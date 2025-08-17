@@ -26,8 +26,8 @@ namespace DNA.Input
 			}
 			this.Movement = controller.CurrentState.ThumbSticks.Left;
 			this.Aiming = controller.CurrentState.ThumbSticks.Right;
-			this.Aiming.X = this.Aiming.X + mouse.DeltaPosition.X / 20f;
-			this.Aiming.Y = this.Aiming.Y - mouse.DeltaPosition.Y / 20f;
+			this.Aiming.X = this.Aiming.X + mouse.DeltaPosition.X / 400f;
+			this.Aiming.Y = this.Aiming.Y - mouse.DeltaPosition.Y / 400f;
 			if (this.InvertY)
 			{
 				this.Aiming.Y = -this.Aiming.Y;

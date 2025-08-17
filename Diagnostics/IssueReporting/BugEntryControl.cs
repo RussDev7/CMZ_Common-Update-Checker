@@ -7,39 +7,6 @@ namespace DNA.Diagnostics.IssueReporting
 {
 	public class BugEntryControl : UserControl
 	{
-		public string BugTitle
-		{
-			get
-			{
-				return this.titleBox.Text;
-			}
-			set
-			{
-				this.titleBox.Text = value;
-			}
-		}
-
-		public string BugDescription
-		{
-			get
-			{
-				return this.descriptionBox.Text;
-			}
-			set
-			{
-				this.descriptionBox.Text = value;
-			}
-		}
-
-		public BugEntryControl()
-		{
-			this.InitializeComponent();
-		}
-
-		private void titleBox_Validating(object sender, CancelEventArgs e)
-		{
-		}
-
 		protected override void Dispose(bool disposing)
 		{
 			if (disposing && this.components != null)
@@ -97,6 +64,39 @@ namespace DNA.Diagnostics.IssueReporting
 			this.groupBox2.ResumeLayout(false);
 			this.groupBox2.PerformLayout();
 			base.ResumeLayout(false);
+		}
+
+		public string BugTitle
+		{
+			get
+			{
+				return this.titleBox.Text;
+			}
+			set
+			{
+				this.titleBox.Text = value;
+			}
+		}
+
+		public string BugDescription
+		{
+			get
+			{
+				return this.descriptionBox.Text;
+			}
+			set
+			{
+				this.descriptionBox.Text = value;
+			}
+		}
+
+		public BugEntryControl()
+		{
+			this.InitializeComponent();
+		}
+
+		private void titleBox_Validating(object sender, CancelEventArgs e)
+		{
 		}
 
 		private IContainer components;

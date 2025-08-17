@@ -8,9 +8,9 @@ using System.Runtime.CompilerServices;
 
 namespace DNA.IO.Storage
 {
+	[DebuggerNonUserCode]
 	[CompilerGenerated]
 	[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "2.0.0.0")]
-	[DebuggerNonUserCode]
 	internal class Strings
 	{
 		internal Strings()

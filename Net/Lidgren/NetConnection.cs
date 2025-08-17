@@ -7,496 +7,6 @@ namespace DNA.Net.Lidgren
 	[DebuggerDisplay("RemoteUniqueIdentifier={RemoteUniqueIdentifier} RemoteEndPoint={remoteEndPoint}")]
 	public class NetConnection
 	{
-		public float AverageRoundtripTime
-		{
-			get
-			{
-				return this.m_averageRoundtripTime;
-			}
-		}
-
-		public float RemoteTimeOffset
-		{
-			get
-			{
-				return (float)this.m_remoteTimeOffset;
-			}
-		}
-
-		internal void InitializeRemoteTimeOffset(float remoteSendTime)
-		{
-			this.m_remoteTimeOffset = (double)remoteSendTime + (double)this.m_averageRoundtripTime / 2.0 - NetTime.Now;
-		}
-
-		public double GetLocalTime(double remoteTimestamp)
-		{
-			return remoteTimestamp - this.m_remoteTimeOffset;
-		}
-
-		public double GetRemoteTime(double localTimestamp)
-		{
-			return localTimestamp + this.m_remoteTimeOffset;
-		}
-
-		internal void InitializePing()
-		{
-			float num = (float)NetTime.Now;
-			this.m_sentPingTime = num;
-			this.m_sentPingTime -= this.m_peerConfiguration.PingInterval * 0.25f;
-			this.m_sentPingTime -= NetRandom.Instance.NextSingle() * (this.m_peerConfiguration.PingInterval * 0.75f);
-			this.m_timeoutDeadline = num + this.m_peerConfiguration.m_connectionTimeout * 2f;
-			this.SendPing();
-		}
-
-		internal void SendPing()
-		{
-			this.m_sentPingNumber++;
-			this.m_sentPingTime = (float)NetTime.Now;
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(1);
-			netOutgoingMessage.Write((byte)this.m_sentPingNumber);
-			netOutgoingMessage.m_messageType = NetMessageType.Ping;
-			int num = netOutgoingMessage.Encode(this.m_peer.m_sendBuffer, 0, 0);
-			bool flag;
-			this.m_peer.SendPacket(num, this.m_remoteEndPoint, 1, out flag);
-		}
-
-		internal void SendPong(int pingNumber)
-		{
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(5);
-			netOutgoingMessage.Write((byte)pingNumber);
-			netOutgoingMessage.Write((float)NetTime.Now);
-			netOutgoingMessage.m_messageType = NetMessageType.Pong;
-			int num = netOutgoingMessage.Encode(this.m_peer.m_sendBuffer, 0, 0);
-			bool flag;
-			this.m_peer.SendPacket(num, this.m_remoteEndPoint, 1, out flag);
-		}
-
-		internal void ReceivedPong(float now, int pongNumber, float remoteSendTime)
-		{
-			if ((byte)pongNumber != (byte)this.m_sentPingNumber)
-			{
-				return;
-			}
-			this.m_timeoutDeadline = now + this.m_peerConfiguration.m_connectionTimeout;
-			float num = now - this.m_sentPingTime;
-			double num2 = (double)remoteSendTime + (double)num / 2.0 - (double)now;
-			if (this.m_averageRoundtripTime < 0f)
-			{
-				this.m_remoteTimeOffset = num2;
-				this.m_averageRoundtripTime = num;
-			}
-			else
-			{
-				this.m_averageRoundtripTime = this.m_averageRoundtripTime * 0.7f + num * 0.3f;
-				this.m_remoteTimeOffset = (this.m_remoteTimeOffset * (double)(this.m_sentPingNumber - 1) + num2) / (double)this.m_sentPingNumber;
-			}
-			float resendDelay = this.GetResendDelay();
-			foreach (NetSenderChannelBase netSenderChannelBase in this.m_sendChannels)
-			{
-				NetReliableSenderChannel netReliableSenderChannel = netSenderChannelBase as NetReliableSenderChannel;
-				if (netReliableSenderChannel != null)
-				{
-					netReliableSenderChannel.m_resendDelay = resendDelay;
-				}
-			}
-			if (this.m_peer.m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionLatencyUpdated))
-			{
-				NetIncomingMessage netIncomingMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionLatencyUpdated, 4);
-				netIncomingMessage.m_senderConnection = this;
-				netIncomingMessage.m_senderEndPoint = this.m_remoteEndPoint;
-				netIncomingMessage.Write(num);
-				this.m_peer.ReleaseMessage(netIncomingMessage);
-			}
-		}
-
-		public NetIncomingMessage RemoteHailMessage
-		{
-			get
-			{
-				return this.m_remoteHailMessage;
-			}
-		}
-
-		internal void UnconnectedHeartbeat(float now)
-		{
-			if (this.m_disconnectRequested)
-			{
-				this.ExecuteDisconnect(this.m_disconnectMessage, true);
-			}
-			if (this.m_connectRequested)
-			{
-				switch (this.m_status)
-				{
-				case NetConnectionStatus.InitiatedConnect:
-					this.SendConnect(now);
-					return;
-				case NetConnectionStatus.RespondedConnect:
-				case NetConnectionStatus.Connected:
-					this.ExecuteDisconnect("Reconnecting", true);
-					return;
-				case NetConnectionStatus.Disconnecting:
-					return;
-				case NetConnectionStatus.Disconnected:
-					throw new NetException("This connection is Disconnected; spent. A new one should have been created");
-				}
-				this.SendConnect(now);
-				return;
-			}
-			if (now - this.m_lastHandshakeSendTime > this.m_peerConfiguration.m_resendHandshakeInterval)
-			{
-				if (this.m_handshakeAttempts >= this.m_peerConfiguration.m_maximumHandshakeAttempts)
-				{
-					this.ExecuteDisconnect("Failed to establish connection - no response from remote host", true);
-					return;
-				}
-				switch (this.m_status)
-				{
-				case NetConnectionStatus.None:
-				case NetConnectionStatus.ReceivedInitiation:
-					this.m_peer.LogWarning("Time to resend handshake, but status is " + this.m_status);
-					return;
-				case NetConnectionStatus.InitiatedConnect:
-					this.SendConnect(now);
-					return;
-				case NetConnectionStatus.RespondedAwaitingApproval:
-					this.m_lastHandshakeSendTime = now;
-					return;
-				case NetConnectionStatus.RespondedConnect:
-					this.SendConnectResponse(now, true);
-					return;
-				default:
-					this.m_peer.LogWarning("Time to resend handshake, but status is " + this.m_status);
-					break;
-				}
-			}
-		}
-
-		internal void ExecuteDisconnect(string reason, bool sendByeMessage)
-		{
-			for (int i = 0; i < this.m_sendChannels.Length; i++)
-			{
-				NetSenderChannelBase netSenderChannelBase = this.m_sendChannels[i];
-				if (netSenderChannelBase != null)
-				{
-					netSenderChannelBase.Reset();
-				}
-			}
-			if (sendByeMessage)
-			{
-				this.SendDisconnect(reason, true);
-			}
-			this.SetStatus(NetConnectionStatus.Disconnected, reason);
-			lock (this.m_peer.m_handshakes)
-			{
-				this.m_peer.m_handshakes.Remove(this.m_remoteEndPoint);
-			}
-			this.m_disconnectRequested = false;
-			this.m_connectRequested = false;
-			this.m_handshakeAttempts = 0;
-		}
-
-		internal void SendConnect(float now)
-		{
-			int num = 13 + this.m_peerConfiguration.AppIdentifier.Length;
-			num += ((this.m_localHailMessage == null) ? 0 : this.m_localHailMessage.LengthBytes);
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(num);
-			netOutgoingMessage.m_messageType = NetMessageType.Connect;
-			netOutgoingMessage.Write(this.m_peerConfiguration.AppIdentifier);
-			netOutgoingMessage.Write(this.m_peer.m_uniqueIdentifier);
-			netOutgoingMessage.Write(now);
-			this.WriteLocalHail(netOutgoingMessage);
-			this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
-			this.m_connectRequested = false;
-			this.m_lastHandshakeSendTime = now;
-			this.m_handshakeAttempts++;
-			int handshakeAttempts = this.m_handshakeAttempts;
-			this.SetStatus(NetConnectionStatus.InitiatedConnect, "Locally requested connect");
-		}
-
-		internal void SendConnectResponse(float now, bool onLibraryThread)
-		{
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(this.m_peerConfiguration.AppIdentifier.Length + 13 + ((this.m_localHailMessage == null) ? 0 : this.m_localHailMessage.LengthBytes));
-			netOutgoingMessage.m_messageType = NetMessageType.ConnectResponse;
-			netOutgoingMessage.Write(this.m_peerConfiguration.AppIdentifier);
-			netOutgoingMessage.Write(this.m_peer.m_uniqueIdentifier);
-			netOutgoingMessage.Write(now);
-			this.WriteLocalHail(netOutgoingMessage);
-			if (onLibraryThread)
-			{
-				this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
-			}
-			else
-			{
-				this.m_peer.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(this.m_remoteEndPoint, netOutgoingMessage));
-			}
-			this.m_lastHandshakeSendTime = now;
-			this.m_handshakeAttempts++;
-			int handshakeAttempts = this.m_handshakeAttempts;
-			this.SetStatus(NetConnectionStatus.RespondedConnect, "Remotely requested connect");
-		}
-
-		internal void SendDisconnect(string reason, bool onLibraryThread)
-		{
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(reason);
-			netOutgoingMessage.m_messageType = NetMessageType.Disconnect;
-			if (onLibraryThread)
-			{
-				this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
-				return;
-			}
-			this.m_peer.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(this.m_remoteEndPoint, netOutgoingMessage));
-		}
-
-		private void WriteLocalHail(NetOutgoingMessage om)
-		{
-			if (this.m_localHailMessage != null)
-			{
-				byte[] data = this.m_localHailMessage.Data;
-				if (data != null && data.Length >= this.m_localHailMessage.LengthBytes)
-				{
-					if (om.LengthBytes + this.m_localHailMessage.LengthBytes > this.m_peerConfiguration.m_maximumTransmissionUnit - 10)
-					{
-						throw new NetException("Hail message too large; can maximally be " + (this.m_peerConfiguration.m_maximumTransmissionUnit - 10 - om.LengthBytes));
-					}
-					om.Write(this.m_localHailMessage.Data, 0, this.m_localHailMessage.LengthBytes);
-				}
-			}
-		}
-
-		internal void SendConnectionEstablished()
-		{
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(4);
-			netOutgoingMessage.m_messageType = NetMessageType.ConnectionEstablished;
-			netOutgoingMessage.Write((float)NetTime.Now);
-			this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
-			this.m_handshakeAttempts = 0;
-			this.InitializePing();
-			if (this.m_status != NetConnectionStatus.Connected)
-			{
-				this.SetStatus(NetConnectionStatus.Connected, "Connected to " + NetUtility.ToHexString(this.m_remoteUniqueIdentifier));
-			}
-		}
-
-		public void Approve()
-		{
-			if (this.m_status != NetConnectionStatus.RespondedAwaitingApproval)
-			{
-				this.m_peer.LogWarning("Approve() called in wrong status; expected RespondedAwaitingApproval; got " + this.m_status);
-				return;
-			}
-			this.m_localHailMessage = null;
-			this.m_handshakeAttempts = 0;
-			this.SendConnectResponse((float)NetTime.Now, false);
-		}
-
-		public void Approve(NetOutgoingMessage localHail)
-		{
-			if (this.m_status != NetConnectionStatus.RespondedAwaitingApproval)
-			{
-				this.m_peer.LogWarning("Approve() called in wrong status; expected RespondedAwaitingApproval; got " + this.m_status);
-				return;
-			}
-			this.m_localHailMessage = localHail;
-			this.m_handshakeAttempts = 0;
-			this.SendConnectResponse((float)NetTime.Now, false);
-		}
-
-		public void Deny()
-		{
-			this.Deny(string.Empty);
-		}
-
-		public void Deny(string reason)
-		{
-			this.SendDisconnect(reason, false);
-			this.m_peer.m_handshakes.Remove(this.m_remoteEndPoint);
-		}
-
-		internal void ReceivedHandshake(double now, NetMessageType tp, int ptr, int payloadLength)
-		{
-			switch (tp)
-			{
-			case NetMessageType.Ping:
-			case NetMessageType.Pong:
-			case NetMessageType.Acknowledge:
-				break;
-			case NetMessageType.Connect:
-				if (this.m_status == NetConnectionStatus.ReceivedInitiation)
-				{
-					byte[] array;
-					bool flag = this.ValidateHandshakeData(ptr, payloadLength, out array);
-					if (flag)
-					{
-						if (array != null)
-						{
-							this.m_remoteHailMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.Data, array);
-							this.m_remoteHailMessage.LengthBits = array.Length * 8;
-						}
-						else
-						{
-							this.m_remoteHailMessage = null;
-						}
-						if (this.m_peerConfiguration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionApproval))
-						{
-							NetIncomingMessage netIncomingMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionApproval, (this.m_remoteHailMessage == null) ? 0 : this.m_remoteHailMessage.LengthBytes);
-							netIncomingMessage.m_receiveTime = now;
-							netIncomingMessage.m_senderConnection = this;
-							netIncomingMessage.m_senderEndPoint = this.m_remoteEndPoint;
-							if (this.m_remoteHailMessage != null)
-							{
-								netIncomingMessage.Write(this.m_remoteHailMessage.m_data, 0, this.m_remoteHailMessage.LengthBytes);
-							}
-							this.SetStatus(NetConnectionStatus.RespondedAwaitingApproval, "Awaiting approval");
-							this.m_peer.ReleaseMessage(netIncomingMessage);
-							return;
-						}
-						this.SendConnectResponse((float)now, true);
-					}
-					return;
-				}
-				if (this.m_status == NetConnectionStatus.RespondedAwaitingApproval)
-				{
-					this.m_peer.LogWarning("Ignoring multiple Connect() most likely due to a delayed Approval");
-					return;
-				}
-				if (this.m_status == NetConnectionStatus.RespondedConnect)
-				{
-					this.SendConnectResponse((float)now, true);
-					return;
-				}
-				break;
-			case NetMessageType.ConnectResponse:
-				switch (this.m_status)
-				{
-				case NetConnectionStatus.None:
-				case NetConnectionStatus.ReceivedInitiation:
-				case NetConnectionStatus.RespondedAwaitingApproval:
-				case NetConnectionStatus.RespondedConnect:
-				case NetConnectionStatus.Disconnecting:
-				case NetConnectionStatus.Disconnected:
-					break;
-				case NetConnectionStatus.InitiatedConnect:
-				{
-					byte[] array;
-					bool flag2 = this.ValidateHandshakeData(ptr, payloadLength, out array);
-					if (flag2)
-					{
-						if (array != null)
-						{
-							this.m_remoteHailMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.Data, array);
-							this.m_remoteHailMessage.LengthBits = array.Length * 8;
-						}
-						else
-						{
-							this.m_remoteHailMessage = null;
-						}
-						this.m_peer.AcceptConnection(this);
-						this.SendConnectionEstablished();
-						return;
-					}
-					break;
-				}
-				case NetConnectionStatus.Connected:
-					this.SendConnectionEstablished();
-					return;
-				default:
-					return;
-				}
-				break;
-			case NetMessageType.ConnectionEstablished:
-				switch (this.m_status)
-				{
-				case NetConnectionStatus.None:
-				case NetConnectionStatus.InitiatedConnect:
-				case NetConnectionStatus.ReceivedInitiation:
-				case NetConnectionStatus.RespondedAwaitingApproval:
-				case NetConnectionStatus.Connected:
-				case NetConnectionStatus.Disconnecting:
-				case NetConnectionStatus.Disconnected:
-					break;
-				case NetConnectionStatus.RespondedConnect:
-				{
-					NetIncomingMessage netIncomingMessage2 = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
-					this.InitializeRemoteTimeOffset(netIncomingMessage2.ReadSingle());
-					this.m_peer.AcceptConnection(this);
-					this.InitializePing();
-					this.SetStatus(NetConnectionStatus.Connected, "Connected to " + NetUtility.ToHexString(this.m_remoteUniqueIdentifier));
-					return;
-				}
-				default:
-					return;
-				}
-				break;
-			case NetMessageType.Disconnect:
-			{
-				string text = "Ouch";
-				try
-				{
-					NetIncomingMessage netIncomingMessage3 = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
-					text = netIncomingMessage3.ReadString();
-				}
-				catch
-				{
-				}
-				this.ExecuteDisconnect(text, false);
-				return;
-			}
-			case NetMessageType.Discovery:
-				this.m_peer.HandleIncomingDiscoveryRequest(now, this.m_remoteEndPoint, ptr, payloadLength);
-				return;
-			case NetMessageType.DiscoveryResponse:
-				this.m_peer.HandleIncomingDiscoveryResponse(now, this.m_remoteEndPoint, ptr, payloadLength);
-				break;
-			default:
-				return;
-			}
-		}
-
-		private bool ValidateHandshakeData(int ptr, int payloadLength, out byte[] hail)
-		{
-			hail = null;
-			NetIncomingMessage netIncomingMessage = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
-			try
-			{
-				string text = netIncomingMessage.ReadString();
-				long num = netIncomingMessage.ReadInt64();
-				this.InitializeRemoteTimeOffset(netIncomingMessage.ReadSingle());
-				int num2 = payloadLength - (netIncomingMessage.PositionInBytes - ptr);
-				if (num2 > 0)
-				{
-					hail = netIncomingMessage.ReadBytes(num2);
-				}
-				if (text != this.m_peer.m_configuration.AppIdentifier)
-				{
-					this.ExecuteDisconnect("Wrong application identifier!", true);
-					return false;
-				}
-				this.m_remoteUniqueIdentifier = num;
-			}
-			catch (Exception ex)
-			{
-				this.ExecuteDisconnect("Handshake data validation failed", true);
-				this.m_peer.LogWarning("ReadRemoteHandshakeData failed: " + ex.Message);
-				return false;
-			}
-			return true;
-		}
-
-		public void Disconnect(string byeMessage)
-		{
-			if (this.m_status == NetConnectionStatus.None || this.m_status == NetConnectionStatus.Disconnected)
-			{
-				return;
-			}
-			this.m_disconnectMessage = byeMessage;
-			if (this.m_status != NetConnectionStatus.Disconnected && this.m_status != NetConnectionStatus.None)
-			{
-				this.SetStatus(NetConnectionStatus.Disconnecting, byeMessage);
-			}
-			this.m_handshakeAttempts = 0;
-			this.m_disconnectRequested = true;
-		}
-
 		internal void InitExpandMTU(double now)
 		{
 			this.m_lastSentMTUAttemptTime = now + (double)this.m_peerConfiguration.m_expandMTUFrequency + 1.5 + (double)this.m_averageRoundtripTime;
@@ -617,6 +127,108 @@ namespace DNA.Net.Lidgren
 			}
 			this.m_currentMTU = size;
 			this.ExpandMTU(now, true);
+		}
+
+		public float AverageRoundtripTime
+		{
+			get
+			{
+				return this.m_averageRoundtripTime;
+			}
+		}
+
+		public float RemoteTimeOffset
+		{
+			get
+			{
+				return (float)this.m_remoteTimeOffset;
+			}
+		}
+
+		internal void InitializeRemoteTimeOffset(float remoteSendTime)
+		{
+			this.m_remoteTimeOffset = (double)remoteSendTime + (double)this.m_averageRoundtripTime / 2.0 - NetTime.Now;
+		}
+
+		public double GetLocalTime(double remoteTimestamp)
+		{
+			return remoteTimestamp - this.m_remoteTimeOffset;
+		}
+
+		public double GetRemoteTime(double localTimestamp)
+		{
+			return localTimestamp + this.m_remoteTimeOffset;
+		}
+
+		internal void InitializePing()
+		{
+			float num = (float)NetTime.Now;
+			this.m_sentPingTime = num;
+			this.m_sentPingTime -= this.m_peerConfiguration.PingInterval * 0.25f;
+			this.m_sentPingTime -= NetRandom.Instance.NextSingle() * (this.m_peerConfiguration.PingInterval * 0.75f);
+			this.m_timeoutDeadline = num + this.m_peerConfiguration.m_connectionTimeout * 2f;
+			this.SendPing();
+		}
+
+		internal void SendPing()
+		{
+			this.m_sentPingNumber++;
+			this.m_sentPingTime = (float)NetTime.Now;
+			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(1);
+			netOutgoingMessage.Write((byte)this.m_sentPingNumber);
+			netOutgoingMessage.m_messageType = NetMessageType.Ping;
+			int num = netOutgoingMessage.Encode(this.m_peer.m_sendBuffer, 0, 0);
+			bool flag;
+			this.m_peer.SendPacket(num, this.m_remoteEndPoint, 1, out flag);
+		}
+
+		internal void SendPong(int pingNumber)
+		{
+			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(5);
+			netOutgoingMessage.Write((byte)pingNumber);
+			netOutgoingMessage.Write((float)NetTime.Now);
+			netOutgoingMessage.m_messageType = NetMessageType.Pong;
+			int num = netOutgoingMessage.Encode(this.m_peer.m_sendBuffer, 0, 0);
+			bool flag;
+			this.m_peer.SendPacket(num, this.m_remoteEndPoint, 1, out flag);
+		}
+
+		internal void ReceivedPong(float now, int pongNumber, float remoteSendTime)
+		{
+			if ((byte)pongNumber != (byte)this.m_sentPingNumber)
+			{
+				return;
+			}
+			this.m_timeoutDeadline = now + this.m_peerConfiguration.m_connectionTimeout;
+			float num = now - this.m_sentPingTime;
+			double num2 = (double)remoteSendTime + (double)num / 2.0 - (double)now;
+			if (this.m_averageRoundtripTime < 0f)
+			{
+				this.m_remoteTimeOffset = num2;
+				this.m_averageRoundtripTime = num;
+			}
+			else
+			{
+				this.m_averageRoundtripTime = this.m_averageRoundtripTime * 0.7f + num * 0.3f;
+				this.m_remoteTimeOffset = (this.m_remoteTimeOffset * (double)(this.m_sentPingNumber - 1) + num2) / (double)this.m_sentPingNumber;
+			}
+			float resendDelay = this.GetResendDelay();
+			foreach (NetSenderChannelBase netSenderChannelBase in this.m_sendChannels)
+			{
+				NetReliableSenderChannel netReliableSenderChannel = netSenderChannelBase as NetReliableSenderChannel;
+				if (netReliableSenderChannel != null)
+				{
+					netReliableSenderChannel.m_resendDelay = resendDelay;
+				}
+			}
+			if (this.m_peer.m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionLatencyUpdated))
+			{
+				NetIncomingMessage netIncomingMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionLatencyUpdated, 4);
+				netIncomingMessage.m_senderConnection = this;
+				netIncomingMessage.m_senderEndPoint = this.m_remoteEndPoint;
+				netIncomingMessage.Write(num);
+				this.m_peer.ReleaseMessage(netIncomingMessage);
+			}
 		}
 
 		public object Tag
@@ -1050,7 +662,393 @@ namespace DNA.Net.Lidgren
 			return "[NetConnection to " + this.m_remoteEndPoint + "]";
 		}
 
-		public const string sConnectionTimeoutErrorString = "Failed to establish connection - no response from remote host";
+		public NetIncomingMessage RemoteHailMessage
+		{
+			get
+			{
+				return this.m_remoteHailMessage;
+			}
+		}
+
+		internal void UnconnectedHeartbeat(float now)
+		{
+			if (this.m_disconnectRequested)
+			{
+				this.ExecuteDisconnect(this.m_disconnectMessage, true);
+			}
+			if (this.m_connectRequested)
+			{
+				switch (this.m_status)
+				{
+				case NetConnectionStatus.InitiatedConnect:
+					this.SendConnect(now);
+					return;
+				case NetConnectionStatus.RespondedConnect:
+				case NetConnectionStatus.Connected:
+					this.ExecuteDisconnect("Reconnecting", true);
+					return;
+				case NetConnectionStatus.Disconnecting:
+					return;
+				case NetConnectionStatus.Disconnected:
+					throw new NetException("This connection is Disconnected; spent. A new one should have been created");
+				}
+				this.SendConnect(now);
+				return;
+			}
+			if (now - this.m_lastHandshakeSendTime > this.m_peerConfiguration.m_resendHandshakeInterval)
+			{
+				if (this.m_handshakeAttempts >= this.m_peerConfiguration.m_maximumHandshakeAttempts)
+				{
+					this.ExecuteDisconnect("Failed to establish connection - no response from remote host", true);
+					return;
+				}
+				switch (this.m_status)
+				{
+				case NetConnectionStatus.None:
+				case NetConnectionStatus.ReceivedInitiation:
+					this.m_peer.LogWarning("Time to resend handshake, but status is " + this.m_status);
+					return;
+				case NetConnectionStatus.InitiatedConnect:
+					this.SendConnect(now);
+					return;
+				case NetConnectionStatus.RespondedAwaitingApproval:
+					this.m_lastHandshakeSendTime = now;
+					return;
+				case NetConnectionStatus.RespondedConnect:
+					this.SendConnectResponse(now, true);
+					return;
+				default:
+					this.m_peer.LogWarning("Time to resend handshake, but status is " + this.m_status);
+					break;
+				}
+			}
+		}
+
+		internal void ExecuteDisconnect(string reason, bool sendByeMessage)
+		{
+			for (int i = 0; i < this.m_sendChannels.Length; i++)
+			{
+				NetSenderChannelBase netSenderChannelBase = this.m_sendChannels[i];
+				if (netSenderChannelBase != null)
+				{
+					netSenderChannelBase.Reset();
+				}
+			}
+			if (sendByeMessage)
+			{
+				this.SendDisconnect(reason, true);
+			}
+			this.SetStatus(NetConnectionStatus.Disconnected, reason);
+			lock (this.m_peer.m_handshakes)
+			{
+				this.m_peer.m_handshakes.Remove(this.m_remoteEndPoint);
+			}
+			this.m_disconnectRequested = false;
+			this.m_connectRequested = false;
+			this.m_handshakeAttempts = 0;
+		}
+
+		internal void SendConnect(float now)
+		{
+			int num = 13 + this.m_peerConfiguration.AppIdentifier.Length;
+			num += ((this.m_localHailMessage == null) ? 0 : this.m_localHailMessage.LengthBytes);
+			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(num);
+			netOutgoingMessage.m_messageType = NetMessageType.Connect;
+			netOutgoingMessage.Write(this.m_peerConfiguration.AppIdentifier);
+			netOutgoingMessage.Write(this.m_peer.m_uniqueIdentifier);
+			netOutgoingMessage.Write(now);
+			this.WriteLocalHail(netOutgoingMessage);
+			this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
+			this.m_connectRequested = false;
+			this.m_lastHandshakeSendTime = now;
+			this.m_handshakeAttempts++;
+			int handshakeAttempts = this.m_handshakeAttempts;
+			this.SetStatus(NetConnectionStatus.InitiatedConnect, "Locally requested connect");
+		}
+
+		internal void SendConnectResponse(float now, bool onLibraryThread)
+		{
+			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(this.m_peerConfiguration.AppIdentifier.Length + 13 + ((this.m_localHailMessage == null) ? 0 : this.m_localHailMessage.LengthBytes));
+			netOutgoingMessage.m_messageType = NetMessageType.ConnectResponse;
+			netOutgoingMessage.Write(this.m_peerConfiguration.AppIdentifier);
+			netOutgoingMessage.Write(this.m_peer.m_uniqueIdentifier);
+			netOutgoingMessage.Write(now);
+			this.WriteLocalHail(netOutgoingMessage);
+			if (onLibraryThread)
+			{
+				this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
+			}
+			else
+			{
+				this.m_peer.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(this.m_remoteEndPoint, netOutgoingMessage));
+			}
+			this.m_lastHandshakeSendTime = now;
+			this.m_handshakeAttempts++;
+			int handshakeAttempts = this.m_handshakeAttempts;
+			this.SetStatus(NetConnectionStatus.RespondedConnect, "Remotely requested connect");
+		}
+
+		internal void SendDisconnect(string reason, bool onLibraryThread)
+		{
+			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(reason);
+			netOutgoingMessage.m_messageType = NetMessageType.Disconnect;
+			if (onLibraryThread)
+			{
+				this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
+				return;
+			}
+			this.m_peer.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(this.m_remoteEndPoint, netOutgoingMessage));
+		}
+
+		private void WriteLocalHail(NetOutgoingMessage om)
+		{
+			if (this.m_localHailMessage != null)
+			{
+				byte[] data = this.m_localHailMessage.Data;
+				if (data != null && data.Length >= this.m_localHailMessage.LengthBytes)
+				{
+					if (om.LengthBytes + this.m_localHailMessage.LengthBytes > this.m_peerConfiguration.m_maximumTransmissionUnit - 10)
+					{
+						throw new NetException("Hail message too large; can maximally be " + (this.m_peerConfiguration.m_maximumTransmissionUnit - 10 - om.LengthBytes));
+					}
+					om.Write(this.m_localHailMessage.Data, 0, this.m_localHailMessage.LengthBytes);
+				}
+			}
+		}
+
+		internal void SendConnectionEstablished()
+		{
+			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(4);
+			netOutgoingMessage.m_messageType = NetMessageType.ConnectionEstablished;
+			netOutgoingMessage.Write((float)NetTime.Now);
+			this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
+			this.m_handshakeAttempts = 0;
+			this.InitializePing();
+			if (this.m_status != NetConnectionStatus.Connected)
+			{
+				this.SetStatus(NetConnectionStatus.Connected, "Connected to " + NetUtility.ToHexString(this.m_remoteUniqueIdentifier));
+			}
+		}
+
+		public void Approve()
+		{
+			if (this.m_status != NetConnectionStatus.RespondedAwaitingApproval)
+			{
+				this.m_peer.LogWarning("Approve() called in wrong status; expected RespondedAwaitingApproval; got " + this.m_status);
+				return;
+			}
+			this.m_localHailMessage = null;
+			this.m_handshakeAttempts = 0;
+			this.SendConnectResponse((float)NetTime.Now, false);
+		}
+
+		public void Approve(NetOutgoingMessage localHail)
+		{
+			if (this.m_status != NetConnectionStatus.RespondedAwaitingApproval)
+			{
+				this.m_peer.LogWarning("Approve() called in wrong status; expected RespondedAwaitingApproval; got " + this.m_status);
+				return;
+			}
+			this.m_localHailMessage = localHail;
+			this.m_handshakeAttempts = 0;
+			this.SendConnectResponse((float)NetTime.Now, false);
+		}
+
+		public void Deny()
+		{
+			this.Deny(string.Empty);
+		}
+
+		public void Deny(string reason)
+		{
+			this.SendDisconnect(reason, false);
+			this.m_peer.m_handshakes.Remove(this.m_remoteEndPoint);
+		}
+
+		internal void ReceivedHandshake(double now, NetMessageType tp, int ptr, int payloadLength)
+		{
+			switch (tp)
+			{
+			case NetMessageType.Ping:
+			case NetMessageType.Pong:
+			case NetMessageType.Acknowledge:
+				break;
+			case NetMessageType.Connect:
+				if (this.m_status == NetConnectionStatus.ReceivedInitiation)
+				{
+					byte[] array;
+					bool flag = this.ValidateHandshakeData(ptr, payloadLength, out array);
+					if (flag)
+					{
+						if (array != null)
+						{
+							this.m_remoteHailMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.Data, array);
+							this.m_remoteHailMessage.LengthBits = array.Length * 8;
+						}
+						else
+						{
+							this.m_remoteHailMessage = null;
+						}
+						if (this.m_peerConfiguration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionApproval))
+						{
+							NetIncomingMessage netIncomingMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionApproval, (this.m_remoteHailMessage == null) ? 0 : this.m_remoteHailMessage.LengthBytes);
+							netIncomingMessage.m_receiveTime = now;
+							netIncomingMessage.m_senderConnection = this;
+							netIncomingMessage.m_senderEndPoint = this.m_remoteEndPoint;
+							if (this.m_remoteHailMessage != null)
+							{
+								netIncomingMessage.Write(this.m_remoteHailMessage.m_data, 0, this.m_remoteHailMessage.LengthBytes);
+							}
+							this.SetStatus(NetConnectionStatus.RespondedAwaitingApproval, "Awaiting approval");
+							this.m_peer.ReleaseMessage(netIncomingMessage);
+							return;
+						}
+						this.SendConnectResponse((float)now, true);
+					}
+					return;
+				}
+				if (this.m_status == NetConnectionStatus.RespondedAwaitingApproval)
+				{
+					this.m_peer.LogWarning("Ignoring multiple Connect() most likely due to a delayed Approval");
+					return;
+				}
+				if (this.m_status == NetConnectionStatus.RespondedConnect)
+				{
+					this.SendConnectResponse((float)now, true);
+					return;
+				}
+				break;
+			case NetMessageType.ConnectResponse:
+				switch (this.m_status)
+				{
+				case NetConnectionStatus.None:
+				case NetConnectionStatus.ReceivedInitiation:
+				case NetConnectionStatus.RespondedAwaitingApproval:
+				case NetConnectionStatus.RespondedConnect:
+				case NetConnectionStatus.Disconnecting:
+				case NetConnectionStatus.Disconnected:
+					break;
+				case NetConnectionStatus.InitiatedConnect:
+				{
+					byte[] array;
+					bool flag2 = this.ValidateHandshakeData(ptr, payloadLength, out array);
+					if (flag2)
+					{
+						if (array != null)
+						{
+							this.m_remoteHailMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.Data, array);
+							this.m_remoteHailMessage.LengthBits = array.Length * 8;
+						}
+						else
+						{
+							this.m_remoteHailMessage = null;
+						}
+						this.m_peer.AcceptConnection(this);
+						this.SendConnectionEstablished();
+						return;
+					}
+					break;
+				}
+				case NetConnectionStatus.Connected:
+					this.SendConnectionEstablished();
+					return;
+				default:
+					return;
+				}
+				break;
+			case NetMessageType.ConnectionEstablished:
+				switch (this.m_status)
+				{
+				case NetConnectionStatus.None:
+				case NetConnectionStatus.InitiatedConnect:
+				case NetConnectionStatus.ReceivedInitiation:
+				case NetConnectionStatus.RespondedAwaitingApproval:
+				case NetConnectionStatus.Connected:
+				case NetConnectionStatus.Disconnecting:
+				case NetConnectionStatus.Disconnected:
+					break;
+				case NetConnectionStatus.RespondedConnect:
+				{
+					NetIncomingMessage netIncomingMessage2 = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
+					this.InitializeRemoteTimeOffset(netIncomingMessage2.ReadSingle());
+					this.m_peer.AcceptConnection(this);
+					this.InitializePing();
+					this.SetStatus(NetConnectionStatus.Connected, "Connected to " + NetUtility.ToHexString(this.m_remoteUniqueIdentifier));
+					return;
+				}
+				default:
+					return;
+				}
+				break;
+			case NetMessageType.Disconnect:
+			{
+				string text = "Ouch";
+				try
+				{
+					NetIncomingMessage netIncomingMessage3 = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
+					text = netIncomingMessage3.ReadString();
+				}
+				catch
+				{
+				}
+				this.ExecuteDisconnect(text, false);
+				return;
+			}
+			case NetMessageType.Discovery:
+				this.m_peer.HandleIncomingDiscoveryRequest(now, this.m_remoteEndPoint, ptr, payloadLength);
+				return;
+			case NetMessageType.DiscoveryResponse:
+				this.m_peer.HandleIncomingDiscoveryResponse(now, this.m_remoteEndPoint, ptr, payloadLength);
+				break;
+			default:
+				return;
+			}
+		}
+
+		private bool ValidateHandshakeData(int ptr, int payloadLength, out byte[] hail)
+		{
+			hail = null;
+			NetIncomingMessage netIncomingMessage = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
+			try
+			{
+				string text = netIncomingMessage.ReadString();
+				long num = netIncomingMessage.ReadInt64();
+				this.InitializeRemoteTimeOffset(netIncomingMessage.ReadSingle());
+				int num2 = payloadLength - (netIncomingMessage.PositionInBytes - ptr);
+				if (num2 > 0)
+				{
+					hail = netIncomingMessage.ReadBytes(num2);
+				}
+				if (text != this.m_peer.m_configuration.AppIdentifier)
+				{
+					this.ExecuteDisconnect("Wrong application identifier!", true);
+					return false;
+				}
+				this.m_remoteUniqueIdentifier = num;
+			}
+			catch (Exception ex)
+			{
+				this.ExecuteDisconnect("Handshake data validation failed", true);
+				this.m_peer.LogWarning("ReadRemoteHandshakeData failed: " + ex.Message);
+				return false;
+			}
+			return true;
+		}
+
+		public void Disconnect(string byeMessage)
+		{
+			if (this.m_status == NetConnectionStatus.None || this.m_status == NetConnectionStatus.Disconnected)
+			{
+				return;
+			}
+			this.m_disconnectMessage = byeMessage;
+			if (this.m_status != NetConnectionStatus.Disconnected && this.m_status != NetConnectionStatus.None)
+			{
+				this.SetStatus(NetConnectionStatus.Disconnecting, byeMessage);
+			}
+			this.m_handshakeAttempts = 0;
+			this.m_disconnectRequested = true;
+		}
 
 		private const int c_protocolMaxMTU = 8190;
 
@@ -1058,29 +1056,7 @@ namespace DNA.Net.Lidgren
 
 		private const int m_messageCoalesceFrames = 3;
 
-		private float m_sentPingTime;
-
-		private int m_sentPingNumber;
-
-		private float m_averageRoundtripTime;
-
-		private float m_timeoutDeadline = float.MaxValue;
-
-		internal double m_remoteTimeOffset;
-
-		internal bool m_connectRequested;
-
-		internal bool m_disconnectRequested;
-
-		internal bool m_connectionInitiator;
-
-		internal string m_disconnectMessage;
-
-		internal NetIncomingMessage m_remoteHailMessage;
-
-		internal float m_lastHandshakeSendTime;
-
-		internal int m_handshakeAttempts;
+		public const string sConnectionTimeoutErrorString = "Failed to establish connection - no response from remote host";
 
 		private NetConnection.ExpandMTUStatus m_expandMTUStatus;
 
@@ -1095,6 +1071,16 @@ namespace DNA.Net.Lidgren
 		private int m_mtuAttemptFails;
 
 		internal int m_currentMTU;
+
+		private float m_sentPingTime;
+
+		private int m_sentPingNumber;
+
+		private float m_averageRoundtripTime;
+
+		private float m_timeoutDeadline = float.MaxValue;
+
+		internal double m_remoteTimeOffset;
 
 		internal NetPeer m_peer;
 
@@ -1125,6 +1111,20 @@ namespace DNA.Net.Lidgren
 		private object m_tag;
 
 		internal NetConnectionStatistics m_statistics;
+
+		internal bool m_connectRequested;
+
+		internal bool m_disconnectRequested;
+
+		internal bool m_connectionInitiator;
+
+		internal string m_disconnectMessage;
+
+		internal NetIncomingMessage m_remoteHailMessage;
+
+		internal float m_lastHandshakeSendTime;
+
+		internal int m_handshakeAttempts;
 
 		private enum ExpandMTUStatus
 		{

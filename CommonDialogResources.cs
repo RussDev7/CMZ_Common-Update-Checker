@@ -10,8 +10,8 @@ using System.Runtime.CompilerServices;
 namespace DNA
 {
 	[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
-	[DebuggerNonUserCode]
 	[CompilerGenerated]
+	[DebuggerNonUserCode]
 	internal class CommonDialogResources
 	{
 		internal CommonDialogResources()

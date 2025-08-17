@@ -74,8 +74,7 @@ namespace DNA.Drawing
 
 		protected virtual void UpdateRotation(FPSControllerMapping input, GameTime gameTime)
 		{
-			float num = (float)gameTime.ElapsedGameTime.TotalSeconds;
-			this.TorsoPitch += Angle.FromRadians(3.1415927f * input.Aiming.Y * num * this.ControlSensitivity);
+			this.TorsoPitch += Angle.FromRadians(3.1415927f * input.Aiming.Y * this.ControlSensitivity);
 			if (this.TorsoPitch > Angle.FromDegrees(89f))
 			{
 				this.TorsoPitch = Angle.FromDegrees(89f);
@@ -84,7 +83,7 @@ namespace DNA.Drawing
 			{
 				this.TorsoPitch = Angle.FromDegrees(-89f);
 			}
-			base.LocalRotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitY, -4.712389f * input.Aiming.X * num * this.ControlSensitivity);
+			base.LocalRotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitY, -3.1415927f * input.Aiming.X * this.ControlSensitivity);
 		}
 
 		protected virtual void UpdateVelocity(FPSControllerMapping input, GameTime gameTime)

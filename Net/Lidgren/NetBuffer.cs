@@ -8,376 +8,6 @@ namespace DNA.Net.Lidgren
 {
 	public class NetBuffer
 	{
-		public void EnsureBufferSize(int numberOfBits)
-		{
-			int num = numberOfBits + 7 >> 3;
-			if (this.m_data == null)
-			{
-				this.m_data = new byte[num + 4];
-				return;
-			}
-			if (this.m_data.Length < num)
-			{
-				Array.Resize<byte>(ref this.m_data, num + 4);
-			}
-		}
-
-		internal void InternalEnsureBufferSize(int numberOfBits)
-		{
-			int num = numberOfBits + 7 >> 3;
-			if (this.m_data == null)
-			{
-				this.m_data = new byte[num];
-				return;
-			}
-			if (this.m_data.Length < num)
-			{
-				Array.Resize<byte>(ref this.m_data, num);
-			}
-		}
-
-		public void Write(bool value)
-		{
-			this.EnsureBufferSize(this.m_bitLength + 1);
-			NetBitWriter.WriteByte(value ? 1 : 0, 1, this.m_data, this.m_bitLength);
-			this.m_bitLength++;
-		}
-
-		public void Write(byte source)
-		{
-			this.EnsureBufferSize(this.m_bitLength + 8);
-			NetBitWriter.WriteByte(source, 8, this.m_data, this.m_bitLength);
-			this.m_bitLength += 8;
-		}
-
-		[CLSCompliant(false)]
-		public void Write(sbyte source)
-		{
-			this.EnsureBufferSize(this.m_bitLength + 8);
-			NetBitWriter.WriteByte((byte)source, 8, this.m_data, this.m_bitLength);
-			this.m_bitLength += 8;
-		}
-
-		public void Write(byte source, int numberOfBits)
-		{
-			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
-			NetBitWriter.WriteByte(source, numberOfBits, this.m_data, this.m_bitLength);
-			this.m_bitLength += numberOfBits;
-		}
-
-		public void Write(byte[] source)
-		{
-			if (source == null)
-			{
-				throw new ArgumentNullException("source");
-			}
-			int num = source.Length * 8;
-			this.EnsureBufferSize(this.m_bitLength + num);
-			NetBitWriter.WriteBytes(source, 0, source.Length, this.m_data, this.m_bitLength);
-			this.m_bitLength += num;
-		}
-
-		public void Write(byte[] source, int offsetInBytes, int numberOfBytes)
-		{
-			if (source == null)
-			{
-				throw new ArgumentNullException("source");
-			}
-			int num = numberOfBytes * 8;
-			this.EnsureBufferSize(this.m_bitLength + num);
-			NetBitWriter.WriteBytes(source, offsetInBytes, numberOfBytes, this.m_data, this.m_bitLength);
-			this.m_bitLength += num;
-		}
-
-		public void CopyBytesFrom(NetBuffer src, int numberOfBytes)
-		{
-			if (src == null)
-			{
-				throw new ArgumentNullException("source");
-			}
-			int num = numberOfBytes * 8;
-			this.EnsureBufferSize(this.m_bitLength + num);
-			if (src.m_bitLength - src.m_readPosition + 7 < numberOfBytes * 8)
-			{
-				return;
-			}
-			if ((this.m_bitLength & 7) == 0)
-			{
-				NetBitWriter.ReadBytes(src.m_data, numberOfBytes, src.m_readPosition, this.m_data, this.m_bitLength >> 3);
-				src.m_readPosition += numberOfBytes * 8;
-				this.m_bitLength += numberOfBytes * 8;
-				return;
-			}
-			byte[] array = src.ReadBytes(numberOfBytes);
-			if (array != null)
-			{
-				NetBitWriter.WriteBytes(array, 0, numberOfBytes, this.m_data, this.m_bitLength);
-				this.m_bitLength += numberOfBytes * 8;
-			}
-		}
-
-		[CLSCompliant(false)]
-		public void Write(ushort source)
-		{
-			this.EnsureBufferSize(this.m_bitLength + 16);
-			NetBitWriter.WriteUInt16(source, 16, this.m_data, this.m_bitLength);
-			this.m_bitLength += 16;
-		}
-
-		[CLSCompliant(false)]
-		public void Write(ushort source, int numberOfBits)
-		{
-			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
-			NetBitWriter.WriteUInt16(source, numberOfBits, this.m_data, this.m_bitLength);
-			this.m_bitLength += numberOfBits;
-		}
-
-		public void Write(short source)
-		{
-			this.EnsureBufferSize(this.m_bitLength + 16);
-			NetBitWriter.WriteUInt16((ushort)source, 16, this.m_data, this.m_bitLength);
-			this.m_bitLength += 16;
-		}
-
-		public void Write(int source)
-		{
-			this.EnsureBufferSize(this.m_bitLength + 32);
-			NetBitWriter.WriteUInt32((uint)source, 32, this.m_data, this.m_bitLength);
-			this.m_bitLength += 32;
-		}
-
-		[CLSCompliant(false)]
-		public void Write(uint source)
-		{
-			this.EnsureBufferSize(this.m_bitLength + 32);
-			NetBitWriter.WriteUInt32(source, 32, this.m_data, this.m_bitLength);
-			this.m_bitLength += 32;
-		}
-
-		[CLSCompliant(false)]
-		public void Write(uint source, int numberOfBits)
-		{
-			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
-			NetBitWriter.WriteUInt32(source, numberOfBits, this.m_data, this.m_bitLength);
-			this.m_bitLength += numberOfBits;
-		}
-
-		public void Write(int source, int numberOfBits)
-		{
-			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
-			if (numberOfBits != 32)
-			{
-				int num = 1 << numberOfBits - 1;
-				if (source < 0)
-				{
-					source = (-source - 1) | num;
-				}
-				else
-				{
-					source &= ~num;
-				}
-			}
-			NetBitWriter.WriteUInt32((uint)source, numberOfBits, this.m_data, this.m_bitLength);
-			this.m_bitLength += numberOfBits;
-		}
-
-		[CLSCompliant(false)]
-		public void Write(ulong source)
-		{
-			this.EnsureBufferSize(this.m_bitLength + 64);
-			NetBitWriter.WriteUInt64(source, 64, this.m_data, this.m_bitLength);
-			this.m_bitLength += 64;
-		}
-
-		[CLSCompliant(false)]
-		public void Write(ulong source, int numberOfBits)
-		{
-			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
-			NetBitWriter.WriteUInt64(source, numberOfBits, this.m_data, this.m_bitLength);
-			this.m_bitLength += numberOfBits;
-		}
-
-		public void Write(long source)
-		{
-			this.EnsureBufferSize(this.m_bitLength + 64);
-			NetBitWriter.WriteUInt64((ulong)source, 64, this.m_data, this.m_bitLength);
-			this.m_bitLength += 64;
-		}
-
-		public void Write(long source, int numberOfBits)
-		{
-			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
-			NetBitWriter.WriteUInt64((ulong)source, numberOfBits, this.m_data, this.m_bitLength);
-			this.m_bitLength += numberOfBits;
-		}
-
-		public void Write(float source)
-		{
-			SingleUIntUnion singleUIntUnion;
-			singleUIntUnion.UIntValue = 0U;
-			singleUIntUnion.SingleValue = source;
-			this.Write(singleUIntUnion.UIntValue);
-		}
-
-		public void Write(double source)
-		{
-			byte[] bytes = BitConverter.GetBytes(source);
-			this.Write(bytes);
-		}
-
-		[CLSCompliant(false)]
-		public int WriteVariableUInt32(uint value)
-		{
-			int num = 1;
-			uint num2 = value;
-			while (num2 >= 128U)
-			{
-				this.Write((byte)(num2 | 128U));
-				num2 >>= 7;
-				num++;
-			}
-			this.Write((byte)num2);
-			return num;
-		}
-
-		public int WriteVariableInt32(int value)
-		{
-			uint num = (uint)((value << 1) ^ (value >> 31));
-			return this.WriteVariableUInt32(num);
-		}
-
-		public int WriteVariableInt64(long value)
-		{
-			ulong num = (ulong)((value << 1) ^ (value >> 63));
-			return this.WriteVariableUInt64(num);
-		}
-
-		[CLSCompliant(false)]
-		public int WriteVariableUInt64(ulong value)
-		{
-			int num = 1;
-			ulong num2 = value;
-			while (num2 >= 128UL)
-			{
-				this.Write((byte)(num2 | 128UL));
-				num2 >>= 7;
-				num++;
-			}
-			this.Write((byte)num2);
-			return num;
-		}
-
-		public void WriteSignedSingle(float value, int numberOfBits)
-		{
-			float num = (value + 1f) * 0.5f;
-			int num2 = (1 << numberOfBits) - 1;
-			uint num3 = (uint)(num * (float)num2);
-			this.Write(num3, numberOfBits);
-		}
-
-		public void WriteUnitSingle(float value, int numberOfBits)
-		{
-			int num = (1 << numberOfBits) - 1;
-			uint num2 = (uint)(value * (float)num);
-			this.Write(num2, numberOfBits);
-		}
-
-		public void WriteRangedSingle(float value, float min, float max, int numberOfBits)
-		{
-			float num = max - min;
-			float num2 = (value - min) / num;
-			int num3 = (1 << numberOfBits) - 1;
-			this.Write((uint)((float)num3 * num2), numberOfBits);
-		}
-
-		public int WriteRangedInteger(int min, int max, int value)
-		{
-			uint num = (uint)(max - min);
-			int num2 = NetUtility.BitsToHoldUInt(num);
-			uint num3 = (uint)(value - min);
-			this.Write(num3, num2);
-			return num2;
-		}
-
-		public void Write(string source)
-		{
-			if (string.IsNullOrEmpty(source))
-			{
-				this.EnsureBufferSize(this.m_bitLength + 8);
-				this.WriteVariableUInt32(0U);
-				return;
-			}
-			byte[] bytes = Encoding.UTF8.GetBytes(source);
-			this.EnsureBufferSize(this.m_bitLength + 8 + bytes.Length * 8);
-			this.WriteVariableUInt32((uint)bytes.Length);
-			this.Write(bytes);
-		}
-
-		public void Write(IPEndPoint endPoint)
-		{
-			byte[] addressBytes = endPoint.Address.GetAddressBytes();
-			this.Write((byte)addressBytes.Length);
-			this.Write(addressBytes);
-			this.Write((ushort)endPoint.Port);
-		}
-
-		public void WriteTime(bool highPrecision)
-		{
-			double now = NetTime.Now;
-			if (highPrecision)
-			{
-				this.Write(now);
-				return;
-			}
-			this.Write((float)now);
-		}
-
-		public void WriteTime(double localTime, bool highPrecision)
-		{
-			if (highPrecision)
-			{
-				this.Write(localTime);
-				return;
-			}
-			this.Write((float)localTime);
-		}
-
-		public void WritePadBits()
-		{
-			this.m_bitLength = (this.m_bitLength + 7 >> 3) * 8;
-			this.EnsureBufferSize(this.m_bitLength);
-		}
-
-		public void WritePadBits(int numberOfBits)
-		{
-			this.m_bitLength += numberOfBits;
-			this.EnsureBufferSize(this.m_bitLength);
-		}
-
-		public void Write(NetOutgoingMessage message)
-		{
-			this.EnsureBufferSize(this.m_bitLength + message.LengthBytes * 8);
-			this.Write(message.m_data, 0, message.LengthBytes);
-			int num = message.m_bitLength % 8;
-			if (num != 0)
-			{
-				int num2 = 8 - num;
-				this.m_bitLength -= num2;
-			}
-		}
-
-		public void Write(NetIncomingMessage message)
-		{
-			this.EnsureBufferSize(this.m_bitLength + message.LengthBytes * 8);
-			this.Write(message.m_data, 0, message.LengthBytes);
-			int num = message.m_bitLength % 8;
-			if (num != 0)
-			{
-				int num2 = 8 - num;
-				this.m_bitLength -= num2;
-			}
-		}
-
 		public byte[] PeekDataBuffer()
 		{
 			return this.m_data;
@@ -1027,55 +657,373 @@ namespace DNA.Net.Lidgren
 			this.m_readPosition += numberOfBits;
 		}
 
-		public void WriteAllFields(object ob)
+		public void EnsureBufferSize(int numberOfBits)
 		{
-			this.WriteAllFields(ob, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			int num = numberOfBits + 7 >> 3;
+			if (this.m_data == null)
+			{
+				this.m_data = new byte[num + 4];
+				return;
+			}
+			if (this.m_data.Length < num)
+			{
+				Array.Resize<byte>(ref this.m_data, num + 4);
+			}
 		}
 
-		public void WriteAllFields(object ob, BindingFlags flags)
+		internal void InternalEnsureBufferSize(int numberOfBits)
 		{
-			if (ob == null)
+			int num = numberOfBits + 7 >> 3;
+			if (this.m_data == null)
+			{
+				this.m_data = new byte[num];
+				return;
+			}
+			if (this.m_data.Length < num)
+			{
+				Array.Resize<byte>(ref this.m_data, num);
+			}
+		}
+
+		public void Write(bool value)
+		{
+			this.EnsureBufferSize(this.m_bitLength + 1);
+			NetBitWriter.WriteByte(value ? 1 : 0, 1, this.m_data, this.m_bitLength);
+			this.m_bitLength++;
+		}
+
+		public void Write(byte source)
+		{
+			this.EnsureBufferSize(this.m_bitLength + 8);
+			NetBitWriter.WriteByte(source, 8, this.m_data, this.m_bitLength);
+			this.m_bitLength += 8;
+		}
+
+		[CLSCompliant(false)]
+		public void Write(sbyte source)
+		{
+			this.EnsureBufferSize(this.m_bitLength + 8);
+			NetBitWriter.WriteByte((byte)source, 8, this.m_data, this.m_bitLength);
+			this.m_bitLength += 8;
+		}
+
+		public void Write(byte source, int numberOfBits)
+		{
+			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
+			NetBitWriter.WriteByte(source, numberOfBits, this.m_data, this.m_bitLength);
+			this.m_bitLength += numberOfBits;
+		}
+
+		public void Write(byte[] source)
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException("source");
+			}
+			int num = source.Length * 8;
+			this.EnsureBufferSize(this.m_bitLength + num);
+			NetBitWriter.WriteBytes(source, 0, source.Length, this.m_data, this.m_bitLength);
+			this.m_bitLength += num;
+		}
+
+		public void Write(byte[] source, int offsetInBytes, int numberOfBytes)
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException("source");
+			}
+			int num = numberOfBytes * 8;
+			this.EnsureBufferSize(this.m_bitLength + num);
+			NetBitWriter.WriteBytes(source, offsetInBytes, numberOfBytes, this.m_data, this.m_bitLength);
+			this.m_bitLength += num;
+		}
+
+		public void CopyBytesFrom(NetBuffer src, int numberOfBytes)
+		{
+			if (src == null)
+			{
+				throw new ArgumentNullException("source");
+			}
+			int num = numberOfBytes * 8;
+			this.EnsureBufferSize(this.m_bitLength + num);
+			if (src.m_bitLength - src.m_readPosition + 7 < numberOfBytes * 8)
 			{
 				return;
 			}
-			Type type = ob.GetType();
-			FieldInfo[] fields = type.GetFields(flags);
-			NetUtility.SortMembersList(fields);
-			foreach (FieldInfo fieldInfo in fields)
+			if ((this.m_bitLength & 7) == 0)
 			{
-				object value = fieldInfo.GetValue(ob);
-				MethodInfo methodInfo;
-				if (!NetBuffer.s_writeMethods.TryGetValue(fieldInfo.FieldType, out methodInfo))
-				{
-					throw new NetException("Failed to find write method for type " + fieldInfo.FieldType);
-				}
-				methodInfo.Invoke(this, new object[] { value });
-			}
-		}
-
-		public void WriteAllProperties(object ob)
-		{
-			this.WriteAllProperties(ob, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-		}
-
-		public void WriteAllProperties(object ob, BindingFlags flags)
-		{
-			if (ob == null)
-			{
+				NetBitWriter.ReadBytes(src.m_data, numberOfBytes, src.m_readPosition, this.m_data, this.m_bitLength >> 3);
+				src.m_readPosition += numberOfBytes * 8;
+				this.m_bitLength += numberOfBytes * 8;
 				return;
 			}
-			Type type = ob.GetType();
-			PropertyInfo[] properties = type.GetProperties(flags);
-			NetUtility.SortMembersList(properties);
-			foreach (PropertyInfo propertyInfo in properties)
+			byte[] array = src.ReadBytes(numberOfBytes);
+			if (array != null)
 			{
-				MethodInfo getMethod = propertyInfo.GetGetMethod((flags & BindingFlags.NonPublic) == BindingFlags.NonPublic);
-				object obj = getMethod.Invoke(ob, null);
-				MethodInfo methodInfo;
-				if (NetBuffer.s_writeMethods.TryGetValue(propertyInfo.PropertyType, out methodInfo))
+				NetBitWriter.WriteBytes(array, 0, numberOfBytes, this.m_data, this.m_bitLength);
+				this.m_bitLength += numberOfBytes * 8;
+			}
+		}
+
+		[CLSCompliant(false)]
+		public void Write(ushort source)
+		{
+			this.EnsureBufferSize(this.m_bitLength + 16);
+			NetBitWriter.WriteUInt16(source, 16, this.m_data, this.m_bitLength);
+			this.m_bitLength += 16;
+		}
+
+		[CLSCompliant(false)]
+		public void Write(ushort source, int numberOfBits)
+		{
+			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
+			NetBitWriter.WriteUInt16(source, numberOfBits, this.m_data, this.m_bitLength);
+			this.m_bitLength += numberOfBits;
+		}
+
+		public void Write(short source)
+		{
+			this.EnsureBufferSize(this.m_bitLength + 16);
+			NetBitWriter.WriteUInt16((ushort)source, 16, this.m_data, this.m_bitLength);
+			this.m_bitLength += 16;
+		}
+
+		public void Write(int source)
+		{
+			this.EnsureBufferSize(this.m_bitLength + 32);
+			NetBitWriter.WriteUInt32((uint)source, 32, this.m_data, this.m_bitLength);
+			this.m_bitLength += 32;
+		}
+
+		[CLSCompliant(false)]
+		public void Write(uint source)
+		{
+			this.EnsureBufferSize(this.m_bitLength + 32);
+			NetBitWriter.WriteUInt32(source, 32, this.m_data, this.m_bitLength);
+			this.m_bitLength += 32;
+		}
+
+		[CLSCompliant(false)]
+		public void Write(uint source, int numberOfBits)
+		{
+			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
+			NetBitWriter.WriteUInt32(source, numberOfBits, this.m_data, this.m_bitLength);
+			this.m_bitLength += numberOfBits;
+		}
+
+		public void Write(int source, int numberOfBits)
+		{
+			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
+			if (numberOfBits != 32)
+			{
+				int num = 1 << numberOfBits - 1;
+				if (source < 0)
 				{
-					methodInfo.Invoke(this, new object[] { obj });
+					source = (-source - 1) | num;
 				}
+				else
+				{
+					source &= ~num;
+				}
+			}
+			NetBitWriter.WriteUInt32((uint)source, numberOfBits, this.m_data, this.m_bitLength);
+			this.m_bitLength += numberOfBits;
+		}
+
+		[CLSCompliant(false)]
+		public void Write(ulong source)
+		{
+			this.EnsureBufferSize(this.m_bitLength + 64);
+			NetBitWriter.WriteUInt64(source, 64, this.m_data, this.m_bitLength);
+			this.m_bitLength += 64;
+		}
+
+		[CLSCompliant(false)]
+		public void Write(ulong source, int numberOfBits)
+		{
+			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
+			NetBitWriter.WriteUInt64(source, numberOfBits, this.m_data, this.m_bitLength);
+			this.m_bitLength += numberOfBits;
+		}
+
+		public void Write(long source)
+		{
+			this.EnsureBufferSize(this.m_bitLength + 64);
+			NetBitWriter.WriteUInt64((ulong)source, 64, this.m_data, this.m_bitLength);
+			this.m_bitLength += 64;
+		}
+
+		public void Write(long source, int numberOfBits)
+		{
+			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
+			NetBitWriter.WriteUInt64((ulong)source, numberOfBits, this.m_data, this.m_bitLength);
+			this.m_bitLength += numberOfBits;
+		}
+
+		public void Write(float source)
+		{
+			SingleUIntUnion singleUIntUnion;
+			singleUIntUnion.UIntValue = 0U;
+			singleUIntUnion.SingleValue = source;
+			this.Write(singleUIntUnion.UIntValue);
+		}
+
+		public void Write(double source)
+		{
+			byte[] bytes = BitConverter.GetBytes(source);
+			this.Write(bytes);
+		}
+
+		[CLSCompliant(false)]
+		public int WriteVariableUInt32(uint value)
+		{
+			int num = 1;
+			uint num2 = value;
+			while (num2 >= 128U)
+			{
+				this.Write((byte)(num2 | 128U));
+				num2 >>= 7;
+				num++;
+			}
+			this.Write((byte)num2);
+			return num;
+		}
+
+		public int WriteVariableInt32(int value)
+		{
+			uint num = (uint)((value << 1) ^ (value >> 31));
+			return this.WriteVariableUInt32(num);
+		}
+
+		public int WriteVariableInt64(long value)
+		{
+			ulong num = (ulong)((value << 1) ^ (value >> 63));
+			return this.WriteVariableUInt64(num);
+		}
+
+		[CLSCompliant(false)]
+		public int WriteVariableUInt64(ulong value)
+		{
+			int num = 1;
+			ulong num2 = value;
+			while (num2 >= 128UL)
+			{
+				this.Write((byte)(num2 | 128UL));
+				num2 >>= 7;
+				num++;
+			}
+			this.Write((byte)num2);
+			return num;
+		}
+
+		public void WriteSignedSingle(float value, int numberOfBits)
+		{
+			float num = (value + 1f) * 0.5f;
+			int num2 = (1 << numberOfBits) - 1;
+			uint num3 = (uint)(num * (float)num2);
+			this.Write(num3, numberOfBits);
+		}
+
+		public void WriteUnitSingle(float value, int numberOfBits)
+		{
+			int num = (1 << numberOfBits) - 1;
+			uint num2 = (uint)(value * (float)num);
+			this.Write(num2, numberOfBits);
+		}
+
+		public void WriteRangedSingle(float value, float min, float max, int numberOfBits)
+		{
+			float num = max - min;
+			float num2 = (value - min) / num;
+			int num3 = (1 << numberOfBits) - 1;
+			this.Write((uint)((float)num3 * num2), numberOfBits);
+		}
+
+		public int WriteRangedInteger(int min, int max, int value)
+		{
+			uint num = (uint)(max - min);
+			int num2 = NetUtility.BitsToHoldUInt(num);
+			uint num3 = (uint)(value - min);
+			this.Write(num3, num2);
+			return num2;
+		}
+
+		public void Write(string source)
+		{
+			if (string.IsNullOrEmpty(source))
+			{
+				this.EnsureBufferSize(this.m_bitLength + 8);
+				this.WriteVariableUInt32(0U);
+				return;
+			}
+			byte[] bytes = Encoding.UTF8.GetBytes(source);
+			this.EnsureBufferSize(this.m_bitLength + 8 + bytes.Length * 8);
+			this.WriteVariableUInt32((uint)bytes.Length);
+			this.Write(bytes);
+		}
+
+		public void Write(IPEndPoint endPoint)
+		{
+			byte[] addressBytes = endPoint.Address.GetAddressBytes();
+			this.Write((byte)addressBytes.Length);
+			this.Write(addressBytes);
+			this.Write((ushort)endPoint.Port);
+		}
+
+		public void WriteTime(bool highPrecision)
+		{
+			double now = NetTime.Now;
+			if (highPrecision)
+			{
+				this.Write(now);
+				return;
+			}
+			this.Write((float)now);
+		}
+
+		public void WriteTime(double localTime, bool highPrecision)
+		{
+			if (highPrecision)
+			{
+				this.Write(localTime);
+				return;
+			}
+			this.Write((float)localTime);
+		}
+
+		public void WritePadBits()
+		{
+			this.m_bitLength = (this.m_bitLength + 7 >> 3) * 8;
+			this.EnsureBufferSize(this.m_bitLength);
+		}
+
+		public void WritePadBits(int numberOfBits)
+		{
+			this.m_bitLength += numberOfBits;
+			this.EnsureBufferSize(this.m_bitLength);
+		}
+
+		public void Write(NetOutgoingMessage message)
+		{
+			this.EnsureBufferSize(this.m_bitLength + message.LengthBytes * 8);
+			this.Write(message.m_data, 0, message.LengthBytes);
+			int num = message.m_bitLength % 8;
+			if (num != 0)
+			{
+				int num2 = 8 - num;
+				this.m_bitLength -= num2;
+			}
+		}
+
+		public void Write(NetIncomingMessage message)
+		{
+			this.EnsureBufferSize(this.m_bitLength + message.LengthBytes * 8);
+			this.Write(message.m_data, 0, message.LengthBytes);
+			int num = message.m_bitLength % 8;
+			if (num != 0)
+			{
+				int num2 = 8 - num;
+				this.m_bitLength -= num2;
 			}
 		}
 
@@ -1160,6 +1108,58 @@ namespace DNA.Net.Lidgren
 					{
 						NetBuffer.s_writeMethods[parameters[0].ParameterType] = methodInfo2;
 					}
+				}
+			}
+		}
+
+		public void WriteAllFields(object ob)
+		{
+			this.WriteAllFields(ob, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		}
+
+		public void WriteAllFields(object ob, BindingFlags flags)
+		{
+			if (ob == null)
+			{
+				return;
+			}
+			Type type = ob.GetType();
+			FieldInfo[] fields = type.GetFields(flags);
+			NetUtility.SortMembersList(fields);
+			foreach (FieldInfo fieldInfo in fields)
+			{
+				object value = fieldInfo.GetValue(ob);
+				MethodInfo methodInfo;
+				if (!NetBuffer.s_writeMethods.TryGetValue(fieldInfo.FieldType, out methodInfo))
+				{
+					throw new NetException("Failed to find write method for type " + fieldInfo.FieldType);
+				}
+				methodInfo.Invoke(this, new object[] { value });
+			}
+		}
+
+		public void WriteAllProperties(object ob)
+		{
+			this.WriteAllProperties(ob, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		}
+
+		public void WriteAllProperties(object ob, BindingFlags flags)
+		{
+			if (ob == null)
+			{
+				return;
+			}
+			Type type = ob.GetType();
+			PropertyInfo[] properties = type.GetProperties(flags);
+			NetUtility.SortMembersList(properties);
+			foreach (PropertyInfo propertyInfo in properties)
+			{
+				MethodInfo getMethod = propertyInfo.GetGetMethod((flags & BindingFlags.NonPublic) == BindingFlags.NonPublic);
+				object obj = getMethod.Invoke(ob, null);
+				MethodInfo methodInfo;
+				if (NetBuffer.s_writeMethods.TryGetValue(propertyInfo.PropertyType, out methodInfo))
+				{
+					methodInfo.Invoke(this, new object[] { obj });
 				}
 			}
 		}

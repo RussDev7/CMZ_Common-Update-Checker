@@ -8,6 +8,16 @@ namespace DNA.Distribution
 {
 	public partial class LauncherForm : Form
 	{
+		public void ValidateLicenseFacebook(string facebookID, string email, string accessToken, string facebookUsername, Uri logoutURL, string facebookName)
+		{
+			this.launcherControl1.ValidateLicenseFacebook(facebookID, accessToken, email, facebookUsername, logoutURL, facebookName);
+		}
+
+		public void RegisterFacebook(string facebookID, string accessToken, string email)
+		{
+			this.launcherControl1.RegisterFacebook(facebookID, accessToken, email);
+		}
+
 		public event EventHandler<EventArgs> OptionsClicked;
 
 		public event EventHandler<EventArgs> FacebookClicked;
@@ -82,16 +92,6 @@ namespace DNA.Distribution
 			{
 				this.BeforeGameLaunched(this, new EventArgs());
 			}
-		}
-
-		public void ValidateLicenseFacebook(string facebookID, string email, string accessToken, string facebookUsername, Uri logoutURL, string facebookName)
-		{
-			this.launcherControl1.ValidateLicenseFacebook(facebookID, accessToken, email, facebookUsername, logoutURL, facebookName);
-		}
-
-		public void RegisterFacebook(string facebookID, string accessToken, string email)
-		{
-			this.launcherControl1.RegisterFacebook(facebookID, accessToken, email);
 		}
 	}
 }

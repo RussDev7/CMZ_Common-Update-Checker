@@ -110,7 +110,11 @@ namespace DNA.Drawing.UI
 			{
 				ConsoleElement.Message message = this.messages[i];
 				message.Update(gameTime);
-				if (message.Visibility > 0f)
+				if (this.ShowAll)
+				{
+					spriteBatch.DrawOutlinedText(this._font, message.Text, vector, base.Color, Color.Black, 1);
+				}
+				else if (message.Visibility > 0f)
 				{
 					spriteBatch.DrawOutlinedText(this._font, message.Text, vector, Color.Lerp(Color.Transparent, base.Color, message.Visibility), Color.Lerp(Color.Transparent, Color.Black, message.Visibility), 1);
 				}
@@ -130,6 +134,8 @@ namespace DNA.Drawing.UI
 		private ConsoleElement.Message _currentMessage = new ConsoleElement.Message("");
 
 		private Queue<ConsoleElement.Message> _messages = new Queue<ConsoleElement.Message>();
+
+		public bool ShowAll;
 
 		private Vector2 _size;
 

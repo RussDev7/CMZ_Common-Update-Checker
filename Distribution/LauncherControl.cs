@@ -14,6 +14,82 @@ namespace DNA.Distribution
 {
 	public class LauncherControl : UserControl
 	{
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing && this.components != null)
+			{
+				this.components.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+
+		private void InitializeComponent()
+		{
+			ComponentResourceManager componentResourceManager = new ComponentResourceManager(typeof(LauncherControl));
+			this.webBrowser1 = new WebBrowser();
+			this.userNameBox = new TextBox();
+			this.passworrdBox = new TextBox();
+			this.rememberPassBox = new CheckBox();
+			this.label1 = new Label();
+			this.label2 = new Label();
+			this.optionsButton = new Button();
+			this.loginButton = new Button();
+			this.NeedAccountLabel = new LinkLabel();
+			this.facebookLoginButton = new Button();
+			base.SuspendLayout();
+			this.webBrowser1.AllowWebBrowserDrop = false;
+			componentResourceManager.ApplyResources(this.webBrowser1, "webBrowser1");
+			this.webBrowser1.IsWebBrowserContextMenuEnabled = false;
+			this.webBrowser1.MinimumSize = new Size(20, 20);
+			this.webBrowser1.Name = "webBrowser1";
+			this.webBrowser1.Url = new Uri("", UriKind.Relative);
+			componentResourceManager.ApplyResources(this.userNameBox, "userNameBox");
+			this.userNameBox.Name = "userNameBox";
+			componentResourceManager.ApplyResources(this.passworrdBox, "passworrdBox");
+			this.passworrdBox.Name = "passworrdBox";
+			componentResourceManager.ApplyResources(this.rememberPassBox, "rememberPassBox");
+			this.rememberPassBox.Name = "rememberPassBox";
+			this.rememberPassBox.UseVisualStyleBackColor = true;
+			componentResourceManager.ApplyResources(this.label1, "label1");
+			this.label1.Name = "label1";
+			componentResourceManager.ApplyResources(this.label2, "label2");
+			this.label2.Name = "label2";
+			componentResourceManager.ApplyResources(this.optionsButton, "optionsButton");
+			this.optionsButton.Name = "optionsButton";
+			this.optionsButton.UseVisualStyleBackColor = true;
+			this.optionsButton.Click += this.optionsButton_Click;
+			componentResourceManager.ApplyResources(this.loginButton, "loginButton");
+			this.loginButton.Name = "loginButton";
+			this.loginButton.UseVisualStyleBackColor = true;
+			this.loginButton.Click += this.loginButton_Click;
+			componentResourceManager.ApplyResources(this.NeedAccountLabel, "NeedAccountLabel");
+			this.NeedAccountLabel.Name = "NeedAccountLabel";
+			this.NeedAccountLabel.TabStop = true;
+			this.NeedAccountLabel.LinkClicked += this.NeedAccountLabel_LinkClicked;
+			componentResourceManager.ApplyResources(this.facebookLoginButton, "facebookLoginButton");
+			this.facebookLoginButton.BackColor = Color.CornflowerBlue;
+			this.facebookLoginButton.ForeColor = Color.White;
+			this.facebookLoginButton.Image = CommonDialogResources.loginwithfacebook;
+			this.facebookLoginButton.Name = "facebookLoginButton";
+			this.facebookLoginButton.UseVisualStyleBackColor = false;
+			this.facebookLoginButton.Click += this.facebookLoginButton_Click;
+			componentResourceManager.ApplyResources(this, "$this");
+			base.AutoScaleMode = AutoScaleMode.Font;
+			base.Controls.Add(this.facebookLoginButton);
+			base.Controls.Add(this.NeedAccountLabel);
+			base.Controls.Add(this.loginButton);
+			base.Controls.Add(this.optionsButton);
+			base.Controls.Add(this.label2);
+			base.Controls.Add(this.label1);
+			base.Controls.Add(this.rememberPassBox);
+			base.Controls.Add(this.passworrdBox);
+			base.Controls.Add(this.userNameBox);
+			base.Controls.Add(this.webBrowser1);
+			base.Name = "LauncherControl";
+			base.ResumeLayout(false);
+			base.PerformLayout();
+		}
+
 		public event EventHandler<EventArgs> GameLaunched;
 
 		public event EventHandler<EventArgs> OptionsClicked;
@@ -335,94 +411,6 @@ namespace DNA.Distribution
 			}
 		}
 
-		protected override void Dispose(bool disposing)
-		{
-			if (disposing && this.components != null)
-			{
-				this.components.Dispose();
-			}
-			base.Dispose(disposing);
-		}
-
-		private void InitializeComponent()
-		{
-			ComponentResourceManager componentResourceManager = new ComponentResourceManager(typeof(LauncherControl));
-			this.webBrowser1 = new WebBrowser();
-			this.userNameBox = new TextBox();
-			this.passworrdBox = new TextBox();
-			this.rememberPassBox = new CheckBox();
-			this.label1 = new Label();
-			this.label2 = new Label();
-			this.optionsButton = new Button();
-			this.loginButton = new Button();
-			this.NeedAccountLabel = new LinkLabel();
-			this.facebookLoginButton = new Button();
-			base.SuspendLayout();
-			this.webBrowser1.AllowWebBrowserDrop = false;
-			componentResourceManager.ApplyResources(this.webBrowser1, "webBrowser1");
-			this.webBrowser1.IsWebBrowserContextMenuEnabled = false;
-			this.webBrowser1.MinimumSize = new Size(20, 20);
-			this.webBrowser1.Name = "webBrowser1";
-			this.webBrowser1.Url = new Uri("", UriKind.Relative);
-			componentResourceManager.ApplyResources(this.userNameBox, "userNameBox");
-			this.userNameBox.Name = "userNameBox";
-			componentResourceManager.ApplyResources(this.passworrdBox, "passworrdBox");
-			this.passworrdBox.Name = "passworrdBox";
-			componentResourceManager.ApplyResources(this.rememberPassBox, "rememberPassBox");
-			this.rememberPassBox.Name = "rememberPassBox";
-			this.rememberPassBox.UseVisualStyleBackColor = true;
-			componentResourceManager.ApplyResources(this.label1, "label1");
-			this.label1.Name = "label1";
-			componentResourceManager.ApplyResources(this.label2, "label2");
-			this.label2.Name = "label2";
-			componentResourceManager.ApplyResources(this.optionsButton, "optionsButton");
-			this.optionsButton.Name = "optionsButton";
-			this.optionsButton.UseVisualStyleBackColor = true;
-			this.optionsButton.Click += this.optionsButton_Click;
-			componentResourceManager.ApplyResources(this.loginButton, "loginButton");
-			this.loginButton.Name = "loginButton";
-			this.loginButton.UseVisualStyleBackColor = true;
-			this.loginButton.Click += this.loginButton_Click;
-			componentResourceManager.ApplyResources(this.NeedAccountLabel, "NeedAccountLabel");
-			this.NeedAccountLabel.Name = "NeedAccountLabel";
-			this.NeedAccountLabel.TabStop = true;
-			this.NeedAccountLabel.LinkClicked += this.NeedAccountLabel_LinkClicked;
-			componentResourceManager.ApplyResources(this.facebookLoginButton, "facebookLoginButton");
-			this.facebookLoginButton.BackColor = Color.CornflowerBlue;
-			this.facebookLoginButton.ForeColor = Color.White;
-			this.facebookLoginButton.Image = CommonDialogResources.loginwithfacebook;
-			this.facebookLoginButton.Name = "facebookLoginButton";
-			this.facebookLoginButton.UseVisualStyleBackColor = false;
-			this.facebookLoginButton.Click += this.facebookLoginButton_Click;
-			componentResourceManager.ApplyResources(this, "$this");
-			base.AutoScaleMode = AutoScaleMode.Font;
-			base.Controls.Add(this.facebookLoginButton);
-			base.Controls.Add(this.NeedAccountLabel);
-			base.Controls.Add(this.loginButton);
-			base.Controls.Add(this.optionsButton);
-			base.Controls.Add(this.label2);
-			base.Controls.Add(this.label1);
-			base.Controls.Add(this.rememberPassBox);
-			base.Controls.Add(this.passworrdBox);
-			base.Controls.Add(this.userNameBox);
-			base.Controls.Add(this.webBrowser1);
-			base.Name = "LauncherControl";
-			base.ResumeLayout(false);
-			base.PerformLayout();
-		}
-
-		public OnlineServices Services;
-
-		private bool _trialMode = true;
-
-		public bool HardwareInvalid;
-
-		private readonly string _keyLoc = "Software\\DigitalDNAGames\\";
-
-		private Uri landerURL;
-
-		private bool docComplete;
-
 		private IContainer components;
 
 		private WebBrowser webBrowser1;
@@ -444,5 +432,17 @@ namespace DNA.Distribution
 		private LinkLabel NeedAccountLabel;
 
 		private Button facebookLoginButton;
+
+		public OnlineServices Services;
+
+		private bool _trialMode = true;
+
+		public bool HardwareInvalid;
+
+		private readonly string _keyLoc = "Software\\DigitalDNAGames\\";
+
+		private Uri landerURL;
+
+		private bool docComplete;
 	}
 }
