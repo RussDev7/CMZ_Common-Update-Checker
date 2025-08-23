@@ -30,10 +30,10 @@ namespace DNA.Audio.SignalProcessing
 			{
 				for (int i = 0; i < this.Processors.Count; i++)
 				{
-					int? sampleRate = this.Processors[i].SampleRate;
-					if (sampleRate != null)
+					int? rate = this.Processors[i].SampleRate;
+					if (rate != null)
 					{
-						return sampleRate;
+						return rate;
 					}
 				}
 				return null;
@@ -46,10 +46,10 @@ namespace DNA.Audio.SignalProcessing
 			{
 				for (int i = 0; i < this.Processors.Count; i++)
 				{
-					int? channels = this.Processors[i].Channels;
-					if (channels != null)
+					int? rate = this.Processors[i].Channels;
+					if (rate != null)
 					{
-						return channels;
+						return rate;
 					}
 				}
 				return null;

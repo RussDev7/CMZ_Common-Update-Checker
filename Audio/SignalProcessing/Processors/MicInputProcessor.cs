@@ -40,26 +40,26 @@ namespace DNA.Audio.SignalProcessing.Processors
 			{
 				this._writePos = 0;
 			}
-			int num = this._micBufferSize;
-			int num2 = this._micBuffer.Length - this._dataLength;
-			if (num2 < num)
+			int dataToRead = this._micBufferSize;
+			int bufferFree = this._micBuffer.Length - this._dataLength;
+			if (bufferFree < dataToRead)
 			{
 				return;
 			}
-			int num3 = this._micBuffer.Length - this._writePos;
-			if (num3 < this._micBufferSize)
+			int tailBufferLeft = this._micBuffer.Length - this._writePos;
+			if (tailBufferLeft < this._micBufferSize)
 			{
 				try
 				{
-					this._microphone.GetData(this._micBuffer, this._writePos, num3);
+					this._microphone.GetData(this._micBuffer, this._writePos, tailBufferLeft);
 				}
 				catch (Exception)
 				{
 					this.DoMicDisconnect();
 					return;
 				}
-				this._writePos += num3;
-				num -= num3;
+				this._writePos += tailBufferLeft;
+				dataToRead -= tailBufferLeft;
 			}
 			if (this._writePos >= this._micBuffer.Length)
 			{
@@ -67,14 +67,14 @@ namespace DNA.Audio.SignalProcessing.Processors
 			}
 			try
 			{
-				this._microphone.GetData(this._micBuffer, this._writePos, num);
+				this._microphone.GetData(this._micBuffer, this._writePos, dataToRead);
 			}
 			catch (NoMicrophoneConnectedException)
 			{
 				this.DoMicDisconnect();
 				return;
 			}
-			this._writePos += num;
+			this._writePos += dataToRead;
 			lock (this.readerLock)
 			{
 				this._dataLength += this._micBufferSize;
@@ -97,8 +97,8 @@ namespace DNA.Audio.SignalProcessing.Processors
 			{
 				return false;
 			}
-			int num = data.ChannelData.Length;
-			for (int i = 0; i < num; i++)
+			int dataSize = data.ChannelData.Length;
+			for (int i = 0; i < dataSize; i++)
 			{
 				if (this._readPos >= this._micBuffer.Length)
 				{
@@ -108,7 +108,7 @@ namespace DNA.Audio.SignalProcessing.Processors
 			}
 			lock (this.readerLock)
 			{
-				this._dataLength -= num;
+				this._dataLength -= dataSize;
 			}
 			return true;
 		}

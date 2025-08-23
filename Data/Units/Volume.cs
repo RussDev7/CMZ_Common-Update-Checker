@@ -238,8 +238,8 @@ namespace DNA.Data.Units
 
 		public override bool Equals(object obj)
 		{
-			Volume volume = (Volume)obj;
-			return this._liters == volume._liters;
+			Volume b = (Volume)obj;
+			return this._liters == b._liters;
 		}
 
 		public static bool operator ==(Volume a, Volume b)

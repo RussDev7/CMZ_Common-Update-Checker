@@ -24,45 +24,45 @@ namespace DNA.Drawing.UI
 
 		public override void Draw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			Rectangle rectangle = new Rectangle(Screen.Adjuster.ScreenRect.Center.X - 412, Screen.Adjuster.ScreenRect.Center.Y - 288, 824, 576);
-			Vector2 vector = new Vector2((float)(rectangle.X + 10), (float)(rectangle.Y + 15));
+			Rectangle drawArea = new Rectangle(Screen.Adjuster.ScreenRect.Center.X - 412, Screen.Adjuster.ScreenRect.Center.Y - 288, 824, 576);
+			Vector2 location = new Vector2((float)(drawArea.X + 10), (float)(drawArea.Y + 15));
 			spriteBatch.Begin();
-			spriteBatch.Draw(this._dummyTexture, new Rectangle(rectangle.X, rectangle.Top, rectangle.Width, rectangle.Height), Color.Black);
-			spriteBatch.Draw(this._dummyTexture, new Rectangle(rectangle.X + 5, rectangle.Top + 5, rectangle.Width - 10, rectangle.Height - 10), this._backColor);
-			spriteBatch.DrawOutlinedText(this._largeFont, CommonResources.Awards, vector, this._mainTextColor, this._progressOutlineColor, 2);
-			int num = 0;
+			spriteBatch.Draw(this._dummyTexture, new Rectangle(drawArea.X, drawArea.Top, drawArea.Width, drawArea.Height), Color.Black);
+			spriteBatch.Draw(this._dummyTexture, new Rectangle(drawArea.X + 5, drawArea.Top + 5, drawArea.Width - 10, drawArea.Height - 10), this._backColor);
+			spriteBatch.DrawOutlinedText(this._largeFont, CommonResources.Awards, location, this._mainTextColor, this._progressOutlineColor, 2);
+			int numberAchieved = 0;
 			for (int i = 0; i < this._achievementManager.Count; i++)
 			{
 				if (this._achievementManager[i].Acheived)
 				{
-					num++;
+					numberAchieved++;
 				}
 			}
 			this.sbuilder.Length = 0;
-			this.sbuilder.Concat(num);
+			this.sbuilder.Concat(numberAchieved);
 			this.sbuilder.Append("/");
 			this.sbuilder.Concat(this._achievementManager.Count);
-			spriteBatch.DrawOutlinedText(this._largeFont, this.sbuilder, new Vector2((float)(rectangle.X + rectangle.Width - 110) - this._largeFont.MeasureString(this.sbuilder).X, vector.Y), this._mainTextColor, this._progressOutlineColor, 2);
-			vector.X += 65f;
-			vector.Y += 75f;
-			float num2 = this._smallFont.MeasureString("OK").Y - 5f;
+			spriteBatch.DrawOutlinedText(this._largeFont, this.sbuilder, new Vector2((float)(drawArea.X + drawArea.Width - 110) - this._largeFont.MeasureString(this.sbuilder).X, location.Y), this._mainTextColor, this._progressOutlineColor, 2);
+			location.X += 65f;
+			location.Y += 75f;
+			float fontHeight = this._smallFont.MeasureString("OK").Y - 5f;
 			for (int j = 0; j < this.MaxAchievementsToDisplay; j++)
 			{
-				spriteBatch.Draw(this._dummyTexture, new Rectangle((int)vector.X, (int)vector.Y, 700, 70), this._progressOutlineColor);
-				spriteBatch.Draw(this._dummyTexture, new Rectangle((int)vector.X + 2, (int)vector.Y + 2, 696, 66), this._progressBackColor);
-				spriteBatch.Draw(this._dummyTexture, new Rectangle((int)vector.X + 2, (int)vector.Y + 2, (int)(696f * this._achievementManager[j + this.TopDisplayIndex].ProgressTowardsUnlock), 66), this._progressColor);
-				spriteBatch.DrawOutlinedText(this._smallFont, this._achievementManager[j + this.TopDisplayIndex].Name, new Vector2(vector.X + 10f, vector.Y + 35f - num2), this._mainTextColor, Color.Black, 1);
-				spriteBatch.DrawOutlinedText(this._smallFont, this._achievementManager[j + this.TopDisplayIndex].HowToUnlock, new Vector2(vector.X + 10f, vector.Y + 35f), this._otherTextColor, Color.Black, 1);
+				spriteBatch.Draw(this._dummyTexture, new Rectangle((int)location.X, (int)location.Y, 700, 70), this._progressOutlineColor);
+				spriteBatch.Draw(this._dummyTexture, new Rectangle((int)location.X + 2, (int)location.Y + 2, 696, 66), this._progressBackColor);
+				spriteBatch.Draw(this._dummyTexture, new Rectangle((int)location.X + 2, (int)location.Y + 2, (int)(696f * this._achievementManager[j + this.TopDisplayIndex].ProgressTowardsUnlock), 66), this._progressColor);
+				spriteBatch.DrawOutlinedText(this._smallFont, this._achievementManager[j + this.TopDisplayIndex].Name, new Vector2(location.X + 10f, location.Y + 35f - fontHeight), this._mainTextColor, Color.Black, 1);
+				spriteBatch.DrawOutlinedText(this._smallFont, this._achievementManager[j + this.TopDisplayIndex].HowToUnlock, new Vector2(location.X + 10f, location.Y + 35f), this._otherTextColor, Color.Black, 1);
 				if (this._achievementManager[j + this.TopDisplayIndex].Reward == null)
 				{
-					spriteBatch.DrawOutlinedText(this._smallFont, this._achievementManager[j + this.TopDisplayIndex].ProgressTowardsUnlockMessage, new Vector2(vector.X + 690f - this._smallFont.MeasureString(this._achievementManager[j + this.TopDisplayIndex].ProgressTowardsUnlockMessage).X, vector.Y + 35f - num2 / 2f), this._mainTextColor, Color.Black, 1);
+					spriteBatch.DrawOutlinedText(this._smallFont, this._achievementManager[j + this.TopDisplayIndex].ProgressTowardsUnlockMessage, new Vector2(location.X + 690f - this._smallFont.MeasureString(this._achievementManager[j + this.TopDisplayIndex].ProgressTowardsUnlockMessage).X, location.Y + 35f - fontHeight / 2f), this._mainTextColor, Color.Black, 1);
 				}
 				else
 				{
-					spriteBatch.DrawOutlinedText(this._smallFont, this._achievementManager[j + this.TopDisplayIndex].ProgressTowardsUnlockMessage, new Vector2(vector.X + 690f - this._smallFont.MeasureString(this._achievementManager[j + this.TopDisplayIndex].ProgressTowardsUnlockMessage).X, vector.Y + 35f - num2), this._mainTextColor, Color.Black, 1);
-					spriteBatch.DrawOutlinedText(this._smallFont, this._achievementManager[j + this.TopDisplayIndex].Reward, new Vector2(vector.X + 690f - this._smallFont.MeasureString(this._achievementManager[j + this.TopDisplayIndex].Reward).X, vector.Y + 35f), this._otherTextColor, Color.Black, 1);
+					spriteBatch.DrawOutlinedText(this._smallFont, this._achievementManager[j + this.TopDisplayIndex].ProgressTowardsUnlockMessage, new Vector2(location.X + 690f - this._smallFont.MeasureString(this._achievementManager[j + this.TopDisplayIndex].ProgressTowardsUnlockMessage).X, location.Y + 35f - fontHeight), this._mainTextColor, Color.Black, 1);
+					spriteBatch.DrawOutlinedText(this._smallFont, this._achievementManager[j + this.TopDisplayIndex].Reward, new Vector2(location.X + 690f - this._smallFont.MeasureString(this._achievementManager[j + this.TopDisplayIndex].Reward).X, location.Y + 35f), this._otherTextColor, Color.Black, 1);
 				}
-				vector.Y += 80f;
+				location.Y += 80f;
 			}
 			spriteBatch.End();
 			base.Draw(device, spriteBatch, gameTime);
@@ -78,8 +78,8 @@ namespace DNA.Drawing.UI
 
 		protected override bool OnPlayerInput(InputManager input, GameController controller, KeyboardInput chatpad, GameTime gameTime)
 		{
-			bool flag = false;
-			bool flag2 = false;
+			bool selectup = false;
+			bool selectdown = false;
 			if (input.Mouse.DeltaPosition.X != 0f || input.Mouse.DeltaPosition.Y != 0f)
 			{
 				this._mouseMovement = true;
@@ -90,12 +90,12 @@ namespace DNA.Drawing.UI
 			}
 			if (controller.CurrentState.ThumbSticks.Left.Y < -0.25f || controller.CurrentState.DPad.Down == ButtonState.Pressed || controller.CurrentState.Triggers.Right > 0.25f || input.Keyboard.IsKeyDown(Keys.Down) || (input.Mouse.Position.Y > 480 && this._mouseMovement))
 			{
-				flag2 = true;
+				selectdown = true;
 			}
-			bool flag3 = input.Mouse.Position.Y < 240 && this._mouseMovement;
-			if (controller.CurrentState.ThumbSticks.Left.Y > 0.25f || controller.CurrentState.DPad.Up == ButtonState.Pressed || controller.CurrentState.Triggers.Left > 0.25f || input.Keyboard.IsKeyDown(Keys.Up) || flag3)
+			bool mouseUp = input.Mouse.Position.Y < 240 && this._mouseMovement;
+			if (controller.CurrentState.ThumbSticks.Left.Y > 0.25f || controller.CurrentState.DPad.Up == ButtonState.Pressed || controller.CurrentState.Triggers.Left > 0.25f || input.Keyboard.IsKeyDown(Keys.Up) || mouseUp)
 			{
-				flag = true;
+				selectup = true;
 			}
 			if (input.Mouse.DeltaWheel < 0)
 			{
@@ -104,7 +104,7 @@ namespace DNA.Drawing.UI
 					this.PlayClickSound();
 				}
 				this.TopDisplayIndex++;
-				flag2 = false;
+				selectdown = false;
 			}
 			else if (input.Mouse.DeltaWheel > 0)
 			{
@@ -113,7 +113,7 @@ namespace DNA.Drawing.UI
 					this.PlayClickSound();
 				}
 				this.TopDisplayIndex--;
-				flag = false;
+				selectup = false;
 			}
 			if ((controller.CurrentState.ThumbSticks.Left.Y < -0.25f && controller.LastState.ThumbSticks.Left.Y > -0.25f) || (controller.PressedDPad.Down || (controller.CurrentState.Triggers.Right > 0.25f && controller.LastState.Triggers.Right < 0.25f)) || input.Keyboard.WasKeyPressed(Keys.Down) || (input.Mouse.Position.Y > 480 && input.Mouse.LastPosition.Y <= 480))
 			{
@@ -122,7 +122,7 @@ namespace DNA.Drawing.UI
 					this.PlayClickSound();
 				}
 				this.TopDisplayIndex++;
-				flag2 = false;
+				selectdown = false;
 			}
 			if ((controller.CurrentState.ThumbSticks.Left.Y > 0.25f && controller.LastState.ThumbSticks.Left.Y < 0.25f) || (controller.PressedDPad.Up || (controller.CurrentState.Triggers.Left > 0.25f && controller.LastState.Triggers.Left < 0.25f)) || input.Keyboard.WasKeyPressed(Keys.Up) || (input.Mouse.Position.Y < 240 && input.Mouse.Position.Y >= 240))
 			{
@@ -131,9 +131,9 @@ namespace DNA.Drawing.UI
 					this.PlayClickSound();
 				}
 				this.TopDisplayIndex--;
-				flag = false;
+				selectup = false;
 			}
-			if (flag2)
+			if (selectdown)
 			{
 				this.holdTimer.Update(gameTime.ElapsedGameTime);
 				if (this.holdTimer.Expired)
@@ -150,7 +150,7 @@ namespace DNA.Drawing.UI
 					}
 				}
 			}
-			else if (flag)
+			else if (selectup)
 			{
 				this.holdTimer.Update(gameTime.ElapsedGameTime);
 				if (this.holdTimer.Expired)
@@ -181,12 +181,12 @@ namespace DNA.Drawing.UI
 				base.PopMe();
 			}
 			base.OnPlayerInput(input, controller, chatpad, gameTime);
-			if ((!flag2 && this.lastselectdown) || (!flag && this.lastselectup))
+			if ((!selectdown && this.lastselectdown) || (!selectup && this.lastselectup))
 			{
 				this.holdTimer.Reset();
 			}
-			this.lastselectdown = flag2;
-			this.lastselectup = flag;
+			this.lastselectdown = selectdown;
+			this.lastselectup = selectup;
 			return base.OnPlayerInput(input, controller, chatpad, gameTime);
 		}
 

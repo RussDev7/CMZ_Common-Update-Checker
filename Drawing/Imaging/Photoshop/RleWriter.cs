@@ -24,16 +24,16 @@ namespace DNA.Drawing.Imaging.Photoshop
 			int num;
 			lock (this.rleLock)
 			{
-				long position = this.stream.Position;
+				long startPosition = this.stream.Position;
 				this.data = data;
 				this.offset = offset;
-				fixed (byte* ptr = &data[0])
+				fixed (byte* ptrData = &data[0])
 				{
-					byte* ptr2 = ptr + offset;
-					byte* ptr3 = ptr2 + count;
-					this.EncodeToStream(ptr2, ptr3);
+					byte* ptr = ptrData + offset;
+					byte* ptrEnd = ptr + count;
+					this.EncodeToStream(ptr, ptrEnd);
 				}
-				num = (int)(this.stream.Position - position);
+				num = (int)(this.stream.Position - startPosition);
 			}
 			return num;
 		}
@@ -46,15 +46,15 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		private void WriteRlePacket()
 		{
-			byte b = (byte)(1 - this.packetLength);
-			this.stream.WriteByte(b);
+			byte header = (byte)(1 - this.packetLength);
+			this.stream.WriteByte(header);
 			this.stream.WriteByte(this.lastValue);
 		}
 
 		private void WriteRawPacket()
 		{
-			byte b = (byte)(this.packetLength - 1);
-			this.stream.WriteByte(b);
+			byte header = (byte)(this.packetLength - 1);
+			this.stream.WriteByte(header);
 			this.stream.Write(this.data, this.idxDataRawPacket, this.packetLength);
 		}
 
@@ -75,27 +75,27 @@ namespace DNA.Drawing.Imaging.Photoshop
 			this.lastValue = *ptr;
 			this.packetLength = 1;
 			ptr++;
-			int num = 1;
+			int totalLength = 1;
 			while (ptr < ptrEnd)
 			{
-				byte b = *ptr;
+				byte color = *ptr;
 				if (this.packetLength == 1)
 				{
-					this.rlePacket = b == this.lastValue;
-					this.lastValue = b;
+					this.rlePacket = color == this.lastValue;
+					this.lastValue = color;
 					this.packetLength = 2;
 				}
 				else if (this.packetLength == this.maxPacketLength)
 				{
 					this.WritePacket();
 					this.rlePacket = false;
-					this.lastValue = b;
-					this.idxDataRawPacket = this.offset + num;
+					this.lastValue = color;
+					this.idxDataRawPacket = this.offset + totalLength;
 					this.packetLength = 1;
 				}
 				else if (this.rlePacket)
 				{
-					if (b == this.lastValue)
+					if (color == this.lastValue)
 					{
 						this.packetLength++;
 					}
@@ -103,12 +103,12 @@ namespace DNA.Drawing.Imaging.Photoshop
 					{
 						this.WriteRlePacket();
 						this.rlePacket = false;
-						this.lastValue = b;
-						this.idxDataRawPacket = this.offset + num;
+						this.lastValue = color;
+						this.idxDataRawPacket = this.offset + totalLength;
 						this.packetLength = 1;
 					}
 				}
-				else if (b == this.lastValue)
+				else if (color == this.lastValue)
 				{
 					this.packetLength--;
 					this.WriteRawPacket();
@@ -117,15 +117,15 @@ namespace DNA.Drawing.Imaging.Photoshop
 				}
 				else
 				{
-					this.lastValue = b;
+					this.lastValue = color;
 					this.packetLength++;
 				}
 				ptr++;
-				num++;
+				totalLength++;
 			}
 			this.WritePacket();
 			this.ClearPacket();
-			return num;
+			return totalLength;
 		}
 
 		private int maxPacketLength = 128;

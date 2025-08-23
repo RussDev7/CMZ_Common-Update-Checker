@@ -27,15 +27,15 @@ namespace DNA
 
 		public void Load(BinaryReader reader)
 		{
-			int num = reader.ReadInt32();
-			if (num != 1095783254)
+			int ident = reader.ReadInt32();
+			if (ident != 1095783254)
 			{
 				throw new Exception();
 			}
-			int num2 = reader.ReadInt32();
+			int version = reader.ReadInt32();
 			this.GamerTag = reader.ReadString();
 			this.DateRecorded = new DateTime(reader.ReadInt64());
-			this.LoadData(reader, num2);
+			this.LoadData(reader, version);
 		}
 
 		protected abstract void LoadData(BinaryReader reader, int version);

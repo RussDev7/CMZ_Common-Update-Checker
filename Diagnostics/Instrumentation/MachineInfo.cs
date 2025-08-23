@@ -121,15 +121,15 @@ namespace DNA.Diagnostics.Instrumentation
 
 		public string GetReport()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			StringWriter stringWriter = new StringWriter(stringBuilder);
+			StringBuilder sb = new StringBuilder();
+			StringWriter sw = new StringWriter(sb);
 			try
 			{
-				stringWriter.WriteLine("Computer Details:");
-				stringWriter.WriteLine("Machine Name:\t" + this.MachineName);
-				stringWriter.WriteLine("Current Time:\t" + DateTime.Now.ToString("F", CultureInfo.CreateSpecificCulture("en-US")));
-				stringWriter.WriteLine("Current User:\t" + this.CurrentUser);
-				stringWriter.WriteLine(string.Concat(new string[]
+				sw.WriteLine("Computer Details:");
+				sw.WriteLine("Machine Name:\t" + this.MachineName);
+				sw.WriteLine("Current Time:\t" + DateTime.Now.ToString("F", CultureInfo.CreateSpecificCulture("en-US")));
+				sw.WriteLine("Current User:\t" + this.CurrentUser);
+				sw.WriteLine(string.Concat(new string[]
 				{
 					"OS:\t\t",
 					this.OSVersion.Platform.ToString(),
@@ -137,131 +137,131 @@ namespace DNA.Diagnostics.Instrumentation
 					this.OSVersion.Version.ToString(),
 					")"
 				}));
-				stringWriter.WriteLine("64bit:\t\t" + (this.IsOS64Bit ? "Yes" : "No"));
-				stringWriter.WriteLine("CLR:\t\t" + this.CLRVersion);
-				stringWriter.WriteLine();
+				sw.WriteLine("64bit:\t\t" + (this.IsOS64Bit ? "Yes" : "No"));
+				sw.WriteLine("CLR:\t\t" + this.CLRVersion);
+				sw.WriteLine();
 				if (this._wmiSupported)
 				{
-					int num = (int)Math.Round((double)(this.MemoryInfo.MemoryLoad * 100f));
-					stringWriter.WriteLine("Memory:");
-					stringWriter.WriteLine("\tLoad:\t\t\t" + num.ToString() + "%");
-					stringWriter.WriteLine("\tWorking Set:\t\t" + this.MemoryInfo.WorkingSet.ToString("n0") + "\tbytes");
-					stringWriter.WriteLine("\tTotal:");
-					stringWriter.WriteLine("\t\tPhysical:\t\t" + this.MemoryInfo.TotalPhysical.ToString("n0") + "\tbytes");
-					stringWriter.WriteLine("\t\tPage File:\t\t" + this.MemoryInfo.TotalPageFile.ToString("n0") + "\tbytes");
-					stringWriter.WriteLine("\t\tVirtual:\t\t" + this.MemoryInfo.TotalVirtual.ToString("n0") + "\tbytes");
-					stringWriter.WriteLine("\tAvailible:");
-					stringWriter.WriteLine("\t\tPhysical:\t\t" + this.MemoryInfo.AvailiblePhysical.ToString("n0") + "\tbytes");
-					stringWriter.WriteLine("\t\tPage File:\t\t" + this.MemoryInfo.AvailiblePageFile.ToString("n0") + "\tbytes");
-					stringWriter.WriteLine("\t\tVirtual:\t\t" + this.MemoryInfo.AvailibleVirtual.ToString("n0") + "\tbytes");
-					stringWriter.WriteLine("\t\tExtended Virtual:\t" + this.MemoryInfo.AvailibleExtendedVirtual.ToString("n0") + "\tbytes");
-					stringWriter.WriteLine();
-					stringWriter.WriteLine("Proccessor Info:");
-					stringWriter.WriteLine("\tCount:\t" + this.Processors.Length);
+					int load = (int)Math.Round((double)(this.MemoryInfo.MemoryLoad * 100f));
+					sw.WriteLine("Memory:");
+					sw.WriteLine("\tLoad:\t\t\t" + load.ToString() + "%");
+					sw.WriteLine("\tWorking Set:\t\t" + this.MemoryInfo.WorkingSet.ToString("n0") + "\tbytes");
+					sw.WriteLine("\tTotal:");
+					sw.WriteLine("\t\tPhysical:\t\t" + this.MemoryInfo.TotalPhysical.ToString("n0") + "\tbytes");
+					sw.WriteLine("\t\tPage File:\t\t" + this.MemoryInfo.TotalPageFile.ToString("n0") + "\tbytes");
+					sw.WriteLine("\t\tVirtual:\t\t" + this.MemoryInfo.TotalVirtual.ToString("n0") + "\tbytes");
+					sw.WriteLine("\tAvailible:");
+					sw.WriteLine("\t\tPhysical:\t\t" + this.MemoryInfo.AvailiblePhysical.ToString("n0") + "\tbytes");
+					sw.WriteLine("\t\tPage File:\t\t" + this.MemoryInfo.AvailiblePageFile.ToString("n0") + "\tbytes");
+					sw.WriteLine("\t\tVirtual:\t\t" + this.MemoryInfo.AvailibleVirtual.ToString("n0") + "\tbytes");
+					sw.WriteLine("\t\tExtended Virtual:\t" + this.MemoryInfo.AvailibleExtendedVirtual.ToString("n0") + "\tbytes");
+					sw.WriteLine();
+					sw.WriteLine("Proccessor Info:");
+					sw.WriteLine("\tCount:\t" + this.Processors.Length);
 					for (int i = 0; i < this.Processors.Length; i++)
 					{
-						ProcessorInfo processorInfo = this.Processors[i];
-						stringWriter.WriteLine("\tProcessor[" + i.ToString() + "]:");
-						stringWriter.WriteLine("\t\tName:\t\t" + processorInfo.Name);
-						stringWriter.WriteLine("\t\tManufacturer:\t" + processorInfo.Manufacturer);
-						stringWriter.WriteLine("\t\tID:\t\t" + processorInfo.ProcessorID);
-						stringWriter.WriteLine("\t\tClockSpeedID:\t" + processorInfo.MaxClockSpeed.ToString("n0") + " Mhz");
-						stringWriter.WriteLine("\t\tCores:\t\t" + processorInfo.NumberOfCores.ToString());
-						stringWriter.WriteLine("\t\tLogicalProcessors:\t" + processorInfo.NumberOfLogicalProcessors.ToString());
-						string text = "NoID";
-						if (processorInfo.UniqueID != null)
+						ProcessorInfo pinfo = this.Processors[i];
+						sw.WriteLine("\tProcessor[" + i.ToString() + "]:");
+						sw.WriteLine("\t\tName:\t\t" + pinfo.Name);
+						sw.WriteLine("\t\tManufacturer:\t" + pinfo.Manufacturer);
+						sw.WriteLine("\t\tID:\t\t" + pinfo.ProcessorID);
+						sw.WriteLine("\t\tClockSpeedID:\t" + pinfo.MaxClockSpeed.ToString("n0") + " Mhz");
+						sw.WriteLine("\t\tCores:\t\t" + pinfo.NumberOfCores.ToString());
+						sw.WriteLine("\t\tLogicalProcessors:\t" + pinfo.NumberOfLogicalProcessors.ToString());
+						string idstr = "NoID";
+						if (pinfo.UniqueID != null)
 						{
-							text = processorInfo.UniqueID;
+							idstr = pinfo.UniqueID;
 						}
-						stringWriter.WriteLine("\t\tUniqueID:\t" + text);
+						sw.WriteLine("\t\tUniqueID:\t" + idstr);
 					}
-					stringWriter.WriteLine();
-					stringWriter.WriteLine("HardDisks:");
-					stringWriter.WriteLine("\tCount:\t" + this.HardDisks.Length.ToString());
+					sw.WriteLine();
+					sw.WriteLine("HardDisks:");
+					sw.WriteLine("\tCount:\t" + this.HardDisks.Length.ToString());
 					for (int j = 0; j < this.HardDisks.Length; j++)
 					{
-						HardDiskInfo hardDiskInfo = this.HardDisks[j];
-						stringWriter.WriteLine("\tDisk[" + j.ToString() + "]:");
-						stringWriter.WriteLine("\t\tModel:\t\t\t" + hardDiskInfo.Model);
-						stringWriter.WriteLine("\t\tBusType:\t\t\t" + hardDiskInfo.BusType);
-						string text2 = "No Serial Number";
-						if (hardDiskInfo.SerialNumber != null)
+						HardDiskInfo hdinfo = this.HardDisks[j];
+						sw.WriteLine("\tDisk[" + j.ToString() + "]:");
+						sw.WriteLine("\t\tModel:\t\t\t" + hdinfo.Model);
+						sw.WriteLine("\t\tBusType:\t\t\t" + hdinfo.BusType);
+						string serialStr = "No Serial Number";
+						if (hdinfo.SerialNumber != null)
 						{
-							text2 = hardDiskInfo.SerialNumber;
+							serialStr = hdinfo.SerialNumber;
 						}
-						stringWriter.WriteLine("\t\tSerial Number:\t\t" + text2);
-						string text3 = "No Serial Number";
-						if (hardDiskInfo.SerialNumber != null)
+						sw.WriteLine("\t\tSerial Number:\t\t" + serialStr);
+						string friendSerialStr = "No Serial Number";
+						if (hdinfo.SerialNumber != null)
 						{
-							text3 = hardDiskInfo.FriendlySerialNumber;
+							friendSerialStr = hdinfo.FriendlySerialNumber;
 						}
-						stringWriter.WriteLine("\t\tFriendly Serial Number:\t" + text3);
+						sw.WriteLine("\t\tFriendly Serial Number:\t" + friendSerialStr);
 					}
-					stringWriter.WriteLine();
-					stringWriter.WriteLine("Logical Drives:");
-					stringWriter.WriteLine("\tCount:" + this.LogicalDrives.Length);
+					sw.WriteLine();
+					sw.WriteLine("Logical Drives:");
+					sw.WriteLine("\tCount:" + this.LogicalDrives.Length);
 					for (int k = 0; k < this.LogicalDrives.Length; k++)
 					{
-						LogicalDriveInfo logicalDriveInfo = this.LogicalDrives[k];
-						stringWriter.WriteLine("\t" + logicalDriveInfo.Name);
-						stringWriter.WriteLine("\t\tType:\t\t" + logicalDriveInfo.DriveType.ToString());
-						stringWriter.WriteLine("\t\tTotal Size:\t" + logicalDriveInfo.Size.ToString("n0") + " bytes");
-						stringWriter.WriteLine("\t\tFree Space:\t" + logicalDriveInfo.FreeSpace.ToString("n0") + " bytes");
+						LogicalDriveInfo driveInfo = this.LogicalDrives[k];
+						sw.WriteLine("\t" + driveInfo.Name);
+						sw.WriteLine("\t\tType:\t\t" + driveInfo.DriveType.ToString());
+						sw.WriteLine("\t\tTotal Size:\t" + driveInfo.Size.ToString("n0") + " bytes");
+						sw.WriteLine("\t\tFree Space:\t" + driveInfo.FreeSpace.ToString("n0") + " bytes");
 					}
-					stringWriter.WriteLine();
-					stringWriter.WriteLine("Network Adapters:");
-					stringWriter.WriteLine("\tCount:" + this.NetworkAdapters.Length.ToString());
+					sw.WriteLine();
+					sw.WriteLine("Network Adapters:");
+					sw.WriteLine("\tCount:" + this.NetworkAdapters.Length.ToString());
 					for (int l = 0; l < this.NetworkAdapters.Length; l++)
 					{
-						NetworkAdapterInfo networkAdapterInfo = this.NetworkAdapters[l];
-						stringWriter.WriteLine("\tAdapter[" + l.ToString() + "]:");
-						stringWriter.WriteLine("\t\tMAC Address:\t" + networkAdapterInfo.MACAddress);
-						stringWriter.WriteLine("\t\tIP Addresses:");
-						foreach (IPAddress ipaddress in networkAdapterInfo.IPAddresses)
+						NetworkAdapterInfo netInfo = this.NetworkAdapters[l];
+						sw.WriteLine("\tAdapter[" + l.ToString() + "]:");
+						sw.WriteLine("\t\tMAC Address:\t" + netInfo.MACAddress);
+						sw.WriteLine("\t\tIP Addresses:");
+						foreach (IPAddress adr in netInfo.IPAddresses)
 						{
-							stringWriter.WriteLine("\t\t\t" + ipaddress.ToString());
+							sw.WriteLine("\t\t\t" + adr.ToString());
 						}
 					}
 				}
 				else
 				{
-					stringWriter.WriteLine("WMI Not Supported");
+					sw.WriteLine("WMI Not Supported");
 				}
-				stringWriter.WriteLine();
-				stringWriter.WriteLine("Video Hardware Details:");
-				int count = GraphicsAdapter.Adapters.Count;
-				stringWriter.WriteLine("\tAdapter Count:\t" + count.ToString());
-				for (int n = 0; n < count; n++)
+				sw.WriteLine();
+				sw.WriteLine("Video Hardware Details:");
+				int adapterCount = GraphicsAdapter.Adapters.Count;
+				sw.WriteLine("\tAdapter Count:\t" + adapterCount.ToString());
+				for (int deviceID = 0; deviceID < adapterCount; deviceID++)
 				{
-					GraphicsAdapter graphicsAdapter = GraphicsAdapter.Adapters[n];
-					stringWriter.WriteLine("\tAdapter[" + n.ToString() + "]:");
-					stringWriter.WriteLine("\t\tName:\t\t" + graphicsAdapter.DeviceName);
-					stringWriter.WriteLine("\t\tDescription:\t" + graphicsAdapter.Description);
-					stringWriter.WriteLine("\t\tRevision:\t\t" + graphicsAdapter.Revision.ToString());
-					stringWriter.WriteLine("\t\tHiDef Support:\t" + (graphicsAdapter.IsProfileSupported(GraphicsProfile.HiDef) ? "Yes" : "No"));
-					stringWriter.WriteLine("\t\tReach Support:\t" + (graphicsAdapter.IsProfileSupported(GraphicsProfile.Reach) ? "Yes" : "No"));
-					stringWriter.WriteLine("\t\tID:\t\t" + graphicsAdapter.DeviceId.ToString());
-					stringWriter.WriteLine("\t\tVendor ID:\t" + graphicsAdapter.VendorId.ToString("X"));
-					stringWriter.WriteLine("\t\tSub System ID:\t" + graphicsAdapter.SubSystemId.ToString("X"));
-					stringWriter.WriteLine("\t\tWideScreen:\t" + (graphicsAdapter.IsWideScreen ? "Yes" : "No"));
-					stringWriter.WriteLine();
-					stringWriter.WriteLine("\tSupported Display Modes:");
-					foreach (DisplayMode displayMode in graphicsAdapter.SupportedDisplayModes)
+					GraphicsAdapter details = GraphicsAdapter.Adapters[deviceID];
+					sw.WriteLine("\tAdapter[" + deviceID.ToString() + "]:");
+					sw.WriteLine("\t\tName:\t\t" + details.DeviceName);
+					sw.WriteLine("\t\tDescription:\t" + details.Description);
+					sw.WriteLine("\t\tRevision:\t\t" + details.Revision.ToString());
+					sw.WriteLine("\t\tHiDef Support:\t" + (details.IsProfileSupported(GraphicsProfile.HiDef) ? "Yes" : "No"));
+					sw.WriteLine("\t\tReach Support:\t" + (details.IsProfileSupported(GraphicsProfile.Reach) ? "Yes" : "No"));
+					sw.WriteLine("\t\tID:\t\t" + details.DeviceId.ToString());
+					sw.WriteLine("\t\tVendor ID:\t" + details.VendorId.ToString("X"));
+					sw.WriteLine("\t\tSub System ID:\t" + details.SubSystemId.ToString("X"));
+					sw.WriteLine("\t\tWideScreen:\t" + (details.IsWideScreen ? "Yes" : "No"));
+					sw.WriteLine();
+					sw.WriteLine("\tSupported Display Modes:");
+					foreach (DisplayMode mode in details.SupportedDisplayModes)
 					{
-						stringWriter.WriteLine("\t\t" + displayMode.ToString());
+						sw.WriteLine("\t\t" + mode.ToString());
 					}
-					stringWriter.WriteLine();
-					stringWriter.WriteLine("\tCurrent Display Mode:" + graphicsAdapter.CurrentDisplayMode.ToString());
-					stringWriter.WriteLine();
-					stringWriter.WriteLine();
+					sw.WriteLine();
+					sw.WriteLine("\tCurrent Display Mode:" + details.CurrentDisplayMode.ToString());
+					sw.WriteLine();
+					sw.WriteLine();
 				}
 			}
-			catch (Exception ex)
+			catch (Exception e)
 			{
-				stringWriter.WriteLine(ex.Message + "\n" + ex.StackTrace);
+				sw.WriteLine(e.Message + "\n" + e.StackTrace);
 			}
-			stringWriter.Flush();
-			return stringBuilder.ToString();
+			sw.Flush();
+			return sb.ToString();
 		}
 
 		private static int CompareProcsByMemory(Process p1, Process p2)
@@ -306,73 +306,73 @@ namespace DNA.Diagnostics.Instrumentation
 
 		private void GetProcessors()
 		{
-			List<ProcessorInfo> list = new List<ProcessorInfo>();
-			ManagementObjectSearcher managementObjectSearcher = new ManagementObjectSearcher("SELECT * FROM Win32_Processor");
-			foreach (ManagementBaseObject managementBaseObject in managementObjectSearcher.Get())
+			List<ProcessorInfo> cpus = new List<ProcessorInfo>();
+			ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_Processor");
+			foreach (ManagementBaseObject managementBaseObject in searcher.Get())
 			{
-				ManagementObject managementObject = (ManagementObject)managementBaseObject;
-				list.Add(new ProcessorInfo(managementObject));
+				ManagementObject mo = (ManagementObject)managementBaseObject;
+				cpus.Add(new ProcessorInfo(mo));
 			}
-			this._processors = list.ToArray();
+			this._processors = cpus.ToArray();
 		}
 
 		private void GetMemory()
 		{
-			Win32MemoryStatusEx win32MemoryStatusEx = Win32API.GlobalMemoryStatus();
-			this._memoryInfo = new MemoryInfo(win32MemoryStatusEx);
+			Win32MemoryStatusEx status = Win32API.GlobalMemoryStatus();
+			this._memoryInfo = new MemoryInfo(status);
 		}
 
 		private void GetHardDisks()
 		{
-			List<HardDiskInfo> list = new List<HardDiskInfo>();
+			List<HardDiskInfo> hdCollection = new List<HardDiskInfo>();
 			if (this._wmiSupported)
 			{
-				ManagementObjectSearcher managementObjectSearcher = new ManagementObjectSearcher("SELECT * FROM Win32_DiskDrive");
-				using (ManagementObjectCollection.ManagementObjectEnumerator enumerator = managementObjectSearcher.Get().GetEnumerator())
+				ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_DiskDrive");
+				using (ManagementObjectCollection.ManagementObjectEnumerator enumerator = searcher.Get().GetEnumerator())
 				{
 					while (enumerator.MoveNext())
 					{
 						ManagementBaseObject managementBaseObject = enumerator.Current;
-						ManagementObject managementObject = (ManagementObject)managementBaseObject;
-						list.Add(HardDiskInfo.FromManagmentObject(managementObject));
+						ManagementObject wmi_HD = (ManagementObject)managementBaseObject;
+						hdCollection.Add(HardDiskInfo.FromManagmentObject(wmi_HD));
 					}
 					goto IL_008A;
 				}
 			}
 			for (int i = 0; i < 16; i++)
 			{
-				string text = "\\\\.\\PhysicalDrive" + i.ToString();
+				string driveName = "\\\\.\\PhysicalDrive" + i.ToString();
 				try
 				{
-					list.Add(HardDiskInfo.GetPhysicalDriveInfo(text));
+					hdCollection.Add(HardDiskInfo.GetPhysicalDriveInfo(driveName));
 				}
 				catch
 				{
 				}
 			}
 			IL_008A:
-			this._hardDisks = list.ToArray();
+			this._hardDisks = hdCollection.ToArray();
 		}
 
 		private void GetLogicalDrives()
 		{
-			List<LogicalDriveInfo> list = new List<LogicalDriveInfo>();
-			ManagementObjectSearcher managementObjectSearcher = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk");
-			foreach (ManagementBaseObject managementBaseObject in managementObjectSearcher.Get())
+			List<LogicalDriveInfo> hdCollection = new List<LogicalDriveInfo>();
+			ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk");
+			foreach (ManagementBaseObject managementBaseObject in searcher.Get())
 			{
-				ManagementObject managementObject = (ManagementObject)managementBaseObject;
-				list.Add(new LogicalDriveInfo(managementObject));
+				ManagementObject wmi_HD = (ManagementObject)managementBaseObject;
+				hdCollection.Add(new LogicalDriveInfo(wmi_HD));
 			}
-			this._logicalDrives = list.ToArray();
+			this._logicalDrives = hdCollection.ToArray();
 		}
 
 		private static void PrintObjectProperties(ManagementObject mo)
 		{
-			foreach (PropertyData propertyData in mo.Properties)
+			foreach (PropertyData pd in mo.Properties)
 			{
-				if (propertyData.Value != null)
+				if (pd.Value != null)
 				{
-					Console.WriteLine(propertyData.Name + " = " + propertyData.Value.ToString());
+					Console.WriteLine(pd.Name + " = " + pd.Value.ToString());
 				}
 			}
 			Console.WriteLine();
@@ -382,17 +382,17 @@ namespace DNA.Diagnostics.Instrumentation
 		{
 			if (this._wmiSupported)
 			{
-				ManagementClass managementClass = new ManagementClass("Win32_NetworkAdapter");
-				ManagementObjectCollection managementObjectCollection = managementClass.GetInstances();
-				Dictionary<string, ManagementObject> dictionary = new Dictionary<string, ManagementObject>();
-				Dictionary<string, bool> dictionary2 = new Dictionary<string, bool>();
-				foreach (ManagementBaseObject managementBaseObject in managementObjectCollection)
+				ManagementClass nicClass = new ManagementClass("Win32_NetworkAdapter");
+				ManagementObjectCollection nicMocs = nicClass.GetInstances();
+				Dictionary<string, ManagementObject> physicalAdapters = new Dictionary<string, ManagementObject>();
+				Dictionary<string, bool> isPhysical = new Dictionary<string, bool>();
+				foreach (ManagementBaseObject managementBaseObject in nicMocs)
 				{
-					ManagementObject managementObject = (ManagementObject)managementBaseObject;
+					ManagementObject nicMo = (ManagementObject)managementBaseObject;
 					try
 					{
-						ushort num = (ushort)managementObject["AdapterTypeID"];
-						if (num != 0)
+						ushort type = (ushort)nicMo["AdapterTypeID"];
+						if (type != 0)
 						{
 							continue;
 						}
@@ -401,64 +401,64 @@ namespace DNA.Diagnostics.Instrumentation
 					{
 						continue;
 					}
-					bool flag = false;
-					string text = (string)managementObject["DeviceID"];
+					bool isRealAdapter = false;
+					string devID = (string)nicMo["DeviceID"];
 					try
 					{
-						flag = (bool)managementObject["PhysicalAdapter"];
-						if (!flag)
+						isRealAdapter = (bool)nicMo["PhysicalAdapter"];
+						if (!isRealAdapter)
 						{
 							continue;
 						}
 					}
 					catch
 					{
-						ManagementObjectSearcher managementObjectSearcher = new ManagementObjectSearcher("ASSOCIATORS OF {Win32_NetworkAdapter.DeviceID='" + text + "'} WHERE ResultClass = Win32_PnPEntity");
-						ManagementObjectCollection managementObjectCollection2 = managementObjectSearcher.Get();
-						if (managementObjectCollection2.Count != 0)
+						ManagementObjectSearcher searcher = new ManagementObjectSearcher("ASSOCIATORS OF {Win32_NetworkAdapter.DeviceID='" + devID + "'} WHERE ResultClass = Win32_PnPEntity");
+						ManagementObjectCollection nicAss = searcher.Get();
+						if (nicAss.Count != 0)
 						{
-							flag = true;
+							isRealAdapter = true;
 						}
 					}
-					if (flag)
+					if (isRealAdapter)
 					{
-						string text2 = (string)managementObject["MacAddress"];
-						dictionary[text2] = managementObject;
-						ManagementObjectSearcher managementObjectSearcher2 = new ManagementObjectSearcher("ASSOCIATORS OF {Win32_NetworkAdapter.DeviceID='" + text + "'} WHERE ResultClass = Win32_IRQResource");
-						ManagementObjectCollection managementObjectCollection3 = managementObjectSearcher2.Get();
-						if (managementObjectCollection3.Count != 0)
+						string macAddress = (string)nicMo["MacAddress"];
+						physicalAdapters[macAddress] = nicMo;
+						ManagementObjectSearcher searcher2 = new ManagementObjectSearcher("ASSOCIATORS OF {Win32_NetworkAdapter.DeviceID='" + devID + "'} WHERE ResultClass = Win32_IRQResource");
+						ManagementObjectCollection nicAss2 = searcher2.Get();
+						if (nicAss2.Count != 0)
 						{
-							dictionary2[text2] = true;
+							isPhysical[macAddress] = true;
 						}
-						else if (!dictionary2.ContainsKey(text2))
+						else if (!isPhysical.ContainsKey(macAddress))
 						{
-							dictionary2[text2] = false;
+							isPhysical[macAddress] = false;
 						}
 					}
 				}
-				managementClass = new ManagementClass("Win32_NetworkAdapterConfiguration");
-				managementObjectCollection = managementClass.GetInstances();
-				Dictionary<string, NetworkAdapterInfo> dictionary3 = new Dictionary<string, NetworkAdapterInfo>();
-				foreach (ManagementBaseObject managementBaseObject2 in managementObjectCollection)
+				nicClass = new ManagementClass("Win32_NetworkAdapterConfiguration");
+				nicMocs = nicClass.GetInstances();
+				Dictionary<string, NetworkAdapterInfo> netInfos = new Dictionary<string, NetworkAdapterInfo>();
+				foreach (ManagementBaseObject managementBaseObject2 in nicMocs)
 				{
-					ManagementObject managementObject2 = (ManagementObject)managementBaseObject2;
+					ManagementObject mo = (ManagementObject)managementBaseObject2;
 					try
 					{
-						string text3 = (string)managementObject2["MacAddress"];
-						if (dictionary.ContainsKey(text3))
+						string macAddress2 = (string)mo["MacAddress"];
+						if (physicalAdapters.ContainsKey(macAddress2))
 						{
-							NetworkAdapterInfo networkAdapterInfo = NetworkAdapterInfo.FromManagmentObject(managementObject2, dictionary2[text3]);
-							NetworkAdapterInfo networkAdapterInfo2;
-							if (dictionary3.TryGetValue(networkAdapterInfo.MACAddress, out networkAdapterInfo2))
+							NetworkAdapterInfo netInfo = NetworkAdapterInfo.FromManagmentObject(mo, isPhysical[macAddress2]);
+							NetworkAdapterInfo existingInfo;
+							if (netInfos.TryGetValue(netInfo.MACAddress, out existingInfo))
 							{
-								if (networkAdapterInfo.IPAddresses.Length > networkAdapterInfo2.IPAddresses.Length)
+								if (netInfo.IPAddresses.Length > existingInfo.IPAddresses.Length)
 								{
-									dictionary3[networkAdapterInfo.MACAddress] = networkAdapterInfo;
+									netInfos[netInfo.MACAddress] = netInfo;
 								}
 							}
 							else
 							{
-								dictionary3[networkAdapterInfo.MACAddress] = networkAdapterInfo;
+								netInfos[netInfo.MACAddress] = netInfo;
 							}
 						}
 					}
@@ -466,9 +466,9 @@ namespace DNA.Diagnostics.Instrumentation
 					{
 					}
 				}
-				NetworkAdapterInfo[] array = new NetworkAdapterInfo[dictionary3.Values.Count];
-				dictionary3.Values.CopyTo(array, 0);
-				this._networkAdapters = array;
+				NetworkAdapterInfo[] finalInfos = new NetworkAdapterInfo[netInfos.Values.Count];
+				netInfos.Values.CopyTo(finalInfos, 0);
+				this._networkAdapters = finalInfos;
 				return;
 			}
 			this._networkAdapters = IPHelperAPI.GetAdaptersInfo();

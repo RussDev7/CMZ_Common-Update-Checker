@@ -19,17 +19,17 @@ namespace DNA.Input
 			{
 				if (m.Msg == 256)
 				{
-					IntPtr intPtr = Marshal.AllocHGlobal(Marshal.SizeOf(m));
-					Marshal.StructureToPtr(m, intPtr, true);
-					KeyGrabber.KeyFilter.TranslateMessage(intPtr);
+					IntPtr pointer = Marshal.AllocHGlobal(Marshal.SizeOf(m));
+					Marshal.StructureToPtr(m, pointer, true);
+					KeyGrabber.KeyFilter.TranslateMessage(pointer);
 					return true;
 				}
 				if (m.Msg == 258)
 				{
-					char c = (char)(int)m.WParam;
+					char trueCharacter = (char)(int)m.WParam;
 					if (KeyGrabber.InboundCharEvent != null)
 					{
-						KeyGrabber.InboundCharEvent(c);
+						KeyGrabber.InboundCharEvent(trueCharacter);
 					}
 				}
 				return false;

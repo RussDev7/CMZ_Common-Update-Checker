@@ -70,14 +70,14 @@ namespace DNA.Security.Cryptography.Crypto.Digests
 		public void Finish()
 		{
 			this.AdjustByteCounts();
-			long num = this.byteCount1 << 3;
-			long num2 = this.byteCount2;
+			long lowBitLength = this.byteCount1 << 3;
+			long hiBitLength = this.byteCount2;
 			this.Update(128);
 			while (this.xBufOff != 0)
 			{
 				this.Update(0);
 			}
-			this.ProcessLength(num, num2);
+			this.ProcessLength(lowBitLength, hiBitLength);
 			this.ProcessBlock();
 		}
 
@@ -91,9 +91,9 @@ namespace DNA.Security.Cryptography.Crypto.Digests
 				this.xBuf[i] = 0;
 			}
 			this.wOff = 0;
-			for (int num = 0; num != this.W.Length; num++)
+			for (int j = 0; j != this.W.Length; j++)
 			{
-				this.W[num] = 0L;
+				this.W[j] = 0L;
 			}
 		}
 
@@ -140,54 +140,54 @@ namespace DNA.Security.Cryptography.Crypto.Digests
 		internal void ProcessBlock()
 		{
 			this.AdjustByteCounts();
-			for (int i = 16; i <= 79; i++)
+			for (int ti = 16; ti <= 79; ti++)
 			{
-				this.W[i] = LongDigest.Sigma1(this.W[i - 2]) + this.W[i - 7] + LongDigest.Sigma0(this.W[i - 15]) + this.W[i - 16];
+				this.W[ti] = LongDigest.Sigma1(this.W[ti - 2]) + this.W[ti - 7] + LongDigest.Sigma0(this.W[ti - 15]) + this.W[ti - 16];
 			}
-			long num = this.H1;
-			long num2 = this.H2;
-			long num3 = this.H3;
-			long num4 = this.H4;
-			long num5 = this.H5;
-			long num6 = this.H6;
-			long num7 = this.H7;
-			long num8 = this.H8;
-			int num9 = 0;
-			for (int j = 0; j < 10; j++)
+			long a = this.H1;
+			long b = this.H2;
+			long c = this.H3;
+			long d = this.H4;
+			long e = this.H5;
+			long f = this.H6;
+			long g = this.H7;
+			long h = this.H8;
+			int t = 0;
+			for (int i = 0; i < 10; i++)
 			{
-				num8 += LongDigest.Sum1(num5) + LongDigest.Ch(num5, num6, num7) + LongDigest.K[num9] + this.W[num9++];
-				num4 += num8;
-				num8 += LongDigest.Sum0(num) + LongDigest.Maj(num, num2, num3);
-				num7 += LongDigest.Sum1(num4) + LongDigest.Ch(num4, num5, num6) + LongDigest.K[num9] + this.W[num9++];
-				num3 += num7;
-				num7 += LongDigest.Sum0(num8) + LongDigest.Maj(num8, num, num2);
-				num6 += LongDigest.Sum1(num3) + LongDigest.Ch(num3, num4, num5) + LongDigest.K[num9] + this.W[num9++];
-				num2 += num6;
-				num6 += LongDigest.Sum0(num7) + LongDigest.Maj(num7, num8, num);
-				num5 += LongDigest.Sum1(num2) + LongDigest.Ch(num2, num3, num4) + LongDigest.K[num9] + this.W[num9++];
-				num += num5;
-				num5 += LongDigest.Sum0(num6) + LongDigest.Maj(num6, num7, num8);
-				num4 += LongDigest.Sum1(num) + LongDigest.Ch(num, num2, num3) + LongDigest.K[num9] + this.W[num9++];
-				num8 += num4;
-				num4 += LongDigest.Sum0(num5) + LongDigest.Maj(num5, num6, num7);
-				num3 += LongDigest.Sum1(num8) + LongDigest.Ch(num8, num, num2) + LongDigest.K[num9] + this.W[num9++];
-				num7 += num3;
-				num3 += LongDigest.Sum0(num4) + LongDigest.Maj(num4, num5, num6);
-				num2 += LongDigest.Sum1(num7) + LongDigest.Ch(num7, num8, num) + LongDigest.K[num9] + this.W[num9++];
-				num6 += num2;
-				num2 += LongDigest.Sum0(num3) + LongDigest.Maj(num3, num4, num5);
-				num += LongDigest.Sum1(num6) + LongDigest.Ch(num6, num7, num8) + LongDigest.K[num9] + this.W[num9++];
-				num5 += num;
-				num += LongDigest.Sum0(num2) + LongDigest.Maj(num2, num3, num4);
+				h += LongDigest.Sum1(e) + LongDigest.Ch(e, f, g) + LongDigest.K[t] + this.W[t++];
+				d += h;
+				h += LongDigest.Sum0(a) + LongDigest.Maj(a, b, c);
+				g += LongDigest.Sum1(d) + LongDigest.Ch(d, e, f) + LongDigest.K[t] + this.W[t++];
+				c += g;
+				g += LongDigest.Sum0(h) + LongDigest.Maj(h, a, b);
+				f += LongDigest.Sum1(c) + LongDigest.Ch(c, d, e) + LongDigest.K[t] + this.W[t++];
+				b += f;
+				f += LongDigest.Sum0(g) + LongDigest.Maj(g, h, a);
+				e += LongDigest.Sum1(b) + LongDigest.Ch(b, c, d) + LongDigest.K[t] + this.W[t++];
+				a += e;
+				e += LongDigest.Sum0(f) + LongDigest.Maj(f, g, h);
+				d += LongDigest.Sum1(a) + LongDigest.Ch(a, b, c) + LongDigest.K[t] + this.W[t++];
+				h += d;
+				d += LongDigest.Sum0(e) + LongDigest.Maj(e, f, g);
+				c += LongDigest.Sum1(h) + LongDigest.Ch(h, a, b) + LongDigest.K[t] + this.W[t++];
+				g += c;
+				c += LongDigest.Sum0(d) + LongDigest.Maj(d, e, f);
+				b += LongDigest.Sum1(g) + LongDigest.Ch(g, h, a) + LongDigest.K[t] + this.W[t++];
+				f += b;
+				b += LongDigest.Sum0(c) + LongDigest.Maj(c, d, e);
+				a += LongDigest.Sum1(f) + LongDigest.Ch(f, g, h) + LongDigest.K[t] + this.W[t++];
+				e += a;
+				a += LongDigest.Sum0(b) + LongDigest.Maj(b, c, d);
 			}
-			this.H1 += num;
-			this.H2 += num2;
-			this.H3 += num3;
-			this.H4 += num4;
-			this.H5 += num5;
-			this.H6 += num6;
-			this.H7 += num7;
-			this.H8 += num8;
+			this.H1 += a;
+			this.H2 += b;
+			this.H3 += c;
+			this.H4 += d;
+			this.H5 += e;
+			this.H6 += f;
+			this.H7 += g;
+			this.H8 += h;
 			this.wOff = 0;
 			Array.Clear(this.W, 0, 16);
 		}

@@ -30,68 +30,68 @@ namespace DNA.Diagnostics.Instrumentation
 
 		public MachineID(string midString)
 		{
-			MD5HashProvider md5HashProvider = new MD5HashProvider();
-			this._hash = md5HashProvider.Parse(midString);
+			MD5HashProvider hasher = new MD5HashProvider();
+			this._hash = hasher.Parse(midString);
 		}
 
 		public MachineID(byte[] data)
 		{
-			MD5HashProvider md5HashProvider = new MD5HashProvider();
-			this._hash = md5HashProvider.CreateHash(data);
+			MD5HashProvider hasher = new MD5HashProvider();
+			this._hash = hasher.CreateHash(data);
 		}
 
 		public MachineID(MachineInfo info)
 		{
-			string text = "";
+			string procID = "";
 			if (info.Processors != null && info.Processors.Length > 0)
 			{
-				text = info.Processors[0].ProcessorID;
+				procID = info.Processors[0].ProcessorID;
 			}
-			string text2 = "";
-			foreach (NetworkAdapterInfo networkAdapterInfo in info.NetworkAdapters)
+			string mac = "";
+			foreach (NetworkAdapterInfo network in info.NetworkAdapters)
 			{
-				if (networkAdapterInfo.Physical && !string.IsNullOrEmpty(networkAdapterInfo.MACAddress))
+				if (network.Physical && !string.IsNullOrEmpty(network.MACAddress))
 				{
-					text2 = networkAdapterInfo.MACAddress;
+					mac = network.MACAddress;
 					break;
 				}
 			}
-			string text3 = "";
-			foreach (HardDiskInfo hardDiskInfo in info.HardDisks)
+			string HDSerial = "";
+			foreach (HardDiskInfo hdinfo in info.HardDisks)
 			{
-				if (!string.IsNullOrEmpty(hardDiskInfo.SerialNumber))
+				if (!string.IsNullOrEmpty(hdinfo.SerialNumber))
 				{
-					if (hardDiskInfo.BusType == "ATA" || hardDiskInfo.BusType == "SCSI")
+					if (hdinfo.BusType == "ATA" || hdinfo.BusType == "SCSI")
 					{
-						text3 = hardDiskInfo.SerialNumber;
+						HDSerial = hdinfo.SerialNumber;
 						break;
 					}
-					if (string.IsNullOrEmpty(text3))
+					if (string.IsNullOrEmpty(HDSerial))
 					{
-						text3 = hardDiskInfo.SerialNumber;
+						HDSerial = hdinfo.SerialNumber;
 					}
 				}
 			}
-			string text4 = "";
-			foreach (HardDiskInfo hardDiskInfo2 in info.HardDisks)
+			string HDModel = "";
+			foreach (HardDiskInfo hdinfo2 in info.HardDisks)
 			{
-				if (!string.IsNullOrEmpty(hardDiskInfo2.Model))
+				if (!string.IsNullOrEmpty(hdinfo2.Model))
 				{
-					if (hardDiskInfo2.BusType == "ATA" || hardDiskInfo2.BusType == "SCSI")
+					if (hdinfo2.BusType == "ATA" || hdinfo2.BusType == "SCSI")
 					{
-						text4 = hardDiskInfo2.Model;
+						HDModel = hdinfo2.Model;
 						break;
 					}
-					if (string.IsNullOrEmpty(text4))
+					if (string.IsNullOrEmpty(HDModel))
 					{
-						text4 = hardDiskInfo2.Model;
+						HDModel = hdinfo2.Model;
 					}
 				}
 			}
-			MD5HashProvider md5HashProvider = new MD5HashProvider();
-			string text5 = text2 + text3 + text + text4;
-			byte[] bytes = Encoding.UTF8.GetBytes(text5);
-			this._hash = md5HashProvider.Compute(bytes);
+			MD5HashProvider hasher = new MD5HashProvider();
+			string hashstring = mac + HDSerial + procID + HDModel;
+			byte[] strData = Encoding.UTF8.GetBytes(hashstring);
+			this._hash = hasher.Compute(strData);
 		}
 
 		private Hash _hash;

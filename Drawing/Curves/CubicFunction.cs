@@ -95,75 +95,75 @@ namespace DNA.Drawing.Curves
 		{
 			get
 			{
-				float num2;
-				float num = (num2 = this.StartValue);
-				float num3 = this.EndValue;
-				if (num3 > num2)
+				float hi;
+				float low = (hi = this.StartValue);
+				float t = this.EndValue;
+				if (t > hi)
 				{
-					num2 = num3;
+					hi = t;
 				}
-				else if (num3 < num)
+				else if (t < low)
 				{
-					num = num3;
+					low = t;
 				}
 				if (this._a == 0f)
 				{
 					if (this._b != 0f)
 					{
-						num3 = -0.5f * this._startSlope / this._b;
-						if (num3 > 0f && num3 < 1f)
+						t = -0.5f * this._startSlope / this._b;
+						if (t > 0f && t < 1f)
 						{
-							num3 = this.GetValue(num3);
-							if (num3 < num)
+							t = this.GetValue(t);
+							if (t < low)
 							{
-								num = num3;
+								low = t;
 							}
-							else if (num3 > num2)
+							else if (t > hi)
 							{
-								num2 = num3;
+								hi = t;
 							}
 						}
 					}
 				}
 				else
 				{
-					float num4 = 3f * this._a;
-					float num5 = 2f * this._b;
-					float num6 = num5 * num5 - 4f * num4 * this._startSlope;
-					if (num6 >= 0f)
+					float da = 3f * this._a;
+					float db = 2f * this._b;
+					float range = db * db - 4f * da * this._startSlope;
+					if (range >= 0f)
 					{
-						num4 = 0.5f / num4;
-						num5 = -num5 * num4;
-						num6 = (float)(Math.Sqrt((double)num6) * (double)num4);
-						num3 = num5 - num6;
-						if (num3 > 0f && num3 < 1f)
+						da = 0.5f / da;
+						db = -db * da;
+						range = (float)(Math.Sqrt((double)range) * (double)da);
+						t = db - range;
+						if (t > 0f && t < 1f)
 						{
-							num3 = this.GetValue(num3);
-							if (num3 < num)
+							t = this.GetValue(t);
+							if (t < low)
 							{
-								num = num3;
+								low = t;
 							}
-							else if (num3 > num2)
+							else if (t > hi)
 							{
-								num2 = num3;
+								hi = t;
 							}
 						}
-						num3 = num5 + num6;
-						if (num3 > 0f && num3 < 1f)
+						t = db + range;
+						if (t > 0f && t < 1f)
 						{
-							num3 = this.GetValue(num3);
-							if (num3 < num)
+							t = this.GetValue(t);
+							if (t < low)
 							{
-								num = num3;
+								low = t;
 							}
-							else if (num3 > num2)
+							else if (t > hi)
 							{
-								num2 = num3;
+								hi = t;
 							}
 						}
 					}
 				}
-				return new RangeF(num, num2);
+				return new RangeF(low, hi);
 			}
 		}
 

@@ -33,20 +33,20 @@ namespace DNA.Drawing.Noise
 
 		public int ComputeNoise(int x, int y, int z)
 		{
-			int num = x & 255;
-			int num2 = y & 255;
-			int num3 = z & 255;
-			int num4 = IntNoise._permute[num] + num2;
-			int num5 = IntNoise._permute[num4] + num3;
-			return IntNoise._permute[num5];
+			int X = x & 255;
+			int Y = y & 255;
+			int Z = z & 255;
+			int A = IntNoise._permute[X] + Y;
+			int AA = IntNoise._permute[A] + Z;
+			return IntNoise._permute[AA];
 		}
 
 		public int ComputeNoise(int x, int y)
 		{
-			int num = x & 255;
-			int num2 = y & 255;
-			int num3 = IntNoise._permute[num] + num2;
-			return IntNoise._permute[num3];
+			int X = x & 255;
+			int Y = y & 255;
+			int A = IntNoise._permute[X] + Y;
+			return IntNoise._permute[A];
 		}
 
 		private static int[] _permute = new int[1024];

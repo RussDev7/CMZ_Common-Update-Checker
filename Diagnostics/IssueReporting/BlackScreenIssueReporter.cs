@@ -18,9 +18,9 @@ namespace DNA.Diagnostics.IssueReporting
 
 		public override void ReportCrash(Exception e)
 		{
-			using (ExceptionGame exceptionGame = new ExceptionGame(e, this._errorURL, this._name, this._version, this._gameStartTime))
+			using (ExceptionGame g = new ExceptionGame(e, this._errorURL, this._name, this._version, this._gameStartTime))
 			{
-				exceptionGame.Run();
+				g.Run();
 			}
 		}
 

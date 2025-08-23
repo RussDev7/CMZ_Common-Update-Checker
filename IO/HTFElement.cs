@@ -63,12 +63,12 @@ namespace DNA.IO
 			char c;
 			for (;;)
 			{
-				int num = stream.ReadByte();
-				if (num == -1)
+				int cv = stream.ReadByte();
+				if (cv == -1)
 				{
 					break;
 				}
-				c = (char)num;
+				c = (char)cv;
 				if (!char.IsWhiteSpace(c))
 				{
 					goto Block_2;
@@ -135,15 +135,15 @@ namespace DNA.IO
 
 		protected void ParseChildren(Stream stream)
 		{
-			int num = 0;
-			int num2 = 0;
-			bool flag = true;
-			while (flag)
+			int index = 0;
+			int length = 0;
+			bool moreChildren = true;
+			while (moreChildren)
 			{
-				HTFElement htfelement = new HTFElement();
-				flag = htfelement.Parse(stream, out num2);
-				this._children.Add(htfelement);
-				num += num2;
+				HTFElement newChild = new HTFElement();
+				moreChildren = newChild.Parse(stream, out length);
+				this._children.Add(newChild);
+				index += length;
 			}
 		}
 
@@ -153,9 +153,9 @@ namespace DNA.IO
 			{
 				this.ParseChildren(stream);
 			}
-			catch (Exception ex)
+			catch (Exception e)
 			{
-				string message = ex.Message;
+				string message = e.Message;
 				return false;
 			}
 			return true;
@@ -163,53 +163,53 @@ namespace DNA.IO
 
 		private bool Parse(Stream stream, out int length)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			bool flag = false;
-			bool flag2 = false;
-			bool flag3 = false;
-			bool flag4 = false;
-			bool flag5 = false;
-			bool flag6 = false;
-			while (!flag)
+			StringBuilder valueBuilder = new StringBuilder();
+			bool done = false;
+			bool moreValues = false;
+			bool foundID = false;
+			bool isLiteral = false;
+			bool inQuotes = false;
+			bool foundFirstChar = false;
+			while (!done)
 			{
-				int num = stream.ReadByte();
-				if (num == -1)
+				int nextval = stream.ReadByte();
+				if (nextval == -1)
 				{
 					throw new EndOfStreamException("Unexpected End of File");
 				}
-				char c = (char)num;
-				if (flag4)
+				char c = (char)nextval;
+				if (isLiteral)
 				{
 					c = HTFElement.TranslateEscapeChar(c);
-					stringBuilder.Append(c);
-					flag4 = false;
+					valueBuilder.Append(c);
+					isLiteral = false;
 				}
-				else if (flag6 || !char.IsWhiteSpace(c))
+				else if (foundFirstChar || !char.IsWhiteSpace(c))
 				{
-					if (flag5)
+					if (inQuotes)
 					{
 						if (c == '"')
 						{
-							flag5 = false;
+							inQuotes = false;
 						}
 						else if (c == '~')
 						{
-							flag4 = true;
+							isLiteral = true;
 						}
 						else
 						{
-							stringBuilder.Append(c);
+							valueBuilder.Append(c);
 						}
 					}
 					else if (c == ',')
 					{
-						flag = true;
-						flag2 = true;
+						done = true;
+						moreValues = true;
 					}
 					else if (c == '>')
 					{
-						flag = true;
-						flag2 = false;
+						done = true;
+						moreValues = false;
 					}
 					else if (c == '<')
 					{
@@ -217,27 +217,27 @@ namespace DNA.IO
 					}
 					else if (c == '~')
 					{
-						flag4 = true;
+						isLiteral = true;
 					}
-					else if (c == '=' && !flag3)
+					else if (c == '=' && !foundID)
 					{
-						this._id = stringBuilder.ToString().Trim();
-						stringBuilder = new StringBuilder();
+						this._id = valueBuilder.ToString().Trim();
+						valueBuilder = new StringBuilder();
 					}
 					else if (c == '"')
 					{
-						flag5 = true;
+						inQuotes = true;
 					}
 					else
 					{
-						stringBuilder.Append(c);
+						valueBuilder.Append(c);
 					}
-					flag6 = true;
+					foundFirstChar = true;
 				}
 			}
-			this._value = stringBuilder.ToString().Trim();
+			this._value = valueBuilder.ToString().Trim();
 			length = this._value.Length;
-			return flag2;
+			return moreValues;
 		}
 
 		private static char GetEscapeChar(char c)
@@ -269,38 +269,38 @@ namespace DNA.IO
 
 		private static string BuildEscapedString(string s)
 		{
-			bool flag = true;
-			bool flag2 = false;
+			bool quoteText = true;
+			bool needsEscape = false;
 			foreach (char c in s)
 			{
 				if (HTFElement.NeedsEscape(c))
 				{
-					flag2 = true;
+					needsEscape = true;
 				}
 				if (c == '"' || c == '\a' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\0')
 				{
-					flag = false;
+					quoteText = false;
 					break;
 				}
 			}
-			if (flag && flag2)
+			if (quoteText && needsEscape)
 			{
 				return "\"" + s + "\"";
 			}
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder br = new StringBuilder();
 			foreach (char c2 in s)
 			{
 				if (HTFElement.NeedsEscape(c2))
 				{
-					stringBuilder.Append('~');
-					stringBuilder.Append(HTFElement.GetEscapeChar(c2));
+					br.Append('~');
+					br.Append(HTFElement.GetEscapeChar(c2));
 				}
 				else
 				{
-					stringBuilder.Append(c2);
+					br.Append(c2);
 				}
 			}
-			return stringBuilder.ToString();
+			return br.ToString();
 		}
 
 		public void Save(StreamWriter writer)

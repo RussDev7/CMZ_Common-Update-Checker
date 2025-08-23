@@ -8,50 +8,50 @@ namespace DNA.Security.Cryptography.Asn1
 	{
 		internal static int GetPadBits(int bitString)
 		{
-			int num = 0;
+			int val = 0;
 			for (int i = 3; i >= 0; i--)
 			{
 				if (i != 0)
 				{
 					if (bitString >> i * 8 != 0)
 					{
-						num = (bitString >> i * 8) & 255;
+						val = (bitString >> i * 8) & 255;
 						break;
 					}
 				}
 				else if (bitString != 0)
 				{
-					num = bitString & 255;
+					val = bitString & 255;
 					break;
 				}
 			}
-			if (num == 0)
+			if (val == 0)
 			{
 				return 7;
 			}
-			int num2 = 1;
-			while (((num <<= 1) & 255) != 0)
+			int bits = 1;
+			while (((val <<= 1) & 255) != 0)
 			{
-				num2++;
+				bits++;
 			}
-			return 8 - num2;
+			return 8 - bits;
 		}
 
 		internal static byte[] GetBytes(int bitString)
 		{
-			int num = 4;
-			int num2 = 3;
-			while (num2 >= 1 && (bitString & (255 << num2 * 8)) == 0)
+			int bytes = 4;
+			int i = 3;
+			while (i >= 1 && (bitString & (255 << i * 8)) == 0)
 			{
-				num--;
-				num2--;
+				bytes--;
+				i--;
 			}
-			byte[] array = new byte[num];
-			for (int i = 0; i < num; i++)
+			byte[] result = new byte[bytes];
+			for (int j = 0; j < bytes; j++)
 			{
-				array[i] = (byte)((bitString >> i * 8) & 255);
+				result[j] = (byte)((bitString >> j * 8) & 255);
 			}
-			return array;
+			return result;
 		}
 
 		public static DerBitString GetInstance(object obj)
@@ -62,11 +62,11 @@ namespace DNA.Security.Cryptography.Asn1
 			}
 			if (obj is Asn1OctetString)
 			{
-				byte[] octets = ((Asn1OctetString)obj).GetOctets();
-				int num = (int)octets[0];
-				byte[] array = new byte[octets.Length - 1];
-				Array.Copy(octets, 1, array, 0, octets.Length - 1);
-				return new DerBitString(array, num);
+				byte[] bytes = ((Asn1OctetString)obj).GetOctets();
+				int padBits = (int)bytes[0];
+				byte[] data = new byte[bytes.Length - 1];
+				Array.Copy(bytes, 1, data, 0, bytes.Length - 1);
+				return new DerBitString(data, padBits);
 			}
 			if (obj is Asn1TaggedObject)
 			{
@@ -119,23 +119,23 @@ namespace DNA.Security.Cryptography.Asn1
 		{
 			get
 			{
-				int num = 0;
-				int num2 = 0;
-				while (num2 != this.data.Length && num2 != 4)
+				int value = 0;
+				int i = 0;
+				while (i != this.data.Length && i != 4)
 				{
-					num |= (int)(this.data[num2] & byte.MaxValue) << 8 * num2;
-					num2++;
+					value |= (int)(this.data[i] & byte.MaxValue) << 8 * i;
+					i++;
 				}
-				return num;
+				return value;
 			}
 		}
 
 		internal override void Encode(DerOutputStream derOut)
 		{
-			byte[] array = new byte[this.GetBytes().Length + 1];
-			array[0] = (byte)this.PadBits;
-			Array.Copy(this.GetBytes(), 0, array, 1, array.Length - 1);
-			derOut.WriteEncoded(3, array);
+			byte[] bytes = new byte[this.GetBytes().Length + 1];
+			bytes[0] = (byte)this.PadBits;
+			Array.Copy(this.GetBytes(), 0, bytes, 1, bytes.Length - 1);
+			derOut.WriteEncoded(3, bytes);
 		}
 
 		protected override int Asn1GetHashCode()
@@ -145,21 +145,21 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerBitString derBitString = asn1Object as DerBitString;
-			return derBitString != null && this.padBits == derBitString.padBits && Arrays.AreEqual(this.data, derBitString.data);
+			DerBitString other = asn1Object as DerBitString;
+			return other != null && this.padBits == other.padBits && Arrays.AreEqual(this.data, other.data);
 		}
 
 		public override string GetString()
 		{
-			StringBuilder stringBuilder = new StringBuilder("#");
-			byte[] derEncoded = base.GetDerEncoded();
-			for (int num = 0; num != derEncoded.Length; num++)
+			StringBuilder buffer = new StringBuilder("#");
+			byte[] str = base.GetDerEncoded();
+			for (int i = 0; i != str.Length; i++)
 			{
-				uint num2 = (uint)derEncoded[num];
-				stringBuilder.Append(DerBitString.table[(int)((UIntPtr)((num2 >> 4) & 15U))]);
-				stringBuilder.Append(DerBitString.table[(int)(derEncoded[num] & 15)]);
+				uint ubyte = (uint)str[i];
+				buffer.Append(DerBitString.table[(int)((UIntPtr)((ubyte >> 4) & 15U))]);
+				buffer.Append(DerBitString.table[(int)(str[i] & 15)]);
 			}
-			return stringBuilder.ToString();
+			return buffer.ToString();
 		}
 
 		private static readonly char[] table = new char[]

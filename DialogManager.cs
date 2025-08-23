@@ -39,8 +39,8 @@ namespace DNA
 			{
 				if (!Guide.IsVisible && this._pendingMessages.Count > 0)
 				{
-					DialogManager.DialogBox dialogBox = this._pendingMessages.Dequeue();
-					dialogBox.Show();
+					DialogManager.DialogBox box = this._pendingMessages.Dequeue();
+					box.Show();
 				}
 			}
 			catch
@@ -85,10 +85,10 @@ namespace DNA
 
 			private void MessageCallback(IAsyncResult result)
 			{
-				int? num = Guide.EndShowMessageBox(result);
+				int? res = Guide.EndShowMessageBox(result);
 				if (this.Callback != null)
 				{
-					this.Callback(num);
+					this.Callback(res);
 				}
 			}
 
@@ -140,8 +140,8 @@ namespace DNA
 
 			public override void Show()
 			{
-				SignedInGamer signedInGamer = Gamer.SignedInGamers[this.Player];
-				if (signedInGamer != null && signedInGamer.Privileges.AllowPurchaseContent)
+				SignedInGamer gamer = Gamer.SignedInGamers[this.Player];
+				if (gamer != null && gamer.Privileges.AllowPurchaseContent)
 				{
 					Guide.ShowMarketplace(this.Player);
 					return;

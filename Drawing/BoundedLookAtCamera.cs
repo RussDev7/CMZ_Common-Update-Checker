@@ -18,13 +18,13 @@ namespace DNA.Drawing
 			{
 				if (this.LookAtEntity != null)
 				{
-					Vector3 worldPosition = base.WorldPosition;
-					Vector3 worldPosition2 = this.LookAtEntity.WorldPosition;
-					LineF3D lineF3D = new LineF3D(worldPosition2, worldPosition);
-					float? num = this._bsp.CollidesWith(lineF3D);
-					if (num != null)
+					Vector3 pos = base.WorldPosition;
+					Vector3 lookAt = this.LookAtEntity.WorldPosition;
+					LineF3D cameraLine = new LineF3D(lookAt, pos);
+					float? t = this._bsp.CollidesWith(cameraLine);
+					if (t != null)
 					{
-						return Matrix.CreateLookAt(lineF3D.GetValue(num.Value * 0.9f), worldPosition2, Vector3.Up);
+						return Matrix.CreateLookAt(cameraLine.GetValue(t.Value * 0.9f), lookAt, Vector3.Up);
 					}
 				}
 				return base.View;

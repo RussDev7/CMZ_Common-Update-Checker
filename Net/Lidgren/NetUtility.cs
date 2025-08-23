@@ -25,8 +25,8 @@ namespace DNA.Net.Lidgren
 
 		public static IPEndPoint Resolve(string ipOrHost, int port)
 		{
-			IPAddress ipaddress = NetUtility.Resolve(ipOrHost);
-			return new IPEndPoint(ipaddress, port);
+			IPAddress adr = NetUtility.Resolve(ipOrHost);
+			return new IPEndPoint(adr, port);
 		}
 
 		public static void ResolveAsync(string ipOrHost, NetUtility.ResolveAddressCallback callback)
@@ -41,8 +41,8 @@ namespace DNA.Net.Lidgren
 			{
 				callback(null);
 			}
-			IPAddress ipaddress = null;
-			if (!IPAddress.TryParse(ipOrHost, out ipaddress))
+			IPAddress ipAddress = null;
+			if (!IPAddress.TryParse(ipOrHost, out ipAddress))
 			{
 				try
 				{
@@ -63,11 +63,11 @@ namespace DNA.Net.Lidgren
 							callback(null);
 							return;
 						}
-						foreach (IPAddress ipaddress2 in entry.AddressList)
+						foreach (IPAddress ipCurrent in entry.AddressList)
 						{
-							if (ipaddress2.AddressFamily == AddressFamily.InterNetwork)
+							if (ipCurrent.AddressFamily == AddressFamily.InterNetwork)
 							{
-								callback(ipaddress2);
+								callback(ipCurrent);
 								return;
 							}
 						}
@@ -81,9 +81,9 @@ namespace DNA.Net.Lidgren
 				}
 				return;
 			}
-			if (ipaddress.AddressFamily == AddressFamily.InterNetwork)
+			if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
 			{
-				callback(ipaddress);
+				callback(ipAddress);
 				return;
 			}
 			throw new ArgumentException("This method will not currently resolve other than ipv4 addresses");
@@ -101,39 +101,39 @@ namespace DNA.Net.Lidgren
 			{
 				return null;
 			}
-			IPAddress ipaddress = null;
-			if (!IPAddress.TryParse(ipOrHost, out ipaddress))
+			IPAddress ipAddress = null;
+			if (!IPAddress.TryParse(ipOrHost, out ipAddress))
 			{
-				IPAddress ipaddress2;
+				IPAddress ipaddress;
 				try
 				{
-					IPHostEntry hostEntry = Dns.GetHostEntry(ipOrHost);
-					if (hostEntry == null)
+					IPHostEntry entry = Dns.GetHostEntry(ipOrHost);
+					if (entry == null)
 					{
-						ipaddress2 = null;
+						ipaddress = null;
 					}
 					else
 					{
-						foreach (IPAddress ipaddress3 in hostEntry.AddressList)
+						foreach (IPAddress ipCurrent in entry.AddressList)
 						{
-							if (ipaddress3.AddressFamily == AddressFamily.InterNetwork)
+							if (ipCurrent.AddressFamily == AddressFamily.InterNetwork)
 							{
-								return ipaddress3;
+								return ipCurrent;
 							}
 						}
-						ipaddress2 = null;
+						ipaddress = null;
 					}
 				}
 				catch (SocketException ex)
 				{
 					NetUtility.LastResolveResult = ex.SocketErrorCode;
-					ipaddress2 = null;
+					ipaddress = null;
 				}
-				return ipaddress2;
-			}
-			if (ipaddress.AddressFamily == AddressFamily.InterNetwork)
-			{
 				return ipaddress;
+			}
+			if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
+			{
+				return ipAddress;
 			}
 			return null;
 		}
@@ -144,37 +144,37 @@ namespace DNA.Net.Lidgren
 			{
 				return null;
 			}
-			NetworkInterface[] allNetworkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
-			if (allNetworkInterfaces == null || allNetworkInterfaces.Length < 1)
+			NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+			if (nics == null || nics.Length < 1)
 			{
 				return null;
 			}
-			NetworkInterface networkInterface = null;
-			foreach (NetworkInterface networkInterface2 in allNetworkInterfaces)
+			NetworkInterface best = null;
+			foreach (NetworkInterface adapter in nics)
 			{
-				if (networkInterface2.NetworkInterfaceType != NetworkInterfaceType.Loopback && networkInterface2.NetworkInterfaceType != NetworkInterfaceType.Unknown && networkInterface2.Supports(NetworkInterfaceComponent.IPv4))
+				if (adapter.NetworkInterfaceType != NetworkInterfaceType.Loopback && adapter.NetworkInterfaceType != NetworkInterfaceType.Unknown && adapter.Supports(NetworkInterfaceComponent.IPv4))
 				{
-					if (networkInterface == null)
+					if (best == null)
 					{
-						networkInterface = networkInterface2;
+						best = adapter;
 					}
-					if (networkInterface2.OperationalStatus == OperationalStatus.Up)
+					if (adapter.OperationalStatus == OperationalStatus.Up)
 					{
-						return networkInterface2;
+						return adapter;
 					}
 				}
 			}
-			return networkInterface;
+			return best;
 		}
 
 		public static PhysicalAddress GetMacAddress()
 		{
-			NetworkInterface networkInterface = NetUtility.GetNetworkInterface();
-			if (networkInterface == null)
+			NetworkInterface ni = NetUtility.GetNetworkInterface();
+			if (ni == null)
 			{
 				return null;
 			}
-			return networkInterface.GetPhysicalAddress();
+			return ni.GetPhysicalAddress();
 		}
 
 		public static string ToHexString(long data)
@@ -184,44 +184,44 @@ namespace DNA.Net.Lidgren
 
 		public static string ToHexString(byte[] data)
 		{
-			char[] array = new char[data.Length * 2];
+			char[] c = new char[data.Length * 2];
 			for (int i = 0; i < data.Length; i++)
 			{
 				byte b = (byte)(data[i] >> 4);
-				array[i * 2] = (char)((b > 9) ? (b + 55) : (b + 48));
+				c[i * 2] = (char)((b > 9) ? (b + 55) : (b + 48));
 				b = data[i] & 15;
-				array[i * 2 + 1] = (char)((b > 9) ? (b + 55) : (b + 48));
+				c[i * 2 + 1] = (char)((b > 9) ? (b + 55) : (b + 48));
 			}
-			return new string(array);
+			return new string(c);
 		}
 
 		public static IPAddress GetBroadcastAddress()
 		{
 			try
 			{
-				NetworkInterface networkInterface = NetUtility.GetNetworkInterface();
-				if (networkInterface == null)
+				NetworkInterface ni = NetUtility.GetNetworkInterface();
+				if (ni == null)
 				{
 					return null;
 				}
-				IPInterfaceProperties ipproperties = networkInterface.GetIPProperties();
-				foreach (UnicastIPAddressInformation unicastIPAddressInformation in ipproperties.UnicastAddresses)
+				IPInterfaceProperties properties = ni.GetIPProperties();
+				foreach (UnicastIPAddressInformation unicastAddress in properties.UnicastAddresses)
 				{
-					if (unicastIPAddressInformation != null && unicastIPAddressInformation.Address != null && unicastIPAddressInformation.Address.AddressFamily == AddressFamily.InterNetwork)
+					if (unicastAddress != null && unicastAddress.Address != null && unicastAddress.Address.AddressFamily == AddressFamily.InterNetwork)
 					{
-						IPAddress ipv4Mask = unicastIPAddressInformation.IPv4Mask;
-						byte[] addressBytes = unicastIPAddressInformation.Address.GetAddressBytes();
-						byte[] addressBytes2 = ipv4Mask.GetAddressBytes();
-						if (addressBytes.Length != addressBytes2.Length)
+						IPAddress mask = unicastAddress.IPv4Mask;
+						byte[] ipAdressBytes = unicastAddress.Address.GetAddressBytes();
+						byte[] subnetMaskBytes = mask.GetAddressBytes();
+						if (ipAdressBytes.Length != subnetMaskBytes.Length)
 						{
 							throw new ArgumentException("Lengths of IP address and subnet mask do not match.");
 						}
-						byte[] array = new byte[addressBytes.Length];
-						for (int i = 0; i < array.Length; i++)
+						byte[] broadcastAddress = new byte[ipAdressBytes.Length];
+						for (int i = 0; i < broadcastAddress.Length; i++)
 						{
-							array[i] = addressBytes[i] | (addressBytes2[i] ^ byte.MaxValue);
+							broadcastAddress[i] = ipAdressBytes[i] | (subnetMaskBytes[i] ^ byte.MaxValue);
 						}
-						return new IPAddress(array);
+						return new IPAddress(broadcastAddress);
 					}
 				}
 			}
@@ -235,19 +235,19 @@ namespace DNA.Net.Lidgren
 		public static IPAddress GetMyAddress(out IPAddress mask)
 		{
 			mask = null;
-			NetworkInterface networkInterface = NetUtility.GetNetworkInterface();
-			if (networkInterface == null)
+			NetworkInterface ni = NetUtility.GetNetworkInterface();
+			if (ni == null)
 			{
 				mask = null;
 				return null;
 			}
-			IPInterfaceProperties ipproperties = networkInterface.GetIPProperties();
-			foreach (UnicastIPAddressInformation unicastIPAddressInformation in ipproperties.UnicastAddresses)
+			IPInterfaceProperties properties = ni.GetIPProperties();
+			foreach (UnicastIPAddressInformation unicastAddress in properties.UnicastAddresses)
 			{
-				if (unicastIPAddressInformation != null && unicastIPAddressInformation.Address != null && unicastIPAddressInformation.Address.AddressFamily == AddressFamily.InterNetwork)
+				if (unicastAddress != null && unicastAddress.Address != null && unicastAddress.Address.AddressFamily == AddressFamily.InterNetwork)
 				{
-					mask = unicastIPAddressInformation.IPv4Mask;
-					return unicastIPAddressInformation.Address;
+					mask = unicastAddress.IPv4Mask;
+					return unicastAddress.Address;
 				}
 			}
 			return null;
@@ -260,27 +260,27 @@ namespace DNA.Net.Lidgren
 
 		public static bool IsLocal(IPAddress remote)
 		{
-			IPAddress ipaddress;
-			IPAddress myAddress = NetUtility.GetMyAddress(out ipaddress);
-			if (ipaddress == null)
+			IPAddress mask;
+			IPAddress local = NetUtility.GetMyAddress(out mask);
+			if (mask == null)
 			{
 				return false;
 			}
-			uint num = BitConverter.ToUInt32(ipaddress.GetAddressBytes(), 0);
-			uint num2 = BitConverter.ToUInt32(remote.GetAddressBytes(), 0);
-			uint num3 = BitConverter.ToUInt32(myAddress.GetAddressBytes(), 0);
-			return (num2 & num) == (num3 & num);
+			uint maskBits = BitConverter.ToUInt32(mask.GetAddressBytes(), 0);
+			uint remoteBits = BitConverter.ToUInt32(remote.GetAddressBytes(), 0);
+			uint localBits = BitConverter.ToUInt32(local.GetAddressBytes(), 0);
+			return (remoteBits & maskBits) == (localBits & maskBits);
 		}
 
 		[CLSCompliant(false)]
 		public static int BitsToHoldUInt(uint value)
 		{
-			int num = 1;
+			int bits = 1;
 			while ((value >>= 1) != 0U)
 			{
-				num++;
+				bits++;
 			}
-			return num;
+			return bits;
 		}
 
 		public static int BytesToHoldBits(int numBits)
@@ -316,12 +316,12 @@ namespace DNA.Net.Lidgren
 
 		public static byte[] ToByteArray(string hexString)
 		{
-			byte[] array = new byte[hexString.Length / 2];
+			byte[] retval = new byte[hexString.Length / 2];
 			for (int i = 0; i < hexString.Length; i += 2)
 			{
-				array[i / 2] = Convert.ToByte(hexString.Substring(i, 2), 16);
+				retval[i / 2] = Convert.ToByte(hexString.Substring(i, 2), 16);
 			}
-			return array;
+			return retval;
 		}
 
 		public static string ToHumanReadable(long bytes)
@@ -370,25 +370,25 @@ namespace DNA.Net.Lidgren
 
 		internal static void SortMembersList(MemberInfo[] list)
 		{
-			int i = 1;
-			while (i * 3 + 1 <= list.Length)
+			int h = 1;
+			while (h * 3 + 1 <= list.Length)
 			{
-				i = 3 * i + 1;
+				h = 3 * h + 1;
 			}
-			while (i > 0)
+			while (h > 0)
 			{
-				for (int j = i - 1; j < list.Length; j++)
+				for (int i = h - 1; i < list.Length; i++)
 				{
-					MemberInfo memberInfo = list[j];
-					int num = j;
-					while (num >= i && string.Compare(list[num - i].Name, memberInfo.Name, StringComparison.InvariantCulture) > 0)
+					MemberInfo tmp = list[i];
+					int j = i;
+					while (j >= h && string.Compare(list[j - h].Name, tmp.Name, StringComparison.InvariantCulture) > 0)
 					{
-						list[num] = list[num - i];
-						num -= i;
+						list[j] = list[j - h];
+						j -= h;
 					}
-					list[num] = memberInfo;
+					list[j] = tmp;
 				}
-				i /= 3;
+				h /= 3;
 			}
 		}
 
@@ -415,19 +415,19 @@ namespace DNA.Net.Lidgren
 
 		public static string MakeCommaDelimitedList<T>(IList<T> list)
 		{
-			int count = list.Count;
-			StringBuilder stringBuilder = new StringBuilder(count * 5);
-			for (int i = 0; i < count; i++)
+			int cnt = list.Count;
+			StringBuilder bdr = new StringBuilder(cnt * 5);
+			for (int i = 0; i < cnt; i++)
 			{
-				StringBuilder stringBuilder2 = stringBuilder;
+				StringBuilder stringBuilder = bdr;
 				T t = list[i];
-				stringBuilder2.Append(t.ToString());
-				if (i != count - 1)
+				stringBuilder.Append(t.ToString());
+				if (i != cnt - 1)
 				{
-					stringBuilder.Append(", ");
+					bdr.Append(", ");
 				}
 			}
-			return stringBuilder.ToString();
+			return bdr.ToString();
 		}
 
 		public static SocketError LastResolveResult;

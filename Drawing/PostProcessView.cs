@@ -32,26 +32,26 @@ namespace DNA.Drawing
 
 		private void SetDestinationTargetInternal(RenderTarget2D destinationTarget)
 		{
-			GraphicsDevice graphicsDevice = base.Game.GraphicsDevice;
-			int num;
-			int num2;
-			SurfaceFormat surfaceFormat;
-			DepthFormat depthFormat;
+			GraphicsDevice device = base.Game.GraphicsDevice;
+			int width;
+			int height;
+			SurfaceFormat format;
+			DepthFormat dFormat;
 			if (destinationTarget == null)
 			{
-				PresentationParameters presentationParameters = graphicsDevice.PresentationParameters;
-				num = presentationParameters.BackBufferWidth;
-				num2 = presentationParameters.BackBufferHeight;
-				surfaceFormat = presentationParameters.BackBufferFormat;
-				depthFormat = presentationParameters.DepthStencilFormat;
-				int multiSampleCount = presentationParameters.MultiSampleCount;
+				PresentationParameters pp = device.PresentationParameters;
+				width = pp.BackBufferWidth;
+				height = pp.BackBufferHeight;
+				format = pp.BackBufferFormat;
+				dFormat = pp.DepthStencilFormat;
+				int multiSampleCount = pp.MultiSampleCount;
 			}
 			else
 			{
-				num = destinationTarget.Width;
-				num2 = destinationTarget.Height;
-				surfaceFormat = destinationTarget.Format;
-				depthFormat = destinationTarget.DepthStencilFormat;
+				width = destinationTarget.Width;
+				height = destinationTarget.Height;
+				format = destinationTarget.Format;
+				dFormat = destinationTarget.DepthStencilFormat;
 				int multiSampleCount2 = destinationTarget.MultiSampleCount;
 			}
 			if (this._renderTarget1 != null && !this._renderTarget1.IsDisposed)
@@ -66,18 +66,18 @@ namespace DNA.Drawing
 			{
 				this._lastFrame.Dispose();
 			}
-			num /= 2;
-			num2 /= 2;
-			this._renderTarget1 = new RenderTarget2D(graphicsDevice, num, num2, false, surfaceFormat, depthFormat, 1, RenderTargetUsage.DiscardContents);
-			this._renderTarget2 = new RenderTarget2D(graphicsDevice, num, num2, false, surfaceFormat, DepthFormat.None, 1, RenderTargetUsage.DiscardContents);
-			if (graphicsDevice.GraphicsProfile == GraphicsProfile.HiDef)
+			width /= 2;
+			height /= 2;
+			this._renderTarget1 = new RenderTarget2D(device, width, height, false, format, dFormat, 1, RenderTargetUsage.DiscardContents);
+			this._renderTarget2 = new RenderTarget2D(device, width, height, false, format, DepthFormat.None, 1, RenderTargetUsage.DiscardContents);
+			if (device.GraphicsProfile == GraphicsProfile.HiDef)
 			{
-				this._lastFrame = new RenderTarget2D(graphicsDevice, num, num2, true, surfaceFormat, DepthFormat.None, 1, RenderTargetUsage.DiscardContents);
+				this._lastFrame = new RenderTarget2D(device, width, height, true, format, DepthFormat.None, 1, RenderTargetUsage.DiscardContents);
 				return;
 			}
-			int num3 = 1 << (int)(Math.Log((double)num) / Math.Log(2.0));
-			int num4 = 1 << (int)(Math.Log((double)num2) / Math.Log(2.0));
-			this._lastFrame = new RenderTarget2D(graphicsDevice, num3, num4, false, surfaceFormat, DepthFormat.None, 1, RenderTargetUsage.DiscardContents);
+			int pow2w = 1 << (int)(Math.Log((double)width) / Math.Log(2.0));
+			int pow2h = 1 << (int)(Math.Log((double)height) / Math.Log(2.0));
+			this._lastFrame = new RenderTarget2D(device, pow2w, pow2h, false, format, DepthFormat.None, 1, RenderTargetUsage.DiscardContents);
 		}
 
 		public override void SetDestinationTarget(RenderTarget2D destinationTarget)
@@ -121,43 +121,43 @@ namespace DNA.Drawing
 
 		private void SetBlurEffectParameters(float dx, float dy)
 		{
-			EffectParameter effectParameter = this.gaussianBlurEffect.Parameters["SampleWeights"];
-			EffectParameter effectParameter2 = this.gaussianBlurEffect.Parameters["SampleOffsets"];
-			int count = effectParameter.Elements.Count;
-			if (this.sampleWeights.Length != count)
+			EffectParameter weightsParameter = this.gaussianBlurEffect.Parameters["SampleWeights"];
+			EffectParameter offsetsParameter = this.gaussianBlurEffect.Parameters["SampleOffsets"];
+			int sampleCount = weightsParameter.Elements.Count;
+			if (this.sampleWeights.Length != sampleCount)
 			{
-				this.sampleWeights = new float[count];
+				this.sampleWeights = new float[sampleCount];
 			}
-			if (this.sampleOffsets.Length != count)
+			if (this.sampleOffsets.Length != sampleCount)
 			{
-				this.sampleOffsets = new Vector2[count];
+				this.sampleOffsets = new Vector2[sampleCount];
 			}
 			this.sampleWeights[0] = this.ComputeGaussian(0f);
 			this.sampleOffsets[0] = new Vector2(0f);
-			float num = this.sampleWeights[0];
-			for (int i = 0; i < count / 2; i++)
+			float totalWeights = this.sampleWeights[0];
+			for (int i = 0; i < sampleCount / 2; i++)
 			{
-				float num2 = this.ComputeGaussian((float)(i + 1));
-				this.sampleWeights[i * 2 + 1] = num2;
-				this.sampleWeights[i * 2 + 2] = num2;
-				num += num2 * 2f;
-				float num3 = (float)(i * 2) + 1.5f;
-				Vector2 vector = new Vector2(dx, dy) * num3;
-				this.sampleOffsets[i * 2 + 1] = vector;
-				this.sampleOffsets[i * 2 + 2] = -vector;
+				float weight = this.ComputeGaussian((float)(i + 1));
+				this.sampleWeights[i * 2 + 1] = weight;
+				this.sampleWeights[i * 2 + 2] = weight;
+				totalWeights += weight * 2f;
+				float sampleOffset = (float)(i * 2) + 1.5f;
+				Vector2 delta = new Vector2(dx, dy) * sampleOffset;
+				this.sampleOffsets[i * 2 + 1] = delta;
+				this.sampleOffsets[i * 2 + 2] = -delta;
 			}
 			for (int j = 0; j < this.sampleWeights.Length; j++)
 			{
-				this.sampleWeights[j] /= num;
+				this.sampleWeights[j] /= totalWeights;
 			}
-			effectParameter.SetValue(this.sampleWeights);
-			effectParameter2.SetValue(this.sampleOffsets);
+			weightsParameter.SetValue(this.sampleWeights);
+			offsetsParameter.SetValue(this.sampleOffsets);
 		}
 
 		private float ComputeGaussian(float n)
 		{
-			float blurAmount = this.BloomSettings.BlurAmount;
-			return (float)(1.0 / Math.Sqrt(6.283185307179586 * (double)blurAmount) * Math.Exp((double)(-(double)(n * n) / (2f * blurAmount * blurAmount))));
+			float theta = this.BloomSettings.BlurAmount;
+			return (float)(1.0 / Math.Sqrt(6.283185307179586 * (double)theta) * Math.Exp((double)(-(double)(n * n) / (2f * theta * theta))));
 		}
 
 		private RenderTarget2D _renderTarget1;

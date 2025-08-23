@@ -13,7 +13,7 @@
 
 		private void InitializeComponent()
 		{
-			global::System.ComponentModel.ComponentResourceManager componentResourceManager = new global::System.ComponentModel.ComponentResourceManager(typeof(global::DNA.Diagnostics.IssueReporting.CustomerCrashReportForm));
+			global::System.ComponentModel.ComponentResourceManager resources = new global::System.ComponentModel.ComponentResourceManager(typeof(global::DNA.Diagnostics.IssueReporting.CustomerCrashReportForm));
 			this.webBrowser1 = new global::System.Windows.Forms.WebBrowser();
 			base.SuspendLayout();
 			this.webBrowser1.Anchor = global::System.Windows.Forms.AnchorStyles.Top | global::System.Windows.Forms.AnchorStyles.Bottom | global::System.Windows.Forms.AnchorStyles.Left | global::System.Windows.Forms.AnchorStyles.Right;
@@ -26,7 +26,7 @@
 			base.AutoScaleMode = global::System.Windows.Forms.AutoScaleMode.Font;
 			base.ClientSize = new global::System.Drawing.Size(784, 564);
 			base.Controls.Add(this.webBrowser1);
-			base.Icon = (global::System.Drawing.Icon)componentResourceManager.GetObject("$this.Icon");
+			base.Icon = (global::System.Drawing.Icon)resources.GetObject("$this.Icon");
 			this.MinimumSize = new global::System.Drawing.Size(506, 266);
 			base.Name = "CustomerCrashReportForm";
 			base.StartPosition = global::System.Windows.Forms.FormStartPosition.CenterParent;

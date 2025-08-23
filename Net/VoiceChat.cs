@@ -31,27 +31,27 @@ namespace DNA.Net
 		private void _microphone_BufferReady(object sender, EventArgs e)
 		{
 			this._microphone.GetData(this._micBuffer);
-			int num = this._micBuffer.Length / 2;
-			int num2 = 0;
-			for (int i = 0; i < num; i++)
+			int samples = this._micBuffer.Length / 2;
+			int readpos = 0;
+			for (int i = 0; i < samples; i++)
 			{
-				short num3 = (short)this._micBuffer[num2 + 1];
-				short num4 = (short)(this._micBuffer[num2] << 8);
-				short num5 = num3 | num4;
-				this._sendBuffer[i] = VoiceChat._pcmToALawMap[(int)num5];
-				num2 += 2;
+				short low = (short)this._micBuffer[readpos + 1];
+				short high = (short)(this._micBuffer[readpos] << 8);
+				short sample = low | high;
+				this._sendBuffer[i] = VoiceChat._pcmToALawMap[(int)sample];
+				readpos += 2;
 			}
 			VoiceChatMessage.Send(this._gamer, this._sendBuffer);
 		}
 
 		public void ProcessMessage(VoiceChatMessage message)
 		{
-			int num = 0;
+			int writepos = 0;
 			for (int i = 0; i < message.AudioBuffer.Length; i++)
 			{
-				short num2 = VoiceChat._aLawToPcmMap[(int)message.AudioBuffer[i]];
-				this._playBuffer[num++] = (byte)(num2 & 255);
-				this._playBuffer[num++] = (byte)(num2 >> 8);
+				short sample = VoiceChat._aLawToPcmMap[(int)message.AudioBuffer[i]];
+				this._playBuffer[writepos++] = (byte)(sample & 255);
+				this._playBuffer[writepos++] = (byte)(sample >> 8);
 			}
 			this._playbackEffect.SubmitBuffer(this._playBuffer);
 		}
@@ -64,16 +64,16 @@ namespace DNA.Net
 				VoiceChat._pcmToALawMap[i & 65535] = VoiceChat.EncodeALawSample(i);
 			}
 			VoiceChat._aLawToPcmMap = new short[256];
-			for (byte b = 0; b < 255; b += 1)
+			for (byte j = 0; j < 255; j += 1)
 			{
-				VoiceChat._aLawToPcmMap[(int)b] = VoiceChat.DecodeALawSample(b);
+				VoiceChat._aLawToPcmMap[(int)j] = VoiceChat.DecodeALawSample(j);
 			}
 		}
 
 		private static byte EncodeALawSample(int pcm)
 		{
-			int num = (pcm & 32768) >> 8;
-			if (num != 0)
+			int sign = (pcm & 32768) >> 8;
+			if (sign != 0)
 			{
 				pcm = -pcm;
 			}
@@ -81,35 +81,35 @@ namespace DNA.Net
 			{
 				pcm = 32767;
 			}
-			int num2 = 7;
-			int num3 = 16384;
-			while ((pcm & num3) == 0 && num2 > 0)
+			int exponent = 7;
+			int expMask = 16384;
+			while ((pcm & expMask) == 0 && exponent > 0)
 			{
-				num2--;
-				num3 >>= 1;
+				exponent--;
+				expMask >>= 1;
 			}
-			int num4 = (pcm >> (((num2 == 0) ? 4 : (num2 + 3)) & 31)) & 15;
-			byte b = (byte)(num | (num2 << 4) | num4);
-			return b ^ 213;
+			int mantissa = (pcm >> (((exponent == 0) ? 4 : (exponent + 3)) & 31)) & 15;
+			byte alaw = (byte)(sign | (exponent << 4) | mantissa);
+			return alaw ^ 213;
 		}
 
 		private static short DecodeALawSample(byte alaw)
 		{
 			alaw ^= 213;
-			int num = (int)(alaw & 128);
-			int num2 = (alaw & 112) >> 4;
-			int num3 = (int)(alaw & 15);
-			num3 <<= 4;
-			num3 += 8;
-			if (num2 != 0)
+			int sign = (int)(alaw & 128);
+			int exponent = (alaw & 112) >> 4;
+			int data = (int)(alaw & 15);
+			data <<= 4;
+			data += 8;
+			if (exponent != 0)
 			{
-				num3 += 256;
+				data += 256;
 			}
-			if (num2 > 1)
+			if (exponent > 1)
 			{
-				num3 <<= num2 - 1;
+				data <<= exponent - 1;
 			}
-			return (short)((num == 0) ? num3 : (-(short)num3));
+			return (short)((sign == 0) ? data : (-(short)data));
 		}
 
 		private Microphone _microphone;

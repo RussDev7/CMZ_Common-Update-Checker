@@ -33,11 +33,11 @@ namespace DNA.Security.Cryptography
 			{
 				throw new Exception("Data over 4GB not supported yet");
 			}
-			IDigest hashAlgorythim = this.GetHashAlgorythim();
-			hashAlgorythim.BlockUpdate(data, 0, data.Length);
-			byte[] array = new byte[hashAlgorythim.GetDigestSize()];
-			hashAlgorythim.DoFinal(array, 0);
-			return this.CreateHash(array);
+			IDigest hasher = this.GetHashAlgorythim();
+			hasher.BlockUpdate(data, 0, data.Length);
+			byte[] hashData = new byte[hasher.GetDigestSize()];
+			hasher.DoFinal(hashData, 0);
+			return this.CreateHash(hashData);
 		}
 
 		public Hash Compute(byte[] data, long length)
@@ -46,11 +46,11 @@ namespace DNA.Security.Cryptography
 			{
 				throw new Exception("Data over 4GB not supported yet");
 			}
-			IDigest hashAlgorythim = this.GetHashAlgorythim();
-			hashAlgorythim.BlockUpdate(data, 0, (int)length);
-			byte[] array = new byte[hashAlgorythim.GetDigestSize()];
-			hashAlgorythim.DoFinal(array, 0);
-			return this.CreateHash(array);
+			IDigest hasher = this.GetHashAlgorythim();
+			hasher.BlockUpdate(data, 0, (int)length);
+			byte[] hashData = new byte[hasher.GetDigestSize()];
+			hasher.DoFinal(hashData, 0);
+			return this.CreateHash(hashData);
 		}
 
 		public Hash Compute(byte[] data, long start, long length)
@@ -59,11 +59,11 @@ namespace DNA.Security.Cryptography
 			{
 				throw new Exception("Data over 4GB not supported yet");
 			}
-			IDigest hashAlgorythim = this.GetHashAlgorythim();
-			hashAlgorythim.BlockUpdate(data, (int)start, (int)length);
-			byte[] array = new byte[hashAlgorythim.GetDigestSize()];
-			hashAlgorythim.DoFinal(array, 0);
-			return this.CreateHash(array);
+			IDigest hasher = this.GetHashAlgorythim();
+			hasher.BlockUpdate(data, (int)start, (int)length);
+			byte[] hashData = new byte[hasher.GetDigestSize()];
+			hasher.DoFinal(hashData, 0);
+			return this.CreateHash(hashData);
 		}
 
 		public Hash Read(BinaryReader reader)
@@ -73,13 +73,13 @@ namespace DNA.Security.Cryptography
 
 		public virtual Hash GetFileHash(string path)
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			FileInfo fileInfo = new FileInfo(path);
-			using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+			MemoryStream memStream = new MemoryStream();
+			FileInfo info = new FileInfo(path);
+			using (FileStream fstream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				memoryStream.CopyStream(fileStream, fileInfo.Length);
+				memStream.CopyStream(fstream, info.Length);
 			}
-			return this.Compute(memoryStream.GetBuffer(), fileInfo.Length);
+			return this.Compute(memStream.GetBuffer(), info.Length);
 		}
 	}
 }

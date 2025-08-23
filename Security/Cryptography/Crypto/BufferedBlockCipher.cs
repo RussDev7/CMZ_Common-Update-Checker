@@ -46,9 +46,9 @@ namespace DNA.Security.Cryptography.Crypto
 
 		public override int GetUpdateOutputSize(int length)
 		{
-			int num = length + this.bufOff;
-			int num2 = num % this.buf.Length;
-			return num - num2;
+			int total = length + this.bufOff;
+			int leftOver = total % this.buf.Length;
+			return total - leftOver;
 		}
 
 		public override int GetOutputSize(int length)
@@ -73,16 +73,16 @@ namespace DNA.Security.Cryptography.Crypto
 
 		public override byte[] ProcessByte(byte input)
 		{
-			int updateOutputSize = this.GetUpdateOutputSize(1);
-			byte[] array = ((updateOutputSize > 0) ? new byte[updateOutputSize] : null);
-			int num = this.ProcessByte(input, array, 0);
-			if (updateOutputSize > 0 && num < updateOutputSize)
+			int outLength = this.GetUpdateOutputSize(1);
+			byte[] outBytes = ((outLength > 0) ? new byte[outLength] : null);
+			int pos = this.ProcessByte(input, outBytes, 0);
+			if (outLength > 0 && pos < outLength)
 			{
-				byte[] array2 = new byte[num];
-				Array.Copy(array, 0, array2, 0, num);
-				array = array2;
+				byte[] tmp = new byte[pos];
+				Array.Copy(outBytes, 0, tmp, 0, pos);
+				outBytes = tmp;
 			}
-			return array;
+			return outBytes;
 		}
 
 		public override byte[] ProcessBytes(byte[] input, int inOff, int length)
@@ -95,16 +95,16 @@ namespace DNA.Security.Cryptography.Crypto
 			{
 				return null;
 			}
-			int updateOutputSize = this.GetUpdateOutputSize(length);
-			byte[] array = ((updateOutputSize > 0) ? new byte[updateOutputSize] : null);
-			int num = this.ProcessBytes(input, inOff, length, array, 0);
-			if (updateOutputSize > 0 && num < updateOutputSize)
+			int outLength = this.GetUpdateOutputSize(length);
+			byte[] outBytes = ((outLength > 0) ? new byte[outLength] : null);
+			int pos = this.ProcessBytes(input, inOff, length, outBytes, 0);
+			if (outLength > 0 && pos < outLength)
 			{
-				byte[] array2 = new byte[num];
-				Array.Copy(array, 0, array2, 0, num);
-				array = array2;
+				byte[] tmp = new byte[pos];
+				Array.Copy(outBytes, 0, tmp, 0, pos);
+				outBytes = tmp;
 			}
-			return array;
+			return outBytes;
 		}
 
 		public override int ProcessBytes(byte[] input, int inOff, int length, byte[] output, int outOff)
@@ -120,23 +120,23 @@ namespace DNA.Security.Cryptography.Crypto
 			else
 			{
 				int blockSize = this.GetBlockSize();
-				int updateOutputSize = this.GetUpdateOutputSize(length);
-				if (updateOutputSize > 0 && outOff + updateOutputSize > output.Length)
+				int outLength = this.GetUpdateOutputSize(length);
+				if (outLength > 0 && outOff + outLength > output.Length)
 				{
 					throw new DataLengthException("output buffer too short");
 				}
-				int num = 0;
-				int num2 = this.buf.Length - this.bufOff;
-				if (length > num2)
+				int resultLen = 0;
+				int gapLen = this.buf.Length - this.bufOff;
+				if (length > gapLen)
 				{
-					Array.Copy(input, inOff, this.buf, this.bufOff, num2);
-					num += this.cipher.ProcessBlock(this.buf, 0, output, outOff);
+					Array.Copy(input, inOff, this.buf, this.bufOff, gapLen);
+					resultLen += this.cipher.ProcessBlock(this.buf, 0, output, outOff);
 					this.bufOff = 0;
-					length -= num2;
-					inOff += num2;
+					length -= gapLen;
+					inOff += gapLen;
 					while (length > this.buf.Length)
 					{
-						num += this.cipher.ProcessBlock(input, inOff, output, outOff + num);
+						resultLen += this.cipher.ProcessBlock(input, inOff, output, outOff + resultLen);
 						length -= blockSize;
 						inOff += blockSize;
 					}
@@ -145,33 +145,33 @@ namespace DNA.Security.Cryptography.Crypto
 				this.bufOff += length;
 				if (this.bufOff == this.buf.Length)
 				{
-					num += this.cipher.ProcessBlock(this.buf, 0, output, outOff + num);
+					resultLen += this.cipher.ProcessBlock(this.buf, 0, output, outOff + resultLen);
 					this.bufOff = 0;
 				}
-				return num;
+				return resultLen;
 			}
 		}
 
 		public override byte[] DoFinal()
 		{
-			byte[] array = BufferedCipherBase.EmptyBuffer;
-			int outputSize = this.GetOutputSize(0);
-			if (outputSize > 0)
+			byte[] outBytes = BufferedCipherBase.EmptyBuffer;
+			int length = this.GetOutputSize(0);
+			if (length > 0)
 			{
-				array = new byte[outputSize];
-				int num = this.DoFinal(array, 0);
-				if (num < array.Length)
+				outBytes = new byte[length];
+				int pos = this.DoFinal(outBytes, 0);
+				if (pos < outBytes.Length)
 				{
-					byte[] array2 = new byte[num];
-					Array.Copy(array, 0, array2, 0, num);
-					array = array2;
+					byte[] tmp = new byte[pos];
+					Array.Copy(outBytes, 0, tmp, 0, pos);
+					outBytes = tmp;
 				}
 			}
 			else
 			{
 				this.Reset();
 			}
-			return array;
+			return outBytes;
 		}
 
 		public override byte[] DoFinal(byte[] input, int inOff, int inLen)
@@ -180,25 +180,25 @@ namespace DNA.Security.Cryptography.Crypto
 			{
 				throw new ArgumentNullException("input");
 			}
-			int outputSize = this.GetOutputSize(inLen);
-			byte[] array = BufferedCipherBase.EmptyBuffer;
-			if (outputSize > 0)
+			int length = this.GetOutputSize(inLen);
+			byte[] outBytes = BufferedCipherBase.EmptyBuffer;
+			if (length > 0)
 			{
-				array = new byte[outputSize];
-				int num = ((inLen > 0) ? this.ProcessBytes(input, inOff, inLen, array, 0) : 0);
-				num += this.DoFinal(array, num);
-				if (num < array.Length)
+				outBytes = new byte[length];
+				int pos = ((inLen > 0) ? this.ProcessBytes(input, inOff, inLen, outBytes, 0) : 0);
+				pos += this.DoFinal(outBytes, pos);
+				if (pos < outBytes.Length)
 				{
-					byte[] array2 = new byte[num];
-					Array.Copy(array, 0, array2, 0, num);
-					array = array2;
+					byte[] tmp = new byte[pos];
+					Array.Copy(outBytes, 0, tmp, 0, pos);
+					outBytes = tmp;
 				}
 			}
 			else
 			{
 				this.Reset();
 			}
-			return array;
+			return outBytes;
 		}
 
 		public override int DoFinal(byte[] output, int outOff)
@@ -216,9 +216,9 @@ namespace DNA.Security.Cryptography.Crypto
 				this.cipher.ProcessBlock(this.buf, 0, this.buf, 0);
 				Array.Copy(this.buf, 0, output, outOff, this.bufOff);
 			}
-			int num = this.bufOff;
+			int resultLen = this.bufOff;
 			this.Reset();
-			return num;
+			return resultLen;
 		}
 
 		public override void Reset()

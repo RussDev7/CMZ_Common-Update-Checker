@@ -24,9 +24,9 @@ namespace DNA.Net.Lidgren
 
 		public static float ReadHalfPrecisionSingle(this NetBuffer message)
 		{
-			HalfSingle halfSingle = default(HalfSingle);
-			halfSingle.PackedValue = message.ReadUInt16();
-			return halfSingle.ToSingle();
+			HalfSingle h = default(HalfSingle);
+			h.PackedValue = message.ReadUInt16();
+			return h.ToSingle();
 		}
 
 		public static void Write(this NetBuffer message, Vector2 vector)
@@ -37,10 +37,10 @@ namespace DNA.Net.Lidgren
 
 		public static Vector2 ReadVector2(this NetBuffer message)
 		{
-			Vector2 vector;
-			vector.X = message.ReadSingle();
-			vector.Y = message.ReadSingle();
-			return vector;
+			Vector2 retval;
+			retval.X = message.ReadSingle();
+			retval.Y = message.ReadSingle();
+			return retval;
 		}
 
 		public static void Write(this NetBuffer message, Vector3 vector)
@@ -59,26 +59,26 @@ namespace DNA.Net.Lidgren
 
 		public static Vector3 ReadVector3(this NetBuffer message)
 		{
-			Vector3 vector;
-			vector.X = message.ReadSingle();
-			vector.Y = message.ReadSingle();
-			vector.Z = message.ReadSingle();
-			return vector;
+			Vector3 retval;
+			retval.X = message.ReadSingle();
+			retval.Y = message.ReadSingle();
+			retval.Z = message.ReadSingle();
+			return retval;
 		}
 
 		public static Vector3 ReadHalfPrecisionVector3(this NetBuffer message)
 		{
-			HalfSingle halfSingle = default(HalfSingle);
-			halfSingle.PackedValue = message.ReadUInt16();
-			HalfSingle halfSingle2 = default(HalfSingle);
-			halfSingle2.PackedValue = message.ReadUInt16();
-			HalfSingle halfSingle3 = default(HalfSingle);
-			halfSingle3.PackedValue = message.ReadUInt16();
-			Vector3 vector;
-			vector.X = halfSingle.ToSingle();
-			vector.Y = halfSingle2.ToSingle();
-			vector.Z = halfSingle3.ToSingle();
-			return vector;
+			HalfSingle hx = default(HalfSingle);
+			hx.PackedValue = message.ReadUInt16();
+			HalfSingle hy = default(HalfSingle);
+			hy.PackedValue = message.ReadUInt16();
+			HalfSingle hz = default(HalfSingle);
+			hz.PackedValue = message.ReadUInt16();
+			Vector3 retval;
+			retval.X = hx.ToSingle();
+			retval.Y = hy.ToSingle();
+			retval.Z = hz.ToSingle();
+			return retval;
 		}
 
 		public static void Write(this NetBuffer message, Vector4 vector)
@@ -91,12 +91,12 @@ namespace DNA.Net.Lidgren
 
 		public static Vector4 ReadVector4(this NetBuffer message)
 		{
-			Vector4 vector;
-			vector.X = message.ReadSingle();
-			vector.Y = message.ReadSingle();
-			vector.Z = message.ReadSingle();
-			vector.W = message.ReadSingle();
-			return vector;
+			Vector4 retval;
+			retval.X = message.ReadSingle();
+			retval.Y = message.ReadSingle();
+			retval.Z = message.ReadSingle();
+			retval.W = message.ReadSingle();
+			return retval;
 		}
 
 		public static void WriteUnitVector3(this NetBuffer message, Vector3 unitVector, int numberOfBits)
@@ -104,24 +104,24 @@ namespace DNA.Net.Lidgren
 			float x = unitVector.X;
 			float y = unitVector.Y;
 			float z = unitVector.Z;
-			double num = 0.3183098861837907;
-			float num2 = (float)(Math.Atan2((double)x, (double)y) * num);
-			float num3 = (float)(Math.Atan2((double)z, Math.Sqrt((double)(x * x + y * y))) * (num * 2.0));
-			int num4 = numberOfBits / 2;
-			message.WriteSignedSingle(num2, num4);
-			message.WriteSignedSingle(num3, numberOfBits - num4);
+			double invPi = 0.3183098861837907;
+			float phi = (float)(Math.Atan2((double)x, (double)y) * invPi);
+			float theta = (float)(Math.Atan2((double)z, Math.Sqrt((double)(x * x + y * y))) * (invPi * 2.0));
+			int halfBits = numberOfBits / 2;
+			message.WriteSignedSingle(phi, halfBits);
+			message.WriteSignedSingle(theta, numberOfBits - halfBits);
 		}
 
 		public static Vector3 ReadUnitVector3(this NetBuffer message, int numberOfBits)
 		{
-			int num = numberOfBits / 2;
-			float num2 = message.ReadSignedSingle(num) * 3.1415927f;
-			float num3 = message.ReadSignedSingle(numberOfBits - num) * 1.5707964f;
-			Vector3 vector;
-			vector.X = (float)(Math.Sin((double)num2) * Math.Cos((double)num3));
-			vector.Y = (float)(Math.Cos((double)num2) * Math.Cos((double)num3));
-			vector.Z = (float)Math.Sin((double)num3);
-			return vector;
+			int halfBits = numberOfBits / 2;
+			float phi = message.ReadSignedSingle(halfBits) * 3.1415927f;
+			float theta = message.ReadSignedSingle(numberOfBits - halfBits) * 1.5707964f;
+			Vector3 retval;
+			retval.X = (float)(Math.Sin((double)phi) * Math.Cos((double)theta));
+			retval.Y = (float)(Math.Cos((double)phi) * Math.Cos((double)theta));
+			retval.Z = (float)Math.Sin((double)theta);
+			return retval;
 		}
 
 		public static void WriteRotation(this NetBuffer message, Quaternion quaternion, int bitsPerElement)
@@ -166,18 +166,18 @@ namespace DNA.Net.Lidgren
 
 		public static Quaternion ReadRotation(this NetBuffer message, int bitsPerElement)
 		{
-			Quaternion quaternion;
-			quaternion.X = message.ReadSignedSingle(bitsPerElement);
-			quaternion.Y = message.ReadSignedSingle(bitsPerElement);
-			quaternion.Z = message.ReadSignedSingle(bitsPerElement);
-			quaternion.W = message.ReadSignedSingle(bitsPerElement);
-			return quaternion;
+			Quaternion retval;
+			retval.X = message.ReadSignedSingle(bitsPerElement);
+			retval.Y = message.ReadSignedSingle(bitsPerElement);
+			retval.Z = message.ReadSignedSingle(bitsPerElement);
+			retval.W = message.ReadSignedSingle(bitsPerElement);
+			return retval;
 		}
 
 		public static void WriteMatrix(this NetBuffer message, ref Matrix matrix)
 		{
-			Quaternion quaternion = Quaternion.CreateFromRotationMatrix(matrix);
-			message.WriteRotation(quaternion, 24);
+			Quaternion rot = Quaternion.CreateFromRotationMatrix(matrix);
+			message.WriteRotation(rot, 24);
 			message.Write(matrix.M41);
 			message.Write(matrix.M42);
 			message.Write(matrix.M43);
@@ -185,8 +185,8 @@ namespace DNA.Net.Lidgren
 
 		public static void WriteMatrix(this NetBuffer message, Matrix matrix)
 		{
-			Quaternion quaternion = Quaternion.CreateFromRotationMatrix(matrix);
-			message.WriteRotation(quaternion, 24);
+			Quaternion rot = Quaternion.CreateFromRotationMatrix(matrix);
+			message.WriteRotation(rot, 24);
 			message.Write(matrix.M41);
 			message.Write(matrix.M42);
 			message.Write(matrix.M43);
@@ -194,18 +194,18 @@ namespace DNA.Net.Lidgren
 
 		public static Matrix ReadMatrix(this NetBuffer message)
 		{
-			Quaternion quaternion = message.ReadRotation(24);
-			Matrix matrix = Matrix.CreateFromQuaternion(quaternion);
-			matrix.M41 = message.ReadSingle();
-			matrix.M42 = message.ReadSingle();
-			matrix.M43 = message.ReadSingle();
-			return matrix;
+			Quaternion rot = message.ReadRotation(24);
+			Matrix retval = Matrix.CreateFromQuaternion(rot);
+			retval.M41 = message.ReadSingle();
+			retval.M42 = message.ReadSingle();
+			retval.M43 = message.ReadSingle();
+			return retval;
 		}
 
 		public static void ReadMatrix(this NetBuffer message, ref Matrix destination)
 		{
-			Quaternion quaternion = message.ReadRotation(24);
-			destination = Matrix.CreateFromQuaternion(quaternion);
+			Quaternion rot = message.ReadRotation(24);
+			destination = Matrix.CreateFromQuaternion(rot);
 			destination.M41 = message.ReadSingle();
 			destination.M42 = message.ReadSingle();
 			destination.M43 = message.ReadSingle();
@@ -221,12 +221,12 @@ namespace DNA.Net.Lidgren
 
 		public static BoundingSphere ReadBoundingSphere(this NetBuffer message)
 		{
-			BoundingSphere boundingSphere;
-			boundingSphere.Center.X = message.ReadSingle();
-			boundingSphere.Center.Y = message.ReadSingle();
-			boundingSphere.Center.Z = message.ReadSingle();
-			boundingSphere.Radius = message.ReadSingle();
-			return boundingSphere;
+			BoundingSphere retval;
+			retval.Center.X = message.ReadSingle();
+			retval.Center.Y = message.ReadSingle();
+			retval.Center.Z = message.ReadSingle();
+			retval.Radius = message.ReadSingle();
+			return retval;
 		}
 	}
 }

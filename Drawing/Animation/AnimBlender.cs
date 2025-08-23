@@ -37,12 +37,12 @@ namespace DNA.Drawing.Animation
 				this._previousAnimation.Update(elapsedAnimationTime);
 			}
 			this._blendCurrentTime += elapsedAnimationTime;
-			float num = 1f;
+			float blendFactor = 1f;
 			if (this._blendTotalTime.TotalSeconds > 0.0)
 			{
-				num = (float)(this._blendCurrentTime.TotalSeconds / this._blendTotalTime.TotalSeconds);
+				blendFactor = (float)(this._blendCurrentTime.TotalSeconds / this._blendTotalTime.TotalSeconds);
 			}
-			if (num < 1f)
+			if (blendFactor < 1f)
 			{
 				for (int i = 0; i < bones.Count; i++)
 				{
@@ -50,22 +50,22 @@ namespace DNA.Drawing.Animation
 					{
 						if (this._currentAnimation != null && this._currentAnimation.GetBoneInfluence(i))
 						{
-							bones[i].Translation = Vector3.Lerp(this._previousAnimation.Translations[i], this._currentAnimation.Translations[i], num);
-							bones[i].Rotation = Quaternion.Slerp(this._previousAnimation.Rotations[i], this._currentAnimation.Rotations[i], num);
-							bones[i].Scale = Vector3.Lerp(this._previousAnimation.Scales[i], this._currentAnimation.Scales[i], num);
+							bones[i].Translation = Vector3.Lerp(this._previousAnimation.Translations[i], this._currentAnimation.Translations[i], blendFactor);
+							bones[i].Rotation = Quaternion.Slerp(this._previousAnimation.Rotations[i], this._currentAnimation.Rotations[i], blendFactor);
+							bones[i].Scale = Vector3.Lerp(this._previousAnimation.Scales[i], this._currentAnimation.Scales[i], blendFactor);
 						}
 						else
 						{
-							bones[i].Translation = Vector3.Lerp(this._previousAnimation.Translations[i], bones[i].Translation, num);
-							bones[i].Rotation = Quaternion.Slerp(this._previousAnimation.Rotations[i], bones[i].Rotation, num);
-							bones[i].Scale = Vector3.Lerp(this._previousAnimation.Scales[i], bones[i].Scale, num);
+							bones[i].Translation = Vector3.Lerp(this._previousAnimation.Translations[i], bones[i].Translation, blendFactor);
+							bones[i].Rotation = Quaternion.Slerp(this._previousAnimation.Rotations[i], bones[i].Rotation, blendFactor);
+							bones[i].Scale = Vector3.Lerp(this._previousAnimation.Scales[i], bones[i].Scale, blendFactor);
 						}
 					}
 					else if (this._currentAnimation != null && this._currentAnimation.GetBoneInfluence(i))
 					{
-						bones[i].Translation = Vector3.Lerp(bones[i].Translation, this._currentAnimation.Translations[i], num);
-						bones[i].Rotation = Quaternion.Slerp(bones[i].Rotation, this._currentAnimation.Rotations[i], num);
-						bones[i].Scale = Vector3.Lerp(bones[i].Scale, this._currentAnimation.Scales[i], num);
+						bones[i].Translation = Vector3.Lerp(bones[i].Translation, this._currentAnimation.Translations[i], blendFactor);
+						bones[i].Rotation = Quaternion.Slerp(bones[i].Rotation, this._currentAnimation.Rotations[i], blendFactor);
+						bones[i].Scale = Vector3.Lerp(bones[i].Scale, this._currentAnimation.Scales[i], blendFactor);
 					}
 				}
 				return;
@@ -75,8 +75,8 @@ namespace DNA.Drawing.Animation
 			{
 				return;
 			}
-			int count = bones.Count;
-			for (int j = 0; j < count; j++)
+			int boneCount = bones.Count;
+			for (int j = 0; j < boneCount; j++)
 			{
 				if (this._currentAnimation.GetBoneInfluence(j))
 				{

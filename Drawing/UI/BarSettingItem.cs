@@ -19,8 +19,8 @@ namespace DNA.Drawing.UI
 		{
 			if (this._location.Contains(mouse.Position) && mouse.LeftButtonDown)
 			{
-				float num = (float)(mouse.Position.X - this._location.X);
-				this.Value = num / (float)this._location.Width;
+				float loc = (float)(mouse.Position.X - this._location.X);
+				this.Value = loc / (float)this._location.Width;
 				return true;
 			}
 			return false;
@@ -71,16 +71,16 @@ namespace DNA.Drawing.UI
 
 		public override void OnDraw(DNAGame _game, GraphicsDevice device, SpriteBatch spriteBatch, SpriteFont font, Color textColor, Color outlineColor, int outlineWidth, Vector2 loc)
 		{
-			Rectangle screenRect = Screen.Adjuster.ScreenRect;
-			Vector2 vector = font.MeasureString(">");
-			float num = (float)(screenRect.Right - screenRect.Center.X - 50) - vector.X * 2f;
-			float num2 = vector.Y / 2f;
-			float num3 = loc.Y + (vector.Y - num2) / 2f - 3f;
-			spriteBatch.DrawOutlinedText(font, "<", new Vector2((float)(screenRect.Center.X + 15), loc.Y), textColor, outlineColor, outlineWidth);
-			spriteBatch.DrawOutlinedText(font, ">", new Vector2((float)(screenRect.Right - 15) - vector.X, loc.Y), textColor, outlineColor, outlineWidth);
-			this._location = new Rectangle((int)((float)(screenRect.Center.X + 25) + vector.X), (int)num3, (int)num, (int)num2);
-			spriteBatch.Draw(_game.DummyTexture, new Rectangle((int)((float)(screenRect.Center.X + 25) + vector.X), (int)num3, (int)num, (int)num2), Color.Black);
-			spriteBatch.Draw(_game.DummyTexture, new Rectangle((int)((float)(screenRect.Center.X + 26) + vector.X), (int)num3 + 1, (int)((num - 2f) * this.Value), (int)(num2 - 2f)), Color.White);
+			Rectangle titleSafe = Screen.Adjuster.ScreenRect;
+			Vector2 size = font.MeasureString(">");
+			float barWidth = (float)(titleSafe.Right - titleSafe.Center.X - 50) - size.X * 2f;
+			float barHeight = size.Y / 2f;
+			float barYloc = loc.Y + (size.Y - barHeight) / 2f - 3f;
+			spriteBatch.DrawOutlinedText(font, "<", new Vector2((float)(titleSafe.Center.X + 15), loc.Y), textColor, outlineColor, outlineWidth);
+			spriteBatch.DrawOutlinedText(font, ">", new Vector2((float)(titleSafe.Right - 15) - size.X, loc.Y), textColor, outlineColor, outlineWidth);
+			this._location = new Rectangle((int)((float)(titleSafe.Center.X + 25) + size.X), (int)barYloc, (int)barWidth, (int)barHeight);
+			spriteBatch.Draw(_game.DummyTexture, new Rectangle((int)((float)(titleSafe.Center.X + 25) + size.X), (int)barYloc, (int)barWidth, (int)barHeight), Color.Black);
+			spriteBatch.Draw(_game.DummyTexture, new Rectangle((int)((float)(titleSafe.Center.X + 26) + size.X), (int)barYloc + 1, (int)((barWidth - 2f) * this.Value), (int)(barHeight - 2f)), Color.White);
 			base.OnDraw(_game, device, spriteBatch, font, textColor, outlineColor, outlineWidth, loc);
 		}
 

@@ -23,82 +23,82 @@ namespace DNA.Drawing.Animation
 
 		public void Resample(int frameRate)
 		{
-			Matrix[] array = new Matrix[this.BoneCount];
-			List<Vector3>[] array2 = new List<Vector3>[this.BoneCount];
-			List<Quaternion>[] array3 = new List<Quaternion>[this.BoneCount];
-			List<Vector3>[] array4 = new List<Vector3>[this.BoneCount];
-			for (int i = 0; i < array.Length; i++)
+			Matrix[] boneTransforms = new Matrix[this.BoneCount];
+			List<Vector3>[] newPosList = new List<Vector3>[this.BoneCount];
+			List<Quaternion>[] newRotList = new List<Quaternion>[this.BoneCount];
+			List<Vector3>[] newScaleList = new List<Vector3>[this.BoneCount];
+			for (int i = 0; i < boneTransforms.Length; i++)
 			{
-				array2[i] = new List<Vector3>();
-				array3[i] = new List<Quaternion>();
-				array4[i] = new List<Vector3>();
+				newPosList[i] = new List<Vector3>();
+				newRotList[i] = new List<Quaternion>();
+				newScaleList[i] = new List<Vector3>();
 			}
-			TimeSpan timeSpan = TimeSpan.FromSeconds(1.0 / (double)frameRate);
-			TimeSpan timeSpan2 = TimeSpan.Zero;
-			while (timeSpan2 <= this.Duration)
+			TimeSpan inc = TimeSpan.FromSeconds(1.0 / (double)frameRate);
+			TimeSpan time = TimeSpan.Zero;
+			while (time <= this.Duration)
 			{
-				float num = (float)((double)this._animationFrameRate * timeSpan2.TotalSeconds);
-				int num2 = (int)num;
-				float num3 = num - (float)num2;
-				for (int j = 0; j < array.Length; j++)
+				float frameTime = (float)((double)this._animationFrameRate * time.TotalSeconds);
+				int currentKeyframe = (int)frameTime;
+				float blender = frameTime - (float)currentKeyframe;
+				for (int j = 0; j < boneTransforms.Length; j++)
 				{
-					Quaternion[] array5 = this._rotations[j];
-					Quaternion quaternion;
-					if (num2 >= array5.Length)
+					Quaternion[] quatKeys = this._rotations[j];
+					Quaternion rotation;
+					if (currentKeyframe >= quatKeys.Length)
 					{
-						quaternion = array5[array5.Length - 1];
+						rotation = quatKeys[quatKeys.Length - 1];
 					}
 					else
 					{
-						quaternion = array5[num2];
-						if (num2 < array5.Length - 2)
+						rotation = quatKeys[currentKeyframe];
+						if (currentKeyframe < quatKeys.Length - 2)
 						{
-							quaternion = Quaternion.Slerp(quaternion, array5[num2 + 1], num3);
+							rotation = Quaternion.Slerp(rotation, quatKeys[currentKeyframe + 1], blender);
 						}
 					}
-					Vector3[] array6 = this._positions[j];
-					Vector3 vector;
-					if (num2 >= array6.Length)
+					Vector3[] tranKeys = this._positions[j];
+					Vector3 translation;
+					if (currentKeyframe >= tranKeys.Length)
 					{
-						vector = array6[array6.Length - 1];
+						translation = tranKeys[tranKeys.Length - 1];
 					}
 					else
 					{
-						vector = array6[num2];
-						if (num2 < array6.Length - 2)
+						translation = tranKeys[currentKeyframe];
+						if (currentKeyframe < tranKeys.Length - 2)
 						{
-							vector = Vector3.Lerp(vector, array6[num2 + 1], num3);
+							translation = Vector3.Lerp(translation, tranKeys[currentKeyframe + 1], blender);
 						}
 					}
-					Vector3[] array7 = this._scales[j];
-					Vector3 vector2;
-					if (num2 >= array7.Length)
+					Vector3[] scaleKeys = this._scales[j];
+					Vector3 scale;
+					if (currentKeyframe >= scaleKeys.Length)
 					{
-						vector2 = array7[array7.Length - 1];
+						scale = scaleKeys[scaleKeys.Length - 1];
 					}
 					else
 					{
-						vector2 = array7[num2];
-						if (num2 < array7.Length - 2)
+						scale = scaleKeys[currentKeyframe];
+						if (currentKeyframe < scaleKeys.Length - 2)
 						{
-							vector2 = Vector3.Lerp(vector2, array7[num2 + 1], num3);
+							scale = Vector3.Lerp(scale, scaleKeys[currentKeyframe + 1], blender);
 						}
 					}
-					array4[j].Add(vector2);
-					array2[j].Add(vector);
-					array3[j].Add(quaternion);
+					newScaleList[j].Add(scale);
+					newPosList[j].Add(translation);
+					newRotList[j].Add(rotation);
 				}
-				timeSpan2 += timeSpan;
+				time += inc;
 			}
 			this._frameRate = frameRate;
 			this._scales = new Vector3[this.BoneCount][];
 			this._positions = new Vector3[this.BoneCount][];
 			this._rotations = new Quaternion[this.BoneCount][];
-			for (int k = 0; k < array.Length; k++)
+			for (int k = 0; k < boneTransforms.Length; k++)
 			{
-				this._scales[k] = array4[k].ToArray();
-				this._positions[k] = array2[k].ToArray();
-				this._rotations[k] = array3[k].ToArray();
+				this._scales[k] = newScaleList[k].ToArray();
+				this._positions[k] = newPosList[k].ToArray();
+				this._rotations[k] = newRotList[k].ToArray();
 			}
 			this.ReduceKeys();
 		}
@@ -107,35 +107,35 @@ namespace DNA.Drawing.Animation
 		{
 			for (int i = 0; i < this.BoneCount; i++)
 			{
-				bool flag = true;
+				bool reduce = true;
 				for (int j = 1; j < this._positions[i].Length; j++)
 				{
 					if (this._positions[i][0] != this._positions[i][j])
 					{
-						flag = false;
+						reduce = false;
 						break;
 					}
 				}
-				if (flag)
+				if (reduce)
 				{
-					Vector3 vector = this._positions[i][0];
+					Vector3 pos = this._positions[i][0];
 					this._positions[i] = new Vector3[1];
-					this._positions[i][0] = vector;
+					this._positions[i][0] = pos;
 				}
-				flag = true;
+				reduce = true;
 				for (int k = 1; k < this._scales[i].Length; k++)
 				{
 					if (this._scales[i][0] != this._scales[i][k])
 					{
-						flag = false;
+						reduce = false;
 						break;
 					}
 				}
-				if (flag)
+				if (reduce)
 				{
-					Vector3 vector2 = this._scales[i][0];
+					Vector3 pos2 = this._scales[i][0];
 					this._scales[i] = new Vector3[1];
-					this._scales[i][0] = vector2;
+					this._scales[i][0] = pos2;
 				}
 				for (int l = 0; l < this._scales[i].Length; l++)
 				{
@@ -152,20 +152,20 @@ namespace DNA.Drawing.Animation
 						this._scales[i][l].Z = 1f;
 					}
 				}
-				flag = true;
+				reduce = true;
 				for (int m = 1; m < this._rotations[i].Length; m++)
 				{
 					if (this._rotations[i][0] != this._rotations[i][m])
 					{
-						flag = false;
+						reduce = false;
 						break;
 					}
 				}
-				if (flag)
+				if (reduce)
 				{
-					Quaternion quaternion = this._rotations[i][0];
+					Quaternion pos3 = this._rotations[i][0];
 					this._rotations[i] = new Quaternion[1];
-					this._rotations[i][0] = quaternion;
+					this._rotations[i][0] = pos3;
 				}
 			}
 		}
@@ -194,11 +194,11 @@ namespace DNA.Drawing.Animation
 			this._rotations = new Quaternion[keys.Count][];
 			for (int i = 0; i < keys.Count; i++)
 			{
-				int count = keys[i].Count;
-				this._positions[i] = new Vector3[count];
-				this._scales[i] = new Vector3[count];
-				this._rotations[i] = new Quaternion[count];
-				for (int j = 0; j < count; j++)
+				int keyCount = keys[i].Count;
+				this._positions[i] = new Vector3[keyCount];
+				this._scales[i] = new Vector3[keyCount];
+				this._rotations[i] = new Quaternion[keyCount];
+				for (int j = 0; j < keyCount; j++)
 				{
 					keys[i][j].Decompose(out this._scales[i][j], out this._rotations[i][j], out this._positions[i][j]);
 				}
@@ -212,66 +212,66 @@ namespace DNA.Drawing.Animation
 
 		public static AnimationClip Load(BinaryReader reader)
 		{
-			AnimationClip animationClip = new AnimationClip();
-			animationClip.Read(reader);
-			return animationClip;
+			AnimationClip clip = new AnimationClip();
+			clip.Read(reader);
+			return clip;
 		}
 
 		public void CopyTransforms(Vector3[] translations, Quaternion[] rotations, Vector3[] scales, TimeSpan position, bool[] influenceMap)
 		{
-			float num = (float)((double)this._animationFrameRate * position.TotalSeconds);
-			int num2 = (int)num;
-			float num3 = num - (float)num2;
-			int num4 = translations.Length;
-			for (int i = 0; i < num4; i++)
+			float frameTime = (float)((double)this._animationFrameRate * position.TotalSeconds);
+			int currentKeyframe = (int)frameTime;
+			float blender = frameTime - (float)currentKeyframe;
+			int boneCount = translations.Length;
+			for (int i = 0; i < boneCount; i++)
 			{
 				if (influenceMap == null || influenceMap[i])
 				{
-					Quaternion[] array = this._rotations[i];
-					Quaternion quaternion;
-					if (num2 >= array.Length)
+					Quaternion[] quatKeys = this._rotations[i];
+					Quaternion rotation;
+					if (currentKeyframe >= quatKeys.Length)
 					{
-						quaternion = array[array.Length - 1];
+						rotation = quatKeys[quatKeys.Length - 1];
 					}
 					else
 					{
-						quaternion = array[num2];
-						if (num2 < array.Length - 2)
+						rotation = quatKeys[currentKeyframe];
+						if (currentKeyframe < quatKeys.Length - 2)
 						{
-							quaternion = Quaternion.Slerp(quaternion, array[num2 + 1], num3);
+							rotation = Quaternion.Slerp(rotation, quatKeys[currentKeyframe + 1], blender);
 						}
 					}
-					Vector3[] array2 = this._positions[i];
-					Vector3 vector;
-					if (num2 >= array2.Length)
+					Vector3[] tranKeys = this._positions[i];
+					Vector3 translation;
+					if (currentKeyframe >= tranKeys.Length)
 					{
-						vector = array2[array2.Length - 1];
+						translation = tranKeys[tranKeys.Length - 1];
 					}
 					else
 					{
-						vector = array2[num2];
-						if (num2 < array2.Length - 2)
+						translation = tranKeys[currentKeyframe];
+						if (currentKeyframe < tranKeys.Length - 2)
 						{
-							vector = Vector3.Lerp(vector, array2[num2 + 1], num3);
+							translation = Vector3.Lerp(translation, tranKeys[currentKeyframe + 1], blender);
 						}
 					}
-					Vector3[] array3 = this._scales[i];
-					Vector3 vector2;
-					if (num2 >= array3.Length)
+					Vector3[] scaleKeys = this._scales[i];
+					Vector3 scale;
+					if (currentKeyframe >= scaleKeys.Length)
 					{
-						vector2 = array3[array3.Length - 1];
+						scale = scaleKeys[scaleKeys.Length - 1];
 					}
 					else
 					{
-						vector2 = array3[num2];
-						if (num2 < array3.Length - 2)
+						scale = scaleKeys[currentKeyframe];
+						if (currentKeyframe < scaleKeys.Length - 2)
 						{
-							vector2 = Vector3.Lerp(vector2, array3[num2 + 1], num3);
+							scale = Vector3.Lerp(scale, scaleKeys[currentKeyframe + 1], blender);
 						}
 					}
-					translations[i] = vector;
-					rotations[i] = quaternion;
-					scales[i] = vector2;
+					translations[i] = translation;
+					rotations[i] = rotation;
+					scales[i] = scale;
 				}
 			}
 		}
@@ -281,27 +281,27 @@ namespace DNA.Drawing.Animation
 			this.Name = reader.ReadString();
 			this._animationFrameRate = reader.ReadInt32();
 			this.Duration = TimeSpan.FromTicks(reader.ReadInt64());
-			int num = reader.ReadInt32();
-			this._scales = new Vector3[num][];
-			this._positions = new Vector3[num][];
-			this._rotations = new Quaternion[num][];
-			for (int i = 0; i < num; i++)
+			int boneCount = reader.ReadInt32();
+			this._scales = new Vector3[boneCount][];
+			this._positions = new Vector3[boneCount][];
+			this._rotations = new Quaternion[boneCount][];
+			for (int i = 0; i < boneCount; i++)
 			{
-				int num2 = reader.ReadInt32();
-				this._positions[i] = new Vector3[num2];
-				for (int j = 0; j < num2; j++)
+				int frames = reader.ReadInt32();
+				this._positions[i] = new Vector3[frames];
+				for (int j = 0; j < frames; j++)
 				{
 					this._positions[i][j] = reader.ReadVector3();
 				}
-				num2 = reader.ReadInt32();
-				this._rotations[i] = new Quaternion[num2];
-				for (int k = 0; k < num2; k++)
+				frames = reader.ReadInt32();
+				this._rotations[i] = new Quaternion[frames];
+				for (int k = 0; k < frames; k++)
 				{
 					this._rotations[i][k] = reader.ReadQuaternion();
 				}
-				num2 = reader.ReadInt32();
-				this._scales[i] = new Vector3[num2];
-				for (int l = 0; l < num2; l++)
+				frames = reader.ReadInt32();
+				this._scales[i] = new Vector3[frames];
+				for (int l = 0; l < frames; l++)
 				{
 					this._scales[i][l] = reader.ReadVector3();
 				}
@@ -316,21 +316,21 @@ namespace DNA.Drawing.Animation
 			writer.Write(this.BoneCount);
 			for (int i = 0; i < this.BoneCount; i++)
 			{
-				int num = this._positions[i].Length;
-				writer.Write(num);
-				for (int j = 0; j < num; j++)
+				int frames = this._positions[i].Length;
+				writer.Write(frames);
+				for (int j = 0; j < frames; j++)
 				{
 					writer.Write(this._positions[i][j]);
 				}
-				num = this._rotations[i].Length;
-				writer.Write(num);
-				for (int k = 0; k < num; k++)
+				frames = this._rotations[i].Length;
+				writer.Write(frames);
+				for (int k = 0; k < frames; k++)
 				{
 					writer.Write(this._rotations[i][k]);
 				}
-				num = this._scales[i].Length;
-				writer.Write(num);
-				for (int l = 0; l < num; l++)
+				frames = this._scales[i].Length;
+				writer.Write(frames);
+				for (int l = 0; l < frames; l++)
 				{
 					writer.Write(this._scales[i][l]);
 				}
@@ -351,9 +351,9 @@ namespace DNA.Drawing.Animation
 		{
 			protected override AnimationClip Read(ContentReader input, AnimationClip existingInstance)
 			{
-				AnimationClip animationClip = new AnimationClip();
-				animationClip.Read(input);
-				return animationClip;
+				AnimationClip data = new AnimationClip();
+				data.Read(input);
+				return data;
 			}
 		}
 	}

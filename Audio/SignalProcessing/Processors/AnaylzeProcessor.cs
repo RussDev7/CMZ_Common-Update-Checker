@@ -14,14 +14,14 @@ namespace DNA.Audio.SignalProcessing.Processors
 
 		public override bool ProcessBlock(SpectralData data)
 		{
-			FrequencyPair[] data2 = data.GetData(0);
-			float num = float.MinValue;
-			for (int i = 0; i < data2.Length; i++)
+			FrequencyPair[] freqs = data.GetData(0);
+			float max = float.MinValue;
+			for (int i = 0; i < freqs.Length; i++)
 			{
-				if (data2[i].Magnitude > num)
+				if (freqs[i].Magnitude > max)
 				{
-					num = data2[i].Magnitude;
-					this._primary = data2[i];
+					max = freqs[i].Magnitude;
+					this._primary = freqs[i];
 				}
 			}
 			this._primary.Value.Hertz = Math.Abs(this._primary.Value.Hertz);

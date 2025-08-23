@@ -27,8 +27,8 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				return -1;
 			}
-			int num = this._in.ReadByte();
-			if (num < 0)
+			int b = this._in.ReadByte();
+			if (b < 0)
 			{
 				throw new EndOfStreamException(string.Concat(new object[] { "DEF length ", this._originalLength, " object truncated by ", this._remaining }));
 			}
@@ -36,7 +36,7 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				this.SetParentEofDetect(true);
 			}
-			return num;
+			return b;
 		}
 
 		public override int Read(byte[] buf, int off, int len)
@@ -45,17 +45,17 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				return 0;
 			}
-			int num = Math.Min(len, this._remaining);
-			int num2 = this._in.Read(buf, off, num);
-			if (num2 < 1)
+			int toRead = Math.Min(len, this._remaining);
+			int numRead = this._in.Read(buf, off, toRead);
+			if (numRead < 1)
 			{
 				throw new EndOfStreamException(string.Concat(new object[] { "DEF length ", this._originalLength, " object truncated by ", this._remaining }));
 			}
-			if ((this._remaining -= num2) == 0)
+			if ((this._remaining -= numRead) == 0)
 			{
 				this.SetParentEofDetect(true);
 			}
-			return num2;
+			return numRead;
 		}
 
 		internal byte[] ToArray()
@@ -64,13 +64,13 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				return DefiniteLengthInputStream.EmptyBytes;
 			}
-			byte[] array = new byte[this._remaining];
-			if ((this._remaining -= Streams.ReadFully(this._in, array)) != 0)
+			byte[] bytes = new byte[this._remaining];
+			if ((this._remaining -= Streams.ReadFully(this._in, bytes)) != 0)
 			{
 				throw new EndOfStreamException(string.Concat(new object[] { "DEF length ", this._originalLength, " object truncated by ", this._remaining }));
 			}
 			this.SetParentEofDetect(true);
-			return array;
+			return bytes;
 		}
 
 		private static readonly byte[] EmptyBytes = new byte[0];

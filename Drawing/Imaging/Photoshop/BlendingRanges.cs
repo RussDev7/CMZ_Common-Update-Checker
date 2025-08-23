@@ -17,12 +17,12 @@ namespace DNA.Drawing.Imaging.Photoshop
 		public BlendingRanges(PsdBinaryReader reader, Layer layer)
 		{
 			this.Layer = layer;
-			int num = reader.ReadInt32();
-			if (num <= 0)
+			int dataLength = reader.ReadInt32();
+			if (dataLength <= 0)
 			{
 				return;
 			}
-			this.Data = reader.ReadBytes(num);
+			this.Data = reader.ReadBytes(dataLength);
 		}
 
 		public void Save(PsdBinaryWriter writer)

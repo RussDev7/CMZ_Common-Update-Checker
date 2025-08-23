@@ -8,16 +8,16 @@ namespace DNA.Drawing.Imaging.Photoshop
 	{
 		public Channel[] ToIdArray()
 		{
-			short num = this.Max((Channel x) => x.ID);
-			Channel[] array = new Channel[(int)(num + 1)];
+			short maxId = this.Max((Channel x) => x.ID);
+			Channel[] idArray = new Channel[(int)(maxId + 1)];
 			foreach (Channel channel in this)
 			{
 				if (channel.ID >= 0)
 				{
-					array[(int)channel.ID] = channel;
+					idArray[(int)channel.ID] = channel;
 				}
 			}
-			return array;
+			return idArray;
 		}
 
 		public Channel GetId(int id)

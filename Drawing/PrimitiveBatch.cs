@@ -62,8 +62,8 @@ namespace DNA.Drawing
 			{
 				throw new InvalidOperationException("Begin must be called before AddVertex can be called.");
 			}
-			bool flag = this.positionInBuffer % this.numVertsPerPrimitive == 0;
-			if (flag && this.positionInBuffer + this.numVertsPerPrimitive >= this.vertices.Length)
+			bool newPrimitive = this.positionInBuffer % this.numVertsPerPrimitive == 0;
+			if (newPrimitive && this.positionInBuffer + this.numVertsPerPrimitive >= this.vertices.Length)
 			{
 				this.Flush();
 			}
@@ -94,8 +94,8 @@ namespace DNA.Drawing
 			{
 				return;
 			}
-			int num = this.positionInBuffer / this.numVertsPerPrimitive;
-			this.device.DrawUserPrimitives<VertexPositionNormalColor>(this.primitiveType, this.vertices, 0, num);
+			int primitiveCount = this.positionInBuffer / this.numVertsPerPrimitive;
+			this.device.DrawUserPrimitives<VertexPositionNormalColor>(this.primitiveType, this.vertices, 0, primitiveCount);
 			this.positionInBuffer = 0;
 		}
 

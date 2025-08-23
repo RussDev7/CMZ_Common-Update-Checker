@@ -10,20 +10,20 @@ namespace DNA.Net.Lidgren
 		{
 			get
 			{
-				NetConnection netConnection = null;
+				NetConnection retval = null;
 				if (this.m_connections.Count > 0)
 				{
 					try
 					{
-						netConnection = this.m_connections[0];
+						retval = this.m_connections[0];
 					}
 					catch
 					{
 						return null;
 					}
-					return netConnection;
+					return retval;
 				}
-				return netConnection;
+				return retval;
 			}
 		}
 
@@ -31,12 +31,12 @@ namespace DNA.Net.Lidgren
 		{
 			get
 			{
-				NetConnection serverConnection = this.ServerConnection;
-				if (serverConnection == null)
+				NetConnection conn = this.ServerConnection;
+				if (conn == null)
 				{
 					return NetConnectionStatus.Disconnected;
 				}
-				return serverConnection.Status;
+				return conn.Status;
 			}
 		}
 
@@ -76,9 +76,9 @@ namespace DNA.Net.Lidgren
 				{
 					if (this.m_handshakes.Count > 0)
 					{
-						foreach (KeyValuePair<IPEndPoint, NetConnection> keyValuePair in this.m_handshakes)
+						foreach (KeyValuePair<IPEndPoint, NetConnection> hs in this.m_handshakes)
 						{
-							keyValuePair.Value.Disconnect(byeMessage);
+							hs.Value.Disconnect(byeMessage);
 						}
 						return;
 					}

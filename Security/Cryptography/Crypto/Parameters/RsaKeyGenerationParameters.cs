@@ -31,8 +31,8 @@ namespace DNA.Security.Cryptography.Crypto.Parameters
 
 		public override bool Equals(object obj)
 		{
-			RsaKeyGenerationParameters rsaKeyGenerationParameters = obj as RsaKeyGenerationParameters;
-			return rsaKeyGenerationParameters != null && this.certainty == rsaKeyGenerationParameters.certainty && this.publicExponent.Equals(rsaKeyGenerationParameters.publicExponent);
+			RsaKeyGenerationParameters other = obj as RsaKeyGenerationParameters;
+			return other != null && this.certainty == other.certainty && this.publicExponent.Equals(other.publicExponent);
 		}
 
 		public override int GetHashCode()

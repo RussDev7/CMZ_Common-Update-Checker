@@ -34,8 +34,8 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnInput(InputManager inputManager, GameController controller, KeyboardInput chatPad, GameTime gameTime)
 		{
-			bool flag = this.HitTest(inputManager.Mouse.Position);
-			if (flag)
+			bool hitTest = this.HitTest(inputManager.Mouse.Position);
+			if (hitTest)
 			{
 				this.Hovering = true;
 				if (inputManager.Mouse.LeftButtonPressed)
@@ -49,7 +49,7 @@ namespace DNA.Drawing.UI.Controls
 			}
 			if (inputManager.Mouse.LeftButtonReleased)
 			{
-				if (flag && base.CaptureInput)
+				if (hitTest && base.CaptureInput)
 				{
 					this.OnPressed();
 				}

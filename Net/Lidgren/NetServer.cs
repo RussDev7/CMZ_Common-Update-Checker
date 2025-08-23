@@ -13,37 +13,37 @@ namespace DNA.Net.Lidgren
 
 		public void SendToAll(NetOutgoingMessage msg, NetDeliveryMethod method)
 		{
-			List<NetConnection> connections = base.Connections;
-			if (connections.Count <= 0)
+			List<NetConnection> all = base.Connections;
+			if (all.Count <= 0)
 			{
 				return;
 			}
-			base.SendMessage(msg, connections, method, 0);
+			base.SendMessage(msg, all, method, 0);
 		}
 
 		public void SendToAll(NetOutgoingMessage msg, NetConnection except, NetDeliveryMethod method, int sequenceChannel)
 		{
-			List<NetConnection> connections = base.Connections;
-			if (connections.Count <= 0)
+			List<NetConnection> all = base.Connections;
+			if (all.Count <= 0)
 			{
 				return;
 			}
 			if (except == null)
 			{
-				base.SendMessage(msg, connections, method, sequenceChannel);
+				base.SendMessage(msg, all, method, sequenceChannel);
 				return;
 			}
-			List<NetConnection> list = new List<NetConnection>(connections.Count - 1);
-			foreach (NetConnection netConnection in connections)
+			List<NetConnection> recipients = new List<NetConnection>(all.Count - 1);
+			foreach (NetConnection conn in all)
 			{
-				if (netConnection != except)
+				if (conn != except)
 				{
-					list.Add(netConnection);
+					recipients.Add(conn);
 				}
 			}
-			if (list.Count > 0)
+			if (recipients.Count > 0)
 			{
-				base.SendMessage(msg, list, method, sequenceChannel);
+				base.SendMessage(msg, recipients, method, sequenceChannel);
 			}
 		}
 

@@ -58,8 +58,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerVisibleString derVisibleString = asn1Object as DerVisibleString;
-			return derVisibleString != null && this.str.Equals(derVisibleString.str);
+			DerVisibleString other = asn1Object as DerVisibleString;
+			return other != null && this.str.Equals(other.str);
 		}
 
 		protected override int Asn1GetHashCode()

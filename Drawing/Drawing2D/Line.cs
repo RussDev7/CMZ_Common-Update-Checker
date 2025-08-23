@@ -53,30 +53,30 @@ namespace DNA.Drawing.Drawing2D
 		public double DistanceTo(Point pnt)
 		{
 			double length = this.Length;
-			double num;
+			double u;
 			if (length != 0.0)
 			{
-				num = (double)((pnt.X - this._start.X) * (this._end.X - this._start.X) + (pnt.Y - this._start.Y) * (this._end.Y - this._start.Y)) / (length * length);
+				u = (double)((pnt.X - this._start.X) * (this._end.X - this._start.X) + (pnt.Y - this._start.Y) * (this._end.Y - this._start.Y)) / (length * length);
 			}
 			else
 			{
-				num = 0.0;
+				u = 0.0;
 			}
-			if (num >= 0.0 && num <= 1.0)
+			if (u >= 0.0 && u <= 1.0)
 			{
-				double num2 = (double)this._start.X + num * (double)(this._end.X - this._start.X);
-				double num3 = (double)this._start.Y + num * (double)(this._end.Y - this._start.Y);
-				double num4 = (double)pnt.X - num2;
-				double num5 = (double)pnt.Y - num3;
-				return Math.Sqrt(num4 * num4 + num5 * num5);
+				double newx = (double)this._start.X + u * (double)(this._end.X - this._start.X);
+				double newy = (double)this._start.Y + u * (double)(this._end.Y - this._start.Y);
+				double xd = (double)pnt.X - newx;
+				double yd = (double)pnt.Y - newy;
+				return Math.Sqrt(xd * xd + yd * yd);
 			}
-			double num6 = pnt.Distance(this._start);
-			double num7 = pnt.Distance(this._end);
-			if (num6 >= num7)
+			double d = pnt.Distance(this._start);
+			double d2 = pnt.Distance(this._end);
+			if (d >= d2)
 			{
-				return num7;
+				return d2;
 			}
-			return num6;
+			return d;
 		}
 
 		public override bool Equals(object obj)

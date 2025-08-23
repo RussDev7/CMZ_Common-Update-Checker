@@ -17,10 +17,10 @@ namespace DNA.Net.Lidgren
 
 		public int GetSeed(object forObject)
 		{
-			int num = Environment.TickCount;
-			num ^= forObject.GetHashCode();
-			int num2 = Interlocked.Increment(ref NetRandom.s_extraSeed);
-			return num + num2;
+			int seed = Environment.TickCount;
+			seed ^= forObject.GetHashCode();
+			int extraSeed = Interlocked.Increment(ref NetRandom.s_extraSeed);
+			return seed + extraSeed;
 		}
 
 		public void Reinitialise(int seed)
@@ -33,17 +33,17 @@ namespace DNA.Net.Lidgren
 
 		public int Next()
 		{
-			uint num = this.x ^ (this.x << 11);
+			uint t = this.x ^ (this.x << 11);
 			this.x = this.y;
 			this.y = this.z;
 			this.z = this.w;
-			this.w = this.w ^ (this.w >> 19) ^ (num ^ (num >> 8));
-			uint num2 = this.w & 2147483647U;
-			if (num2 == 2147483647U)
+			this.w = this.w ^ (this.w >> 19) ^ (t ^ (t >> 8));
+			uint rtn = this.w & 2147483647U;
+			if (rtn == 2147483647U)
 			{
 				return this.Next();
 			}
-			return (int)num2;
+			return (int)rtn;
 		}
 
 		public int Next(int upperBound)
@@ -52,11 +52,11 @@ namespace DNA.Net.Lidgren
 			{
 				throw new ArgumentOutOfRangeException("upperBound", upperBound, "upperBound must be >=0");
 			}
-			uint num = this.x ^ (this.x << 11);
+			uint t = this.x ^ (this.x << 11);
 			this.x = this.y;
 			this.y = this.z;
 			this.z = this.w;
-			return (int)(4.656612873077393E-10 * (double)(2147483647U & (this.w = this.w ^ (this.w >> 19) ^ (num ^ (num >> 8)))) * (double)upperBound);
+			return (int)(4.656612873077393E-10 * (double)(2147483647U & (this.w = this.w ^ (this.w >> 19) ^ (t ^ (t >> 8)))) * (double)upperBound);
 		}
 
 		public int Next(int lowerBound, int upperBound)
@@ -65,25 +65,25 @@ namespace DNA.Net.Lidgren
 			{
 				throw new ArgumentOutOfRangeException("upperBound", upperBound, "upperBound must be >=lowerBound");
 			}
-			uint num = this.x ^ (this.x << 11);
+			uint t = this.x ^ (this.x << 11);
 			this.x = this.y;
 			this.y = this.z;
 			this.z = this.w;
-			int num2 = upperBound - lowerBound;
-			if (num2 < 0)
+			int range = upperBound - lowerBound;
+			if (range < 0)
 			{
-				return lowerBound + (int)(2.3283064365386963E-10 * (this.w = this.w ^ (this.w >> 19) ^ (num ^ (num >> 8))) * (double)((long)upperBound - (long)lowerBound));
+				return lowerBound + (int)(2.3283064365386963E-10 * (this.w = this.w ^ (this.w >> 19) ^ (t ^ (t >> 8))) * (double)((long)upperBound - (long)lowerBound));
 			}
-			return lowerBound + (int)(4.656612873077393E-10 * (double)(2147483647U & (this.w = this.w ^ (this.w >> 19) ^ (num ^ (num >> 8)))) * (double)num2);
+			return lowerBound + (int)(4.656612873077393E-10 * (double)(2147483647U & (this.w = this.w ^ (this.w >> 19) ^ (t ^ (t >> 8)))) * (double)range);
 		}
 
 		public double NextDouble()
 		{
-			uint num = this.x ^ (this.x << 11);
+			uint t = this.x ^ (this.x << 11);
 			this.x = this.y;
 			this.y = this.z;
 			this.z = this.w;
-			return 4.656612873077393E-10 * (double)(2147483647U & (this.w = this.w ^ (this.w >> 19) ^ (num ^ (num >> 8))));
+			return 4.656612873077393E-10 * (double)(2147483647U & (this.w = this.w ^ (this.w >> 19) ^ (t ^ (t >> 8))));
 		}
 
 		public float NextSingle()
@@ -93,79 +93,79 @@ namespace DNA.Net.Lidgren
 
 		public void NextBytes(byte[] buffer)
 		{
-			uint num = this.x;
-			uint num2 = this.y;
-			uint num3 = this.z;
-			uint num4 = this.w;
+			uint x = this.x;
+			uint y = this.y;
+			uint z = this.z;
+			uint w = this.w;
 			int i = 0;
-			int num5 = buffer.Length - 3;
-			while (i < num5)
+			int bound = buffer.Length - 3;
+			while (i < bound)
 			{
-				uint num6 = num ^ (num << 11);
-				num = num2;
-				num2 = num3;
-				num3 = num4;
-				num4 = num4 ^ (num4 >> 19) ^ (num6 ^ (num6 >> 8));
-				buffer[i++] = (byte)num4;
-				buffer[i++] = (byte)(num4 >> 8);
-				buffer[i++] = (byte)(num4 >> 16);
-				buffer[i++] = (byte)(num4 >> 24);
+				uint t = x ^ (x << 11);
+				x = y;
+				y = z;
+				z = w;
+				w = w ^ (w >> 19) ^ (t ^ (t >> 8));
+				buffer[i++] = (byte)w;
+				buffer[i++] = (byte)(w >> 8);
+				buffer[i++] = (byte)(w >> 16);
+				buffer[i++] = (byte)(w >> 24);
 			}
 			if (i < buffer.Length)
 			{
-				uint num6 = num ^ (num << 11);
-				num = num2;
-				num2 = num3;
-				num3 = num4;
-				num4 = num4 ^ (num4 >> 19) ^ (num6 ^ (num6 >> 8));
-				buffer[i++] = (byte)num4;
+				uint t = x ^ (x << 11);
+				x = y;
+				y = z;
+				z = w;
+				w = w ^ (w >> 19) ^ (t ^ (t >> 8));
+				buffer[i++] = (byte)w;
 				if (i < buffer.Length)
 				{
-					buffer[i++] = (byte)(num4 >> 8);
+					buffer[i++] = (byte)(w >> 8);
 					if (i < buffer.Length)
 					{
-						buffer[i++] = (byte)(num4 >> 16);
+						buffer[i++] = (byte)(w >> 16);
 						if (i < buffer.Length)
 						{
-							buffer[i] = (byte)(num4 >> 24);
+							buffer[i] = (byte)(w >> 24);
 						}
 					}
 				}
 			}
-			this.x = num;
-			this.y = num2;
-			this.z = num3;
-			this.w = num4;
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.w = w;
 		}
 
 		[CLSCompliant(false)]
 		public uint NextUInt()
 		{
-			uint num = this.x ^ (this.x << 11);
+			uint t = this.x ^ (this.x << 11);
 			this.x = this.y;
 			this.y = this.z;
 			this.z = this.w;
-			return this.w = this.w ^ (this.w >> 19) ^ (num ^ (num >> 8));
+			return this.w = this.w ^ (this.w >> 19) ^ (t ^ (t >> 8));
 		}
 
 		public int NextInt()
 		{
-			uint num = this.x ^ (this.x << 11);
+			uint t = this.x ^ (this.x << 11);
 			this.x = this.y;
 			this.y = this.z;
 			this.z = this.w;
-			return (int)(2147483647U & (this.w = this.w ^ (this.w >> 19) ^ (num ^ (num >> 8))));
+			return (int)(2147483647U & (this.w = this.w ^ (this.w >> 19) ^ (t ^ (t >> 8))));
 		}
 
 		public bool NextBool()
 		{
 			if (this.bitMask == 1U)
 			{
-				uint num = this.x ^ (this.x << 11);
+				uint t = this.x ^ (this.x << 11);
 				this.x = this.y;
 				this.y = this.z;
 				this.z = this.w;
-				this.bitBuffer = (this.w = this.w ^ (this.w >> 19) ^ (num ^ (num >> 8)));
+				this.bitBuffer = (this.w = this.w ^ (this.w >> 19) ^ (t ^ (t >> 8)));
 				this.bitMask = 2147483648U;
 				return (this.bitBuffer & this.bitMask) == 0U;
 			}

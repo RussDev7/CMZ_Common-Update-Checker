@@ -20,26 +20,26 @@ namespace DNA.Drawing.Curves.Splines
 
 		public override Vector3 ComputeValue(float t)
 		{
-			int controlPointIndex = Spline.GetControlPointIndex(this._controlPoints.Count, ref t);
-			return HermiteSpline.ComputeValue(t, this.ControlPoints[controlPointIndex], this.ControlPoints[controlPointIndex + 1]);
+			int idx = Spline.GetControlPointIndex(this._controlPoints.Count, ref t);
+			return HermiteSpline.ComputeValue(t, this.ControlPoints[idx], this.ControlPoints[idx + 1]);
 		}
 
 		private static Vector3 ComputeValue(float t, HermiteSpline.ControlPoint cp1, HermiteSpline.ControlPoint cp2)
 		{
-			Vector3 location = cp1.Location;
-			Vector3 @out = cp1.Out;
-			Vector3 location2 = cp2.Location;
-			Vector3 @in = cp2.In;
-			float num = t * t;
-			float num2 = num * t;
-			float num3 = 2f * num2 - 3f * num + 1f;
-			float num4 = -2f * num2 + 3f * num;
-			float num5 = num2 - 2f * num + t;
-			float num6 = num2 - num;
-			float num7 = num3 * location.X + num4 * location2.X + num5 * @out.X + num6 * @in.X;
-			float num8 = num3 * location.Y + num4 * location2.Y + num5 * @out.Y + num6 * @in.Y;
-			float num9 = num3 * location.Z + num4 * location2.Z + num5 * @out.Z + num6 * @in.Z;
-			return new Vector3(num7, num8, num9);
+			Vector3 p = cp1.Location;
+			Vector3 v = cp1.Out;
+			Vector3 p2 = cp2.Location;
+			Vector3 v2 = cp2.In;
+			float t2 = t * t;
+			float t3 = t2 * t;
+			float a = 2f * t3 - 3f * t2 + 1f;
+			float b = -2f * t3 + 3f * t2;
+			float c = t3 - 2f * t2 + t;
+			float d = t3 - t2;
+			float x = a * p.X + b * p2.X + c * v.X + d * v2.X;
+			float y = a * p.Y + b * p2.Y + c * v.Y + d * v2.Y;
+			float z = a * p.Z + b * p2.Z + c * v.Z + d * v2.Z;
+			return new Vector3(x, y, z);
 		}
 
 		public override Vector3 ComputeVelocity(float t)
@@ -54,8 +54,8 @@ namespace DNA.Drawing.Curves.Splines
 
 		public override bool Equals(object obj)
 		{
-			HermiteSpline hermiteSpline = obj as HermiteSpline;
-			return !(hermiteSpline == null) && this == hermiteSpline;
+			HermiteSpline val = obj as HermiteSpline;
+			return !(val == null) && this == val;
 		}
 
 		public override int GetHashCode()

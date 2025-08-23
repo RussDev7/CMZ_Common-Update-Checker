@@ -26,12 +26,12 @@ namespace DNA.Security.Cryptography.Asn1
 			}
 			if (obj is Asn1Sequence)
 			{
-				List<object> list = new List<object>();
-				foreach (object obj2 in ((Asn1Sequence)obj))
+				List<object> v = new List<object>();
+				foreach (object o in ((Asn1Sequence)obj))
 				{
-					list.Add(obj2);
+					v.Add(o);
 				}
-				return new BerOctetString(list);
+				return new BerOctetString(v);
 			}
 			throw new ArgumentException("illegal object in GetInstance: " + obj.GetType().Name);
 		}
@@ -51,9 +51,9 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				this.str = obj.GetDerEncoded();
 			}
-			catch (IOException ex)
+			catch (IOException e)
 			{
-				throw new ArgumentException("Error processing object : " + ex.ToString());
+				throw new ArgumentException("Error processing object : " + e.ToString());
 			}
 		}
 
@@ -82,14 +82,14 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerOctetString derOctetString = asn1Object as DerOctetString;
-			return derOctetString != null && Arrays.AreEqual(this.GetOctets(), derOctetString.GetOctets());
+			DerOctetString other = asn1Object as DerOctetString;
+			return other != null && Arrays.AreEqual(this.GetOctets(), other.GetOctets());
 		}
 
 		public override string ToString()
 		{
-			byte[] array = Hex.Encode(this.str);
-			return "#" + ASCIIEncoder.GetString(array, 0, array.Length);
+			byte[] hex = Hex.Encode(this.str);
+			return "#" + ASCIIEncoder.GetString(hex, 0, hex.Length);
 		}
 
 		internal byte[] str;

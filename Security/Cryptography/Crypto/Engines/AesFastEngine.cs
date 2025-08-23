@@ -18,11 +18,11 @@ namespace DNA.Security.Cryptography.Crypto.Engines
 
 		private uint Inv_Mcol(uint x)
 		{
-			uint num = this.FFmulX(x);
-			uint num2 = this.FFmulX(num);
-			uint num3 = this.FFmulX(num2);
-			uint num4 = x ^ num3;
-			return num ^ num2 ^ num3 ^ this.Shift(num ^ num4, 8) ^ this.Shift(num2 ^ num4, 16) ^ this.Shift(num4, 24);
+			uint f2 = this.FFmulX(x);
+			uint f3 = this.FFmulX(f2);
+			uint f4 = this.FFmulX(f3);
+			uint f5 = x ^ f4;
+			return f2 ^ f3 ^ f4 ^ this.Shift(f2 ^ f5, 8) ^ this.Shift(f3 ^ f5, 16) ^ this.Shift(f5, 24);
 		}
 
 		private uint SubWord(uint x)
@@ -32,46 +32,46 @@ namespace DNA.Security.Cryptography.Crypto.Engines
 
 		private uint[,] GenerateWorkingKey(byte[] key, bool forEncryption)
 		{
-			int num = key.Length / 4;
-			if ((num != 4 && num != 6 && num != 8) || num * 4 != key.Length)
+			int KC = key.Length / 4;
+			if ((KC != 4 && KC != 6 && KC != 8) || KC * 4 != key.Length)
 			{
 				throw new ArgumentException("Key length not 128/192/256 bits.");
 			}
-			this.ROUNDS = num + 6;
-			uint[,] array = new uint[this.ROUNDS + 1, 4];
-			int num2 = 0;
+			this.ROUNDS = KC + 6;
+			uint[,] W = new uint[this.ROUNDS + 1, 4];
+			int t = 0;
 			int i = 0;
 			while (i < key.Length)
 			{
-				array[num2 >> 2, num2 & 3] = Pack.LE_To_UInt32(key, i);
+				W[t >> 2, t & 3] = Pack.LE_To_UInt32(key, i);
 				i += 4;
-				num2++;
+				t++;
 			}
-			int num3 = this.ROUNDS + 1 << 2;
-			for (int j = num; j < num3; j++)
+			int j = this.ROUNDS + 1 << 2;
+			for (int k = KC; k < j; k++)
 			{
-				uint num4 = array[j - 1 >> 2, (j - 1) & 3];
-				if (j % num == 0)
+				uint temp = W[k - 1 >> 2, (k - 1) & 3];
+				if (k % KC == 0)
 				{
-					num4 = this.SubWord(this.Shift(num4, 8)) ^ (uint)AesFastEngine.rcon[j / num - 1];
+					temp = this.SubWord(this.Shift(temp, 8)) ^ (uint)AesFastEngine.rcon[k / KC - 1];
 				}
-				else if (num > 6 && j % num == 4)
+				else if (KC > 6 && k % KC == 4)
 				{
-					num4 = this.SubWord(num4);
+					temp = this.SubWord(temp);
 				}
-				array[j >> 2, j & 3] = array[j - num >> 2, (j - num) & 3] ^ num4;
+				W[k >> 2, k & 3] = W[k - KC >> 2, (k - KC) & 3] ^ temp;
 			}
 			if (!forEncryption)
 			{
-				for (int k = 1; k < this.ROUNDS; k++)
+				for (int l = 1; l < this.ROUNDS; l++)
 				{
-					for (int l = 0; l < 4; l++)
+					for (int m = 0; m < 4; m++)
 					{
-						array[k, l] = this.Inv_Mcol(array[k, l]);
+						W[l, m] = this.Inv_Mcol(W[l, m]);
 					}
 				}
 			}
-			return array;
+			return W;
 		}
 
 		public void Init(bool forEncryption, ICipherParameters parameters)
@@ -158,30 +158,30 @@ namespace DNA.Security.Cryptography.Crypto.Engines
 			this.C1 ^= KW[0, 1];
 			this.C2 ^= KW[0, 2];
 			this.C3 ^= KW[0, 3];
-			int i = 1;
-			uint num;
-			uint num2;
-			uint num3;
-			uint num4;
-			while (i < this.ROUNDS - 1)
+			int r = 1;
+			uint r2;
+			uint r3;
+			uint r4;
+			uint r5;
+			while (r < this.ROUNDS - 1)
 			{
-				num = AesFastEngine.T0[(int)((UIntPtr)(this.C0 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C1 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C2 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C3 >> 24))] ^ KW[i, 0];
-				num2 = AesFastEngine.T0[(int)((UIntPtr)(this.C1 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C2 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C3 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C0 >> 24))] ^ KW[i, 1];
-				num3 = AesFastEngine.T0[(int)((UIntPtr)(this.C2 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C3 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C0 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C1 >> 24))] ^ KW[i, 2];
-				num4 = AesFastEngine.T0[(int)((UIntPtr)(this.C3 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C0 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C1 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C2 >> 24))] ^ KW[i++, 3];
-				this.C0 = AesFastEngine.T0[(int)((UIntPtr)(num & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((num2 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((num3 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(num4 >> 24))] ^ KW[i, 0];
-				this.C1 = AesFastEngine.T0[(int)((UIntPtr)(num2 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((num3 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((num4 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(num >> 24))] ^ KW[i, 1];
-				this.C2 = AesFastEngine.T0[(int)((UIntPtr)(num3 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((num4 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((num >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(num2 >> 24))] ^ KW[i, 2];
-				this.C3 = AesFastEngine.T0[(int)((UIntPtr)(num4 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((num >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((num2 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(num3 >> 24))] ^ KW[i++, 3];
+				r2 = AesFastEngine.T0[(int)((UIntPtr)(this.C0 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C1 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C2 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C3 >> 24))] ^ KW[r, 0];
+				r3 = AesFastEngine.T0[(int)((UIntPtr)(this.C1 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C2 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C3 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C0 >> 24))] ^ KW[r, 1];
+				r4 = AesFastEngine.T0[(int)((UIntPtr)(this.C2 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C3 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C0 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C1 >> 24))] ^ KW[r, 2];
+				r5 = AesFastEngine.T0[(int)((UIntPtr)(this.C3 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C0 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C1 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C2 >> 24))] ^ KW[r++, 3];
+				this.C0 = AesFastEngine.T0[(int)((UIntPtr)(r2 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((r3 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((r4 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(r5 >> 24))] ^ KW[r, 0];
+				this.C1 = AesFastEngine.T0[(int)((UIntPtr)(r3 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((r4 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((r5 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(r2 >> 24))] ^ KW[r, 1];
+				this.C2 = AesFastEngine.T0[(int)((UIntPtr)(r4 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((r5 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((r2 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(r3 >> 24))] ^ KW[r, 2];
+				this.C3 = AesFastEngine.T0[(int)((UIntPtr)(r5 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((r2 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((r3 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(r4 >> 24))] ^ KW[r++, 3];
 			}
-			num = AesFastEngine.T0[(int)((UIntPtr)(this.C0 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C1 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C2 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C3 >> 24))] ^ KW[i, 0];
-			num2 = AesFastEngine.T0[(int)((UIntPtr)(this.C1 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C2 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C3 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C0 >> 24))] ^ KW[i, 1];
-			num3 = AesFastEngine.T0[(int)((UIntPtr)(this.C2 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C3 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C0 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C1 >> 24))] ^ KW[i, 2];
-			num4 = AesFastEngine.T0[(int)((UIntPtr)(this.C3 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C0 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C1 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C2 >> 24))] ^ KW[i++, 3];
-			this.C0 = (uint)((int)AesFastEngine.S[(int)((UIntPtr)(num & 255U))] ^ ((int)AesFastEngine.S[(int)((UIntPtr)((num2 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.S[(int)((UIntPtr)((num3 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.S[(int)((UIntPtr)(num4 >> 24))] << 24) ^ (int)KW[i, 0]);
-			this.C1 = (uint)((int)AesFastEngine.S[(int)((UIntPtr)(num2 & 255U))] ^ ((int)AesFastEngine.S[(int)((UIntPtr)((num3 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.S[(int)((UIntPtr)((num4 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.S[(int)((UIntPtr)(num >> 24))] << 24) ^ (int)KW[i, 1]);
-			this.C2 = (uint)((int)AesFastEngine.S[(int)((UIntPtr)(num3 & 255U))] ^ ((int)AesFastEngine.S[(int)((UIntPtr)((num4 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.S[(int)((UIntPtr)((num >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.S[(int)((UIntPtr)(num2 >> 24))] << 24) ^ (int)KW[i, 2]);
-			this.C3 = (uint)((int)AesFastEngine.S[(int)((UIntPtr)(num4 & 255U))] ^ ((int)AesFastEngine.S[(int)((UIntPtr)((num >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.S[(int)((UIntPtr)((num2 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.S[(int)((UIntPtr)(num3 >> 24))] << 24) ^ (int)KW[i, 3]);
+			r2 = AesFastEngine.T0[(int)((UIntPtr)(this.C0 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C1 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C2 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C3 >> 24))] ^ KW[r, 0];
+			r3 = AesFastEngine.T0[(int)((UIntPtr)(this.C1 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C2 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C3 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C0 >> 24))] ^ KW[r, 1];
+			r4 = AesFastEngine.T0[(int)((UIntPtr)(this.C2 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C3 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C0 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C1 >> 24))] ^ KW[r, 2];
+			r5 = AesFastEngine.T0[(int)((UIntPtr)(this.C3 & 255U))] ^ AesFastEngine.T1[(int)((UIntPtr)((this.C0 >> 8) & 255U))] ^ AesFastEngine.T2[(int)((UIntPtr)((this.C1 >> 16) & 255U))] ^ AesFastEngine.T3[(int)((UIntPtr)(this.C2 >> 24))] ^ KW[r++, 3];
+			this.C0 = (uint)((int)AesFastEngine.S[(int)((UIntPtr)(r2 & 255U))] ^ ((int)AesFastEngine.S[(int)((UIntPtr)((r3 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.S[(int)((UIntPtr)((r4 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.S[(int)((UIntPtr)(r5 >> 24))] << 24) ^ (int)KW[r, 0]);
+			this.C1 = (uint)((int)AesFastEngine.S[(int)((UIntPtr)(r3 & 255U))] ^ ((int)AesFastEngine.S[(int)((UIntPtr)((r4 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.S[(int)((UIntPtr)((r5 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.S[(int)((UIntPtr)(r2 >> 24))] << 24) ^ (int)KW[r, 1]);
+			this.C2 = (uint)((int)AesFastEngine.S[(int)((UIntPtr)(r4 & 255U))] ^ ((int)AesFastEngine.S[(int)((UIntPtr)((r5 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.S[(int)((UIntPtr)((r2 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.S[(int)((UIntPtr)(r3 >> 24))] << 24) ^ (int)KW[r, 2]);
+			this.C3 = (uint)((int)AesFastEngine.S[(int)((UIntPtr)(r5 & 255U))] ^ ((int)AesFastEngine.S[(int)((UIntPtr)((r2 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.S[(int)((UIntPtr)((r3 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.S[(int)((UIntPtr)(r4 >> 24))] << 24) ^ (int)KW[r, 3]);
 		}
 
 		private void DecryptBlock(uint[,] KW)
@@ -190,30 +190,30 @@ namespace DNA.Security.Cryptography.Crypto.Engines
 			this.C1 ^= KW[this.ROUNDS, 1];
 			this.C2 ^= KW[this.ROUNDS, 2];
 			this.C3 ^= KW[this.ROUNDS, 3];
-			int i = this.ROUNDS - 1;
-			uint num;
-			uint num2;
-			uint num3;
-			uint num4;
-			while (i > 1)
+			int r = this.ROUNDS - 1;
+			uint r2;
+			uint r3;
+			uint r4;
+			uint r5;
+			while (r > 1)
 			{
-				num = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C0 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C3 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C2 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C1 >> 24))] ^ KW[i, 0];
-				num2 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C1 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C0 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C3 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C2 >> 24))] ^ KW[i, 1];
-				num3 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C2 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C1 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C0 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C3 >> 24))] ^ KW[i, 2];
-				num4 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C3 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C2 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C1 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C0 >> 24))] ^ KW[i--, 3];
-				this.C0 = AesFastEngine.Tinv0[(int)((UIntPtr)(num & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((num4 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((num3 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(num2 >> 24))] ^ KW[i, 0];
-				this.C1 = AesFastEngine.Tinv0[(int)((UIntPtr)(num2 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((num >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((num4 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(num3 >> 24))] ^ KW[i, 1];
-				this.C2 = AesFastEngine.Tinv0[(int)((UIntPtr)(num3 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((num2 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((num >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(num4 >> 24))] ^ KW[i, 2];
-				this.C3 = AesFastEngine.Tinv0[(int)((UIntPtr)(num4 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((num3 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((num2 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(num >> 24))] ^ KW[i--, 3];
+				r2 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C0 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C3 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C2 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C1 >> 24))] ^ KW[r, 0];
+				r3 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C1 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C0 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C3 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C2 >> 24))] ^ KW[r, 1];
+				r4 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C2 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C1 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C0 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C3 >> 24))] ^ KW[r, 2];
+				r5 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C3 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C2 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C1 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C0 >> 24))] ^ KW[r--, 3];
+				this.C0 = AesFastEngine.Tinv0[(int)((UIntPtr)(r2 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((r5 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((r4 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(r3 >> 24))] ^ KW[r, 0];
+				this.C1 = AesFastEngine.Tinv0[(int)((UIntPtr)(r3 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((r2 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((r5 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(r4 >> 24))] ^ KW[r, 1];
+				this.C2 = AesFastEngine.Tinv0[(int)((UIntPtr)(r4 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((r3 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((r2 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(r5 >> 24))] ^ KW[r, 2];
+				this.C3 = AesFastEngine.Tinv0[(int)((UIntPtr)(r5 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((r4 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((r3 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(r2 >> 24))] ^ KW[r--, 3];
 			}
-			num = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C0 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C3 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C2 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C1 >> 24))] ^ KW[i, 0];
-			num2 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C1 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C0 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C3 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C2 >> 24))] ^ KW[i, 1];
-			num3 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C2 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C1 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C0 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C3 >> 24))] ^ KW[i, 2];
-			num4 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C3 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C2 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C1 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C0 >> 24))] ^ KW[i, 3];
-			this.C0 = (uint)((int)AesFastEngine.Si[(int)((UIntPtr)(num & 255U))] ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((num4 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((num3 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)(num2 >> 24))] << 24) ^ (int)KW[0, 0]);
-			this.C1 = (uint)((int)AesFastEngine.Si[(int)((UIntPtr)(num2 & 255U))] ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((num >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((num4 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)(num3 >> 24))] << 24) ^ (int)KW[0, 1]);
-			this.C2 = (uint)((int)AesFastEngine.Si[(int)((UIntPtr)(num3 & 255U))] ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((num2 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((num >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)(num4 >> 24))] << 24) ^ (int)KW[0, 2]);
-			this.C3 = (uint)((int)AesFastEngine.Si[(int)((UIntPtr)(num4 & 255U))] ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((num3 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((num2 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)(num >> 24))] << 24) ^ (int)KW[0, 3]);
+			r2 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C0 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C3 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C2 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C1 >> 24))] ^ KW[r, 0];
+			r3 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C1 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C0 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C3 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C2 >> 24))] ^ KW[r, 1];
+			r4 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C2 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C1 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C0 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C3 >> 24))] ^ KW[r, 2];
+			r5 = AesFastEngine.Tinv0[(int)((UIntPtr)(this.C3 & 255U))] ^ AesFastEngine.Tinv1[(int)((UIntPtr)((this.C2 >> 8) & 255U))] ^ AesFastEngine.Tinv2[(int)((UIntPtr)((this.C1 >> 16) & 255U))] ^ AesFastEngine.Tinv3[(int)((UIntPtr)(this.C0 >> 24))] ^ KW[r, 3];
+			this.C0 = (uint)((int)AesFastEngine.Si[(int)((UIntPtr)(r2 & 255U))] ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((r5 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((r4 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)(r3 >> 24))] << 24) ^ (int)KW[0, 0]);
+			this.C1 = (uint)((int)AesFastEngine.Si[(int)((UIntPtr)(r3 & 255U))] ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((r2 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((r5 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)(r4 >> 24))] << 24) ^ (int)KW[0, 1]);
+			this.C2 = (uint)((int)AesFastEngine.Si[(int)((UIntPtr)(r4 & 255U))] ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((r3 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((r2 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)(r5 >> 24))] << 24) ^ (int)KW[0, 2]);
+			this.C3 = (uint)((int)AesFastEngine.Si[(int)((UIntPtr)(r5 & 255U))] ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((r4 >> 8) & 255U))] << 8) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)((r3 >> 16) & 255U))] << 16) ^ ((int)AesFastEngine.Si[(int)((UIntPtr)(r2 >> 24))] << 24) ^ (int)KW[0, 3]);
 		}
 
 		private const uint m1 = 2155905152U;

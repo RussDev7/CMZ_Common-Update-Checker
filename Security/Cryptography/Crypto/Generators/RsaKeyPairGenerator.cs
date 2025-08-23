@@ -19,46 +19,46 @@ namespace DNA.Security.Cryptography.Crypto.Generators
 		public AsymmetricCipherKeyPair GenerateKeyPair()
 		{
 			int strength = this.param.Strength;
-			int num = (strength + 1) / 2;
-			int num2 = strength - num;
-			int num3 = strength / 3;
-			BigInteger publicExponent = this.param.PublicExponent;
-			BigInteger bigInteger;
+			int pbitlength = (strength + 1) / 2;
+			int qbitlength = strength - pbitlength;
+			int mindiffbits = strength / 3;
+			BigInteger e = this.param.PublicExponent;
+			BigInteger p;
 			do
 			{
-				bigInteger = new BigInteger(num, 1, this.param.Random);
+				p = new BigInteger(pbitlength, 1, this.param.Random);
 			}
-			while (bigInteger.Mod(publicExponent).Equals(BigInteger.One) || !bigInteger.IsProbablePrime(this.param.Certainty) || !publicExponent.Gcd(bigInteger.Subtract(BigInteger.One)).Equals(BigInteger.One));
-			BigInteger bigInteger2;
-			BigInteger bigInteger3;
+			while (p.Mod(e).Equals(BigInteger.One) || !p.IsProbablePrime(this.param.Certainty) || !e.Gcd(p.Subtract(BigInteger.One)).Equals(BigInteger.One));
+			BigInteger q;
+			BigInteger i;
 			for (;;)
 			{
-				bigInteger2 = new BigInteger(num2, 1, this.param.Random);
-				if (bigInteger2.Subtract(bigInteger).Abs().BitLength >= num3 && !bigInteger2.Mod(publicExponent).Equals(BigInteger.One) && bigInteger2.IsProbablePrime(this.param.Certainty) && publicExponent.Gcd(bigInteger2.Subtract(BigInteger.One)).Equals(BigInteger.One))
+				q = new BigInteger(qbitlength, 1, this.param.Random);
+				if (q.Subtract(p).Abs().BitLength >= mindiffbits && !q.Mod(e).Equals(BigInteger.One) && q.IsProbablePrime(this.param.Certainty) && e.Gcd(q.Subtract(BigInteger.One)).Equals(BigInteger.One))
 				{
-					bigInteger3 = bigInteger.Multiply(bigInteger2);
-					if (bigInteger3.BitLength == this.param.Strength)
+					i = p.Multiply(q);
+					if (i.BitLength == this.param.Strength)
 					{
 						break;
 					}
-					bigInteger = bigInteger.Max(bigInteger2);
+					p = p.Max(q);
 				}
 			}
-			BigInteger bigInteger4;
-			if (bigInteger.CompareTo(bigInteger2) < 0)
+			BigInteger phi;
+			if (p.CompareTo(q) < 0)
 			{
-				bigInteger4 = bigInteger;
-				bigInteger = bigInteger2;
-				bigInteger2 = bigInteger4;
+				phi = p;
+				p = q;
+				q = phi;
 			}
-			BigInteger bigInteger5 = bigInteger.Subtract(BigInteger.One);
-			BigInteger bigInteger6 = bigInteger2.Subtract(BigInteger.One);
-			bigInteger4 = bigInteger5.Multiply(bigInteger6);
-			BigInteger bigInteger7 = publicExponent.ModInverse(bigInteger4);
-			BigInteger bigInteger8 = bigInteger7.Remainder(bigInteger5);
-			BigInteger bigInteger9 = bigInteger7.Remainder(bigInteger6);
-			BigInteger bigInteger10 = bigInteger2.ModInverse(bigInteger);
-			return new AsymmetricCipherKeyPair(new RsaKeyParameters(false, bigInteger3, publicExponent), new RsaPrivateCrtKeyParameters(bigInteger3, publicExponent, bigInteger7, bigInteger, bigInteger2, bigInteger8, bigInteger9, bigInteger10));
+			BigInteger pSub = p.Subtract(BigInteger.One);
+			BigInteger qSub = q.Subtract(BigInteger.One);
+			phi = pSub.Multiply(qSub);
+			BigInteger d = e.ModInverse(phi);
+			BigInteger dP = d.Remainder(pSub);
+			BigInteger dQ = d.Remainder(qSub);
+			BigInteger qInv = q.ModInverse(p);
+			return new AsymmetricCipherKeyPair(new RsaKeyParameters(false, i, e), new RsaPrivateCrtKeyParameters(i, e, d, p, q, dP, dQ, qInv));
 		}
 
 		private const int DefaultTests = 12;

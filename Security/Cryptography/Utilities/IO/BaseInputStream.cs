@@ -60,28 +60,28 @@ namespace DNA.Security.Cryptography.Utilities.IO
 
 		public override int Read(byte[] buffer, int offset, int count)
 		{
-			int i = offset;
+			int pos = offset;
 			try
 			{
-				int num = offset + count;
-				while (i < num)
+				int end = offset + count;
+				while (pos < end)
 				{
-					int num2 = this.ReadByte();
-					if (num2 == -1)
+					int b = this.ReadByte();
+					if (b == -1)
 					{
 						break;
 					}
-					buffer[i++] = (byte)num2;
+					buffer[pos++] = (byte)b;
 				}
 			}
 			catch (IOException)
 			{
-				if (i == offset)
+				if (pos == offset)
 				{
 					throw;
 				}
 			}
-			return i - offset;
+			return pos - offset;
 		}
 
 		public sealed override long Seek(long offset, SeekOrigin origin)

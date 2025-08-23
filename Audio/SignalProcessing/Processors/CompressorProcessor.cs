@@ -12,23 +12,23 @@ namespace DNA.Audio.SignalProcessing.Processors
 			{
 				this.index = 0;
 			}
-			float num = 0f;
+			float averageLevelHistory = 0f;
 			for (int i = 0; i < this.levelHistory.Length; i++)
 			{
-				num += this.levelHistory[i];
+				averageLevelHistory += this.levelHistory[i];
 			}
-			num /= (float)this.levelHistory.Length;
-			float num2 = this.targetLevel / num;
-			float[] data2 = data.GetData(0);
-			if (this.PeakLevel * num2 > 0.8f)
+			averageLevelHistory /= (float)this.levelHistory.Length;
+			float LevelMultiplier = this.targetLevel / averageLevelHistory;
+			float[] cdata = data.GetData(0);
+			if (this.PeakLevel * LevelMultiplier > 0.8f)
 			{
-				num2 = 0.8f / this.PeakLevel;
+				LevelMultiplier = 0.8f / this.PeakLevel;
 			}
 			if (this.PeakLevel > 0.15f)
 			{
-				for (int j = 0; j < data2.Length; j++)
+				for (int j = 0; j < cdata.Length; j++)
 				{
-					data2[j] *= num2;
+					cdata[j] *= LevelMultiplier;
 				}
 			}
 			return true;

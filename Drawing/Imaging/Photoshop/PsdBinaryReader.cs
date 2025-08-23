@@ -41,63 +41,63 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		public unsafe short ReadInt16()
 		{
-			short num = this.reader.ReadInt16();
-			Util.SwapBytes((byte*)(&num), 2);
-			return num;
+			short val = this.reader.ReadInt16();
+			Util.SwapBytes((byte*)(&val), 2);
+			return val;
 		}
 
 		public unsafe int ReadInt32()
 		{
-			int num = this.reader.ReadInt32();
-			Util.SwapBytes((byte*)(&num), 4);
-			return num;
+			int val = this.reader.ReadInt32();
+			Util.SwapBytes((byte*)(&val), 4);
+			return val;
 		}
 
 		public unsafe long ReadInt64()
 		{
-			long num = this.reader.ReadInt64();
-			Util.SwapBytes((byte*)(&num), 8);
-			return num;
+			long val = this.reader.ReadInt64();
+			Util.SwapBytes((byte*)(&val), 8);
+			return val;
 		}
 
 		public unsafe ushort ReadUInt16()
 		{
-			ushort num = this.reader.ReadUInt16();
-			Util.SwapBytes((byte*)(&num), 2);
-			return num;
+			ushort val = this.reader.ReadUInt16();
+			Util.SwapBytes((byte*)(&val), 2);
+			return val;
 		}
 
 		public unsafe uint ReadUInt32()
 		{
-			uint num = this.reader.ReadUInt32();
-			Util.SwapBytes((byte*)(&num), 4);
-			return num;
+			uint val = this.reader.ReadUInt32();
+			Util.SwapBytes((byte*)(&val), 4);
+			return val;
 		}
 
 		public unsafe ulong ReadUInt64()
 		{
-			ulong num = this.reader.ReadUInt64();
-			Util.SwapBytes((byte*)(&num), 8);
-			return num;
+			ulong val = this.reader.ReadUInt64();
+			Util.SwapBytes((byte*)(&val), 8);
+			return val;
 		}
 
 		public string ReadPascalString()
 		{
-			byte b = this.ReadByte();
-			char[] array = this.ReadChars((int)b);
-			if (b % 2 == 0)
+			byte stringLength = this.ReadByte();
+			char[] c = this.ReadChars((int)stringLength);
+			if (stringLength % 2 == 0)
 			{
 				this.ReadByte();
 			}
-			return new string(array);
+			return new string(c);
 		}
 
 		public string ReadUnicodeString()
 		{
-			int num = this.ReadInt32();
-			int num2 = 2 * num;
-			byte[] array = this.ReadBytes(num2);
-			return Encoding.BigEndianUnicode.GetString(array, 0, num2);
+			int numChars = this.ReadInt32();
+			int length = 2 * numChars;
+			byte[] data = this.ReadBytes(length);
+			return Encoding.BigEndianUnicode.GetString(data, 0, length);
 		}
 
 		public void Dispose()

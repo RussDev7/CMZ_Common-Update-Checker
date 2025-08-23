@@ -35,22 +35,22 @@ namespace DNA.IO.Compression.Zip.Compression
 
 		private bool DecodeHeader()
 		{
-			int num = this.input.PeekBits(16);
-			if (num < 0)
+			int header = this.input.PeekBits(16);
+			if (header < 0)
 			{
 				return false;
 			}
 			this.input.DropBits(16);
-			num = ((num << 8) | (num >> 8)) & 65535;
-			if (num % 31 != 0)
+			header = ((header << 8) | (header >> 8)) & 65535;
+			if (header % 31 != 0)
 			{
 				throw new CompressionException("Header checksum illegal");
 			}
-			if ((num & 3840) != Deflater.Deflated << 8)
+			if ((header & 3840) != Deflater.Deflated << 8)
 			{
 				throw new CompressionException("Compression Method unknown");
 			}
-			if ((num & 32) == 0)
+			if ((header & 32) == 0)
 			{
 				this.mode = 2;
 			}
@@ -66,13 +66,13 @@ namespace DNA.IO.Compression.Zip.Compression
 		{
 			while (this.neededBits > 0)
 			{
-				int num = this.input.PeekBits(8);
-				if (num < 0)
+				int dictByte = this.input.PeekBits(8);
+				if (dictByte < 0)
 				{
 					return false;
 				}
 				this.input.DropBits(8);
-				this.readAdler = (this.readAdler << 8) | num;
+				this.readAdler = (this.readAdler << 8) | dictByte;
 				this.neededBits -= 8;
 			}
 			return false;
@@ -80,27 +80,27 @@ namespace DNA.IO.Compression.Zip.Compression
 
 		private bool DecodeHuffman()
 		{
-			int i = this.outputWindow.GetFreeSpace();
-			while (i >= 258)
+			int free = this.outputWindow.GetFreeSpace();
+			while (free >= 258)
 			{
-				int num;
+				int symbol;
 				switch (this.mode)
 				{
 				case 7:
-					while (((num = this.litlenTree.GetSymbol(this.input)) & -256) == 0)
+					while (((symbol = this.litlenTree.GetSymbol(this.input)) & -256) == 0)
 					{
-						this.outputWindow.Write(num);
-						if (--i < 258)
+						this.outputWindow.Write(symbol);
+						if (--free < 258)
 						{
 							return true;
 						}
 					}
-					if (num >= 257)
+					if (symbol >= 257)
 					{
 						try
 						{
-							this.repLength = Inflater.CPLENS[num - 257];
-							this.neededBits = Inflater.CPLEXT[num - 257];
+							this.repLength = Inflater.CPLENS[symbol - 257];
+							this.neededBits = Inflater.CPLEXT[symbol - 257];
 						}
 						catch (Exception)
 						{
@@ -108,7 +108,7 @@ namespace DNA.IO.Compression.Zip.Compression
 						}
 						goto IL_00C5;
 					}
-					if (num < 0)
+					if (symbol < 0)
 					{
 						return false;
 					}
@@ -129,28 +129,28 @@ namespace DNA.IO.Compression.Zip.Compression
 				if (this.neededBits > 0)
 				{
 					this.mode = 10;
-					int num2 = this.input.PeekBits(this.neededBits);
-					if (num2 < 0)
+					int i = this.input.PeekBits(this.neededBits);
+					if (i < 0)
 					{
 						return false;
 					}
 					this.input.DropBits(this.neededBits);
-					this.repDist += num2;
+					this.repDist += i;
 				}
 				this.outputWindow.Repeat(this.repLength, this.repDist);
-				i -= this.repLength;
+				free -= this.repLength;
 				this.mode = 7;
 				continue;
 				IL_0114:
-				num = this.distTree.GetSymbol(this.input);
-				if (num < 0)
+				symbol = this.distTree.GetSymbol(this.input);
+				if (symbol < 0)
 				{
 					return false;
 				}
 				try
 				{
-					this.repDist = Inflater.CPDIST[num];
-					this.neededBits = Inflater.CPDEXT[num];
+					this.repDist = Inflater.CPDIST[symbol];
+					this.neededBits = Inflater.CPDEXT[symbol];
 				}
 				catch (Exception)
 				{
@@ -161,13 +161,13 @@ namespace DNA.IO.Compression.Zip.Compression
 				if (this.neededBits > 0)
 				{
 					this.mode = 8;
-					int num3 = this.input.PeekBits(this.neededBits);
-					if (num3 < 0)
+					int j = this.input.PeekBits(this.neededBits);
+					if (j < 0)
 					{
 						return false;
 					}
 					this.input.DropBits(this.neededBits);
-					this.repLength += num3;
+					this.repLength += j;
 				}
 				this.mode = 9;
 				goto IL_0114;
@@ -179,13 +179,13 @@ namespace DNA.IO.Compression.Zip.Compression
 		{
 			while (this.neededBits > 0)
 			{
-				int num = this.input.PeekBits(8);
-				if (num < 0)
+				int chkByte = this.input.PeekBits(8);
+				if (chkByte < 0)
 				{
 					return false;
 				}
 				this.input.DropBits(8);
-				this.readAdler = (this.readAdler << 8) | num;
+				this.readAdler = (this.readAdler << 8) | chkByte;
 				this.neededBits -= 8;
 			}
 			if (this.adler.Value != (uint)this.readAdler)
@@ -225,17 +225,17 @@ namespace DNA.IO.Compression.Zip.Compression
 				}
 				else
 				{
-					int num = this.input.PeekBits(3);
-					if (num < 0)
+					int type = this.input.PeekBits(3);
+					if (type < 0)
 					{
 						return false;
 					}
 					this.input.DropBits(3);
-					if ((num & 1) != 0)
+					if ((type & 1) != 0)
 					{
 						this.isLastBlock = true;
 					}
-					switch (num >> 1)
+					switch (type >> 1)
 					{
 					case 0:
 						this.input.SkipToByteBoundary();
@@ -251,7 +251,7 @@ namespace DNA.IO.Compression.Zip.Compression
 						this.mode = 6;
 						break;
 					default:
-						throw new CompressionException("Unknown block type " + num);
+						throw new CompressionException("Unknown block type " + type);
 					}
 					return true;
 				}
@@ -289,20 +289,20 @@ namespace DNA.IO.Compression.Zip.Compression
 			default:
 				throw new CompressionException("Inflater.Decode unknown mode");
 			}
-			int num2 = this.input.PeekBits(16);
-			if (num2 < 0)
+			int nlen = this.input.PeekBits(16);
+			if (nlen < 0)
 			{
 				return false;
 			}
 			this.input.DropBits(16);
-			if (num2 != (this.uncomprLen ^ 65535))
+			if (nlen != (this.uncomprLen ^ 65535))
 			{
 				throw new CompressionException("broken uncompressed block");
 			}
 			this.mode = 5;
 			IL_01A9:
-			int num3 = this.outputWindow.CopyStored(this.input, this.uncomprLen);
-			this.uncomprLen -= num3;
+			int more = this.outputWindow.CopyStored(this.input, this.uncomprLen);
+			this.uncomprLen -= more;
 			if (this.uncomprLen == 0)
 			{
 				this.mode = 2;
@@ -364,17 +364,17 @@ namespace DNA.IO.Compression.Zip.Compression
 				}
 				return 0;
 			}
-			int num = 0;
+			int count = 0;
 			for (;;)
 			{
 				if (this.mode != 11)
 				{
-					int num2 = this.outputWindow.CopyOutput(buf, offset, len);
-					this.adler.Update(buf, offset, num2);
-					offset += num2;
-					num += num2;
-					this.totalOut += num2;
-					len -= num2;
+					int more = this.outputWindow.CopyOutput(buf, offset, len);
+					this.adler.Update(buf, offset, more);
+					offset += more;
+					count += more;
+					this.totalOut += more;
+					len -= more;
 					if (len == 0)
 					{
 						break;
@@ -382,10 +382,10 @@ namespace DNA.IO.Compression.Zip.Compression
 				}
 				if (!this.Decode() && (this.outputWindow.GetAvailable() <= 0 || this.mode == 11))
 				{
-					return num;
+					return count;
 				}
 			}
-			return num;
+			return count;
 		}
 
 		public bool IsNeedingInput

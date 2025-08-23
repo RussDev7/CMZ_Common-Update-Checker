@@ -13,16 +13,16 @@
 
 		private void InitializeComponent()
 		{
-			global::System.ComponentModel.ComponentResourceManager componentResourceManager = new global::System.ComponentModel.ComponentResourceManager(typeof(global::DNA.Distribution.LauncherForm));
+			global::System.ComponentModel.ComponentResourceManager resources = new global::System.ComponentModel.ComponentResourceManager(typeof(global::DNA.Distribution.LauncherForm));
 			this.launcherControl1 = new global::DNA.Distribution.LauncherControl();
 			base.SuspendLayout();
-			componentResourceManager.ApplyResources(this.launcherControl1, "launcherControl1");
+			resources.ApplyResources(this.launcherControl1, "launcherControl1");
 			this.launcherControl1.Name = "launcherControl1";
 			this.launcherControl1.GameLaunched += new global::System.EventHandler<global::System.EventArgs>(this.launcherControl1_GameLaunched);
 			this.launcherControl1.OptionsClicked += new global::System.EventHandler<global::System.EventArgs>(this.launcherControl1_OptionsClicked);
 			this.launcherControl1.FacebookLoginClicked += new global::System.EventHandler<global::System.EventArgs>(this.launcherControl1_FacebookLoginClicked);
 			this.launcherControl1.BeforeGameLaunch += new global::System.EventHandler<global::System.EventArgs>(this.launcherControl1_BeforeGameLaunch);
-			componentResourceManager.ApplyResources(this, "$this");
+			resources.ApplyResources(this, "$this");
 			base.AutoScaleMode = global::System.Windows.Forms.AutoScaleMode.Font;
 			base.Controls.Add(this.launcherControl1);
 			base.Name = "LauncherForm";

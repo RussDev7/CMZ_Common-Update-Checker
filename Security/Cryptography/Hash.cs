@@ -20,12 +20,12 @@ namespace DNA.Security.Cryptography
 
 		public override int GetHashCode()
 		{
-			int num = 0;
+			int res = 0;
 			for (int i = 0; i < this._data.Length; i++)
 			{
-				num ^= (int)this._data[i];
+				res ^= (int)this._data[i];
 			}
-			return num;
+			return res;
 		}
 
 		public static bool operator ==(Hash a, Hash b)
@@ -45,13 +45,13 @@ namespace DNA.Security.Cryptography
 
 		public override string ToString()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder builder = new StringBuilder();
 			for (int i = 0; i < this._data.Length; i++)
 			{
-				string text = this._data[i].ToString("X2");
-				stringBuilder.Append(text);
+				string str = this._data[i].ToString("X2");
+				builder.Append(str);
 			}
-			return stringBuilder.ToString();
+			return builder.ToString();
 		}
 
 		public int CompareTo(Hash other)
@@ -66,10 +66,10 @@ namespace DNA.Security.Cryptography
 			}
 			for (int i = 0; i < this._data.Length; i++)
 			{
-				int num = (int)(this._data[i] - other._data[i]);
-				if (num != 0)
+				int ret = (int)(this._data[i] - other._data[i]);
+				if (ret != 0)
 				{
-					return num;
+					return ret;
 				}
 			}
 			return 0;

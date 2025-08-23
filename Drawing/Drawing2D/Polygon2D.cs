@@ -51,13 +51,13 @@ namespace DNA.Drawing.Drawing2D
 
 		public IList<LineF2D> GetLineSegments()
 		{
-			LineF2D[] array = new LineF2D[this._points.Length];
+			LineF2D[] lines = new LineF2D[this._points.Length];
 			for (int i = 0; i < this._points.Length - 1; i++)
 			{
-				array[i] = new LineF2D(this._points[i], this._points[i + 1]);
+				lines[i] = new LineF2D(this._points[i], this._points[i + 1]);
 			}
-			array[this._points.Length - 1] = new LineF2D(this._points[this._points.Length - 1], this._points[0]);
-			return array;
+			lines[this._points.Length - 1] = new LineF2D(this._points[this._points.Length - 1], this._points[0]);
+			return lines;
 		}
 
 		public override void Transform(Matrix mat)
@@ -71,18 +71,18 @@ namespace DNA.Drawing.Drawing2D
 
 		public Polygon2D(IList<Vector2> points)
 		{
-			int num = points.Count;
+			int newLen = points.Count;
 			if (points[0] != points[points.Count - 1])
 			{
-				num++;
+				newLen++;
 			}
-			this._points = new Vector2[num];
+			this._points = new Vector2[newLen];
 			for (int i = 0; i < points.Count; i++)
 			{
-				Vector2 vector = points[i];
-				if (this._points.Length == 0 || this._points[this._points.Length - 1] != vector)
+				Vector2 p = points[i];
+				if (this._points.Length == 0 || this._points[this._points.Length - 1] != p)
 				{
-					this._points[i] = vector;
+					this._points[i] = p;
 				}
 			}
 			if (points[0] != points[points.Count - 1])
@@ -95,37 +95,37 @@ namespace DNA.Drawing.Drawing2D
 
 		public Rectangle ComputeTransformedBoundingBox(Matrix mat)
 		{
-			float num = float.MaxValue;
-			float num2 = float.MaxValue;
-			float num3 = float.MinValue;
-			float num4 = float.MinValue;
+			float lowX = float.MaxValue;
+			float lowY = float.MaxValue;
+			float highX = float.MinValue;
+			float highY = float.MinValue;
 			for (int i = 0; i < this._points.Length; i++)
 			{
-				Vector2 vector = this._points[i];
-				Vector3 vector2 = Vector3.Transform(new Vector3(vector.X, vector.Y, 0f), mat);
-				num = Math.Min(num, vector2.X);
-				num2 = Math.Min(num2, vector2.Y);
-				num3 = Math.Max(num3, vector2.X);
-				num4 = Math.Max(num4, vector2.Y);
+				Vector2 p = this._points[i];
+				Vector3 vect = Vector3.Transform(new Vector3(p.X, p.Y, 0f), mat);
+				lowX = Math.Min(lowX, vect.X);
+				lowY = Math.Min(lowY, vect.Y);
+				highX = Math.Max(highX, vect.X);
+				highY = Math.Max(highY, vect.Y);
 			}
-			return new Rectangle((int)num, (int)num2, (int)(num3 - num), (int)(num4 - num2));
+			return new Rectangle((int)lowX, (int)lowY, (int)(highX - lowX), (int)(highY - lowY));
 		}
 
 		private void ComputeBoundingBox()
 		{
-			float num = 2.1474836E+09f;
-			float num2 = 2.1474836E+09f;
-			float num3 = -2.1474836E+09f;
-			float num4 = -2.1474836E+09f;
+			float lowX = 2.1474836E+09f;
+			float lowY = 2.1474836E+09f;
+			float highX = -2.1474836E+09f;
+			float highY = -2.1474836E+09f;
 			for (int i = 0; i < this._points.Length; i++)
 			{
-				Vector2 vector = this._points[i];
-				num = Math.Min(num, vector.X);
-				num2 = Math.Min(num2, vector.Y);
-				num3 = Math.Max(num3, vector.X);
-				num4 = Math.Max(num4, vector.Y);
+				Vector2 p = this._points[i];
+				lowX = Math.Min(lowX, p.X);
+				lowY = Math.Min(lowY, p.Y);
+				highX = Math.Max(highX, p.X);
+				highY = Math.Max(highY, p.Y);
 			}
-			this._boundingBox = new RectangleF(num, num2, num3 - num + 1f, num4 - num2 + 1f);
+			this._boundingBox = new RectangleF(lowX, lowY, highX - lowX + 1f, highY - lowY + 1f);
 			this._center = new Vector2(this._boundingBox.Left + this._boundingBox.Width / 2f, this._boundingBox.Top + this._boundingBox.Height / 2f);
 		}
 
@@ -162,15 +162,15 @@ namespace DNA.Drawing.Drawing2D
 			{
 				return 0f;
 			}
-			int num = 0;
+			int incount = 0;
 			for (int i = 0; i < this._points.Length; i++)
 			{
 				if (region.Contains(this._points[i]))
 				{
-					num++;
+					incount++;
 				}
 			}
-			return (float)num / (float)this._points.Length;
+			return (float)incount / (float)this._points.Length;
 		}
 
 		private bool Touches(Polygon2D s)
@@ -184,8 +184,8 @@ namespace DNA.Drawing.Drawing2D
 			{
 				for (int i = 0; i < this._points.Length; i++)
 				{
-					Vector2 vector = this._points[i];
-					if (s.Contains(vector))
+					Vector2 p = this._points[i];
+					if (s.Contains(p))
 					{
 						return true;
 					}
@@ -194,23 +194,23 @@ namespace DNA.Drawing.Drawing2D
 				{
 					throw new NotImplementedException();
 				}
-				IPointShape2D pointShape2D = (IPointShape2D)s;
-				IList<Vector2> points = pointShape2D.Points;
+				IPointShape2D poly = (IPointShape2D)s;
+				IList<Vector2> points = poly.Points;
 				for (int j = 0; j < points.Count; j++)
 				{
-					Vector2 vector2 = points[j];
-					if (this.Contains(vector2))
+					Vector2 p2 = points[j];
+					if (this.Contains(p2))
 					{
 						return true;
 					}
 				}
-				IList<LineF2D> lineSegments = this.GetLineSegments();
-				IList<LineF2D> lineSegments2 = pointShape2D.GetLineSegments();
-				for (int k = 0; k < lineSegments.Count; k++)
+				IList<LineF2D> lines = this.GetLineSegments();
+				IList<LineF2D> lines2 = poly.GetLineSegments();
+				for (int k = 0; k < lines.Count; k++)
 				{
-					for (int l = 0; l < lineSegments2.Count; l++)
+					for (int l = 0; l < lines2.Count; l++)
 					{
-						if (lineSegments[k].Intersects(lineSegments2[l]))
+						if (lines[k].Intersects(lines2[l]))
 						{
 							return true;
 						}
@@ -226,23 +226,23 @@ namespace DNA.Drawing.Drawing2D
 			{
 				return false;
 			}
-			Vector2 vector = this._points[0];
-			float num = p.X + 0.5f;
+			Vector2 p2 = this._points[0];
+			float x = p.X + 0.5f;
 			for (int i = 1; i < this._points.Length; i++)
 			{
-				Vector2 vector2 = this._points[i];
-				float num2 = vector2.X - num;
-				float num3 = vector.X - num;
-				if ((num2 > 0f && num3 < 0f) || (num2 < 0f && num3 > 0f))
+				Vector2 p3 = this._points[i];
+				float x2 = p3.X - x;
+				float x3 = p2.X - x;
+				if ((x2 > 0f && x3 < 0f) || (x2 < 0f && x3 > 0f))
 				{
-					float num4 = (num - vector.X) / (vector2.X - vector.X);
-					float num5 = vector.Y + num4 * (vector2.Y - vector.Y);
-					if (num5 < p.Y)
+					float t = (x - p2.X) / (p3.X - p2.X);
+					float y = p2.Y + t * (p3.Y - p2.Y);
+					if (y < p.Y)
 					{
 						return false;
 					}
 				}
-				vector = vector2;
+				p2 = p3;
 			}
 			return true;
 		}
@@ -252,12 +252,12 @@ namespace DNA.Drawing.Drawing2D
 			lowestT = float.MaxValue;
 			for (int i = 0; i < this._points.Length - 1; i++)
 			{
-				LineF2D lineF2D = new LineF2D(this._points[i], this._points[i + 1]);
-				float num;
-				bool flag;
-				if (lineF2D.Intersects(targetLine, out num, out flag) && !flag && lowestT > num)
+				LineF2D line = new LineF2D(this._points[i], this._points[i + 1]);
+				float intersection;
+				bool coincident;
+				if (line.Intersects(targetLine, out intersection, out coincident) && !coincident && lowestT > intersection)
 				{
-					lowestT = num;
+					lowestT = intersection;
 				}
 			}
 			return lowestT != float.MaxValue;
@@ -267,84 +267,84 @@ namespace DNA.Drawing.Drawing2D
 		{
 			for (int i = 0; i < this._points.Length - 1; i++)
 			{
-				LineF2D lineF2D = new LineF2D(this._points[i], this._points[i + 1]);
-				float num;
-				bool flag;
-				if (lineF2D.Intersects(targetLine, out num, out flag) && !flag)
+				LineF2D line = new LineF2D(this._points[i], this._points[i + 1]);
+				float intersection;
+				bool coincident;
+				if (line.Intersects(targetLine, out intersection, out coincident) && !coincident)
 				{
-					intersections.Add(new Polygon2D.IntersectionData(num, lineF2D, flag));
+					intersections.Add(new Polygon2D.IntersectionData(intersection, line, coincident));
 				}
 			}
 		}
 
 		public IList<float> ParametricIntersections(LineF2D targetLine)
 		{
-			List<float> list = new List<float>();
+			List<float> ints = new List<float>();
 			for (int i = 0; i < this._points.Length - 1; i++)
 			{
-				LineF2D lineF2D = new LineF2D(this._points[i], this._points[i + 1]);
-				float num;
-				bool flag;
-				if (lineF2D.Intersects(targetLine, out num, out flag) && !flag)
+				LineF2D line = new LineF2D(this._points[i], this._points[i + 1]);
+				float intersection;
+				bool coincident;
+				if (line.Intersects(targetLine, out intersection, out coincident) && !coincident)
 				{
-					list.Add(num);
+					ints.Add(intersection);
 				}
 			}
-			return list;
+			return ints;
 		}
 
 		public IList<Vector2> Intersections(LineF2D targetLine)
 		{
-			List<Vector2> list = new List<Vector2>();
+			List<Vector2> ints = new List<Vector2>();
 			for (int i = 0; i < this._points.Length - 1; i++)
 			{
-				LineF2D lineF2D = new LineF2D(this._points[i], this._points[i + 1]);
-				Vector2 vector;
-				bool flag;
-				if (lineF2D.Intersects(targetLine, out vector, out flag) && !flag)
+				LineF2D line = new LineF2D(this._points[i], this._points[i + 1]);
+				Vector2 intersection;
+				bool coincident;
+				if (line.Intersects(targetLine, out intersection, out coincident) && !coincident)
 				{
-					list.Add(vector);
+					ints.Add(intersection);
 				}
 			}
-			return list;
+			return ints;
 		}
 
 		public Vector2 ShortestVectorTo(Vector2 point)
 		{
-			LineF2D lineF2D = new LineF2D(this._points[0], this._points[1]);
-			Vector2 vector = lineF2D.ShortestVectorTo(point);
-			float num = vector.LengthSquared();
-			Vector2 vector2 = this._points[1];
+			LineF2D line = new LineF2D(this._points[0], this._points[1]);
+			Vector2 shortestVector = line.ShortestVectorTo(point);
+			float lsq = shortestVector.LengthSquared();
+			Vector2 lastPoint = this._points[1];
 			for (int i = 2; i < this._points.Length; i++)
 			{
-				lineF2D = new LineF2D(vector2, this._points[i]);
-				Vector2 vector3 = lineF2D.ShortestVectorTo(point);
-				float num2 = vector3.LengthSquared();
-				if (num2 < num)
+				line = new LineF2D(lastPoint, this._points[i]);
+				Vector2 vt = line.ShortestVectorTo(point);
+				float vlsq = vt.LengthSquared();
+				if (vlsq < lsq)
 				{
-					num = num2;
-					vector = vector3;
+					lsq = vlsq;
+					shortestVector = vt;
 				}
-				vector2 = this._points[i];
+				lastPoint = this._points[i];
 			}
-			return vector;
+			return shortestVector;
 		}
 
 		public override float DistanceSquaredTo(IShape2D shape)
 		{
 			if (shape is IPointShape2D)
 			{
-				IPointShape2D pointShape2D = (IPointShape2D)shape;
-				float num = float.MaxValue;
-				IList<Vector2> points = pointShape2D.Points;
+				IPointShape2D poly = (IPointShape2D)shape;
+				float min = float.MaxValue;
+				IList<Vector2> p2s = poly.Points;
 				for (int i = 0; i < this._points.Length; i++)
 				{
-					for (int j = 0; j < points.Count; j++)
+					for (int j = 0; j < p2s.Count; j++)
 					{
-						num = Math.Min((float)this._points[i].DistanceSquared(points[j]), num);
+						min = Math.Min((float)this._points[i].DistanceSquared(p2s[j]), min);
 					}
 				}
-				return num;
+				return min;
 			}
 			throw new NotImplementedException();
 		}
@@ -355,23 +355,23 @@ namespace DNA.Drawing.Drawing2D
 			{
 				return false;
 			}
-			Vector2 vector = this._points[0];
-			float num = p.X + 0.5f;
+			Vector2 p2 = this._points[0];
+			float x = p.X + 0.5f;
 			for (int i = 1; i < this._points.Length; i++)
 			{
-				Vector2 vector2 = this._points[i];
-				float num2 = vector2.X - num;
-				float num3 = vector.X - num;
-				if ((num2 > 0f && num3 < 0f) || (num2 < 0f && num3 > 0f))
+				Vector2 p3 = this._points[i];
+				float x2 = p3.X - x;
+				float x3 = p2.X - x;
+				if ((x2 > 0f && x3 < 0f) || (x2 < 0f && x3 > 0f))
 				{
-					float num4 = (num - vector.X) / (vector2.X - vector.X);
-					float num5 = vector.Y + num4 * (vector2.Y - vector.Y);
-					if (num5 > p.Y)
+					float t = (x - p2.X) / (p3.X - p2.X);
+					float y = p2.Y + t * (p3.Y - p2.Y);
+					if (y > p.Y)
 					{
 						return false;
 					}
 				}
-				vector = vector2;
+				p2 = p3;
 			}
 			return true;
 		}
@@ -382,23 +382,23 @@ namespace DNA.Drawing.Drawing2D
 			{
 				return false;
 			}
-			Vector2 vector = this._points[0];
-			float num = p.Y + 0.5f;
+			Vector2 p2 = this._points[0];
+			float y = p.Y + 0.5f;
 			for (int i = 1; i < this._points.Length; i++)
 			{
-				Vector2 vector2 = this._points[i];
-				float num2 = vector2.Y - num;
-				float num3 = vector.Y - num;
-				if ((num2 > 0f && num3 < 0f) || (num2 < 0f && num3 > 0f))
+				Vector2 p3 = this._points[i];
+				float y2 = p3.Y - y;
+				float y3 = p2.Y - y;
+				if ((y2 > 0f && y3 < 0f) || (y2 < 0f && y3 > 0f))
 				{
-					float num4 = (num - vector.Y) / (vector2.Y - vector.Y);
-					float num5 = vector.X + num4 * (vector2.X - vector.X);
-					if (num5 < p.X)
+					float t = (y - p2.Y) / (p3.Y - p2.Y);
+					float x = p2.X + t * (p3.X - p2.X);
+					if (x < p.X)
 					{
 						return false;
 					}
 				}
-				vector = vector2;
+				p2 = p3;
 			}
 			return true;
 		}
@@ -409,23 +409,23 @@ namespace DNA.Drawing.Drawing2D
 			{
 				return false;
 			}
-			Vector2 vector = this._points[0];
-			float num = p.Y + 0.5f;
+			Vector2 p2 = this._points[0];
+			float y = p.Y + 0.5f;
 			for (int i = 1; i < this._points.Length; i++)
 			{
-				Vector2 vector2 = this._points[i];
-				float num2 = vector2.Y - num;
-				float num3 = vector.Y - num;
-				if ((num2 > 0f && num3 < 0f) || (num2 < 0f && num3 > 0f))
+				Vector2 p3 = this._points[i];
+				float y2 = p3.Y - y;
+				float y3 = p2.Y - y;
+				if ((y2 > 0f && y3 < 0f) || (y2 < 0f && y3 > 0f))
 				{
-					float num4 = (num - vector.Y) / (vector2.Y - vector.Y);
-					float num5 = vector.X + num4 * (vector2.X - vector.X);
-					if (num5 > p.X)
+					float t = (y - p2.Y) / (p3.Y - p2.Y);
+					float x = p2.X + t * (p3.X - p2.X);
+					if (x > p.X)
 					{
 						return false;
 					}
 				}
-				vector = vector2;
+				p2 = p3;
 			}
 			return true;
 		}
@@ -434,8 +434,8 @@ namespace DNA.Drawing.Drawing2D
 		{
 			if (shape is IPointShape2D)
 			{
-				IPointShape2D pointShape2D = (IPointShape2D)shape;
-				return pointShape2D.PointsInside(this) == 1f;
+				IPointShape2D poly = (IPointShape2D)shape;
+				return poly.PointsInside(this) == 1f;
 			}
 			throw new NotImplementedException();
 		}
@@ -446,26 +446,26 @@ namespace DNA.Drawing.Drawing2D
 			{
 				return false;
 			}
-			Vector2 vector = this._points[0];
+			Vector2 p2 = this._points[0];
 			float y = p.Y;
-			int num = 0;
+			int crosses = 0;
 			for (int i = 1; i < this._points.Length; i++)
 			{
-				Vector2 vector2 = this._points[i];
-				float num2 = vector2.Y - y;
-				float num3 = vector.Y - y;
-				if ((num2 >= 0f && num3 < 0f) || (num2 < 0f && num3 >= 0f))
+				Vector2 p3 = this._points[i];
+				float y2 = p3.Y - y;
+				float y3 = p2.Y - y;
+				if ((y2 >= 0f && y3 < 0f) || (y2 < 0f && y3 >= 0f))
 				{
-					float num4 = (y - vector.Y) / (vector2.Y - vector.Y);
-					float num5 = vector.X + num4 * (vector2.X - vector.X);
-					if (num5 < p.X)
+					float t = (y - p2.Y) / (p3.Y - p2.Y);
+					float x = p2.X + t * (p3.X - p2.X);
+					if (x < p.X)
 					{
-						num++;
+						crosses++;
 					}
 				}
-				vector = vector2;
+				p2 = p3;
 			}
-			return (num & 1) != 0;
+			return (crosses & 1) != 0;
 		}
 
 		public override IShape2D Intersection(IShape2D s)
@@ -484,7 +484,7 @@ namespace DNA.Drawing.Drawing2D
 			{
 				return 0f;
 			}
-			float area = shape.Area;
+			float maxArea = shape.Area;
 			if (shape.Area == 0f)
 			{
 				return 0f;
@@ -493,22 +493,22 @@ namespace DNA.Drawing.Drawing2D
 			{
 				return 0f;
 			}
-			RectangleF rectangleF = RectangleF.Intersect(this._boundingBox, shape.BoundingBox);
-			float num = rectangleF.Width * rectangleF.Height;
-			return num / area;
+			RectangleF intersect = RectangleF.Intersect(this._boundingBox, shape.BoundingBox);
+			float iArea = intersect.Width * intersect.Height;
+			return iArea / maxArea;
 		}
 
 		private static float GetPolygonArea(IList<Vector2> points)
 		{
-			float num = 0f;
-			Vector2 vector = points[0];
+			float area = 0f;
+			Vector2 p = points[0];
 			for (int i = 0; i < points.Count; i++)
 			{
-				Vector2 vector2 = points[i];
-				num += (vector.X + vector2.X) * (vector.Y - vector2.Y);
-				vector = vector2;
+				Vector2 p2 = points[i];
+				area += (p.X + p2.X) * (p.Y - p2.Y);
+				p = p2;
 			}
-			return num * 0.5f;
+			return area * 0.5f;
 		}
 
 		private static float GetTriangleArea(Vector2 p1, Vector2 p2, Vector2 p3)
@@ -518,33 +518,33 @@ namespace DNA.Drawing.Drawing2D
 
 		private static bool IsEar(IList<Vector2> points, LinkedListNode<int> currentNode)
 		{
-			int value = currentNode.Value;
-			int num;
+			int index = currentNode.Value;
+			int pindex;
 			if (currentNode.Previous == null)
 			{
-				num = currentNode.List.Last.Value;
+				pindex = currentNode.List.Last.Value;
 			}
 			else
 			{
-				num = currentNode.Previous.Value;
+				pindex = currentNode.Previous.Value;
 			}
-			int num2;
+			int nindex;
 			if (currentNode.Next == null)
 			{
-				num2 = currentNode.List.First.Value;
+				nindex = currentNode.List.First.Value;
 			}
 			else
 			{
-				num2 = currentNode.Next.Value;
+				nindex = currentNode.Next.Value;
 			}
-			Vector2 vector = points[num];
-			Vector2 vector2 = points[value];
-			Vector2 vector3 = points[num2];
-			if (Polygon2D.GetTriangleArea(vector, vector2, vector3) < 0f)
+			Vector2 pj = points[pindex];
+			Vector2 pi = points[index];
+			Vector2 pk = points[nindex];
+			if (Polygon2D.GetTriangleArea(pj, pi, pk) < 0f)
 			{
-				foreach (int num3 in currentNode.List)
+				foreach (int i in currentNode.List)
 				{
-					if (num3 != num && num3 != num2 && num3 != value && DrawingTools.PointInTriangle(vector, vector2, vector3, points[num3]))
+					if (i != pindex && i != nindex && i != index && DrawingTools.PointInTriangle(pj, pi, pk, points[i]))
 					{
 						return false;
 					}

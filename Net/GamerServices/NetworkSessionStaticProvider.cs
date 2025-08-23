@@ -65,9 +65,9 @@ namespace DNA.Net.GamerServices
 
 		public NetworkSessionStaticProvider()
 		{
-			for (NetworkSession.ResultCode resultCode = NetworkSession.ResultCode.Succeeded; resultCode < NetworkSession.ResultCode.Count; resultCode++)
+			for (NetworkSession.ResultCode i = NetworkSession.ResultCode.Succeeded; i < NetworkSession.ResultCode.Count; i++)
 			{
-				this._sResultCodeNames[(int)resultCode] = resultCode.ToString();
+				this._sResultCodeNames[(int)i] = i.ToString();
 			}
 			this._taskScheduler = new TaskScheduler();
 			this._taskScheduler.ThreadException += this._taskScheduler_ThreadException;
@@ -87,80 +87,80 @@ namespace DNA.Net.GamerServices
 
 		public virtual IAsyncResult BeginCreate(NetworkSessionType sessionType, IEnumerable<SignedInGamer> localGamers, int maxGamers, int privateGamerSlots, NetworkSessionProperties sessionProperties, string gameName, int networkVersion, string serverMessage, string password, AsyncCallback callback, object asyncState)
 		{
-			NetworkSessionStaticProvider.BeginCreateSessionState beginCreateSessionState = new NetworkSessionStaticProvider.BeginCreateSessionState(callback, asyncState);
-			beginCreateSessionState.LocalGamers = localGamers;
-			beginCreateSessionState.Properties = sessionProperties;
-			beginCreateSessionState.MaxPlayers = maxGamers;
-			beginCreateSessionState.SessionType = sessionType;
-			beginCreateSessionState.NetworkGameName = gameName;
-			beginCreateSessionState.ServerMessage = serverMessage;
-			beginCreateSessionState.Version = networkVersion;
-			beginCreateSessionState.Password = password;
-			beginCreateSessionState.Session = this.CreateSession();
-			this.FinishBeginCreate(beginCreateSessionState);
-			return beginCreateSessionState;
+			NetworkSessionStaticProvider.BeginCreateSessionState state = new NetworkSessionStaticProvider.BeginCreateSessionState(callback, asyncState);
+			state.LocalGamers = localGamers;
+			state.Properties = sessionProperties;
+			state.MaxPlayers = maxGamers;
+			state.SessionType = sessionType;
+			state.NetworkGameName = gameName;
+			state.ServerMessage = serverMessage;
+			state.Version = networkVersion;
+			state.Password = password;
+			state.Session = this.CreateSession();
+			this.FinishBeginCreate(state);
+			return state;
 		}
 
 		public virtual NetworkSession EndCreate(IAsyncResult result)
 		{
-			NetworkSessionStaticProvider.BeginCreateSessionState beginCreateSessionState = (NetworkSessionStaticProvider.BeginCreateSessionState)result;
-			beginCreateSessionState.AsyncWaitHandle.WaitOne();
-			return beginCreateSessionState.Session;
+			NetworkSessionStaticProvider.BeginCreateSessionState sqs = (NetworkSessionStaticProvider.BeginCreateSessionState)result;
+			sqs.AsyncWaitHandle.WaitOne();
+			return sqs.Session;
 		}
 
 		public virtual IAsyncResult BeginFind(NetworkSessionType sessionType, IEnumerable<SignedInGamer> localGamers, QuerySessionInfo searchProperties, AsyncCallback callback, object asyncState)
 		{
-			NetworkSessionStaticProvider.SessionQueryState sessionQueryState = new NetworkSessionStaticProvider.SessionQueryState(searchProperties, callback, asyncState);
-			this.FinishBeginFind(sessionQueryState);
-			return sessionQueryState;
+			NetworkSessionStaticProvider.SessionQueryState state = new NetworkSessionStaticProvider.SessionQueryState(searchProperties, callback, asyncState);
+			this.FinishBeginFind(state);
+			return state;
 		}
 
 		public virtual AvailableNetworkSessionCollection EndFind(IAsyncResult result)
 		{
-			NetworkSessionStaticProvider.SessionQueryState sessionQueryState = (NetworkSessionStaticProvider.SessionQueryState)result;
-			sessionQueryState.AsyncWaitHandle.WaitOne();
-			return sessionQueryState.Sessions;
+			NetworkSessionStaticProvider.SessionQueryState sqs = (NetworkSessionStaticProvider.SessionQueryState)result;
+			sqs.AsyncWaitHandle.WaitOne();
+			return sqs.Sessions;
 		}
 
 		public virtual IAsyncResult BeginJoinInvited(ulong lobbyId, int version, string gameName, IEnumerable<SignedInGamer> localGamers, AsyncCallback callback, object asyncState, GetPasswordForInvitedGameCallback getPasswordCallback)
 		{
-			NetworkSessionStaticProvider.BeginJoinSessionState beginJoinSessionState = new NetworkSessionStaticProvider.BeginJoinSessionState(callback, asyncState);
-			beginJoinSessionState.AvailableSession = null;
-			beginJoinSessionState.SessionType = NetworkSessionType.PlayerMatch;
-			beginJoinSessionState.LocalGamers = localGamers;
-			beginJoinSessionState.Version = version;
-			beginJoinSessionState.NetworkGameName = gameName;
-			beginJoinSessionState.Session = this.CreateSession();
-			this.FinishBeginJoinInvited(lobbyId, beginJoinSessionState, getPasswordCallback);
-			return beginJoinSessionState;
+			NetworkSessionStaticProvider.BeginJoinSessionState state = new NetworkSessionStaticProvider.BeginJoinSessionState(callback, asyncState);
+			state.AvailableSession = null;
+			state.SessionType = NetworkSessionType.PlayerMatch;
+			state.LocalGamers = localGamers;
+			state.Version = version;
+			state.NetworkGameName = gameName;
+			state.Session = this.CreateSession();
+			this.FinishBeginJoinInvited(lobbyId, state, getPasswordCallback);
+			return state;
 		}
 
 		public virtual IAsyncResult BeginJoin(AvailableNetworkSession availableSession, string gameName, int version, string password, IEnumerable<SignedInGamer> localGamers, AsyncCallback callback, object asyncState)
 		{
-			NetworkSessionStaticProvider.BeginJoinSessionState beginJoinSessionState = new NetworkSessionStaticProvider.BeginJoinSessionState(callback, asyncState);
-			beginJoinSessionState.AvailableSession = availableSession;
-			beginJoinSessionState.SessionType = NetworkSessionType.PlayerMatch;
-			beginJoinSessionState.LocalGamers = localGamers;
-			beginJoinSessionState.NetworkGameName = gameName;
-			beginJoinSessionState.Version = version;
-			beginJoinSessionState.Password = password;
-			beginJoinSessionState.Session = this.CreateSession();
-			this.FinishBeginJoin(beginJoinSessionState);
-			return beginJoinSessionState;
+			NetworkSessionStaticProvider.BeginJoinSessionState state = new NetworkSessionStaticProvider.BeginJoinSessionState(callback, asyncState);
+			state.AvailableSession = availableSession;
+			state.SessionType = NetworkSessionType.PlayerMatch;
+			state.LocalGamers = localGamers;
+			state.NetworkGameName = gameName;
+			state.Version = version;
+			state.Password = password;
+			state.Session = this.CreateSession();
+			this.FinishBeginJoin(state);
+			return state;
 		}
 
 		public virtual NetworkSession EndJoin(IAsyncResult result)
 		{
-			NetworkSessionStaticProvider.BeginJoinSessionState beginJoinSessionState = (NetworkSessionStaticProvider.BeginJoinSessionState)result;
-			if (beginJoinSessionState.HostConnectionResult != NetworkSession.ResultCode.Succeeded)
+			NetworkSessionStaticProvider.BeginJoinSessionState sqs = (NetworkSessionStaticProvider.BeginJoinSessionState)result;
+			if (sqs.HostConnectionResult != NetworkSession.ResultCode.Succeeded)
 			{
 				string empty = string.Empty;
-				beginJoinSessionState.Session.Dispose();
-				beginJoinSessionState.Session = null;
-				throw new Exception("Connection failed: " + beginJoinSessionState.HostConnectionResultString);
+				sqs.Session.Dispose();
+				sqs.Session = null;
+				throw new Exception("Connection failed: " + sqs.HostConnectionResultString);
 			}
-			beginJoinSessionState.AsyncWaitHandle.WaitOne();
-			return beginJoinSessionState.Session;
+			sqs.AsyncWaitHandle.WaitOne();
+			return sqs.Session;
 		}
 
 		protected abstract NetworkSession CreateSession();

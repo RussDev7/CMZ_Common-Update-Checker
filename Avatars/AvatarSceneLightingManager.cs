@@ -26,54 +26,54 @@ namespace DNA.Avatars
 		public override void SetAvatarLighting(Avatar avatar)
 		{
 			Scene scene = this.GetScene(avatar);
-			Vector3 avatarWorldPosition = this.GetAvatarWorldPosition(avatar);
-			Vector3 vector = Vector3.Zero;
-			Vector3 vector2 = Vector3.Zero;
-			Vector3 vector3 = Vector3.Zero;
-			float num = 0f;
-			float num2 = 0f;
+			Vector3 avatarPosition = this.GetAvatarWorldPosition(avatar);
+			Vector3 finalDirection = Vector3.Zero;
+			Vector3 finalAmbientColor = Vector3.Zero;
+			Vector3 finalColor = Vector3.Zero;
+			float totalInfluence = 0f;
+			float totalAmbientInfluence = 0f;
 			ReadOnlyCollection<Light> lights = scene.Lights;
-			int count = lights.Count;
-			for (int i = 0; i < count; i++)
+			int lightCount = lights.Count;
+			for (int i = 0; i < lightCount; i++)
 			{
 				Light light = lights[i];
-				float influence = light.GetInfluence(avatarWorldPosition);
+				float influence = light.GetInfluence(avatarPosition);
 				if (influence > 0f && this.UseLight(avatar, light))
 				{
-					num += influence;
+					totalInfluence += influence;
 					if (light is AmbientLight)
 					{
-						vector2 += light.LightColor.ToVector3() * influence;
-						num2 += influence;
+						finalAmbientColor += light.LightColor.ToVector3() * influence;
+						totalAmbientInfluence += influence;
 					}
 					else
 					{
-						vector3 += light.LightColor.ToVector3() * influence;
-						num = influence;
+						finalColor += light.LightColor.ToVector3() * influence;
+						totalInfluence = influence;
 						if (light is DirectionalLight)
 						{
-							DirectionalLight directionalLight = (DirectionalLight)light;
-							vector += directionalLight.LightDirection * influence;
+							DirectionalLight dl = (DirectionalLight)light;
+							finalDirection += dl.LightDirection * influence;
 						}
 						else
 						{
-							Vector3 vector4 = avatarWorldPosition - light.WorldPosition;
-							vector += vector4 * influence;
+							Vector3 direction = avatarPosition - light.WorldPosition;
+							finalDirection += direction * influence;
 						}
 					}
 				}
 			}
-			if (num2 < 1f)
+			if (totalAmbientInfluence < 1f)
 			{
-				vector2 += base.AmbientLightColor.ToVector3() * (1f - num2);
+				finalAmbientColor += base.AmbientLightColor.ToVector3() * (1f - totalAmbientInfluence);
 			}
-			if (num < 1f)
+			if (totalInfluence < 1f)
 			{
-				vector3 += base.LightColor.ToVector3() * (1f - num);
-				vector += base.LightDirection * (1f - num);
+				finalColor += base.LightColor.ToVector3() * (1f - totalInfluence);
+				finalDirection += base.LightDirection * (1f - totalInfluence);
 			}
 			base.LightDirection.Normalize();
-			this.SetAvatarLighting(avatar, vector2, vector3, vector);
+			this.SetAvatarLighting(avatar, finalAmbientColor, finalColor, finalDirection);
 		}
 	}
 }

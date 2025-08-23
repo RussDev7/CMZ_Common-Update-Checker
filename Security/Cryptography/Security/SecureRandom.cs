@@ -14,12 +14,12 @@ namespace DNA.Security.Cryptography.Security
 			{
 				if (SecureRandom.master[0] == null)
 				{
-					IRandomGenerator randomGenerator = new DigestRandomGenerator(new Sha256Digest());
-					randomGenerator = new ReversedWindowGenerator(randomGenerator, 32);
-					SecureRandom secureRandom = (SecureRandom.master[0] = new SecureRandom(randomGenerator));
-					secureRandom.SetSeed(DateTime.Now.Ticks);
-					secureRandom.SetSeed(new ThreadedSeedGenerator().GenerateSeed(24, true));
-					secureRandom.GenerateSeed(1 + secureRandom.Next(32));
+					IRandomGenerator gen = new DigestRandomGenerator(new Sha256Digest());
+					gen = new ReversedWindowGenerator(gen, 32);
+					SecureRandom sr = (SecureRandom.master[0] = new SecureRandom(gen));
+					sr.SetSeed(DateTime.Now.Ticks);
+					sr.SetSeed(new ThreadedSeedGenerator().GenerateSeed(24, true));
+					sr.GenerateSeed(1 + sr.Next(32));
 				}
 				return SecureRandom.master[0];
 			}
@@ -78,9 +78,9 @@ namespace DNA.Security.Cryptography.Security
 		public virtual byte[] GenerateSeed(int length)
 		{
 			this.SetSeed(DateTime.Now.Ticks);
-			byte[] array = new byte[length];
-			this.NextBytes(array);
-			return array;
+			byte[] rv = new byte[length];
+			this.NextBytes(rv);
+			return rv;
 		}
 
 		public virtual void SetSeed(byte[] inSeed)
@@ -95,13 +95,13 @@ namespace DNA.Security.Cryptography.Security
 
 		public override int Next()
 		{
-			int num;
+			int i;
 			do
 			{
-				num = this.NextInt() & int.MaxValue;
+				i = this.NextInt() & int.MaxValue;
 			}
-			while (num == 2147483647);
-			return num;
+			while (i == 2147483647);
+			return i;
 		}
 
 		public override int Next(int maxValue)
@@ -118,19 +118,19 @@ namespace DNA.Security.Cryptography.Security
 			{
 				if ((maxValue & -maxValue) == maxValue)
 				{
-					int num = this.NextInt() & int.MaxValue;
-					long num2 = (long)maxValue * (long)num >> 31;
-					return (int)num2;
+					int val = this.NextInt() & int.MaxValue;
+					long lr = (long)maxValue * (long)val >> 31;
+					return (int)lr;
 				}
-				int num3;
-				int num4;
+				int bits;
+				int result;
 				do
 				{
-					num3 = this.NextInt() & int.MaxValue;
-					num4 = num3 % maxValue;
+					bits = this.NextInt() & int.MaxValue;
+					result = bits % maxValue;
 				}
-				while (num3 - num4 + (maxValue - 1) < 0);
-				return num4;
+				while (bits - result + (maxValue - 1) < 0);
+				return result;
 			}
 		}
 
@@ -146,18 +146,18 @@ namespace DNA.Security.Cryptography.Security
 			}
 			else
 			{
-				int num = maxValue - minValue;
-				if (num > 0)
+				int diff = maxValue - minValue;
+				if (diff > 0)
 				{
-					return minValue + this.Next(num);
+					return minValue + this.Next(diff);
 				}
-				int num2;
+				int i;
 				do
 				{
-					num2 = this.NextInt();
+					i = this.NextInt();
 				}
-				while (num2 < minValue || num2 >= maxValue);
-				return num2;
+				while (i < minValue || i >= maxValue);
+				return i;
 			}
 		}
 
@@ -178,14 +178,14 @@ namespace DNA.Security.Cryptography.Security
 
 		public virtual int NextInt()
 		{
-			byte[] array = new byte[4];
-			this.NextBytes(array);
-			int num = 0;
+			byte[] intBytes = new byte[4];
+			this.NextBytes(intBytes);
+			int result = 0;
 			for (int i = 0; i < 4; i++)
 			{
-				num = (num << 8) + (int)(array[i] & byte.MaxValue);
+				result = (result << 8) + (int)(intBytes[i] & byte.MaxValue);
 			}
-			return num;
+			return result;
 		}
 
 		public virtual long NextLong()

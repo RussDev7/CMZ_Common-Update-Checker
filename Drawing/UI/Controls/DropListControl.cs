@@ -67,12 +67,12 @@ namespace DNA.Drawing.UI.Controls
 			}
 			set
 			{
-				int num = this._items.IndexOf(value);
-				if (num < 0)
+				int result = this._items.IndexOf(value);
+				if (result < 0)
 				{
 					throw new Exception("Item Not in List");
 				}
-				this.SelectedIndex = num;
+				this.SelectedIndex = result;
 			}
 		}
 
@@ -113,40 +113,40 @@ namespace DNA.Drawing.UI.Controls
 		{
 			Rectangle frameRect = this.FrameRect;
 			this.Frame.Draw(spriteBatch, frameRect, Color.White);
-			Rectangle rectangle = this.Frame.CenterRegion(frameRect);
+			Rectangle textRect = this.Frame.CenterRegion(frameRect);
 			string text = "";
 			if (this.SelectedItem != null)
 			{
 				T selectedItem = this.SelectedItem;
 				text = selectedItem.ToString();
 			}
-			Vector2 vector = this.Font.MeasureString(text) * this.Scale;
-			Vector2 vector2 = new Vector2((float)rectangle.Left, (float)rectangle.Center.Y - vector.Y / 2f);
-			float num = (float)this.Font.LineSpacing * this.Scale;
-			spriteBatch.DrawString(this.Font, text, vector2, Color.Black, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
-			Rectangle rectangle2 = new Rectangle(rectangle.Right - (int)((float)this.DropArrow.Width * this.Scale), rectangle.Center.Y - (int)((float)this.DropArrow.Height * this.Scale / 2f), (int)((float)this.DropArrow.Width * this.Scale), (int)((float)this.DropArrow.Height * this.Scale));
-			spriteBatch.Draw(this.DropArrow, rectangle2, Color.White);
+			Vector2 textSize = this.Font.MeasureString(text) * this.Scale;
+			Vector2 textLoc = new Vector2((float)textRect.Left, (float)textRect.Center.Y - textSize.Y / 2f);
+			float lineSpacing = (float)this.Font.LineSpacing * this.Scale;
+			spriteBatch.DrawString(this.Font, text, textLoc, Color.Black, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+			Rectangle dropArrowLoc = new Rectangle(textRect.Right - (int)((float)this.DropArrow.Width * this.Scale), textRect.Center.Y - (int)((float)this.DropArrow.Height * this.Scale / 2f), (int)((float)this.DropArrow.Width * this.Scale), (int)((float)this.DropArrow.Height * this.Scale));
+			spriteBatch.Draw(this.DropArrow, dropArrowLoc, Color.White);
 			if (base.CaptureInput)
 			{
-				Rectangle rectangle3 = new Rectangle(frameRect.Left, frameRect.Bottom, frameRect.Width, (int)(num * (float)this._items.Count));
-				spriteBatch.Draw(UIControl.DummyTexture, rectangle3, Color.Black);
-				rectangle3.Inflate(-1, -1);
-				spriteBatch.Draw(UIControl.DummyTexture, rectangle3, Color.White);
+				Rectangle expandRect = new Rectangle(frameRect.Left, frameRect.Bottom, frameRect.Width, (int)(lineSpacing * (float)this._items.Count));
+				spriteBatch.Draw(UIControl.DummyTexture, expandRect, Color.Black);
+				expandRect.Inflate(-1, -1);
+				spriteBatch.Draw(UIControl.DummyTexture, expandRect, Color.White);
 				for (int i = 0; i < this._items.Count; i++)
 				{
 					if (i == this._expandSel)
 					{
-						Rectangle rectangle4 = new Rectangle(rectangle3.Left, rectangle3.Top + (int)(num * (float)i), rectangle3.Width, (int)num);
-						spriteBatch.Draw(UIControl.DummyTexture, rectangle4, Color.Black);
+						Rectangle selRect = new Rectangle(expandRect.Left, expandRect.Top + (int)(lineSpacing * (float)i), expandRect.Width, (int)lineSpacing);
+						spriteBatch.Draw(UIControl.DummyTexture, selRect, Color.Black);
 						SpriteFont font = this.Font;
 						T t = this._items[i];
-						spriteBatch.DrawString(font, t.ToString(), new Vector2((float)rectangle3.Left, num * (float)i + (float)rectangle3.Top), Color.White, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+						spriteBatch.DrawString(font, t.ToString(), new Vector2((float)expandRect.Left, lineSpacing * (float)i + (float)expandRect.Top), Color.White, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 					}
 					else
 					{
 						SpriteFont font2 = this.Font;
 						T t2 = this._items[i];
-						spriteBatch.DrawString(font2, t2.ToString(), new Vector2((float)rectangle3.Left, num * (float)i + (float)rectangle3.Top), Color.Black, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+						spriteBatch.DrawString(font2, t2.ToString(), new Vector2((float)expandRect.Left, lineSpacing * (float)i + (float)expandRect.Top), Color.Black, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 					}
 				}
 			}
@@ -154,10 +154,10 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnInput(InputManager inputManager, GameController controller, KeyboardInput chatPad, GameTime gameTime)
 		{
-			bool flag = this.HitTest(inputManager.Mouse.Position);
+			bool hitTest = this.HitTest(inputManager.Mouse.Position);
 			if (inputManager.Mouse.LeftButtonPressed)
 			{
-				if (flag)
+				if (hitTest)
 				{
 					if (!base.CaptureInput)
 					{
@@ -171,7 +171,7 @@ namespace DNA.Drawing.UI.Controls
 					base.CaptureInput = false;
 				}
 			}
-			if (flag && base.CaptureInput)
+			if (hitTest && base.CaptureInput)
 			{
 				Rectangle expandRect = this.ExpandRect;
 				if (expandRect.Contains(inputManager.Mouse.Position))

@@ -109,10 +109,10 @@ namespace DNA.Profiling
 
 		private Profiler.ProfileEvent InternalTimeSection(string name, ProfilerThreadEnum tindex)
 		{
-			Profiler.ProfileEvent profileEvent = this._eventPool.Get();
-			this._activeEvents.Push(profileEvent);
-			profileEvent.Init(name, tindex);
-			return profileEvent;
+			Profiler.ProfileEvent result = this._eventPool.Get();
+			this._activeEvents.Push(result);
+			result.Init(name, tindex);
+			return result;
 		}
 
 		public override void Initialize()
@@ -145,11 +145,11 @@ namespace DNA.Profiling
 				this._sectionColors = this._colorDict.Values.ToArray<Color>();
 				this._sectionSizes = new Vector2[this._sectionNames.Length];
 				this._stringSize = Vector2.Zero;
-				int num = 0;
-				foreach (string text in this._sectionNames)
+				int i = 0;
+				foreach (string name in this._sectionNames)
 				{
-					this._sectionSizes[num] = ProfilerUtils.SystemFont.MeasureString(text);
-					this._stringSize = Vector2.Max(this._sectionSizes[num++], this._stringSize);
+					this._sectionSizes[i] = ProfilerUtils.SystemFont.MeasureString(name);
+					this._stringSize = Vector2.Max(this._sectionSizes[i++], this._stringSize);
 				}
 			}
 			return true;
@@ -207,98 +207,98 @@ namespace DNA.Profiling
 			if (this._profiling && this._eventsToBeReported != null)
 			{
 				ProfilerUtils._standard2DProjection = Matrix.CreateOrthographicOffCenter(0f, (float)base.Game.GraphicsDevice.Viewport.Width, (float)base.GraphicsDevice.Viewport.Height, 0f, 0f, 1f);
-				float num = (float)((double)(this._frameEnd - this._frameStart) * this._ticksToMilliseconds);
+				float frameTime = (float)((double)(this._frameEnd - this._frameStart) * this._ticksToMilliseconds);
 				this._sampleWaitTime -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 				if (this._sampleWaitTime < 0f)
 				{
 					this._sampleWaitTime += 1f;
 					this._memSamples.Add((float)(GC.GetTotalMemory(false) / 1024L));
 				}
-				Profiler.ProfileEvent profileEvent = this._eventsToBeReported;
-				while (profileEvent != null)
+				Profiler.ProfileEvent nextP = this._eventsToBeReported;
+				while (nextP != null)
 				{
-					Profiler.ProfileEvent profileEvent2 = profileEvent;
-					profileEvent = profileEvent2.NextNode as Profiler.ProfileEvent;
-					this._eventLists[profileEvent2._threadIndex].Push(profileEvent2);
+					Profiler.ProfileEvent p = nextP;
+					nextP = p.NextNode as Profiler.ProfileEvent;
+					this._eventLists[p._threadIndex].Push(p);
 				}
 				this._eventsToBeReported = null;
-				float num2 = 200f + num * 30f;
+				float frameEnd = 200f + frameTime * 30f;
 				this._primitiveBatch.Begin(PrimitiveType.LineList);
-				this._primitiveBatch.AddVertex(new Vector2(num2, 180f), Color.White);
-				this._primitiveBatch.AddVertex(new Vector2(num2, 260f), Color.White);
+				this._primitiveBatch.AddVertex(new Vector2(frameEnd, 180f), Color.White);
+				this._primitiveBatch.AddVertex(new Vector2(frameEnd, 260f), Color.White);
 				this._primitiveBatch.End();
 				this._primitiveBatch.Begin(PrimitiveType.TriangleList);
 				this._primitiveBatch.AddFilledBox(new Vector2(200f, 180f), new Vector2(990f, 5f), Color.Olive, false);
 				this._primitiveBatch.AddFilledBox(new Vector2(200f, 180f), new Vector2(510f, 5f), Color.Yellow, false);
-				this._primitiveBatch.AddFilledBox(new Vector2(200f, 185f), new Vector2(num * 30f, 5f), Color.Maroon, false);
-				Vector2 vector = new Vector2(200f, 200f);
-				foreach (ProfilerSimpleStack<Profiler.ProfileEvent> profilerSimpleStack in this._eventLists)
+				this._primitiveBatch.AddFilledBox(new Vector2(200f, 185f), new Vector2(frameTime * 30f, 5f), Color.Maroon, false);
+				Vector2 position = new Vector2(200f, 200f);
+				foreach (ProfilerSimpleStack<Profiler.ProfileEvent> stack in this._eventLists)
 				{
-					if (!profilerSimpleStack.Empty)
+					if (!stack.Empty)
 					{
-						Profiler.ProfileEvent profileEvent2 = profilerSimpleStack.Root;
+						Profiler.ProfileEvent p = stack.Root;
 						this._eventStack.Clear();
-						float num3 = 100f;
-						while (profileEvent2 != null)
+						float taskHeight = 100f;
+						while (p != null)
 						{
-							while (this._eventStack.Count != 0 && this._eventStack[this._eventStack.Count - 1]._endTime <= profileEvent2._startTime)
+							while (this._eventStack.Count != 0 && this._eventStack[this._eventStack.Count - 1]._endTime <= p._startTime)
 							{
-								num3 = num3 * 3f / 2f;
+								taskHeight = taskHeight * 3f / 2f;
 								this._eventStack.RemoveAt(this._eventStack.Count - 1);
 							}
-							this._eventStack.Add(profileEvent2);
-							num3 = num3 * 2f / 3f;
-							float num4 = this.GetElapsedMillis(profileEvent2) * 30f;
-							Color white;
-							if (!this._colorDict.TryGetValue(profileEvent2._name, out white))
+							this._eventStack.Add(p);
+							taskHeight = taskHeight * 2f / 3f;
+							float elapsed = this.GetElapsedMillis(p) * 30f;
+							Color color;
+							if (!this._colorDict.TryGetValue(p._name, out color))
 							{
-								white = Color.White;
+								color = Color.White;
 							}
-							vector.X = 200f + this.GetStartMillis(profileEvent2) * 30f;
-							this._primitiveBatch.AddFilledBox(vector, new Vector2(num4, num3), white, false);
-							profileEvent2 = profileEvent2.NextNode as Profiler.ProfileEvent;
+							position.X = 200f + this.GetStartMillis(p) * 30f;
+							this._primitiveBatch.AddFilledBox(position, new Vector2(elapsed, taskHeight), color, false);
+							p = p.NextNode as Profiler.ProfileEvent;
 						}
-						this._eventPool.PutList(profilerSimpleStack.Root);
-						profilerSimpleStack.Clear();
+						this._eventPool.PutList(stack.Root);
+						stack.Clear();
 					}
-					vector.Y += 20f;
+					position.Y += 20f;
 				}
 				this._primitiveBatch.End();
 				if (this.GetSectionColors())
 				{
 					this._spriteBatch.Begin();
 					this._primitiveBatch.Begin(PrimitiveType.TriangleList);
-					vector.Y += 50f;
-					vector.X = 200f;
-					for (int j = 0; j < this._sectionNames.Length; j++)
+					position.Y += 50f;
+					position.X = 200f;
+					for (int i = 0; i < this._sectionNames.Length; i++)
 					{
-						if (vector.X + this._stringSize.X + this._stringSize.Y + 10f >= (float)base.GraphicsDevice.Viewport.Width)
+						if (position.X + this._stringSize.X + this._stringSize.Y + 10f >= (float)base.GraphicsDevice.Viewport.Width)
 						{
-							vector.X = 200f;
-							vector.Y += this._stringSize.Y + 10f;
+							position.X = 200f;
+							position.Y += this._stringSize.Y + 10f;
 						}
-						Vector2 vector2 = vector;
-						vector2.X += this._stringSize.X - this._sectionSizes[j].X;
-						this._spriteBatch.DrawString(ProfilerUtils.SystemFont, this._sectionNames[j], vector2, Color.White);
-						vector2.X = vector.X + this._stringSize.X + 10f;
-						this._primitiveBatch.AddFilledBox(vector2, new Vector2(this._stringSize.Y, this._stringSize.Y), this._sectionColors[j], false);
-						vector.X += this._stringSize.X + this._stringSize.Y + 20f;
+						Vector2 textPosition = position;
+						textPosition.X += this._stringSize.X - this._sectionSizes[i].X;
+						this._spriteBatch.DrawString(ProfilerUtils.SystemFont, this._sectionNames[i], textPosition, Color.White);
+						textPosition.X = position.X + this._stringSize.X + 10f;
+						this._primitiveBatch.AddFilledBox(textPosition, new Vector2(this._stringSize.Y, this._stringSize.Y), this._sectionColors[i], false);
+						position.X += this._stringSize.X + this._stringSize.Y + 20f;
 					}
 					this._primitiveBatch.End();
 					this._spriteBatch.End();
 				}
-				vector.X = 320f;
-				vector.Y += this._stringSize.Y + 40f;
-				Vector2 vector3 = new Vector2(620f, 300f);
-				Vector2 vector4 = new Vector2(0f, 256000f);
-				this._primitiveBatch.DrawGraphVerticalAxis(vector, vector3, Color.Red);
-				this._primitiveBatch.DrawGraphBar(0f, vector4, vector, vector3, Color.Red);
-				this._primitiveBatch.DrawGraphBar(128000f, vector4, vector, vector3, Color.Red);
-				for (int k = 2; k < 25; k += 2)
+				position.X = 320f;
+				position.Y += this._stringSize.Y + 40f;
+				Vector2 size = new Vector2(620f, 300f);
+				Vector2 scale = new Vector2(0f, 256000f);
+				this._primitiveBatch.DrawGraphVerticalAxis(position, size, Color.Red);
+				this._primitiveBatch.DrawGraphBar(0f, scale, position, size, Color.Red);
+				this._primitiveBatch.DrawGraphBar(128000f, scale, position, size, Color.Red);
+				for (int j = 2; j < 25; j += 2)
 				{
-					this._primitiveBatch.DrawGraphBar((float)(k * 10000), vector4, vector, vector3, Color.Yellow);
+					this._primitiveBatch.DrawGraphBar((float)(j * 10000), scale, position, size, Color.Yellow);
 				}
-				this._primitiveBatch.DrawGraph(this._memSamples.Buffer, this._memSamples.Head, vector4, vector, vector3, Color.White);
+				this._primitiveBatch.DrawGraph(this._memSamples.Buffer, this._memSamples.Head, scale, position, size, Color.White);
 				this._primitiveBatch.End();
 			}
 			this._gfxEvent = Profiler.TimeSection("XNA (Graphics)", ProfilerThreadEnum.MAIN);

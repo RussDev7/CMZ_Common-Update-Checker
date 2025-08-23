@@ -90,92 +90,92 @@ namespace DNA.Drawing.Imaging.Photoshop
 		public Layer(PsdBinaryReader reader, PsdFile psdFile)
 		{
 			this.PsdFile = psdFile;
-			Rectangle rectangle = default(Rectangle);
-			rectangle.Y = reader.ReadInt32();
-			rectangle.X = reader.ReadInt32();
-			rectangle.Height = reader.ReadInt32() - rectangle.Y;
-			rectangle.Width = reader.ReadInt32() - rectangle.X;
-			this.Rect = rectangle;
-			int num = (int)reader.ReadUInt16();
+			Rectangle rect = default(Rectangle);
+			rect.Y = reader.ReadInt32();
+			rect.X = reader.ReadInt32();
+			rect.Height = reader.ReadInt32() - rect.Y;
+			rect.Width = reader.ReadInt32() - rect.X;
+			this.Rect = rect;
+			int numberOfChannels = (int)reader.ReadUInt16();
 			this.Channels = new ChannelList();
-			for (int i = 0; i < num; i++)
+			for (int channel = 0; channel < numberOfChannels; channel++)
 			{
-				Channel channel = new Channel(reader, this);
-				this.Channels.Add(channel);
+				Channel ch = new Channel(reader, this);
+				this.Channels.Add(ch);
 			}
-			string text = new string(reader.ReadChars(4));
-			if (text != "8BIM")
+			string signature = new string(reader.ReadChars(4));
+			if (signature != "8BIM")
 			{
 				throw new PsdInvalidException("Invalid signature in channel header.");
 			}
 			this.BlendModeKey = new string(reader.ReadChars(4));
 			this.Opacity = reader.ReadByte();
 			this.Clipping = reader.ReadBoolean();
-			byte b = reader.ReadByte();
-			this.flags = new BitVector32((int)b);
+			byte flagsByte = reader.ReadByte();
+			this.flags = new BitVector32((int)flagsByte);
 			reader.ReadByte();
-			uint num2 = reader.ReadUInt32();
-			long position = reader.BaseStream.Position;
+			uint extraDataSize = reader.ReadUInt32();
+			long extraDataStartPosition = reader.BaseStream.Position;
 			this.MaskData = new Mask(reader, this);
 			this.BlendingRangesData = new BlendingRanges(reader, this);
-			long position2 = reader.BaseStream.Position;
+			long namePosition = reader.BaseStream.Position;
 			this.Name = reader.ReadPascalString();
-			int num3 = (int)((reader.BaseStream.Position - position2) % 4L);
-			reader.ReadBytes(num3);
-			long num4 = position + (long)((ulong)num2);
+			int paddingBytes = (int)((reader.BaseStream.Position - namePosition) % 4L);
+			reader.ReadBytes(paddingBytes);
+			long adjustmentLayerEndPos = extraDataStartPosition + (long)((ulong)extraDataSize);
 			this.AdditionalInfo = new List<LayerInfo>();
 			try
 			{
-				while (reader.BaseStream.Position < num4)
+				while (reader.BaseStream.Position < adjustmentLayerEndPos)
 				{
 					this.AdditionalInfo.Add(LayerInfoFactory.CreateLayerInfo(reader));
 				}
 			}
 			catch
 			{
-				reader.BaseStream.Position = num4;
+				reader.BaseStream.Position = adjustmentLayerEndPos;
 			}
-			foreach (LayerInfo layerInfo in this.AdditionalInfo)
+			foreach (LayerInfo adjustmentInfo in this.AdditionalInfo)
 			{
 				string key;
-				if ((key = layerInfo.Key) != null && key == "luni")
+				if ((key = adjustmentInfo.Key) != null && key == "luni")
 				{
-					this.Name = ((LayerUnicodeName)layerInfo).Name;
+					this.Name = ((LayerUnicodeName)adjustmentInfo).Name;
 				}
 			}
 		}
 
 		public unsafe void CreateMissingChannels()
 		{
-			short num = this.PsdFile.ColorMode.ChannelCount();
-			for (short num2 = 0; num2 < num; num2 += 1)
+			short channelCount = this.PsdFile.ColorMode.ChannelCount();
+			for (short id = 0; id < channelCount; id += 1)
 			{
-				if (!this.Channels.ContainsId((int)num2))
+				if (!this.Channels.ContainsId((int)id))
 				{
-					int num3 = this.Rect.Height * this.Rect.Width;
-					Channel channel = new Channel(num2, this);
-					channel.ImageData = new byte[num3];
-					fixed (byte* ptr = &channel.ImageData[0])
+					int size = this.Rect.Height * this.Rect.Width;
+					Channel ch = new Channel(id, this);
+					ch.ImageData = new byte[size];
+					fixed (byte* ptr = &ch.ImageData[0])
 					{
-						Util.Fill(ptr, byte.MaxValue, num3);
+						Util.Fill(ptr, byte.MaxValue, size);
 					}
-					this.Channels.Add(channel);
+					this.Channels.Add(ch);
 				}
 			}
 		}
 
 		public void PrepareSave()
 		{
-			foreach (Channel channel in this.Channels)
+			foreach (Channel ch in this.Channels)
 			{
-				channel.CompressImageData();
+				ch.CompressImageData();
 			}
-			IEnumerable<LayerInfo> enumerable = this.AdditionalInfo.Where((LayerInfo x) => x is LayerUnicodeName);
-			if (enumerable.Count<LayerInfo>() > 1)
+			IEnumerable<LayerInfo> layerUnicodeNames = this.AdditionalInfo.Where((LayerInfo x) => x is LayerUnicodeName);
+			if (layerUnicodeNames.Count<LayerInfo>() > 1)
 			{
 				throw new PsdInvalidException("Layer has more than one LayerUnicodeName.");
 			}
-			LayerUnicodeName layerUnicodeName = (LayerUnicodeName)enumerable.FirstOrDefault<LayerInfo>();
+			LayerUnicodeName layerUnicodeName = (LayerUnicodeName)layerUnicodeNames.FirstOrDefault<LayerInfo>();
 			if (layerUnicodeName == null)
 			{
 				layerUnicodeName = new LayerUnicodeName(this.Name);
@@ -195,9 +195,9 @@ namespace DNA.Drawing.Imaging.Photoshop
 			writer.Write(this.Rect.Bottom);
 			writer.Write(this.Rect.Right);
 			writer.Write((short)this.Channels.Count);
-			foreach (Channel channel in this.Channels)
+			foreach (Channel ch in this.Channels)
 			{
-				channel.Save(writer);
+				ch.Save(writer);
 			}
 			writer.Write(Util.SIGNATURE_8BIM);
 			writer.Write(this.BlendModeKey.ToCharArray());
@@ -209,16 +209,16 @@ namespace DNA.Drawing.Imaging.Photoshop
 			{
 				this.MaskData.Save(writer);
 				this.BlendingRangesData.Save(writer);
-				long position = writer.BaseStream.Position;
+				long namePosition = writer.BaseStream.Position;
 				writer.WritePascalString(this.Name);
-				int num = (int)((writer.BaseStream.Position - position) % 4L);
-				for (int i = 0; i < num; i++)
+				int paddingBytes = (int)((writer.BaseStream.Position - namePosition) % 4L);
+				for (int i = 0; i < paddingBytes; i++)
 				{
 					writer.Write(0);
 				}
-				foreach (LayerInfo layerInfo in this.AdditionalInfo)
+				foreach (LayerInfo info in this.AdditionalInfo)
 				{
-					layerInfo.Save(writer);
+					info.Save(writer);
 				}
 			}
 		}

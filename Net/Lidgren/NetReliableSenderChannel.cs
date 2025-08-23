@@ -45,9 +45,9 @@ namespace DNA.Net.Lidgren
 		internal override NetSendResult Enqueue(NetOutgoingMessage message)
 		{
 			this.m_queuedSends.Enqueue(message);
-			int count = this.m_queuedSends.Count;
-			int num = this.m_windowSize - (this.m_sendStart + 1024 - this.m_windowStart) % 1024;
-			if (count <= num)
+			int queueLen = this.m_queuedSends.Count;
+			int left = this.m_windowSize - (this.m_sendStart + 1024 - this.m_windowStart) % 1024;
+			if (queueLen <= left)
 			{
 				return NetSendResult.Sent;
 			}
@@ -58,69 +58,69 @@ namespace DNA.Net.Lidgren
 		{
 			for (int i = 0; i < this.m_storedMessages.Length; i++)
 			{
-				NetOutgoingMessage message = this.m_storedMessages[i].Message;
-				if (message != null)
+				NetOutgoingMessage om = this.m_storedMessages[i].Message;
+				if (om != null)
 				{
-					float lastSent = this.m_storedMessages[i].LastSent;
-					if (lastSent > 0f && now - lastSent > this.m_resendDelay)
+					float t = this.m_storedMessages[i].LastSent;
+					if (t > 0f && now - t > this.m_resendDelay)
 					{
-						int num = this.m_windowStart % this.m_windowSize;
-						int num2 = this.m_windowStart;
-						while (num != i)
+						int startSlot = this.m_windowStart % this.m_windowSize;
+						int seqNr = this.m_windowStart;
+						while (startSlot != i)
 						{
-							num--;
-							if (num < 0)
+							startSlot--;
+							if (startSlot < 0)
 							{
-								num = this.m_windowSize - 1;
+								startSlot = this.m_windowSize - 1;
 							}
-							num2--;
+							seqNr--;
 						}
-						this.m_connection.QueueSendMessage(message, num2);
+						this.m_connection.QueueSendMessage(om, seqNr);
 						this.m_storedMessages[i].LastSent = now;
 						NetStoredReliableMessage[] storedMessages = this.m_storedMessages;
-						int num3 = i;
-						storedMessages[num3].NumSent = storedMessages[num3].NumSent + 1;
+						int num2 = i;
+						storedMessages[num2].NumSent = storedMessages[num2].NumSent + 1;
 					}
 				}
 			}
-			int num4 = this.GetAllowedSends();
-			if (num4 < 1)
+			int num = this.GetAllowedSends();
+			if (num < 1)
 			{
 				return;
 			}
-			while (this.m_queuedSends.Count > 0 && num4 > 0)
+			while (this.m_queuedSends.Count > 0 && num > 0)
 			{
-				NetOutgoingMessage netOutgoingMessage;
-				if (this.m_queuedSends.TryDequeue(out netOutgoingMessage))
+				NetOutgoingMessage om2;
+				if (this.m_queuedSends.TryDequeue(out om2))
 				{
-					this.ExecuteSend(now, netOutgoingMessage);
+					this.ExecuteSend(now, om2);
 				}
-				num4--;
+				num--;
 			}
 		}
 
 		private void ExecuteSend(float now, NetOutgoingMessage message)
 		{
-			int sendStart = this.m_sendStart;
+			int seqNr = this.m_sendStart;
 			this.m_sendStart = (this.m_sendStart + 1) % 1024;
-			this.m_connection.QueueSendMessage(message, sendStart);
-			int num = sendStart % this.m_windowSize;
+			this.m_connection.QueueSendMessage(message, seqNr);
+			int storeIndex = seqNr % this.m_windowSize;
 			NetStoredReliableMessage[] storedMessages = this.m_storedMessages;
-			int num2 = num;
-			storedMessages[num2].NumSent = storedMessages[num2].NumSent + 1;
-			this.m_storedMessages[num].Message = message;
-			this.m_storedMessages[num].LastSent = now;
+			int num = storeIndex;
+			storedMessages[num].NumSent = storedMessages[num].NumSent + 1;
+			this.m_storedMessages[storeIndex].Message = message;
+			this.m_storedMessages[storeIndex].LastSent = now;
 		}
 
 		private void DestoreMessage(int storeIndex)
 		{
-			NetOutgoingMessage message = this.m_storedMessages[storeIndex].Message;
-			if (message != null)
+			NetOutgoingMessage storedMessage = this.m_storedMessages[storeIndex].Message;
+			if (storedMessage != null)
 			{
-				Interlocked.Decrement(ref message.m_recyclingCount);
-				if (message.m_recyclingCount <= 0)
+				Interlocked.Decrement(ref storedMessage.m_recyclingCount);
+				if (storedMessage.m_recyclingCount <= 0)
 				{
-					this.m_connection.m_peer.Recycle(message);
+					this.m_connection.m_peer.Recycle(storedMessage);
 				}
 			}
 			this.m_storedMessages[storeIndex] = default(NetStoredReliableMessage);
@@ -128,12 +128,12 @@ namespace DNA.Net.Lidgren
 
 		internal override void ReceiveAcknowledge(float now, int seqNr)
 		{
-			int num = NetUtility.RelativeSequenceNumber(seqNr, this.m_windowStart);
-			if (num < 0)
+			int relate = NetUtility.RelativeSequenceNumber(seqNr, this.m_windowStart);
+			if (relate < 0)
 			{
 				return;
 			}
-			if (num == 0)
+			if (relate == 0)
 			{
 				this.m_receivedAcks[this.m_windowStart] = false;
 				this.DestoreMessage(this.m_windowStart % this.m_windowSize);
@@ -146,44 +146,44 @@ namespace DNA.Net.Lidgren
 				}
 				return;
 			}
-			int num2 = NetUtility.RelativeSequenceNumber(seqNr, this.m_sendStart);
-			if (num2 <= 0)
+			int sendRelate = NetUtility.RelativeSequenceNumber(seqNr, this.m_sendStart);
+			if (sendRelate <= 0)
 			{
 				if (!this.m_receivedAcks[seqNr])
 				{
 					this.m_receivedAcks[seqNr] = true;
 				}
 			}
-			else if (num2 > 0)
+			else if (sendRelate > 0)
 			{
 				return;
 			}
-			int num3 = seqNr;
+			int rnr = seqNr;
 			do
 			{
-				num3--;
-				if (num3 < 0)
+				rnr--;
+				if (rnr < 0)
 				{
-					num3 = 1023;
+					rnr = 1023;
 				}
-				if (!this.m_receivedAcks[num3])
+				if (!this.m_receivedAcks[rnr])
 				{
-					int num4 = num3 % this.m_windowSize;
-					if (this.m_storedMessages[num4].NumSent == 1)
+					int slot = rnr % this.m_windowSize;
+					if (this.m_storedMessages[slot].NumSent == 1)
 					{
-						NetOutgoingMessage message = this.m_storedMessages[num4].Message;
-						if (now - this.m_storedMessages[num4].LastSent >= this.m_resendDelay * 0.35f)
+						NetOutgoingMessage rmsg = this.m_storedMessages[slot].Message;
+						if (now - this.m_storedMessages[slot].LastSent >= this.m_resendDelay * 0.35f)
 						{
-							this.m_storedMessages[num4].LastSent = now;
+							this.m_storedMessages[slot].LastSent = now;
 							NetStoredReliableMessage[] storedMessages = this.m_storedMessages;
-							int num5 = num4;
-							storedMessages[num5].NumSent = storedMessages[num5].NumSent + 1;
-							this.m_connection.QueueSendMessage(message, num3);
+							int num = slot;
+							storedMessages[num].NumSent = storedMessages[num].NumSent + 1;
+							this.m_connection.QueueSendMessage(rmsg, rnr);
 						}
 					}
 				}
 			}
-			while (num3 != this.m_windowStart);
+			while (rnr != this.m_windowStart);
 		}
 
 		private NetConnection m_connection;

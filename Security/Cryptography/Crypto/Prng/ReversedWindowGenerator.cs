@@ -50,15 +50,15 @@ namespace DNA.Security.Cryptography.Crypto.Prng
 		{
 			lock (this)
 			{
-				int i = 0;
-				while (i < len)
+				int done = 0;
+				while (done < len)
 				{
 					if (this.windowCount < 1)
 					{
 						this.generator.NextBytes(this.window, 0, this.window.Length);
 						this.windowCount = this.window.Length;
 					}
-					bytes[start + i++] = this.window[--this.windowCount];
+					bytes[start + done++] = this.window[--this.windowCount];
 				}
 			}
 		}

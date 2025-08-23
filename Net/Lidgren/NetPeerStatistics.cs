@@ -105,13 +105,13 @@ namespace DNA.Net.Lidgren
 
 		public override string ToString()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(this.m_peer.ConnectionsCount.ToString() + " connections");
-			stringBuilder.AppendLine("Sent (n/a) bytes in (n/a) messages in (n/a) packets");
-			stringBuilder.AppendLine("Received (n/a) bytes in (n/a) messages in (n/a) packets");
-			stringBuilder.AppendLine("Storage allocated " + this.m_bytesAllocated + " bytes");
-			stringBuilder.AppendLine("Recycled pool " + this.m_peer.m_storagePoolBytes + " bytes");
-			return stringBuilder.ToString();
+			StringBuilder bdr = new StringBuilder();
+			bdr.AppendLine(this.m_peer.ConnectionsCount.ToString() + " connections");
+			bdr.AppendLine("Sent (n/a) bytes in (n/a) messages in (n/a) packets");
+			bdr.AppendLine("Received (n/a) bytes in (n/a) messages in (n/a) packets");
+			bdr.AppendLine("Storage allocated " + this.m_bytesAllocated + " bytes");
+			bdr.AppendLine("Recycled pool " + this.m_peer.m_storagePoolBytes + " bytes");
+			return bdr.ToString();
 		}
 
 		private readonly NetPeer m_peer;

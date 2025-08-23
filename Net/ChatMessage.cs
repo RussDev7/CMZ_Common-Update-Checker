@@ -12,9 +12,9 @@ namespace DNA.Net
 
 		public static void Send(LocalNetworkGamer from, string message)
 		{
-			ChatMessage sendInstance = DNA.Net.Message.GetSendInstance<ChatMessage>();
-			sendInstance.Message = message;
-			sendInstance.DoSend(from);
+			ChatMessage instance = DNA.Net.Message.GetSendInstance<ChatMessage>();
+			instance.Message = message;
+			instance.DoSend(from);
 		}
 
 		protected override SendDataOptions SendDataOptions

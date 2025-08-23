@@ -12,9 +12,9 @@ namespace DNA
 
 		public void Read(BinaryReader reader)
 		{
-			int num = reader.ReadInt32();
-			this._playerHash = new byte[num];
-			for (int i = 0; i < num; i++)
+			int length = reader.ReadInt32();
+			this._playerHash = new byte[length];
+			for (int i = 0; i < length; i++)
 			{
 				this._playerHash[i] = reader.ReadByte();
 			}
@@ -39,12 +39,12 @@ namespace DNA
 
 		public override int GetHashCode()
 		{
-			int num = 0;
+			int res = 0;
 			for (int i = 0; i < this._playerHash.Length; i++)
 			{
-				num ^= (int)this._playerHash[i];
+				res ^= (int)this._playerHash[i];
 			}
-			return num;
+			return res;
 		}
 
 		public static bool operator ==(PlayerID a, PlayerID b)
@@ -79,10 +79,10 @@ namespace DNA
 			}
 			for (int i = 0; i < this._playerHash.Length; i++)
 			{
-				int num = (int)(this._playerHash[i] - other._playerHash[i]);
-				if (num != 0)
+				int ret = (int)(this._playerHash[i] - other._playerHash[i]);
+				if (ret != 0)
 				{
-					return num;
+					return ret;
 				}
 			}
 			return 0;

@@ -11,22 +11,22 @@ namespace DNA.Threading
 		{
 			if (this.ThreadRunning)
 			{
-				Thread queueWorkerThread = this._queueWorkerThread;
+				Thread t = this._queueWorkerThread;
 				this._runThread = false;
 				this._event.Set();
-				if (Thread.CurrentThread != queueWorkerThread)
+				if (Thread.CurrentThread != t)
 				{
-					queueWorkerThread.Join();
+					t.Join();
 				}
 			}
 		}
 
 		private void ExecutionThread(object state)
 		{
-			TaskScheduler.ScheduledTask scheduledTask = (TaskScheduler.ScheduledTask)state;
-			if (!scheduledTask.DoWork() && this.ThreadException != null)
+			TaskScheduler.ScheduledTask task = (TaskScheduler.ScheduledTask)state;
+			if (!task.DoWork() && this.ThreadException != null)
 			{
-				this.ThreadException(this, new TaskScheduler.ExceptionEventArgs(scheduledTask.Exception));
+				this.ThreadException(this, new TaskScheduler.ExceptionEventArgs(task.Exception));
 			}
 		}
 
@@ -58,12 +58,12 @@ namespace DNA.Threading
 				this._event.WaitOne();
 				while (this._taskQueue.Count > 0)
 				{
-					TaskScheduler.ScheduledTask scheduledTask;
+					TaskScheduler.ScheduledTask task;
 					lock (this._taskQueue)
 					{
-						scheduledTask = this._taskQueue.Dequeue();
+						task = this._taskQueue.Dequeue();
 					}
-					this.ExecutionThread(scheduledTask);
+					this.ExecutionThread(task);
 				}
 			}
 			this._queueWorkerThread = null;
@@ -74,42 +74,42 @@ namespace DNA.Threading
 
 		public Task QueueUserWorkItem(ThreadStart callBack)
 		{
-			Task task;
+			Task task2;
 			lock (this._taskQueue)
 			{
-				TaskScheduler.ScheduledTask scheduledTask = new TaskScheduler.ScheduledTask(callBack);
-				this._taskQueue.Enqueue(scheduledTask);
+				TaskScheduler.ScheduledTask task = new TaskScheduler.ScheduledTask(callBack);
+				this._taskQueue.Enqueue(task);
 				this.StartWorkerQueue();
-				task = scheduledTask;
+				task2 = task;
 			}
-			return task;
+			return task2;
 		}
 
 		public Task QueueUserWorkItem(ParameterizedThreadStart callBack, object state)
 		{
-			Task task;
+			Task task2;
 			lock (this._taskQueue)
 			{
-				TaskScheduler.ScheduledTask scheduledTask = new TaskScheduler.ScheduledTask(callBack, state);
-				this._taskQueue.Enqueue(scheduledTask);
+				TaskScheduler.ScheduledTask task = new TaskScheduler.ScheduledTask(callBack, state);
+				this._taskQueue.Enqueue(task);
 				this.StartWorkerQueue();
-				task = scheduledTask;
+				task2 = task;
 			}
-			return task;
+			return task2;
 		}
 
 		public Task DoUserWorkItem(ThreadStart callBack)
 		{
-			TaskScheduler.ScheduledTask scheduledTask = new TaskScheduler.ScheduledTask(callBack);
-			ThreadPool.QueueUserWorkItem(new WaitCallback(this.ExecutionThread), scheduledTask);
-			return scheduledTask;
+			TaskScheduler.ScheduledTask task = new TaskScheduler.ScheduledTask(callBack);
+			ThreadPool.QueueUserWorkItem(new WaitCallback(this.ExecutionThread), task);
+			return task;
 		}
 
 		public Task DoUserWorkItem(ParameterizedThreadStart callBack, object state)
 		{
-			TaskScheduler.ScheduledTask scheduledTask = new TaskScheduler.ScheduledTask(callBack, state);
-			ThreadPool.QueueUserWorkItem(new WaitCallback(this.ExecutionThread), scheduledTask);
-			return scheduledTask;
+			TaskScheduler.ScheduledTask task = new TaskScheduler.ScheduledTask(callBack, state);
+			ThreadPool.QueueUserWorkItem(new WaitCallback(this.ExecutionThread), task);
+			return task;
 		}
 
 		private Queue<TaskScheduler.ScheduledTask> _taskQueue = new Queue<TaskScheduler.ScheduledTask>();
@@ -160,9 +160,9 @@ namespace DNA.Threading
 							this._paramCallback(this._state);
 						}
 					}
-					catch (Exception ex)
+					catch (Exception e)
 					{
-						base.Exception = ex;
+						base.Exception = e;
 						base.Status = TaskStatus.Failed;
 						return false;
 					}

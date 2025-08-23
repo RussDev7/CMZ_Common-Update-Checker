@@ -17,10 +17,10 @@ namespace DNA.Security.Cryptography.Utilities
 
 		public static BigInteger CreateRandomInRange(BigInteger min, BigInteger max, SecureRandom random)
 		{
-			int num = min.CompareTo(max);
-			if (num >= 0)
+			int cmp = min.CompareTo(max);
+			if (cmp >= 0)
 			{
-				if (num > 0)
+				if (cmp > 0)
 				{
 					throw new ArgumentException("'min' may not be greater than 'max'");
 				}
@@ -34,10 +34,10 @@ namespace DNA.Security.Cryptography.Utilities
 				}
 				for (int i = 0; i < 1000; i++)
 				{
-					BigInteger bigInteger = new BigInteger(max.BitLength, random);
-					if (bigInteger.CompareTo(min) >= 0 && bigInteger.CompareTo(max) <= 0)
+					BigInteger x = new BigInteger(max.BitLength, random);
+					if (x.CompareTo(min) >= 0 && x.CompareTo(max) <= 0)
 					{
-						return bigInteger;
+						return x;
 					}
 				}
 				return new BigInteger(max.Subtract(min).BitLength - 1, random).Add(min);

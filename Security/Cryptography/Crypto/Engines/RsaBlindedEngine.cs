@@ -21,9 +21,9 @@ namespace DNA.Security.Cryptography.Crypto.Engines
 			this.core.Init(forEncryption, param);
 			if (param is ParametersWithRandom)
 			{
-				ParametersWithRandom parametersWithRandom = (ParametersWithRandom)param;
-				this.key = (RsaKeyParameters)parametersWithRandom.Parameters;
-				this.random = parametersWithRandom.Random;
+				ParametersWithRandom rParam = (ParametersWithRandom)param;
+				this.key = (RsaKeyParameters)rParam.Parameters;
+				this.random = rParam.Random;
 				return;
 			}
 			this.key = (RsaKeyParameters)param;
@@ -46,31 +46,31 @@ namespace DNA.Security.Cryptography.Crypto.Engines
 			{
 				throw new InvalidOperationException("RSA engine not initialised");
 			}
-			BigInteger bigInteger = this.core.ConvertInput(inBuf, inOff, inLen);
-			BigInteger bigInteger6;
+			BigInteger input = this.core.ConvertInput(inBuf, inOff, inLen);
+			BigInteger result;
 			if (this.key is RsaPrivateCrtKeyParameters)
 			{
-				RsaPrivateCrtKeyParameters rsaPrivateCrtKeyParameters = (RsaPrivateCrtKeyParameters)this.key;
-				BigInteger publicExponent = rsaPrivateCrtKeyParameters.PublicExponent;
-				if (publicExponent != null)
+				RsaPrivateCrtKeyParameters i = (RsaPrivateCrtKeyParameters)this.key;
+				BigInteger e = i.PublicExponent;
+				if (e != null)
 				{
-					BigInteger modulus = rsaPrivateCrtKeyParameters.Modulus;
-					BigInteger bigInteger2 = BigIntegers.CreateRandomInRange(BigInteger.One, modulus.Subtract(BigInteger.One), this.random);
-					BigInteger bigInteger3 = bigInteger2.ModPow(publicExponent, modulus).Multiply(bigInteger).Mod(modulus);
-					BigInteger bigInteger4 = this.core.ProcessBlock(bigInteger3);
-					BigInteger bigInteger5 = bigInteger2.ModInverse(modulus);
-					bigInteger6 = bigInteger4.Multiply(bigInteger5).Mod(modulus);
+					BigInteger j = i.Modulus;
+					BigInteger r = BigIntegers.CreateRandomInRange(BigInteger.One, j.Subtract(BigInteger.One), this.random);
+					BigInteger blindedInput = r.ModPow(e, j).Multiply(input).Mod(j);
+					BigInteger blindedResult = this.core.ProcessBlock(blindedInput);
+					BigInteger rInv = r.ModInverse(j);
+					result = blindedResult.Multiply(rInv).Mod(j);
 				}
 				else
 				{
-					bigInteger6 = this.core.ProcessBlock(bigInteger);
+					result = this.core.ProcessBlock(input);
 				}
 			}
 			else
 			{
-				bigInteger6 = this.core.ProcessBlock(bigInteger);
+				result = this.core.ProcessBlock(input);
 			}
-			return this.core.ConvertOutput(bigInteger6);
+			return this.core.ConvertOutput(result);
 		}
 
 		private readonly RsaCoreEngine core = new RsaCoreEngine();

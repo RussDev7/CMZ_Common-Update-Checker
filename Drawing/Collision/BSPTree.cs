@@ -22,29 +22,29 @@ namespace DNA.Drawing.Collision
 
 		public void Build(IList<Triangle3D> polys, int percisionDigits)
 		{
-			LinkedList<Triangle3D> linkedList = new LinkedList<Triangle3D>();
-			int num = 0;
-			foreach (Triangle3D triangle3D in polys)
+			LinkedList<Triangle3D> triList = new LinkedList<Triangle3D>();
+			int degenTriangles = 0;
+			foreach (Triangle3D tri in polys)
 			{
-				double num2 = Math.Round((double)triangle3D.Area, percisionDigits);
-				if (num2 != 0.0)
+				double area = Math.Round((double)tri.Area, percisionDigits);
+				if (area != 0.0)
 				{
-					linkedList.AddLast(triangle3D);
+					triList.AddLast(tri);
 				}
 				else
 				{
-					num++;
+					degenTriangles++;
 				}
 			}
 			this._percisionDigits = percisionDigits;
 			this._root = new BSPTree.BSPTreeNode();
-			this._root.Build(linkedList, percisionDigits);
+			this._root.Build(triList, percisionDigits);
 		}
 
 		public void Build(Model model, int percisionDigits)
 		{
-			List<Triangle3D> list = model.ExtractModelTris(true);
-			this.Build(list, percisionDigits);
+			List<Triangle3D> polys = model.ExtractModelTris(true);
+			this.Build(polys, percisionDigits);
 		}
 
 		protected override CollisionMap.RayQueryResult? CollidesWith(Ray ray, float min, float max)
@@ -79,13 +79,13 @@ namespace DNA.Drawing.Collision
 
 		public override void Load(BinaryReader reader)
 		{
-			string text = reader.ReadString();
-			if (text != this.FileID)
+			string id = reader.ReadString();
+			if (id != this.FileID)
 			{
 				throw new Exception("Bad BSP file Format");
 			}
-			int num = reader.ReadInt32();
-			if (num != 1)
+			int verison = reader.ReadInt32();
+			if (verison != 1)
 			{
 				throw new Exception("Bad BSP version");
 			}
@@ -120,9 +120,9 @@ namespace DNA.Drawing.Collision
 					existingInstance.Load(input);
 					return existingInstance;
 				}
-				BSPTree bsptree = new BSPTree();
-				bsptree.Load(input);
-				return bsptree;
+				BSPTree tree = new BSPTree();
+				tree.Load(input);
+				return tree;
 			}
 		}
 
@@ -134,227 +134,227 @@ namespace DNA.Drawing.Collision
 				{
 					return;
 				}
-				LinkedListNode<Triangle3D>[] array = new LinkedListNode<Triangle3D>[splitList.Count];
-				Triangle3D[] array2 = new Triangle3D[splitList.Count];
-				LinkedListNode<Triangle3D> linkedListNode = splitList.First;
-				for (int i = 0; i < array2.Length; i++)
+				LinkedListNode<Triangle3D>[] nodes = new LinkedListNode<Triangle3D>[splitList.Count];
+				Triangle3D[] triList = new Triangle3D[splitList.Count];
+				LinkedListNode<Triangle3D> currentNode = splitList.First;
+				for (int i = 0; i < triList.Length; i++)
 				{
-					array2[i] = linkedListNode.Value;
-					array[i] = linkedListNode;
-					linkedListNode = linkedListNode.Next;
+					triList[i] = currentNode.Value;
+					nodes[i] = currentNode;
+					currentNode = currentNode.Next;
 				}
-				int num = Environment.ProcessorCount;
-				if (array2.Length < num * 500)
+				int totalProcessors = Environment.ProcessorCount;
+				if (triList.Length < totalProcessors * 500)
 				{
-					num = 1;
+					totalProcessors = 1;
 				}
-				int num2 = array2.Length / num + 1;
-				BSPTree.BSPTreeNode.SplitCounts splitCounts = null;
-				float num3 = 0.8f;
-				bool flag = true;
-				while (splitCounts == null)
+				int triPreProc = triList.Length / totalProcessors + 1;
+				BSPTree.BSPTreeNode.SplitCounts bestPolygon = null;
+				float minRelation = 0.8f;
+				bool isConvex = true;
+				while (bestPolygon == null)
 				{
-					float num4 = float.MinValue;
-					int num5 = int.MaxValue;
-					List<BSPTree.BSPTreeNode.BestSplitFinder> list = new List<BSPTree.BSPTreeNode.BestSplitFinder>();
-					int num6 = 0;
-					for (int j = 0; j < num; j++)
+					float bestRatio = float.MinValue;
+					int leastSplits = int.MaxValue;
+					List<BSPTree.BSPTreeNode.BestSplitFinder> finders = new List<BSPTree.BSPTreeNode.BestSplitFinder>();
+					int startPoly = 0;
+					for (int processor = 0; processor < totalProcessors; processor++)
 					{
-						int num7 = num6 + num2;
-						if (num7 > array2.Length)
+						int polyStop = startPoly + triPreProc;
+						if (polyStop > triList.Length)
 						{
-							num7 = array2.Length;
+							polyStop = triList.Length;
 						}
-						BSPTree.BSPTreeNode.BestSplitFinder bestSplitFinder = new BSPTree.BSPTreeNode.BestSplitFinder(array2, num3, num6, num7);
-						bestSplitFinder.FindSplitAsync();
-						list.Add(bestSplitFinder);
-						num6 = num7 + 1;
+						BSPTree.BSPTreeNode.BestSplitFinder finder = new BSPTree.BSPTreeNode.BestSplitFinder(triList, minRelation, startPoly, polyStop);
+						finder.FindSplitAsync();
+						finders.Add(finder);
+						startPoly = polyStop + 1;
 					}
-					foreach (BSPTree.BSPTreeNode.BestSplitFinder bestSplitFinder2 in list)
+					foreach (BSPTree.BSPTreeNode.BestSplitFinder finder2 in finders)
 					{
-						bestSplitFinder2.EndFindSplit();
-						if (!bestSplitFinder2.isConvex)
+						finder2.EndFindSplit();
+						if (!finder2.isConvex)
 						{
-							flag = false;
+							isConvex = false;
 						}
-						if (bestSplitFinder2.bestPolygon != null)
+						if (finder2.bestPolygon != null)
 						{
-							BSPTree.BSPTreeNode.SplitCounts bestPolygon = bestSplitFinder2.bestPolygon;
-							if (bestPolygon.Spanning < num5 || (bestPolygon.Spanning == num5 && bestPolygon.DivisionFactor > num4))
+							BSPTree.BSPTreeNode.SplitCounts counts = finder2.bestPolygon;
+							if (counts.Spanning < leastSplits || (counts.Spanning == leastSplits && counts.DivisionFactor > bestRatio))
 							{
-								splitCounts = bestPolygon;
-								num5 = bestPolygon.Spanning;
-								num4 = bestPolygon.DivisionFactor;
+								bestPolygon = counts;
+								leastSplits = counts.Spanning;
+								bestRatio = counts.DivisionFactor;
 							}
 						}
 					}
-					num3 /= 2f;
-					if (flag)
+					minRelation /= 2f;
+					if (isConvex)
 					{
 						return;
 					}
 				}
-				splitList.Remove(array[splitCounts.Node]);
-				splitList.AddFirst(array[splitCounts.Node]);
+				splitList.Remove(nodes[bestPolygon.Node]);
+				splitList.AddFirst(nodes[bestPolygon.Node]);
 			}
 
 			public static void SortList(Plane splitPlane, LinkedList<Triangle3D> triList, LinkedList<Triangle3D> frontList, LinkedList<Triangle3D> backList, int percisionDigits)
 			{
-				LinkedListNode<Triangle3D> linkedListNode = triList.First;
-				while (linkedListNode != null)
+				LinkedListNode<Triangle3D> currentNode = triList.First;
+				while (currentNode != null)
 				{
-					int num = percisionDigits;
-					bool flag = true;
-					while (flag)
+					int tempPercision = percisionDigits;
+					bool retry = true;
+					while (retry)
 					{
-						bool flag2 = false;
-						Triangle3D value = linkedListNode.Value;
-						double num2 = (double)splitPlane.DotCoordinate(value.A);
-						double num3 = (double)splitPlane.DotCoordinate(value.B);
-						double num4 = (double)splitPlane.DotCoordinate(value.C);
-						num2 = Math.Round(num2, num);
-						num3 = Math.Round(num3, num);
-						num4 = Math.Round(num4, num);
-						if (num2 == 0.0 && num3 == 0.0 && num4 == 0.0)
+						bool remove = false;
+						Triangle3D tri = currentNode.Value;
+						double d = (double)splitPlane.DotCoordinate(tri.A);
+						double d2 = (double)splitPlane.DotCoordinate(tri.B);
+						double d3 = (double)splitPlane.DotCoordinate(tri.C);
+						d = Math.Round(d, tempPercision);
+						d2 = Math.Round(d2, tempPercision);
+						d3 = Math.Round(d3, tempPercision);
+						if (d == 0.0 && d2 == 0.0 && d3 == 0.0)
 						{
-							Plane plane = new Plane(value.B, value.A, value.C);
-							if (Vector3.Dot(splitPlane.Normal, plane.Normal) > 0f)
+							Plane p2 = new Plane(tri.B, tri.A, tri.C);
+							if (Vector3.Dot(splitPlane.Normal, p2.Normal) > 0f)
 							{
-								frontList.AddFirst(value);
+								frontList.AddFirst(tri);
 							}
 							else
 							{
-								backList.AddLast(value);
+								backList.AddLast(tri);
 							}
-							flag2 = true;
+							remove = true;
 						}
-						else if (num2 <= 0.0 && num3 <= 0.0 && num4 <= 0.0)
+						else if (d <= 0.0 && d2 <= 0.0 && d3 <= 0.0)
 						{
-							flag2 = true;
-							backList.AddLast(value);
+							remove = true;
+							backList.AddLast(tri);
 						}
 						else
 						{
-							if (num2 >= 0.0 && num3 >= 0.0)
+							if (d >= 0.0 && d2 >= 0.0)
 							{
-								if (num4 >= 0.0)
+								if (d3 >= 0.0)
 								{
 									goto IL_01C4;
 								}
 							}
 							try
 							{
-								Triangle3D[] array = value.Slice(splitPlane, num);
-								if (array.Length == 1)
+								Triangle3D[] tris = tri.Slice(splitPlane, tempPercision);
+								if (tris.Length == 1)
 								{
 									throw new PrecisionException();
 								}
-								for (int i = 0; i < array.Length; i++)
+								for (int i = 0; i < tris.Length; i++)
 								{
-									if (Math.Round((double)array[i].Area, percisionDigits - 1) > 0.0)
+									if (Math.Round((double)tris[i].Area, percisionDigits - 1) > 0.0)
 									{
-										triList.AddLast(array[i]);
+										triList.AddLast(tris[i]);
 									}
 								}
 							}
 							catch (PrecisionException)
 							{
-								num--;
-								if (num < 0)
+								tempPercision--;
+								if (tempPercision < 0)
 								{
 									throw new Exception("Slice Error");
 								}
 								continue;
 							}
-							flag2 = true;
+							remove = true;
 						}
 						IL_01C4:
-						LinkedListNode<Triangle3D> next = linkedListNode.Next;
-						if (flag2)
+						LinkedListNode<Triangle3D> nextNode = currentNode.Next;
+						if (remove)
 						{
-							triList.Remove(linkedListNode);
+							triList.Remove(currentNode);
 						}
-						linkedListNode = next;
-						flag = false;
+						currentNode = nextNode;
+						retry = false;
 					}
 				}
 			}
 
 			public void Build(LinkedList<Triangle3D> splitList, int percisionDigits)
 			{
-				LinkedList<Triangle3D> linkedList = new LinkedList<Triangle3D>();
-				LinkedList<Triangle3D> linkedList2 = new LinkedList<Triangle3D>();
+				LinkedList<Triangle3D> frontList = new LinkedList<Triangle3D>();
+				LinkedList<Triangle3D> backList = new LinkedList<Triangle3D>();
 				BSPTree.BSPTreeNode.ChooseDividingPolygon(splitList);
-				linkedList.AddFirst(splitList.First.Value);
-				Triangle3D value = splitList.First.Value;
+				frontList.AddFirst(splitList.First.Value);
+				Triangle3D triangle = splitList.First.Value;
 				splitList.RemoveFirst();
-				this.SplitPlane = new Plane(value.B, value.A, value.C);
+				this.SplitPlane = new Plane(triangle.B, triangle.A, triangle.C);
 				this.SplitPlane.Normalize();
-				BSPTree.BSPTreeNode.SortList(this.SplitPlane, splitList, linkedList, linkedList2, percisionDigits);
-				this.TriList = new Triangle3D[linkedList.Count];
-				linkedList.CopyTo(this.TriList, 0);
-				Thread thread = null;
-				bool flag = false;
-				bool flag2 = false;
+				BSPTree.BSPTreeNode.SortList(this.SplitPlane, splitList, frontList, backList, percisionDigits);
+				this.TriList = new Triangle3D[frontList.Count];
+				frontList.CopyTo(this.TriList, 0);
+				Thread workerThread = null;
+				bool doFrontBuild = false;
+				bool doBackBuild = false;
 				if (splitList.Count > 0)
 				{
 					this.Front = new BSPTree.BSPTreeNode();
-					if (thread == null && splitList.Count > 1000 && splitList.Count >= linkedList2.Count && BSPTree.BSPTreeNode.AvailibleThread > 0)
+					if (workerThread == null && splitList.Count > 1000 && splitList.Count >= backList.Count && BSPTree.BSPTreeNode.AvailibleThread > 0)
 					{
-						flag = false;
+						doFrontBuild = false;
 						lock (BSPTree.BSPTreeNode.threadLock)
 						{
 							BSPTree.BSPTreeNode.AvailibleThread--;
 						}
-						thread = new Thread(delegate(object state)
+						workerThread = new Thread(delegate(object state)
 						{
-							object[] array = (object[])state;
-							BSPTree.BSPTreeNode bsptreeNode = (BSPTree.BSPTreeNode)array[0];
-							bsptreeNode.Build((LinkedList<Triangle3D>)array[1], (int)array[2]);
+							object[] parms = (object[])state;
+							BSPTree.BSPTreeNode node = (BSPTree.BSPTreeNode)parms[0];
+							node.Build((LinkedList<Triangle3D>)parms[1], (int)parms[2]);
 						});
-						thread.Name = "BSP Front Side Worker Thread";
-						thread.Start(new object[] { this.Front, splitList, percisionDigits });
+						workerThread.Name = "BSP Front Side Worker Thread";
+						workerThread.Start(new object[] { this.Front, splitList, percisionDigits });
 					}
 					else
 					{
-						flag = true;
+						doFrontBuild = true;
 					}
 				}
-				if (linkedList2.Count > 0)
+				if (backList.Count > 0)
 				{
 					this.Back = new BSPTree.BSPTreeNode();
-					if (thread == null && linkedList2.Count > 1000 && linkedList2.Count >= splitList.Count && BSPTree.BSPTreeNode.AvailibleThread > 0)
+					if (workerThread == null && backList.Count > 1000 && backList.Count >= splitList.Count && BSPTree.BSPTreeNode.AvailibleThread > 0)
 					{
-						flag2 = false;
+						doBackBuild = false;
 						lock (BSPTree.BSPTreeNode.threadLock)
 						{
 							BSPTree.BSPTreeNode.AvailibleThread--;
 						}
-						thread = new Thread(delegate(object state)
+						workerThread = new Thread(delegate(object state)
 						{
-							object[] array2 = (object[])state;
-							BSPTree.BSPTreeNode bsptreeNode2 = (BSPTree.BSPTreeNode)array2[0];
-							bsptreeNode2.Build((LinkedList<Triangle3D>)array2[1], (int)array2[2]);
+							object[] parms2 = (object[])state;
+							BSPTree.BSPTreeNode node2 = (BSPTree.BSPTreeNode)parms2[0];
+							node2.Build((LinkedList<Triangle3D>)parms2[1], (int)parms2[2]);
 						});
-						thread.Name = "BSP Front Side Worker Thread";
-						thread.Start(new object[] { this.Back, linkedList2, percisionDigits });
+						workerThread.Name = "BSP Front Side Worker Thread";
+						workerThread.Start(new object[] { this.Back, backList, percisionDigits });
 					}
 					else
 					{
-						flag2 = true;
+						doBackBuild = true;
 					}
 				}
-				if (flag)
+				if (doFrontBuild)
 				{
 					this.Front.Build(splitList, percisionDigits);
 				}
-				if (flag2)
+				if (doBackBuild)
 				{
-					this.Back.Build(linkedList2, percisionDigits);
+					this.Back.Build(backList, percisionDigits);
 				}
-				if (thread != null)
+				if (workerThread != null)
 				{
-					thread.Join();
+					workerThread.Join();
 					lock (BSPTree.BSPTreeNode.threadLock)
 					{
 						BSPTree.BSPTreeNode.AvailibleThread++;
@@ -364,23 +364,23 @@ namespace DNA.Drawing.Collision
 
 			public static BSPTree.BSPTreeNode Load(BinaryReader reader)
 			{
-				int num = reader.ReadInt32();
-				if (num == 0)
+				int tris = reader.ReadInt32();
+				if (tris == 0)
 				{
 					return null;
 				}
-				BSPTree.BSPTreeNode bsptreeNode = new BSPTree.BSPTreeNode();
-				bsptreeNode.TriList = new Triangle3D[num];
-				for (int i = 0; i < num; i++)
+				BSPTree.BSPTreeNode ret = new BSPTree.BSPTreeNode();
+				ret.TriList = new Triangle3D[tris];
+				for (int i = 0; i < tris; i++)
 				{
-					bsptreeNode.TriList[i] = Triangle3D.Read(reader);
+					ret.TriList[i] = Triangle3D.Read(reader);
 				}
-				Triangle3D triangle3D = bsptreeNode.TriList[bsptreeNode.TriList.Length - 1];
-				bsptreeNode.SplitPlane = new Plane(triangle3D.B, triangle3D.A, triangle3D.C);
-				bsptreeNode.SplitPlane.Normalize();
-				bsptreeNode.Front = BSPTree.BSPTreeNode.Load(reader);
-				bsptreeNode.Back = BSPTree.BSPTreeNode.Load(reader);
-				return bsptreeNode;
+				Triangle3D triangle = ret.TriList[ret.TriList.Length - 1];
+				ret.SplitPlane = new Plane(triangle.B, triangle.A, triangle.C);
+				ret.SplitPlane.Normalize();
+				ret.Front = BSPTree.BSPTreeNode.Load(reader);
+				ret.Back = BSPTree.BSPTreeNode.Load(reader);
+				return ret;
 			}
 
 			public void Save(BinaryWriter writer)
@@ -391,9 +391,9 @@ namespace DNA.Drawing.Collision
 					return;
 				}
 				writer.Write(this.TriList.Length);
-				foreach (Triangle3D triangle3D in this.TriList)
+				foreach (Triangle3D tri in this.TriList)
 				{
-					triangle3D.Write(writer);
+					tri.Write(writer);
 				}
 				if (this.Front == null)
 				{
@@ -425,16 +425,16 @@ namespace DNA.Drawing.Collision
 
 			public CollisionMap.RayQueryResult? CollidesWith(Ray ray, float minT, float maxT, int percisionDigits)
 			{
-				Vector3 vector = ray.Position + ray.Direction * minT;
-				float num = this.SplitPlane.DotCoordinate(vector);
-				float? num2 = ray.Intersects(this.SplitPlane);
-				if (num2 != null)
+				Vector3 rayStart = ray.Position + ray.Direction * minT;
+				float distanceToPlane = this.SplitPlane.DotCoordinate(rayStart);
+				float? tval = ray.Intersects(this.SplitPlane);
+				if (tval != null)
 				{
-					num2 = new float?((float)Math.Round((double)num2.Value, percisionDigits));
+					tval = new float?((float)Math.Round((double)tval.Value, percisionDigits));
 				}
-				if (num2 == null || num2.Value < minT || num2.Value > maxT)
+				if (tval == null || tval.Value < minT || tval.Value > maxT)
 				{
-					if (num >= 0f)
+					if (distanceToPlane >= 0f)
 					{
 						if (this.Front == null)
 						{
@@ -451,77 +451,77 @@ namespace DNA.Drawing.Collision
 						return this.Back.CollidesWith(ray, minT, maxT, percisionDigits);
 					}
 				}
-				else if (num >= 0f)
+				else if (distanceToPlane >= 0f)
 				{
-					CollisionMap.RayQueryResult? rayQueryResult = null;
+					CollisionMap.RayQueryResult? result = null;
 					if (this.Front != null)
 					{
-						rayQueryResult = this.Front.CollidesWith(ray, minT, Math.Min(maxT, num2.Value), percisionDigits);
+						result = this.Front.CollidesWith(ray, minT, Math.Min(maxT, tval.Value), percisionDigits);
 					}
-					if (rayQueryResult != null)
+					if (result != null)
 					{
-						return rayQueryResult;
+						return result;
 					}
-					Triangle3D? triangle3D = this.CollideWithTriangles(ray);
-					if (triangle3D != null)
+					Triangle3D? colTri = this.CollideWithTriangles(ray);
+					if (colTri != null)
 					{
-						return new CollisionMap.RayQueryResult?(new CollisionMap.RayQueryResult(num2.Value, triangle3D.Value));
+						return new CollisionMap.RayQueryResult?(new CollisionMap.RayQueryResult(tval.Value, colTri.Value));
 					}
 					if (this.Back == null)
 					{
 						return null;
 					}
-					return this.Back.CollidesWith(ray, Math.Max(minT, num2.Value), maxT, percisionDigits);
+					return this.Back.CollidesWith(ray, Math.Max(minT, tval.Value), maxT, percisionDigits);
 				}
 				else
 				{
-					CollisionMap.RayQueryResult? rayQueryResult2 = null;
+					CollisionMap.RayQueryResult? result2 = null;
 					if (this.Back != null)
 					{
-						rayQueryResult2 = this.Back.CollidesWith(ray, minT, Math.Min(maxT, num2.Value), percisionDigits);
+						result2 = this.Back.CollidesWith(ray, minT, Math.Min(maxT, tval.Value), percisionDigits);
 					}
-					if (rayQueryResult2 != null)
+					if (result2 != null)
 					{
-						return rayQueryResult2;
+						return result2;
 					}
 					if (this.Front == null)
 					{
 						return null;
 					}
-					return this.Front.CollidesWith(ray, Math.Max(minT, num2.Value), maxT, percisionDigits);
+					return this.Front.CollidesWith(ray, Math.Max(minT, tval.Value), maxT, percisionDigits);
 				}
 			}
 
 			private void CollideWithTriangles(Ellipsoid ellipsoid, float distanceToPlane, List<CollisionMap.ContactPoint> contacts)
 			{
-				Vector3 normal = this.SplitPlane.Normal;
-				float num = ellipsoid.Radius.X * normal.X * ellipsoid.Radius.X * normal.X + ellipsoid.Radius.Y * normal.Y * ellipsoid.Radius.Y * normal.Y + ellipsoid.Radius.Z * normal.Z * ellipsoid.Radius.Z * normal.Z;
-				float num2 = distanceToPlane * distanceToPlane;
+				Vector3 planeNormal = this.SplitPlane.Normal;
+				float sphereRadSqu = ellipsoid.Radius.X * planeNormal.X * ellipsoid.Radius.X * planeNormal.X + ellipsoid.Radius.Y * planeNormal.Y * ellipsoid.Radius.Y * planeNormal.Y + ellipsoid.Radius.Z * planeNormal.Z * ellipsoid.Radius.Z * planeNormal.Z;
+				float distToPlaneSquared = distanceToPlane * distanceToPlane;
 				for (int i = 0; i < this.TriList.Length; i++)
 				{
-					Triangle3D triangle3D = this.TriList[i];
-					Vector3 vector = ellipsoid.Center - triangle3D.A;
-					Vector3.Dot(normal, vector);
-					Vector3 vector2 = distanceToPlane * normal;
-					Vector3 vector3 = ellipsoid.Center + vector2;
-					Vector3 vector4 = triangle3D.B - triangle3D.A;
-					Vector3 vector5 = triangle3D.C - triangle3D.A;
-					float num3 = Vector3.Dot(vector4, vector4);
-					float num4 = Vector3.Dot(vector4, vector5);
-					float num5 = Vector3.Dot(vector5, vector5);
-					Vector3 vector6 = vector3 - triangle3D.A;
-					float num6 = Vector3.Dot(vector6, vector4);
-					float num7 = Vector3.Dot(vector6, vector5);
-					float num8 = num4 * num4 - num3 * num5;
-					float num9 = (num4 * num7 - num5 * num6) / num8;
-					if ((double)num9 >= 0.0 && (double)num9 <= 1.0)
+					Triangle3D tri = this.TriList[i];
+					Vector3 w0 = ellipsoid.Center - tri.A;
+					Vector3.Dot(planeNormal, w0);
+					Vector3 dt = distanceToPlane * planeNormal;
+					Vector3 intersectionPoint = ellipsoid.Center + dt;
+					Vector3 u = tri.B - tri.A;
+					Vector3 v = tri.C - tri.A;
+					float uu = Vector3.Dot(u, u);
+					float uv = Vector3.Dot(u, v);
+					float vv = Vector3.Dot(v, v);
+					Vector3 w = intersectionPoint - tri.A;
+					float wu = Vector3.Dot(w, u);
+					float wv = Vector3.Dot(w, v);
+					float D = uv * uv - uu * vv;
+					float sI = (uv * wv - vv * wu) / D;
+					if ((double)sI >= 0.0 && (double)sI <= 1.0)
 					{
-						float num10 = (num4 * num6 - num3 * num7) / num8;
-						if ((double)num10 >= 0.0 && (double)(num9 + num10) <= 1.0 && num2 <= num)
+						float tI = (uv * wu - uu * wv) / D;
+						if ((double)tI >= 0.0 && (double)(sI + tI) <= 1.0 && distToPlaneSquared <= sphereRadSqu)
 						{
-							float num11 = (float)Math.Sqrt((double)num);
-							Vector3 vector7 = (num11 - distanceToPlane) * normal;
-							contacts.Add(new CollisionMap.ContactPoint(vector7, triangle3D));
+							float ellipseRad = (float)Math.Sqrt((double)sphereRadSqu);
+							Vector3 pVect = (ellipseRad - distanceToPlane) * planeNormal;
+							contacts.Add(new CollisionMap.ContactPoint(pVect, tri));
 						}
 					}
 				}
@@ -529,87 +529,87 @@ namespace DNA.Drawing.Collision
 
 			private void CollideWithTriangles(Ellipsoid ellipsoid, Plane localPlane, float distanceToLocalPlane, List<CollisionMap.ContactPoint> contacts)
 			{
-				Triangle3D triangle3D = default(Triangle3D);
+				Triangle3D localTri = default(Triangle3D);
 				for (int i = 0; i < this.TriList.Length; i++)
 				{
-					ellipsoid.TransformWorldSpaceTriToUnitSphereSpace(this.TriList[i], ref triangle3D);
-					Vector3.Dot(localPlane.Normal, triangle3D.A);
-					Vector3 vector = -distanceToLocalPlane * localPlane.Normal;
-					Vector3 vector2 = triangle3D.B - triangle3D.A;
-					Vector3 vector3 = triangle3D.C - triangle3D.A;
-					float num = Vector3.Dot(vector2, vector2);
-					float num2 = Vector3.Dot(vector2, vector3);
-					float num3 = Vector3.Dot(vector3, vector3);
-					Vector3 vector4 = vector - triangle3D.A;
-					float num4 = Vector3.Dot(vector4, vector2);
-					float num5 = Vector3.Dot(vector4, vector3);
-					float num6 = num2 * num2 - num * num3;
-					float num7 = (num2 * num5 - num3 * num4) / num6;
-					if ((double)num7 >= 0.0 && (double)num7 <= 1.0)
+					ellipsoid.TransformWorldSpaceTriToUnitSphereSpace(this.TriList[i], ref localTri);
+					Vector3.Dot(localPlane.Normal, localTri.A);
+					Vector3 intersectionPoint = -distanceToLocalPlane * localPlane.Normal;
+					Vector3 u = localTri.B - localTri.A;
+					Vector3 v = localTri.C - localTri.A;
+					float uu = Vector3.Dot(u, u);
+					float uv = Vector3.Dot(u, v);
+					float vv = Vector3.Dot(v, v);
+					Vector3 w = intersectionPoint - localTri.A;
+					float wu = Vector3.Dot(w, u);
+					float wv = Vector3.Dot(w, v);
+					float D = uv * uv - uu * vv;
+					float sI = (uv * wv - vv * wu) / D;
+					if ((double)sI >= 0.0 && (double)sI <= 1.0)
 					{
-						float num8 = (num2 * num4 - num * num5) / num6;
-						if ((double)num8 >= 0.0 && (double)(num7 + num8) <= 1.0)
+						float tI = (uv * wu - uu * wv) / D;
+						if ((double)tI >= 0.0 && (double)(sI + tI) <= 1.0)
 						{
-							float num9 = ellipsoid.CalculateWorldSpacePenetration(vector);
-							contacts.Add(new CollisionMap.ContactPoint(this.SplitPlane.Normal, this.TriList[i], num9));
+							float penetration = ellipsoid.CalculateWorldSpacePenetration(intersectionPoint);
+							contacts.Add(new CollisionMap.ContactPoint(this.SplitPlane.Normal, this.TriList[i], penetration));
 							return;
 						}
 					}
 				}
-				Vector3 vector5 = Vector3.Zero;
+				Vector3 colNormal = Vector3.Zero;
 				for (int j = 0; j < this.TriList.Length; j++)
 				{
-					ellipsoid.TransformWorldSpaceTriToUnitSphereSpace(this.TriList[j], ref triangle3D);
-					LineF3D lineF3D = new LineF3D(triangle3D.A, triangle3D.B);
-					LineF3D lineF3D2 = new LineF3D(triangle3D.A, triangle3D.C);
-					LineF3D lineF3D3 = new LineF3D(triangle3D.B, triangle3D.C);
-					Vector3 vector6 = lineF3D.ClosetPointTo(Vector3.Zero);
-					Vector3 vector7 = lineF3D2.ClosetPointTo(Vector3.Zero);
-					Vector3 vector8 = lineF3D3.ClosetPointTo(Vector3.Zero);
-					float num10 = vector6.LengthSquared();
-					float num11 = vector7.LengthSquared();
-					float num12 = vector8.LengthSquared();
-					bool flag = false;
-					float num13 = 1f;
-					if (num10 <= num13)
+					ellipsoid.TransformWorldSpaceTriToUnitSphereSpace(this.TriList[j], ref localTri);
+					LineF3D lineAB = new LineF3D(localTri.A, localTri.B);
+					LineF3D lineAC = new LineF3D(localTri.A, localTri.C);
+					LineF3D lineBC = new LineF3D(localTri.B, localTri.C);
+					Vector3 p = lineAB.ClosetPointTo(Vector3.Zero);
+					Vector3 p2 = lineAC.ClosetPointTo(Vector3.Zero);
+					Vector3 p3 = lineBC.ClosetPointTo(Vector3.Zero);
+					float dd = p.LengthSquared();
+					float dd2 = p2.LengthSquared();
+					float dd3 = p3.LengthSquared();
+					bool foundCollsion = false;
+					float closestDist = 1f;
+					if (dd <= closestDist)
 					{
-						num13 = num10;
-						vector5 = vector6;
-						flag = true;
+						closestDist = dd;
+						colNormal = p;
+						foundCollsion = true;
 					}
-					if (num11 <= num13)
+					if (dd2 <= closestDist)
 					{
-						num13 = num11;
-						vector5 = vector7;
-						flag = true;
+						closestDist = dd2;
+						colNormal = p2;
+						foundCollsion = true;
 					}
-					if (num12 <= num13)
+					if (dd3 <= closestDist)
 					{
-						vector5 = vector8;
-						flag = true;
+						colNormal = p3;
+						foundCollsion = true;
 					}
-					if (flag)
+					if (foundCollsion)
 					{
-						float num14 = ellipsoid.CalculateWorldSpacePenetration(vector5);
-						vector5 = ellipsoid.TransformUnitSphereSpaceVectorToWorldSpace(Vector3.Negate(vector5));
-						contacts.Add(new CollisionMap.ContactPoint(vector5, this.TriList[j], num14));
+						float penetration2 = ellipsoid.CalculateWorldSpacePenetration(colNormal);
+						colNormal = ellipsoid.TransformUnitSphereSpaceVectorToWorldSpace(Vector3.Negate(colNormal));
+						contacts.Add(new CollisionMap.ContactPoint(colNormal, this.TriList[j], penetration2));
 					}
 				}
 			}
 
 			public void FindCollisions(Ellipsoid ellipsoid, List<CollisionMap.ContactPoint> contacts)
 			{
-				Plane plane = ellipsoid.TransformWorldSpacePlaneToUnitSphereSpace(this.SplitPlane);
-				float d = plane.D;
-				if (d >= 0f)
+				Plane localPlane = ellipsoid.TransformWorldSpacePlaneToUnitSphereSpace(this.SplitPlane);
+				float distanceToPlane = localPlane.D;
+				if (distanceToPlane >= 0f)
 				{
 					if (this.Front != null)
 					{
 						this.Front.FindCollisions(ellipsoid, contacts);
 					}
-					if (d <= 1f)
+					if (distanceToPlane <= 1f)
 					{
-						this.CollideWithTriangles(ellipsoid, plane, d, contacts);
+						this.CollideWithTriangles(ellipsoid, localPlane, distanceToPlane, contacts);
 						if (this.Back != null)
 						{
 							this.Back.FindCollisions(ellipsoid, contacts);
@@ -623,7 +623,7 @@ namespace DNA.Drawing.Collision
 					{
 						this.Back.FindCollisions(ellipsoid, contacts);
 					}
-					if (d >= -1f && this.Front != null)
+					if (distanceToPlane >= -1f && this.Front != null)
 					{
 						this.Front.FindCollisions(ellipsoid, contacts);
 					}
@@ -632,16 +632,16 @@ namespace DNA.Drawing.Collision
 
 			public void FindCollisions(BoundingSphere sphere, List<CollisionMap.ContactPoint> contacts)
 			{
-				float num = this.SplitPlane.DotCoordinate(sphere.Center);
-				if (num >= 0f)
+				float distanceToPlane = this.SplitPlane.DotCoordinate(sphere.Center);
+				if (distanceToPlane >= 0f)
 				{
 					if (this.Front != null)
 					{
 						this.Front.FindCollisions(sphere, contacts);
 					}
-					if (num <= sphere.Radius)
+					if (distanceToPlane <= sphere.Radius)
 					{
-						this.CollideWithTriangles(sphere, num, contacts);
+						this.CollideWithTriangles(sphere, distanceToPlane, contacts);
 						if (this.Back != null)
 						{
 							this.Back.FindCollisions(sphere, contacts);
@@ -655,7 +655,7 @@ namespace DNA.Drawing.Collision
 					{
 						this.Back.FindCollisions(sphere, contacts);
 					}
-					if (num >= -sphere.Radius && this.Front != null)
+					if (distanceToPlane >= -sphere.Radius && this.Front != null)
 					{
 						this.Front.FindCollisions(sphere, contacts);
 					}
@@ -664,33 +664,33 @@ namespace DNA.Drawing.Collision
 
 			private void CollideWithTriangles(BoundingSphere sphere, float distanceToPlane, List<CollisionMap.ContactPoint> contacts)
 			{
-				Vector3 normal = this.SplitPlane.Normal;
-				float num = distanceToPlane * distanceToPlane;
-				float num2 = sphere.Radius * sphere.Radius;
+				Vector3 planeNormal = this.SplitPlane.Normal;
+				float distToPlaneSquared = distanceToPlane * distanceToPlane;
+				float sphereRadSqu = sphere.Radius * sphere.Radius;
 				for (int i = 0; i < this.TriList.Length; i++)
 				{
-					Triangle3D triangle3D = this.TriList[i];
-					Vector3 vector = sphere.Center - triangle3D.A;
-					Vector3.Dot(normal, vector);
-					Vector3 vector2 = distanceToPlane * normal;
-					Vector3 vector3 = sphere.Center + vector2;
-					Vector3 vector4 = triangle3D.B - triangle3D.A;
-					Vector3 vector5 = triangle3D.C - triangle3D.A;
-					float num3 = Vector3.Dot(vector4, vector4);
-					float num4 = Vector3.Dot(vector4, vector5);
-					float num5 = Vector3.Dot(vector5, vector5);
-					Vector3 vector6 = vector3 - triangle3D.A;
-					float num6 = Vector3.Dot(vector6, vector4);
-					float num7 = Vector3.Dot(vector6, vector5);
-					float num8 = num4 * num4 - num3 * num5;
-					float num9 = (num4 * num7 - num5 * num6) / num8;
-					if ((double)num9 >= 0.0 && (double)num9 <= 1.0)
+					Triangle3D tri = this.TriList[i];
+					Vector3 w0 = sphere.Center - tri.A;
+					Vector3.Dot(planeNormal, w0);
+					Vector3 dt = distanceToPlane * planeNormal;
+					Vector3 intersectionPoint = sphere.Center + dt;
+					Vector3 u = tri.B - tri.A;
+					Vector3 v = tri.C - tri.A;
+					float uu = Vector3.Dot(u, u);
+					float uv = Vector3.Dot(u, v);
+					float vv = Vector3.Dot(v, v);
+					Vector3 w = intersectionPoint - tri.A;
+					float wu = Vector3.Dot(w, u);
+					float wv = Vector3.Dot(w, v);
+					float D = uv * uv - uu * vv;
+					float sI = (uv * wv - vv * wu) / D;
+					if ((double)sI >= 0.0 && (double)sI <= 1.0)
 					{
-						float num10 = (num4 * num6 - num3 * num7) / num8;
-						if ((double)num10 >= 0.0 && (double)(num9 + num10) <= 1.0 && num <= num2)
+						float tI = (uv * wu - uu * wv) / D;
+						if ((double)tI >= 0.0 && (double)(sI + tI) <= 1.0 && distToPlaneSquared <= sphereRadSqu)
 						{
-							Vector3 vector7 = (sphere.Radius - distanceToPlane) * normal;
-							contacts.Add(new CollisionMap.ContactPoint(vector7, triangle3D));
+							Vector3 pVect = (sphere.Radius - distanceToPlane) * planeNormal;
+							contacts.Add(new CollisionMap.ContactPoint(pVect, tri));
 						}
 					}
 				}
@@ -795,75 +795,75 @@ namespace DNA.Drawing.Collision
 
 				public void FindSplit()
 				{
-					for (int i = this.startPoly; i < this.endPoly; i++)
+					for (int otri = this.startPoly; otri < this.endPoly; otri++)
 					{
-						int num = 0;
-						int num2 = 0;
-						int num3 = 0;
-						int num4 = 0;
-						Plane plane = this.triList[i].GetPlane();
-						for (int j = 0; j < this.triList.Length; j++)
+						int numPositive = 0;
+						int numNegative = 0;
+						int numSplits = 0;
+						int numCoincident = 0;
+						Plane plane = this.triList[otri].GetPlane();
+						for (int itri = 0; itri < this.triList.Length; itri++)
 						{
-							if (i != j)
+							if (otri != itri)
 							{
-								Triangle3D triangle3D = this.triList[j];
-								int num5 = 0;
-								int num6 = 0;
-								float num7 = plane.DotCoordinate(triangle3D.A);
-								if (num7 > 0f)
+								Triangle3D tri2 = this.triList[itri];
+								int front = 0;
+								int back = 0;
+								float d = plane.DotCoordinate(tri2.A);
+								if (d > 0f)
 								{
-									num5++;
+									front++;
 								}
-								else if (num7 < 0f)
+								else if (d < 0f)
 								{
-									num6++;
+									back++;
 								}
-								num7 = plane.DotCoordinate(triangle3D.B);
-								if (num7 > 0f)
+								d = plane.DotCoordinate(tri2.B);
+								if (d > 0f)
 								{
-									num5++;
+									front++;
 								}
-								else if (num7 < 0f)
+								else if (d < 0f)
 								{
-									num6++;
+									back++;
 								}
-								num7 = plane.DotCoordinate(triangle3D.C);
-								if (num7 > 0f)
+								d = plane.DotCoordinate(tri2.C);
+								if (d > 0f)
 								{
-									num5++;
+									front++;
 								}
-								else if (num7 < 0f)
+								else if (d < 0f)
 								{
-									num6++;
+									back++;
 								}
-								if (num5 > 0 && num6 == 0)
+								if (front > 0 && back == 0)
 								{
-									num++;
+									numPositive++;
 								}
-								else if (num5 == 0 && num6 > 0)
+								else if (front == 0 && back > 0)
 								{
-									num2++;
+									numNegative++;
 								}
-								else if (num5 != 0 || num6 != 0)
+								else if (front != 0 || back != 0)
 								{
-									num3++;
+									numSplits++;
 								}
 								else
 								{
-									num4++;
+									numCoincident++;
 								}
 							}
 						}
-						BSPTree.BSPTreeNode.SplitCounts splitCounts = new BSPTree.BSPTreeNode.SplitCounts(i, num, num2, num3, num4);
-						if (num2 > 0 || num3 > 0)
+						BSPTree.BSPTreeNode.SplitCounts counts = new BSPTree.BSPTreeNode.SplitCounts(otri, numPositive, numNegative, numSplits, numCoincident);
+						if (numNegative > 0 || numSplits > 0)
 						{
 							this.isConvex = false;
 						}
-						if (splitCounts.DivisionFactor >= this.minRelation && (splitCounts.Spanning < this.leastSplits || (splitCounts.Spanning == this.leastSplits && splitCounts.DivisionFactor > this.bestRatio)))
+						if (counts.DivisionFactor >= this.minRelation && (counts.Spanning < this.leastSplits || (counts.Spanning == this.leastSplits && counts.DivisionFactor > this.bestRatio)))
 						{
-							this.bestPolygon = splitCounts;
-							this.leastSplits = splitCounts.Spanning;
-							this.bestRatio = splitCounts.DivisionFactor;
+							this.bestPolygon = counts;
+							this.leastSplits = counts.Spanning;
+							this.bestRatio = counts.DivisionFactor;
 						}
 					}
 				}

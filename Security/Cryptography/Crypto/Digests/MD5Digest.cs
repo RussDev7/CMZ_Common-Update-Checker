@@ -79,9 +79,9 @@ namespace DNA.Security.Cryptography.Crypto.Digests
 			this.H3 = -1732584194;
 			this.H4 = 271733878;
 			this.xOff = 0;
-			for (int num = 0; num != this.X.Length; num++)
+			for (int i = 0; i != this.X.Length; i++)
 			{
-				this.X[num] = 0;
+				this.X[i] = 0;
 			}
 		}
 
@@ -112,82 +112,82 @@ namespace DNA.Security.Cryptography.Crypto.Digests
 
 		internal override void ProcessBlock()
 		{
-			int num = this.H1;
-			int num2 = this.H2;
-			int num3 = this.H3;
-			int num4 = this.H4;
-			num = this.RotateLeft(num + this.F(num2, num3, num4) + this.X[0] + -680876936, MD5Digest.S11) + num2;
-			num4 = this.RotateLeft(num4 + this.F(num, num2, num3) + this.X[1] + -389564586, MD5Digest.S12) + num;
-			num3 = this.RotateLeft(num3 + this.F(num4, num, num2) + this.X[2] + 606105819, MD5Digest.S13) + num4;
-			num2 = this.RotateLeft(num2 + this.F(num3, num4, num) + this.X[3] + -1044525330, MD5Digest.S14) + num3;
-			num = this.RotateLeft(num + this.F(num2, num3, num4) + this.X[4] + -176418897, MD5Digest.S11) + num2;
-			num4 = this.RotateLeft(num4 + this.F(num, num2, num3) + this.X[5] + 1200080426, MD5Digest.S12) + num;
-			num3 = this.RotateLeft(num3 + this.F(num4, num, num2) + this.X[6] + -1473231341, MD5Digest.S13) + num4;
-			num2 = this.RotateLeft(num2 + this.F(num3, num4, num) + this.X[7] + -45705983, MD5Digest.S14) + num3;
-			num = this.RotateLeft(num + this.F(num2, num3, num4) + this.X[8] + 1770035416, MD5Digest.S11) + num2;
-			num4 = this.RotateLeft(num4 + this.F(num, num2, num3) + this.X[9] + -1958414417, MD5Digest.S12) + num;
-			num3 = this.RotateLeft(num3 + this.F(num4, num, num2) + this.X[10] + -42063, MD5Digest.S13) + num4;
-			num2 = this.RotateLeft(num2 + this.F(num3, num4, num) + this.X[11] + -1990404162, MD5Digest.S14) + num3;
-			num = this.RotateLeft(num + this.F(num2, num3, num4) + this.X[12] + 1804603682, MD5Digest.S11) + num2;
-			num4 = this.RotateLeft(num4 + this.F(num, num2, num3) + this.X[13] + -40341101, MD5Digest.S12) + num;
-			num3 = this.RotateLeft(num3 + this.F(num4, num, num2) + this.X[14] + -1502002290, MD5Digest.S13) + num4;
-			num2 = this.RotateLeft(num2 + this.F(num3, num4, num) + this.X[15] + 1236535329, MD5Digest.S14) + num3;
-			num = this.RotateLeft(num + this.G(num2, num3, num4) + this.X[1] + -165796510, MD5Digest.S21) + num2;
-			num4 = this.RotateLeft(num4 + this.G(num, num2, num3) + this.X[6] + -1069501632, MD5Digest.S22) + num;
-			num3 = this.RotateLeft(num3 + this.G(num4, num, num2) + this.X[11] + 643717713, MD5Digest.S23) + num4;
-			num2 = this.RotateLeft(num2 + this.G(num3, num4, num) + this.X[0] + -373897302, MD5Digest.S24) + num3;
-			num = this.RotateLeft(num + this.G(num2, num3, num4) + this.X[5] + -701558691, MD5Digest.S21) + num2;
-			num4 = this.RotateLeft(num4 + this.G(num, num2, num3) + this.X[10] + 38016083, MD5Digest.S22) + num;
-			num3 = this.RotateLeft(num3 + this.G(num4, num, num2) + this.X[15] + -660478335, MD5Digest.S23) + num4;
-			num2 = this.RotateLeft(num2 + this.G(num3, num4, num) + this.X[4] + -405537848, MD5Digest.S24) + num3;
-			num = this.RotateLeft(num + this.G(num2, num3, num4) + this.X[9] + 568446438, MD5Digest.S21) + num2;
-			num4 = this.RotateLeft(num4 + this.G(num, num2, num3) + this.X[14] + -1019803690, MD5Digest.S22) + num;
-			num3 = this.RotateLeft(num3 + this.G(num4, num, num2) + this.X[3] + -187363961, MD5Digest.S23) + num4;
-			num2 = this.RotateLeft(num2 + this.G(num3, num4, num) + this.X[8] + 1163531501, MD5Digest.S24) + num3;
-			num = this.RotateLeft(num + this.G(num2, num3, num4) + this.X[13] + -1444681467, MD5Digest.S21) + num2;
-			num4 = this.RotateLeft(num4 + this.G(num, num2, num3) + this.X[2] + -51403784, MD5Digest.S22) + num;
-			num3 = this.RotateLeft(num3 + this.G(num4, num, num2) + this.X[7] + 1735328473, MD5Digest.S23) + num4;
-			num2 = this.RotateLeft(num2 + this.G(num3, num4, num) + this.X[12] + -1926607734, MD5Digest.S24) + num3;
-			num = this.RotateLeft(num + this.H(num2, num3, num4) + this.X[5] + -378558, MD5Digest.S31) + num2;
-			num4 = this.RotateLeft(num4 + this.H(num, num2, num3) + this.X[8] + -2022574463, MD5Digest.S32) + num;
-			num3 = this.RotateLeft(num3 + this.H(num4, num, num2) + this.X[11] + 1839030562, MD5Digest.S33) + num4;
-			num2 = this.RotateLeft(num2 + this.H(num3, num4, num) + this.X[14] + -35309556, MD5Digest.S34) + num3;
-			num = this.RotateLeft(num + this.H(num2, num3, num4) + this.X[1] + -1530992060, MD5Digest.S31) + num2;
-			num4 = this.RotateLeft(num4 + this.H(num, num2, num3) + this.X[4] + 1272893353, MD5Digest.S32) + num;
-			num3 = this.RotateLeft(num3 + this.H(num4, num, num2) + this.X[7] + -155497632, MD5Digest.S33) + num4;
-			num2 = this.RotateLeft(num2 + this.H(num3, num4, num) + this.X[10] + -1094730640, MD5Digest.S34) + num3;
-			num = this.RotateLeft(num + this.H(num2, num3, num4) + this.X[13] + 681279174, MD5Digest.S31) + num2;
-			num4 = this.RotateLeft(num4 + this.H(num, num2, num3) + this.X[0] + -358537222, MD5Digest.S32) + num;
-			num3 = this.RotateLeft(num3 + this.H(num4, num, num2) + this.X[3] + -722521979, MD5Digest.S33) + num4;
-			num2 = this.RotateLeft(num2 + this.H(num3, num4, num) + this.X[6] + 76029189, MD5Digest.S34) + num3;
-			num = this.RotateLeft(num + this.H(num2, num3, num4) + this.X[9] + -640364487, MD5Digest.S31) + num2;
-			num4 = this.RotateLeft(num4 + this.H(num, num2, num3) + this.X[12] + -421815835, MD5Digest.S32) + num;
-			num3 = this.RotateLeft(num3 + this.H(num4, num, num2) + this.X[15] + 530742520, MD5Digest.S33) + num4;
-			num2 = this.RotateLeft(num2 + this.H(num3, num4, num) + this.X[2] + -995338651, MD5Digest.S34) + num3;
-			num = this.RotateLeft(num + this.K(num2, num3, num4) + this.X[0] + -198630844, MD5Digest.S41) + num2;
-			num4 = this.RotateLeft(num4 + this.K(num, num2, num3) + this.X[7] + 1126891415, MD5Digest.S42) + num;
-			num3 = this.RotateLeft(num3 + this.K(num4, num, num2) + this.X[14] + -1416354905, MD5Digest.S43) + num4;
-			num2 = this.RotateLeft(num2 + this.K(num3, num4, num) + this.X[5] + -57434055, MD5Digest.S44) + num3;
-			num = this.RotateLeft(num + this.K(num2, num3, num4) + this.X[12] + 1700485571, MD5Digest.S41) + num2;
-			num4 = this.RotateLeft(num4 + this.K(num, num2, num3) + this.X[3] + -1894986606, MD5Digest.S42) + num;
-			num3 = this.RotateLeft(num3 + this.K(num4, num, num2) + this.X[10] + -1051523, MD5Digest.S43) + num4;
-			num2 = this.RotateLeft(num2 + this.K(num3, num4, num) + this.X[1] + -2054922799, MD5Digest.S44) + num3;
-			num = this.RotateLeft(num + this.K(num2, num3, num4) + this.X[8] + 1873313359, MD5Digest.S41) + num2;
-			num4 = this.RotateLeft(num4 + this.K(num, num2, num3) + this.X[15] + -30611744, MD5Digest.S42) + num;
-			num3 = this.RotateLeft(num3 + this.K(num4, num, num2) + this.X[6] + -1560198380, MD5Digest.S43) + num4;
-			num2 = this.RotateLeft(num2 + this.K(num3, num4, num) + this.X[13] + 1309151649, MD5Digest.S44) + num3;
-			num = this.RotateLeft(num + this.K(num2, num3, num4) + this.X[4] + -145523070, MD5Digest.S41) + num2;
-			num4 = this.RotateLeft(num4 + this.K(num, num2, num3) + this.X[11] + -1120210379, MD5Digest.S42) + num;
-			num3 = this.RotateLeft(num3 + this.K(num4, num, num2) + this.X[2] + 718787259, MD5Digest.S43) + num4;
-			num2 = this.RotateLeft(num2 + this.K(num3, num4, num) + this.X[9] + -343485551, MD5Digest.S44) + num3;
-			this.H1 += num;
-			this.H2 += num2;
-			this.H3 += num3;
-			this.H4 += num4;
+			int a = this.H1;
+			int b = this.H2;
+			int c = this.H3;
+			int d = this.H4;
+			a = this.RotateLeft(a + this.F(b, c, d) + this.X[0] + -680876936, MD5Digest.S11) + b;
+			d = this.RotateLeft(d + this.F(a, b, c) + this.X[1] + -389564586, MD5Digest.S12) + a;
+			c = this.RotateLeft(c + this.F(d, a, b) + this.X[2] + 606105819, MD5Digest.S13) + d;
+			b = this.RotateLeft(b + this.F(c, d, a) + this.X[3] + -1044525330, MD5Digest.S14) + c;
+			a = this.RotateLeft(a + this.F(b, c, d) + this.X[4] + -176418897, MD5Digest.S11) + b;
+			d = this.RotateLeft(d + this.F(a, b, c) + this.X[5] + 1200080426, MD5Digest.S12) + a;
+			c = this.RotateLeft(c + this.F(d, a, b) + this.X[6] + -1473231341, MD5Digest.S13) + d;
+			b = this.RotateLeft(b + this.F(c, d, a) + this.X[7] + -45705983, MD5Digest.S14) + c;
+			a = this.RotateLeft(a + this.F(b, c, d) + this.X[8] + 1770035416, MD5Digest.S11) + b;
+			d = this.RotateLeft(d + this.F(a, b, c) + this.X[9] + -1958414417, MD5Digest.S12) + a;
+			c = this.RotateLeft(c + this.F(d, a, b) + this.X[10] + -42063, MD5Digest.S13) + d;
+			b = this.RotateLeft(b + this.F(c, d, a) + this.X[11] + -1990404162, MD5Digest.S14) + c;
+			a = this.RotateLeft(a + this.F(b, c, d) + this.X[12] + 1804603682, MD5Digest.S11) + b;
+			d = this.RotateLeft(d + this.F(a, b, c) + this.X[13] + -40341101, MD5Digest.S12) + a;
+			c = this.RotateLeft(c + this.F(d, a, b) + this.X[14] + -1502002290, MD5Digest.S13) + d;
+			b = this.RotateLeft(b + this.F(c, d, a) + this.X[15] + 1236535329, MD5Digest.S14) + c;
+			a = this.RotateLeft(a + this.G(b, c, d) + this.X[1] + -165796510, MD5Digest.S21) + b;
+			d = this.RotateLeft(d + this.G(a, b, c) + this.X[6] + -1069501632, MD5Digest.S22) + a;
+			c = this.RotateLeft(c + this.G(d, a, b) + this.X[11] + 643717713, MD5Digest.S23) + d;
+			b = this.RotateLeft(b + this.G(c, d, a) + this.X[0] + -373897302, MD5Digest.S24) + c;
+			a = this.RotateLeft(a + this.G(b, c, d) + this.X[5] + -701558691, MD5Digest.S21) + b;
+			d = this.RotateLeft(d + this.G(a, b, c) + this.X[10] + 38016083, MD5Digest.S22) + a;
+			c = this.RotateLeft(c + this.G(d, a, b) + this.X[15] + -660478335, MD5Digest.S23) + d;
+			b = this.RotateLeft(b + this.G(c, d, a) + this.X[4] + -405537848, MD5Digest.S24) + c;
+			a = this.RotateLeft(a + this.G(b, c, d) + this.X[9] + 568446438, MD5Digest.S21) + b;
+			d = this.RotateLeft(d + this.G(a, b, c) + this.X[14] + -1019803690, MD5Digest.S22) + a;
+			c = this.RotateLeft(c + this.G(d, a, b) + this.X[3] + -187363961, MD5Digest.S23) + d;
+			b = this.RotateLeft(b + this.G(c, d, a) + this.X[8] + 1163531501, MD5Digest.S24) + c;
+			a = this.RotateLeft(a + this.G(b, c, d) + this.X[13] + -1444681467, MD5Digest.S21) + b;
+			d = this.RotateLeft(d + this.G(a, b, c) + this.X[2] + -51403784, MD5Digest.S22) + a;
+			c = this.RotateLeft(c + this.G(d, a, b) + this.X[7] + 1735328473, MD5Digest.S23) + d;
+			b = this.RotateLeft(b + this.G(c, d, a) + this.X[12] + -1926607734, MD5Digest.S24) + c;
+			a = this.RotateLeft(a + this.H(b, c, d) + this.X[5] + -378558, MD5Digest.S31) + b;
+			d = this.RotateLeft(d + this.H(a, b, c) + this.X[8] + -2022574463, MD5Digest.S32) + a;
+			c = this.RotateLeft(c + this.H(d, a, b) + this.X[11] + 1839030562, MD5Digest.S33) + d;
+			b = this.RotateLeft(b + this.H(c, d, a) + this.X[14] + -35309556, MD5Digest.S34) + c;
+			a = this.RotateLeft(a + this.H(b, c, d) + this.X[1] + -1530992060, MD5Digest.S31) + b;
+			d = this.RotateLeft(d + this.H(a, b, c) + this.X[4] + 1272893353, MD5Digest.S32) + a;
+			c = this.RotateLeft(c + this.H(d, a, b) + this.X[7] + -155497632, MD5Digest.S33) + d;
+			b = this.RotateLeft(b + this.H(c, d, a) + this.X[10] + -1094730640, MD5Digest.S34) + c;
+			a = this.RotateLeft(a + this.H(b, c, d) + this.X[13] + 681279174, MD5Digest.S31) + b;
+			d = this.RotateLeft(d + this.H(a, b, c) + this.X[0] + -358537222, MD5Digest.S32) + a;
+			c = this.RotateLeft(c + this.H(d, a, b) + this.X[3] + -722521979, MD5Digest.S33) + d;
+			b = this.RotateLeft(b + this.H(c, d, a) + this.X[6] + 76029189, MD5Digest.S34) + c;
+			a = this.RotateLeft(a + this.H(b, c, d) + this.X[9] + -640364487, MD5Digest.S31) + b;
+			d = this.RotateLeft(d + this.H(a, b, c) + this.X[12] + -421815835, MD5Digest.S32) + a;
+			c = this.RotateLeft(c + this.H(d, a, b) + this.X[15] + 530742520, MD5Digest.S33) + d;
+			b = this.RotateLeft(b + this.H(c, d, a) + this.X[2] + -995338651, MD5Digest.S34) + c;
+			a = this.RotateLeft(a + this.K(b, c, d) + this.X[0] + -198630844, MD5Digest.S41) + b;
+			d = this.RotateLeft(d + this.K(a, b, c) + this.X[7] + 1126891415, MD5Digest.S42) + a;
+			c = this.RotateLeft(c + this.K(d, a, b) + this.X[14] + -1416354905, MD5Digest.S43) + d;
+			b = this.RotateLeft(b + this.K(c, d, a) + this.X[5] + -57434055, MD5Digest.S44) + c;
+			a = this.RotateLeft(a + this.K(b, c, d) + this.X[12] + 1700485571, MD5Digest.S41) + b;
+			d = this.RotateLeft(d + this.K(a, b, c) + this.X[3] + -1894986606, MD5Digest.S42) + a;
+			c = this.RotateLeft(c + this.K(d, a, b) + this.X[10] + -1051523, MD5Digest.S43) + d;
+			b = this.RotateLeft(b + this.K(c, d, a) + this.X[1] + -2054922799, MD5Digest.S44) + c;
+			a = this.RotateLeft(a + this.K(b, c, d) + this.X[8] + 1873313359, MD5Digest.S41) + b;
+			d = this.RotateLeft(d + this.K(a, b, c) + this.X[15] + -30611744, MD5Digest.S42) + a;
+			c = this.RotateLeft(c + this.K(d, a, b) + this.X[6] + -1560198380, MD5Digest.S43) + d;
+			b = this.RotateLeft(b + this.K(c, d, a) + this.X[13] + 1309151649, MD5Digest.S44) + c;
+			a = this.RotateLeft(a + this.K(b, c, d) + this.X[4] + -145523070, MD5Digest.S41) + b;
+			d = this.RotateLeft(d + this.K(a, b, c) + this.X[11] + -1120210379, MD5Digest.S42) + a;
+			c = this.RotateLeft(c + this.K(d, a, b) + this.X[2] + 718787259, MD5Digest.S43) + d;
+			b = this.RotateLeft(b + this.K(c, d, a) + this.X[9] + -343485551, MD5Digest.S44) + c;
+			this.H1 += a;
+			this.H2 += b;
+			this.H3 += c;
+			this.H4 += d;
 			this.xOff = 0;
-			for (int num5 = 0; num5 != this.X.Length; num5++)
+			for (int i = 0; i != this.X.Length; i++)
 			{
-				this.X[num5] = 0;
+				this.X[i] = 0;
 			}
 		}
 

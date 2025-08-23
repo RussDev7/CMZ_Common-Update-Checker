@@ -40,9 +40,9 @@ namespace DNA.Runtime.InteropServices
 
 		public byte[] ToByteArray()
 		{
-			byte[] array = new byte[this.Size];
-			Marshal.Copy(this._buffer, array, 0, (int)this.Size);
-			return array;
+			byte[] data = new byte[this.Size];
+			Marshal.Copy(this._buffer, data, 0, (int)this.Size);
+			return data;
 		}
 
 		public void Dispose()

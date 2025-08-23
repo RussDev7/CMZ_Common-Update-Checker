@@ -35,16 +35,16 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("collection");
 			}
-			int num = 0;
-			ICollection<T> collection2 = collection as ICollection<T>;
-			if (collection2 != null)
+			int capacity = 0;
+			ICollection<T> col = collection as ICollection<T>;
+			if (col != null)
 			{
-				num = collection2.Count;
+				capacity = col.Count;
 			}
-			this.Init(num, comparer);
-			foreach (T t in collection)
+			this.Init(capacity, comparer);
+			foreach (T item in collection)
 			{
-				this.Add(t);
+				this.Add(item);
 			}
 		}
 
@@ -81,10 +81,10 @@ namespace DNA.Collections
 		private bool SlotsContainsAt(int index, int hash, T item)
 		{
 			Set<T>.Link link;
-			for (int num = this.table[index] - 1; num != -1; num = link.Next)
+			for (int current = this.table[index] - 1; current != -1; current = link.Next)
 			{
-				link = this.links[num];
-				if (link.HashCode == hash && ((hash == -2147483648 && (item == null || this.slots[num] == null)) ? (item == null && null == this.slots[num]) : this.comparer.Equals(item, this.slots[num])))
+				link = this.links[current];
+				if (link.HashCode == hash && ((hash == -2147483648 && (item == null || this.slots[current] == null)) ? (item == null && null == this.slots[current]) : this.comparer.Equals(item, this.slots[current])))
 				{
 					return true;
 				}
@@ -120,39 +120,39 @@ namespace DNA.Collections
 			{
 				throw new ArgumentException("Destination array cannot hold the requested elements!");
 			}
-			int num = 0;
-			int num2 = 0;
-			while (num < this.touched && num2 < count)
+			int i = 0;
+			int items = 0;
+			while (i < this.touched && items < count)
 			{
-				if (this.GetLinkHashCode(num) != 0)
+				if (this.GetLinkHashCode(i) != 0)
 				{
-					array[arrayIndex++] = this.slots[num];
+					array[arrayIndex++] = this.slots[i];
 				}
-				num++;
+				i++;
 			}
 		}
 
 		private void Resize()
 		{
-			int num = Set<T>.PrimeHelper.ToPrime((this.table.Length << 1) | 1);
-			int[] array = new int[num];
-			Set<T>.Link[] array2 = new Set<T>.Link[num];
+			int newSize = Set<T>.PrimeHelper.ToPrime((this.table.Length << 1) | 1);
+			int[] newTable = new int[newSize];
+			Set<T>.Link[] newLinks = new Set<T>.Link[newSize];
 			for (int i = 0; i < this.table.Length; i++)
 			{
-				for (int num2 = this.table[i] - 1; num2 != -1; num2 = this.links[num2].Next)
+				for (int current = this.table[i] - 1; current != -1; current = this.links[current].Next)
 				{
-					int num3 = (array2[num2].HashCode = this.GetItemHashCode(this.slots[num2]));
-					int num4 = (num3 & int.MaxValue) % num;
-					array2[num2].Next = array[num4] - 1;
-					array[num4] = num2 + 1;
+					int hashCode = (newLinks[current].HashCode = this.GetItemHashCode(this.slots[current]));
+					int index = (hashCode & int.MaxValue) % newSize;
+					newLinks[current].Next = newTable[index] - 1;
+					newTable[index] = current + 1;
 				}
 			}
-			this.table = array;
-			this.links = array2;
-			T[] array3 = new T[num];
-			Array.Copy(this.slots, 0, array3, 0, this.touched);
-			this.slots = array3;
-			this.threshold = (int)((float)num * 0.9f);
+			this.table = newTable;
+			this.links = newLinks;
+			T[] newSlots = new T[newSize];
+			Array.Copy(this.slots, 0, newSlots, 0, this.touched);
+			this.slots = newSlots;
+			this.threshold = (int)((float)newSize * 0.9f);
 		}
 
 		private int GetLinkHashCode(int index)
@@ -171,30 +171,30 @@ namespace DNA.Collections
 
 		public bool Add(T item)
 		{
-			int itemHashCode = this.GetItemHashCode(item);
-			int num = (itemHashCode & int.MaxValue) % this.table.Length;
-			if (this.SlotsContainsAt(num, itemHashCode, item))
+			int hashCode = this.GetItemHashCode(item);
+			int index = (hashCode & int.MaxValue) % this.table.Length;
+			if (this.SlotsContainsAt(index, hashCode, item))
 			{
 				return false;
 			}
 			if (++this.count > this.threshold)
 			{
 				this.Resize();
-				num = (itemHashCode & int.MaxValue) % this.table.Length;
+				index = (hashCode & int.MaxValue) % this.table.Length;
 			}
-			int num2 = this.empty_slot;
-			if (num2 == -1)
+			int current = this.empty_slot;
+			if (current == -1)
 			{
-				num2 = this.touched++;
+				current = this.touched++;
 			}
 			else
 			{
-				this.empty_slot = this.links[num2].Next;
+				this.empty_slot = this.links[current].Next;
 			}
-			this.links[num2].HashCode = itemHashCode;
-			this.links[num2].Next = this.table[num] - 1;
-			this.table[num] = num2 + 1;
-			this.slots[num2] = item;
+			this.links[current].HashCode = hashCode;
+			this.links[current].Next = this.table[index] - 1;
+			this.table[index] = current + 1;
+			this.slots[current] = item;
 			this.generation++;
 			return true;
 		}
@@ -220,49 +220,49 @@ namespace DNA.Collections
 
 		public bool Contains(T item)
 		{
-			int itemHashCode = this.GetItemHashCode(item);
-			int num = (itemHashCode & int.MaxValue) % this.table.Length;
-			return this.SlotsContainsAt(num, itemHashCode, item);
+			int hashCode = this.GetItemHashCode(item);
+			int index = (hashCode & int.MaxValue) % this.table.Length;
+			return this.SlotsContainsAt(index, hashCode, item);
 		}
 
 		public bool Remove(T item)
 		{
-			int itemHashCode = this.GetItemHashCode(item);
-			int num = (itemHashCode & int.MaxValue) % this.table.Length;
-			int num2 = this.table[num] - 1;
-			if (num2 == -1)
+			int hashCode = this.GetItemHashCode(item);
+			int index = (hashCode & int.MaxValue) % this.table.Length;
+			int current = this.table[index] - 1;
+			if (current == -1)
 			{
 				return false;
 			}
-			int num3 = -1;
+			int prev = -1;
 			do
 			{
-				Set<T>.Link link = this.links[num2];
-				if (link.HashCode == itemHashCode && ((itemHashCode == -2147483648 && (item == null || this.slots[num2] == null)) ? (item == null && null == this.slots[num2]) : this.comparer.Equals(this.slots[num2], item)))
+				Set<T>.Link link = this.links[current];
+				if (link.HashCode == hashCode && ((hashCode == -2147483648 && (item == null || this.slots[current] == null)) ? (item == null && null == this.slots[current]) : this.comparer.Equals(this.slots[current], item)))
 				{
 					break;
 				}
-				num3 = num2;
-				num2 = link.Next;
+				prev = current;
+				current = link.Next;
 			}
-			while (num2 != -1);
-			if (num2 == -1)
+			while (current != -1);
+			if (current == -1)
 			{
 				return false;
 			}
 			this.count--;
-			if (num3 == -1)
+			if (prev == -1)
 			{
-				this.table[num] = this.links[num2].Next + 1;
+				this.table[index] = this.links[current].Next + 1;
 			}
 			else
 			{
-				this.links[num3].Next = this.links[num2].Next;
+				this.links[prev].Next = this.links[current].Next;
 			}
-			this.links[num2].Next = this.empty_slot;
-			this.empty_slot = num2;
-			this.links[num2].HashCode = 0;
-			this.slots[num2] = default(T);
+			this.links[current].Next = this.empty_slot;
+			this.empty_slot = current;
+			this.links[current].HashCode = 0;
+			this.slots[current] = default(T);
 			this.generation++;
 			return true;
 		}
@@ -273,19 +273,19 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("match");
 			}
-			List<T> list = new List<T>();
-			foreach (T t in this)
+			List<T> candidates = new List<T>();
+			foreach (T item in this)
 			{
-				if (match(t))
+				if (match(item))
 				{
-					list.Add(t);
+					candidates.Add(item);
 				}
 			}
-			foreach (T t2 in list)
+			foreach (T item2 in candidates)
 			{
-				this.Remove(t2);
+				this.Remove(item2);
 			}
-			return list.Count;
+			return candidates.Count;
 		}
 
 		public void TrimExcess()
@@ -309,9 +309,9 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("other");
 			}
-			foreach (T t in other)
+			foreach (T item in other)
 			{
-				this.Remove(t);
+				this.Remove(item);
 			}
 		}
 
@@ -321,9 +321,9 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("other");
 			}
-			foreach (T t in other)
+			foreach (T item in other)
 			{
-				if (this.Contains(t))
+				if (this.Contains(item))
 				{
 					return true;
 				}
@@ -337,14 +337,14 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("other");
 			}
-			Set<T> set = this.ToSet(other);
-			if (this.count != set.Count)
+			Set<T> other_set = this.ToSet(other);
+			if (this.count != other_set.Count)
 			{
 				return false;
 			}
-			foreach (T t in this)
+			foreach (T item in this)
 			{
-				if (!set.Contains(t))
+				if (!other_set.Contains(item))
 				{
 					return false;
 				}
@@ -358,11 +358,11 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("other");
 			}
-			foreach (T t in this.ToSet(other))
+			foreach (T item in this.ToSet(other))
 			{
-				if (!this.Add(t))
+				if (!this.Add(item))
 				{
-					this.Remove(t);
+					this.Remove(item);
 				}
 			}
 		}
@@ -383,9 +383,9 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("other");
 			}
-			foreach (T t in other)
+			foreach (T item in other)
 			{
-				this.Add(t);
+				this.Add(item);
 			}
 		}
 
@@ -395,9 +395,9 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("other");
 			}
-			foreach (T t in this)
+			foreach (T item in this)
 			{
-				if (!other.Contains(t))
+				if (!other.Contains(item))
 				{
 					return false;
 				}
@@ -415,8 +415,8 @@ namespace DNA.Collections
 			{
 				return true;
 			}
-			Set<T> set = this.ToSet(other);
-			return this.count <= set.Count && this.CheckIsSubsetOf(set);
+			Set<T> other_set = this.ToSet(other);
+			return this.count <= other_set.Count && this.CheckIsSubsetOf(other_set);
 		}
 
 		public bool IsProperSubsetOf(IEnumerable<T> other)
@@ -429,8 +429,8 @@ namespace DNA.Collections
 			{
 				return true;
 			}
-			Set<T> set = this.ToSet(other);
-			return this.count < set.Count && this.CheckIsSubsetOf(set);
+			Set<T> other_set = this.ToSet(other);
+			return this.count < other_set.Count && this.CheckIsSubsetOf(other_set);
 		}
 
 		private bool CheckIsSupersetOf(Set<T> other)
@@ -439,9 +439,9 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("other");
 			}
-			foreach (T t in other)
+			foreach (T item in other)
 			{
-				if (!this.Contains(t))
+				if (!this.Contains(item))
 				{
 					return false;
 				}
@@ -455,8 +455,8 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("other");
 			}
-			Set<T> set = this.ToSet(other);
-			return this.count >= set.Count && this.CheckIsSupersetOf(set);
+			Set<T> other_set = this.ToSet(other);
+			return this.count >= other_set.Count && this.CheckIsSupersetOf(other_set);
 		}
 
 		public bool IsProperSupersetOf(IEnumerable<T> other)
@@ -465,8 +465,8 @@ namespace DNA.Collections
 			{
 				throw new ArgumentNullException("other");
 			}
-			Set<T> set = this.ToSet(other);
-			return this.count > set.Count && this.CheckIsSupersetOf(set);
+			Set<T> other_set = this.ToSet(other);
+			return this.count > other_set.Count && this.CheckIsSupersetOf(other_set);
 		}
 
 		public static IEqualityComparer<Set<T>> CreateSetComparer()
@@ -549,9 +549,9 @@ namespace DNA.Collections
 				{
 					return false;
 				}
-				foreach (T t in lhs)
+				foreach (T item in lhs)
 				{
-					if (!rhs.Contains(t))
+					if (!rhs.Contains(item))
 					{
 						return false;
 					}
@@ -565,13 +565,13 @@ namespace DNA.Collections
 				{
 					return 0;
 				}
-				IEqualityComparer<T> @default = EqualityComparer<T>.Default;
-				int num = 0;
-				foreach (T t in hashset)
+				IEqualityComparer<T> comparer = EqualityComparer<T>.Default;
+				int hash = 0;
+				foreach (T item in hashset)
 				{
-					num ^= @default.GetHashCode(t);
+					hash ^= comparer.GetHashCode(item);
 				}
-				return num;
+				return hash;
 			}
 		}
 
@@ -594,10 +594,10 @@ namespace DNA.Collections
 				}
 				while (this.next < this.hashset.touched)
 				{
-					int num = this.next++;
-					if (this.hashset.GetLinkHashCode(num) != 0)
+					int cur = this.next++;
+					if (this.hashset.GetLinkHashCode(cur) != 0)
 					{
-						this.current = this.hashset.slots[num];
+						this.current = this.hashset.slots[cur];
 						return true;
 					}
 				}
@@ -664,8 +664,8 @@ namespace DNA.Collections
 			{
 				if ((x & 1) != 0)
 				{
-					int num = (int)Math.Sqrt((double)x);
-					for (int i = 3; i < num; i += 2)
+					int top = (int)Math.Sqrt((double)x);
+					for (int i = 3; i < top; i += 2)
 					{
 						if (x % i == 0)
 						{

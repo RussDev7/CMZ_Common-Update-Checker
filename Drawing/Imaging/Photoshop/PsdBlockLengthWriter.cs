@@ -14,11 +14,11 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		public void Write()
 		{
-			long position = this.writer.BaseStream.Position;
+			long endPosition = this.writer.BaseStream.Position;
 			this.writer.BaseStream.Position = this.lengthPosition;
-			long num = position - this.startPosition;
-			this.writer.Write((uint)num);
-			this.writer.BaseStream.Position = position;
+			long length = endPosition - this.startPosition;
+			this.writer.Write((uint)length);
+			this.writer.BaseStream.Position = endPosition;
 		}
 
 		public void Dispose()

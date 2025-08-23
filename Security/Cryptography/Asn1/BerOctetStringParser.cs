@@ -23,9 +23,9 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				asn1Object = new BerOctetString(Streams.ReadAll(this.GetOctetStream()));
 			}
-			catch (IOException ex)
+			catch (IOException e)
 			{
-				throw new InvalidOperationException("IOException converting stream to byte array: " + ex.Message, ex);
+				throw new InvalidOperationException("IOException converting stream to byte array: " + e.Message, e);
 			}
 			return asn1Object;
 		}

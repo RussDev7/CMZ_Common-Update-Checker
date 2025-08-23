@@ -23,11 +23,11 @@ namespace DNA.Drawing
 			: base(model)
 		{
 			this._backgroundImage = backgoundImage;
-			foreach (ModelMesh modelMesh in model.Meshes)
+			foreach (ModelMesh mesh in model.Meshes)
 			{
-				foreach (ModelMeshPart modelMeshPart in modelMesh.MeshParts)
+				foreach (ModelMeshPart part in mesh.MeshParts)
 				{
-					modelMeshPart.Effect = new HeatHazeEffect(game);
+					part.Effect = new HeatHazeEffect(game);
 				}
 			}
 			this.AlphaSort = true;
@@ -37,12 +37,12 @@ namespace DNA.Drawing
 		{
 			for (int i = 0; i < base.Model.Meshes.Count; i++)
 			{
-				ModelMesh modelMesh = base.Model.Meshes[i];
-				for (int j = 0; j < modelMesh.Effects.Count; j++)
+				ModelMesh mesh = base.Model.Meshes[i];
+				for (int j = 0; j < mesh.Effects.Count; j++)
 				{
-					HeatHazeEffect heatHazeEffect = (HeatHazeEffect)modelMesh.Effects[j];
-					heatHazeEffect.WaveMagnitude = this.WaveMagnitude;
-					heatHazeEffect.ScreenTexture = this._backgroundImage;
+					HeatHazeEffect effect = (HeatHazeEffect)mesh.Effects[j];
+					effect.WaveMagnitude = this.WaveMagnitude;
+					effect.ScreenTexture = this._backgroundImage;
 				}
 			}
 			base.Draw(device, gameTime, view, projection);

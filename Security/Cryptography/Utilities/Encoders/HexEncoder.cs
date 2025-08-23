@@ -23,9 +23,9 @@ namespace DNA.Security.Cryptography.Utilities.Encoders
 		{
 			for (int i = off; i < off + length; i++)
 			{
-				int num = (int)data[i];
-				outStream.WriteByte(HexEncoder.encodingTable[num >> 4]);
-				outStream.WriteByte(HexEncoder.encodingTable[num & 15]);
+				int v = (int)data[i];
+				outStream.WriteByte(HexEncoder.encodingTable[v >> 4]);
+				outStream.WriteByte(HexEncoder.encodingTable[v & 15]);
 			}
 			return length * 2;
 		}
@@ -37,56 +37,56 @@ namespace DNA.Security.Cryptography.Utilities.Encoders
 
 		public int Decode(byte[] data, int off, int length, Stream outStream)
 		{
-			int num = 0;
-			int num2 = off + length;
-			while (num2 > off && this.ignore((char)data[num2 - 1]))
+			int outLen = 0;
+			int end = off + length;
+			while (end > off && this.ignore((char)data[end - 1]))
 			{
-				num2--;
+				end--;
 			}
 			int i = off;
-			while (i < num2)
+			while (i < end)
 			{
-				while (i < num2 && this.ignore((char)data[i]))
+				while (i < end && this.ignore((char)data[i]))
 				{
 					i++;
 				}
 				byte b = HexEncoder.decodingTable[(int)data[i++]];
-				while (i < num2 && this.ignore((char)data[i]))
+				while (i < end && this.ignore((char)data[i]))
 				{
 					i++;
 				}
 				byte b2 = HexEncoder.decodingTable[(int)data[i++]];
 				outStream.WriteByte((byte)(((int)b << 4) | (int)b2));
-				num++;
+				outLen++;
 			}
-			return num;
+			return outLen;
 		}
 
 		public int DecodeString(string data, Stream outStream)
 		{
-			int num = 0;
-			int num2 = data.Length;
-			while (num2 > 0 && this.ignore(data[num2 - 1]))
+			int length = 0;
+			int end = data.Length;
+			while (end > 0 && this.ignore(data[end - 1]))
 			{
-				num2--;
+				end--;
 			}
 			int i = 0;
-			while (i < num2)
+			while (i < end)
 			{
-				while (i < num2 && this.ignore(data[i]))
+				while (i < end && this.ignore(data[i]))
 				{
 					i++;
 				}
 				byte b = HexEncoder.decodingTable[(int)data[i++]];
-				while (i < num2 && this.ignore(data[i]))
+				while (i < end && this.ignore(data[i]))
 				{
 					i++;
 				}
 				byte b2 = HexEncoder.decodingTable[(int)data[i++]];
 				outStream.WriteByte((byte)(((int)b << 4) | (int)b2));
-				num++;
+				length++;
 			}
-			return num;
+			return length;
 		}
 
 		private static readonly byte[] encodingTable = new byte[]

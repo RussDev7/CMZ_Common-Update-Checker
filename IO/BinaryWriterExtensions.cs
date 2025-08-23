@@ -65,17 +65,17 @@ namespace DNA.IO
 
 		public static void Write(this BinaryWriter writer, IntVector3[] value, int count)
 		{
-			int num;
+			int outCount;
 			if (value == null)
 			{
-				num = 0;
+				outCount = 0;
 			}
 			else
 			{
-				num = Math.Min(value.Length, count);
+				outCount = Math.Min(value.Length, count);
 			}
-			writer.Write(num);
-			for (int i = 0; i < num; i++)
+			writer.Write(outCount);
+			for (int i = 0; i < outCount; i++)
 			{
 				writer.Write(value[i]);
 			}
@@ -83,17 +83,17 @@ namespace DNA.IO
 
 		public static void Write(this BinaryWriter writer, uint[] value, int count)
 		{
-			int num;
+			int outCount;
 			if (value == null)
 			{
-				num = 0;
+				outCount = 0;
 			}
 			else
 			{
-				num = Math.Min(value.Length, count);
+				outCount = Math.Min(value.Length, count);
 			}
-			writer.Write(num);
-			for (int i = 0; i < num; i++)
+			writer.Write(outCount);
+			for (int i = 0; i < outCount; i++)
 			{
 				writer.Write(value[i]);
 			}
@@ -131,32 +131,32 @@ namespace DNA.IO
 
 		public static IntVector3[] ReadIntVector3Array(this BinaryReader reader)
 		{
-			IntVector3[] array = null;
-			int num = reader.ReadInt32();
-			if (num > 0)
+			IntVector3[] result = null;
+			int count = reader.ReadInt32();
+			if (count > 0)
 			{
-				array = new IntVector3[num];
-				for (int i = 0; i < num; i++)
+				result = new IntVector3[count];
+				for (int i = 0; i < count; i++)
 				{
-					array[i] = reader.ReadIntVector3();
+					result[i] = reader.ReadIntVector3();
 				}
 			}
-			return array;
+			return result;
 		}
 
 		public static uint[] ReadUIntArray(this BinaryReader reader)
 		{
-			uint[] array = null;
-			int num = reader.ReadInt32();
-			if (num > 0)
+			uint[] result = null;
+			int count = reader.ReadInt32();
+			if (count > 0)
 			{
-				array = new uint[num];
-				for (int i = 0; i < num; i++)
+				result = new uint[count];
+				for (int i = 0; i < count; i++)
 				{
-					array[i] = reader.ReadUInt32();
+					result[i] = reader.ReadUInt32();
 				}
 			}
-			return array;
+			return result;
 		}
 
 		public static Quaternion ReadQuaternion(this BinaryReader reader)

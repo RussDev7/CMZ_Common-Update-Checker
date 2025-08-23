@@ -29,23 +29,23 @@ namespace DNA.Drawing
 
 		public bool Contains(Vector2 point)
 		{
-			bool flag = false;
+			bool c = false;
 			int i = 0;
-			int num = this.Points.Length - 1;
+			int j = this.Points.Length - 1;
 			while (i < this.Points.Length)
 			{
-				float x = this.Points[i].X;
-				float y = this.Points[i].Y;
-				float x2 = this.Points[num].X;
-				float y2 = this.Points[num].Y;
-				if (((y <= point.Y && point.Y < y2) || (y2 <= point.Y && point.Y < y)) && point.X < (x2 - x) * (point.Y - y) / (y2 - y) + x)
+				float xi = this.Points[i].X;
+				float yi = this.Points[i].Y;
+				float xj = this.Points[j].X;
+				float yj = this.Points[j].Y;
+				if (((yi <= point.Y && point.Y < yj) || (yj <= point.Y && point.Y < yi)) && point.X < (xj - xi) * (point.Y - yi) / (yj - yi) + xi)
 				{
-					flag = !flag;
+					c = !c;
 				}
-				num = i;
+				j = i;
 				i++;
 			}
-			return flag;
+			return c;
 		}
 
 		private Vector2[] _points;

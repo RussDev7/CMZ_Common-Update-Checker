@@ -26,9 +26,9 @@ namespace DNA.Drawing.Particles
 					return this._particleCores[i];
 				}
 			}
-			ParticleEmitter.ParticleEmitterCore particleEmitterCore = new ParticleEmitter.ParticleEmitterCore(emitter);
-			this._particleCores.Add(particleEmitterCore);
-			return particleEmitterCore;
+			ParticleEmitter.ParticleEmitterCore newCore = new ParticleEmitter.ParticleEmitterCore(emitter);
+			this._particleCores.Add(newCore);
+			return newCore;
 		}
 
 		public ParticleEmitter CreateEmitter(DNAGame game)

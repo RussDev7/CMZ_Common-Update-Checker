@@ -35,9 +35,9 @@ namespace DNA.IO
 
 		public override int Read(byte[] buffer, int offset, int count)
 		{
-			int num = this._stream.Read(buffer, offset, count);
+			int byteCount = this._stream.Read(buffer, offset, count);
 			this._checkSum.Update(buffer, offset, count);
-			return num;
+			return byteCount;
 		}
 
 		public override void Write(byte[] buffer, int offset, int count)
@@ -48,9 +48,9 @@ namespace DNA.IO
 
 		public override int ReadByte()
 		{
-			int num = this._stream.ReadByte();
-			this._checkSum.Update((byte)num);
-			return num;
+			int data = this._stream.ReadByte();
+			this._checkSum.Update((byte)data);
+			return data;
 		}
 
 		public override void WriteByte(byte value)

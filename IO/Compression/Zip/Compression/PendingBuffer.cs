@@ -118,11 +118,11 @@ namespace DNA.IO.Compression.Zip.Compression
 
 		public byte[] ToByteArray()
 		{
-			byte[] array = new byte[this.end - this.start];
-			Array.Copy(this.buf, this.start, array, 0, array.Length);
+			byte[] ret = new byte[this.end - this.start];
+			Array.Copy(this.buf, this.start, ret, 0, ret.Length);
 			this.start = 0;
 			this.end = 0;
-			return array;
+			return ret;
 		}
 
 		protected byte[] buf;

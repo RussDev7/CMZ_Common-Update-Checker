@@ -33,8 +33,8 @@ namespace DNA.Drawing.Actions
 			{
 				this._currentTime = this._totalTime;
 			}
-			float num = (float)((this._totalTime.TotalSeconds - this._currentTime.TotalSeconds) / this._totalTime.TotalSeconds);
-			entity.LocalPosition = Vector3.Lerp(this._endPosition, this._startPosition, num);
+			float blender = (float)((this._totalTime.TotalSeconds - this._currentTime.TotalSeconds) / this._totalTime.TotalSeconds);
+			entity.LocalPosition = Vector3.Lerp(this._endPosition, this._startPosition, blender);
 			base.OnTick(game, entity, deltaT);
 		}
 

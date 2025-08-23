@@ -82,9 +82,9 @@ namespace DNA.Security.Cryptography.Crypto.Digests
 			this.H4 = 271733878;
 			this.H5 = -1009589776;
 			this.xOff = 0;
-			for (int num = 0; num != this.X.Length; num++)
+			for (int i = 0; i != this.X.Length; i++)
 			{
-				this.X[num] = 0;
+				this.X[i] = 0;
 			}
 		}
 
@@ -107,72 +107,72 @@ namespace DNA.Security.Cryptography.Crypto.Digests
 		{
 			for (int i = 16; i < 80; i++)
 			{
-				int num = this.X[i - 3] ^ this.X[i - 8] ^ this.X[i - 14] ^ this.X[i - 16];
-				this.X[i] = (num << 1) | (int)((uint)num >> 31);
+				int t = this.X[i - 3] ^ this.X[i - 8] ^ this.X[i - 14] ^ this.X[i - 16];
+				this.X[i] = (t << 1) | (int)((uint)t >> 31);
 			}
-			int num2 = this.H1;
-			int num3 = this.H2;
-			int num4 = this.H3;
-			int num5 = this.H4;
-			int num6 = this.H5;
-			int num7 = 0;
+			int A = this.H1;
+			int B = this.H2;
+			int C = this.H3;
+			int D = this.H4;
+			int E = this.H5;
+			int idx = 0;
 			for (int j = 0; j < 4; j++)
 			{
-				num6 += ((num2 << 5) | (int)((uint)num2 >> 27)) + Sha1Digest.F(num3, num4, num5) + this.X[num7++] + 1518500249;
-				num3 = (num3 << 30) | (int)((uint)num3 >> 2);
-				num5 += ((num6 << 5) | (int)((uint)num6 >> 27)) + Sha1Digest.F(num2, num3, num4) + this.X[num7++] + 1518500249;
-				num2 = (num2 << 30) | (int)((uint)num2 >> 2);
-				num4 += ((num5 << 5) | (int)((uint)num5 >> 27)) + Sha1Digest.F(num6, num2, num3) + this.X[num7++] + 1518500249;
-				num6 = (num6 << 30) | (int)((uint)num6 >> 2);
-				num3 += ((num4 << 5) | (int)((uint)num4 >> 27)) + Sha1Digest.F(num5, num6, num2) + this.X[num7++] + 1518500249;
-				num5 = (num5 << 30) | (int)((uint)num5 >> 2);
-				num2 += ((num3 << 5) | (int)((uint)num3 >> 27)) + Sha1Digest.F(num4, num5, num6) + this.X[num7++] + 1518500249;
-				num4 = (num4 << 30) | (int)((uint)num4 >> 2);
+				E += ((A << 5) | (int)((uint)A >> 27)) + Sha1Digest.F(B, C, D) + this.X[idx++] + 1518500249;
+				B = (B << 30) | (int)((uint)B >> 2);
+				D += ((E << 5) | (int)((uint)E >> 27)) + Sha1Digest.F(A, B, C) + this.X[idx++] + 1518500249;
+				A = (A << 30) | (int)((uint)A >> 2);
+				C += ((D << 5) | (int)((uint)D >> 27)) + Sha1Digest.F(E, A, B) + this.X[idx++] + 1518500249;
+				E = (E << 30) | (int)((uint)E >> 2);
+				B += ((C << 5) | (int)((uint)C >> 27)) + Sha1Digest.F(D, E, A) + this.X[idx++] + 1518500249;
+				D = (D << 30) | (int)((uint)D >> 2);
+				A += ((B << 5) | (int)((uint)B >> 27)) + Sha1Digest.F(C, D, E) + this.X[idx++] + 1518500249;
+				C = (C << 30) | (int)((uint)C >> 2);
 			}
 			for (int k = 0; k < 4; k++)
 			{
-				num6 += ((num2 << 5) | (int)((uint)num2 >> 27)) + Sha1Digest.H(num3, num4, num5) + this.X[num7++] + 1859775393;
-				num3 = (num3 << 30) | (int)((uint)num3 >> 2);
-				num5 += ((num6 << 5) | (int)((uint)num6 >> 27)) + Sha1Digest.H(num2, num3, num4) + this.X[num7++] + 1859775393;
-				num2 = (num2 << 30) | (int)((uint)num2 >> 2);
-				num4 += ((num5 << 5) | (int)((uint)num5 >> 27)) + Sha1Digest.H(num6, num2, num3) + this.X[num7++] + 1859775393;
-				num6 = (num6 << 30) | (int)((uint)num6 >> 2);
-				num3 += ((num4 << 5) | (int)((uint)num4 >> 27)) + Sha1Digest.H(num5, num6, num2) + this.X[num7++] + 1859775393;
-				num5 = (num5 << 30) | (int)((uint)num5 >> 2);
-				num2 += ((num3 << 5) | (int)((uint)num3 >> 27)) + Sha1Digest.H(num4, num5, num6) + this.X[num7++] + 1859775393;
-				num4 = (num4 << 30) | (int)((uint)num4 >> 2);
+				E += ((A << 5) | (int)((uint)A >> 27)) + Sha1Digest.H(B, C, D) + this.X[idx++] + 1859775393;
+				B = (B << 30) | (int)((uint)B >> 2);
+				D += ((E << 5) | (int)((uint)E >> 27)) + Sha1Digest.H(A, B, C) + this.X[idx++] + 1859775393;
+				A = (A << 30) | (int)((uint)A >> 2);
+				C += ((D << 5) | (int)((uint)D >> 27)) + Sha1Digest.H(E, A, B) + this.X[idx++] + 1859775393;
+				E = (E << 30) | (int)((uint)E >> 2);
+				B += ((C << 5) | (int)((uint)C >> 27)) + Sha1Digest.H(D, E, A) + this.X[idx++] + 1859775393;
+				D = (D << 30) | (int)((uint)D >> 2);
+				A += ((B << 5) | (int)((uint)B >> 27)) + Sha1Digest.H(C, D, E) + this.X[idx++] + 1859775393;
+				C = (C << 30) | (int)((uint)C >> 2);
 			}
 			for (int l = 0; l < 4; l++)
 			{
-				num6 += ((num2 << 5) | (int)((uint)num2 >> 27)) + Sha1Digest.G(num3, num4, num5) + this.X[num7++] + -1894007588;
-				num3 = (num3 << 30) | (int)((uint)num3 >> 2);
-				num5 += ((num6 << 5) | (int)((uint)num6 >> 27)) + Sha1Digest.G(num2, num3, num4) + this.X[num7++] + -1894007588;
-				num2 = (num2 << 30) | (int)((uint)num2 >> 2);
-				num4 += ((num5 << 5) | (int)((uint)num5 >> 27)) + Sha1Digest.G(num6, num2, num3) + this.X[num7++] + -1894007588;
-				num6 = (num6 << 30) | (int)((uint)num6 >> 2);
-				num3 += ((num4 << 5) | (int)((uint)num4 >> 27)) + Sha1Digest.G(num5, num6, num2) + this.X[num7++] + -1894007588;
-				num5 = (num5 << 30) | (int)((uint)num5 >> 2);
-				num2 += ((num3 << 5) | (int)((uint)num3 >> 27)) + Sha1Digest.G(num4, num5, num6) + this.X[num7++] + -1894007588;
-				num4 = (num4 << 30) | (int)((uint)num4 >> 2);
+				E += ((A << 5) | (int)((uint)A >> 27)) + Sha1Digest.G(B, C, D) + this.X[idx++] + -1894007588;
+				B = (B << 30) | (int)((uint)B >> 2);
+				D += ((E << 5) | (int)((uint)E >> 27)) + Sha1Digest.G(A, B, C) + this.X[idx++] + -1894007588;
+				A = (A << 30) | (int)((uint)A >> 2);
+				C += ((D << 5) | (int)((uint)D >> 27)) + Sha1Digest.G(E, A, B) + this.X[idx++] + -1894007588;
+				E = (E << 30) | (int)((uint)E >> 2);
+				B += ((C << 5) | (int)((uint)C >> 27)) + Sha1Digest.G(D, E, A) + this.X[idx++] + -1894007588;
+				D = (D << 30) | (int)((uint)D >> 2);
+				A += ((B << 5) | (int)((uint)B >> 27)) + Sha1Digest.G(C, D, E) + this.X[idx++] + -1894007588;
+				C = (C << 30) | (int)((uint)C >> 2);
 			}
 			for (int m = 0; m <= 3; m++)
 			{
-				num6 += ((num2 << 5) | (int)((uint)num2 >> 27)) + Sha1Digest.H(num3, num4, num5) + this.X[num7++] + -899497514;
-				num3 = (num3 << 30) | (int)((uint)num3 >> 2);
-				num5 += ((num6 << 5) | (int)((uint)num6 >> 27)) + Sha1Digest.H(num2, num3, num4) + this.X[num7++] + -899497514;
-				num2 = (num2 << 30) | (int)((uint)num2 >> 2);
-				num4 += ((num5 << 5) | (int)((uint)num5 >> 27)) + Sha1Digest.H(num6, num2, num3) + this.X[num7++] + -899497514;
-				num6 = (num6 << 30) | (int)((uint)num6 >> 2);
-				num3 += ((num4 << 5) | (int)((uint)num4 >> 27)) + Sha1Digest.H(num5, num6, num2) + this.X[num7++] + -899497514;
-				num5 = (num5 << 30) | (int)((uint)num5 >> 2);
-				num2 += ((num3 << 5) | (int)((uint)num3 >> 27)) + Sha1Digest.H(num4, num5, num6) + this.X[num7++] + -899497514;
-				num4 = (num4 << 30) | (int)((uint)num4 >> 2);
+				E += ((A << 5) | (int)((uint)A >> 27)) + Sha1Digest.H(B, C, D) + this.X[idx++] + -899497514;
+				B = (B << 30) | (int)((uint)B >> 2);
+				D += ((E << 5) | (int)((uint)E >> 27)) + Sha1Digest.H(A, B, C) + this.X[idx++] + -899497514;
+				A = (A << 30) | (int)((uint)A >> 2);
+				C += ((D << 5) | (int)((uint)D >> 27)) + Sha1Digest.H(E, A, B) + this.X[idx++] + -899497514;
+				E = (E << 30) | (int)((uint)E >> 2);
+				B += ((C << 5) | (int)((uint)C >> 27)) + Sha1Digest.H(D, E, A) + this.X[idx++] + -899497514;
+				D = (D << 30) | (int)((uint)D >> 2);
+				A += ((B << 5) | (int)((uint)B >> 27)) + Sha1Digest.H(C, D, E) + this.X[idx++] + -899497514;
+				C = (C << 30) | (int)((uint)C >> 2);
 			}
-			this.H1 += num2;
-			this.H2 += num3;
-			this.H3 += num4;
-			this.H4 += num5;
-			this.H5 += num6;
+			this.H1 += A;
+			this.H2 += B;
+			this.H3 += C;
+			this.H4 += D;
+			this.H5 += E;
 			this.xOff = 0;
 			for (int n = 0; n < 16; n++)
 			{

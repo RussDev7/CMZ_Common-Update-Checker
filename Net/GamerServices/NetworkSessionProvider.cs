@@ -94,9 +94,9 @@ namespace DNA.Net.GamerServices
 			{
 				this._gamerJoined += value;
 				GamerCollection<LocalNetworkGamer> localGamers = this.LocalGamers;
-				foreach (LocalNetworkGamer localNetworkGamer in localGamers)
+				foreach (LocalNetworkGamer lg in localGamers)
 				{
-					value(this, new GamerJoinedEventArgs(localNetworkGamer));
+					value(this, new GamerJoinedEventArgs(lg));
 				}
 			}
 			remove
@@ -145,47 +145,47 @@ namespace DNA.Net.GamerServices
 			}
 			if (this.SessionEnded != null)
 			{
-				NetworkSessionEndReason networkSessionEndReason;
+				NetworkSessionEndReason nser;
 				if (disconnectReason != null)
 				{
 					if (disconnectReason == "Session Ended Normally")
 					{
-						networkSessionEndReason = NetworkSessionEndReason.HostEndedSession;
+						nser = NetworkSessionEndReason.HostEndedSession;
 						goto IL_0078;
 					}
 					if (disconnectReason == "Host Kicked Us")
 					{
-						networkSessionEndReason = NetworkSessionEndReason.RemovedByHost;
+						nser = NetworkSessionEndReason.RemovedByHost;
 						goto IL_0078;
 					}
 					if (disconnectReason == "Connection Dropped")
 					{
-						networkSessionEndReason = NetworkSessionEndReason.Disconnected;
+						nser = NetworkSessionEndReason.Disconnected;
 						goto IL_0078;
 					}
 					if (disconnectReason == "Failed to establish connection - no response from remote host")
 					{
-						networkSessionEndReason = NetworkSessionEndReason.Disconnected;
+						nser = NetworkSessionEndReason.Disconnected;
 						goto IL_0078;
 					}
 				}
-				networkSessionEndReason = NetworkSessionEndReason.Disconnected;
+				nser = NetworkSessionEndReason.Disconnected;
 				IL_0078:
-				this.SessionEnded(this, new NetworkSessionEndedEventArgs(networkSessionEndReason));
+				this.SessionEnded(this, new NetworkSessionEndedEventArgs(nser));
 			}
 		}
 
 		protected void AddLocalGamer(SignedInGamer sig, bool isHost, byte globalID, ulong steamID)
 		{
-			LocalNetworkGamer localNetworkGamer = new LocalNetworkGamer(sig, this._networkSession, true, isHost, globalID, steamID);
+			LocalNetworkGamer lng = new LocalNetworkGamer(sig, this._networkSession, true, isHost, globalID, steamID);
 			this._localPlayerGID = globalID;
 			if (isHost)
 			{
-				this._host = localNetworkGamer;
+				this._host = lng;
 			}
-			this._idToGamer.Add(globalID, localNetworkGamer);
-			this._allGamers.Add(localNetworkGamer);
-			this._localGamers.Add(localNetworkGamer);
+			this._idToGamer.Add(globalID, lng);
+			this._allGamers.Add(lng);
+			this._localGamers.Add(lng);
 			this._allGamerCollection = new GamerCollection<NetworkGamer>(this._allGamers);
 			lock (this._localGamerCollection)
 			{
@@ -194,7 +194,7 @@ namespace DNA.Net.GamerServices
 			this.LocalPlayerJoinedEvent.Set();
 			if (this._gamerJoined != null)
 			{
-				this._gamerJoined(this, new GamerJoinedEventArgs(localNetworkGamer));
+				this._gamerJoined(this, new GamerJoinedEventArgs(lng));
 			}
 		}
 
@@ -205,21 +205,21 @@ namespace DNA.Net.GamerServices
 
 		protected NetworkGamer AddProxyGamer(Gamer gmr, bool isHost, byte globalID)
 		{
-			NetworkGamer networkGamer = new NetworkGamer(gmr, this._networkSession, false, isHost, globalID);
+			NetworkGamer ng = new NetworkGamer(gmr, this._networkSession, false, isHost, globalID);
 			if (isHost)
 			{
-				this._host = networkGamer;
+				this._host = ng;
 			}
-			this._idToGamer.Add(networkGamer.Id, networkGamer);
-			this._allGamers.Add(networkGamer);
+			this._idToGamer.Add(ng.Id, ng);
+			this._allGamers.Add(ng);
 			this._allGamerCollection = new GamerCollection<NetworkGamer>(this._allGamers);
-			this._remoteGamers.Add(networkGamer);
+			this._remoteGamers.Add(ng);
 			this._remoteGamerCollection = new GamerCollection<NetworkGamer>(this._remoteGamers);
 			if (this._gamerJoined != null)
 			{
-				this._gamerJoined(this, new GamerJoinedEventArgs(networkGamer));
+				this._gamerJoined(this, new GamerJoinedEventArgs(ng));
 			}
-			return networkGamer;
+			return ng;
 		}
 
 		private void FinishAddingRemoteGamer(NetworkGamer ng, bool isHost, byte playerGID)
@@ -241,16 +241,16 @@ namespace DNA.Net.GamerServices
 
 		protected NetworkGamer AddRemoteGamer(Gamer gmr, IPAddress endPoint, bool isHost, byte playerGID)
 		{
-			NetworkGamer networkGamer = new NetworkGamer(gmr, this._networkSession, false, isHost, playerGID, endPoint);
-			this.FinishAddingRemoteGamer(networkGamer, isHost, playerGID);
-			return networkGamer;
+			NetworkGamer ng = new NetworkGamer(gmr, this._networkSession, false, isHost, playerGID, endPoint);
+			this.FinishAddingRemoteGamer(ng, isHost, playerGID);
+			return ng;
 		}
 
 		protected NetworkGamer AddRemoteGamer(Gamer gmr, ulong steamId, bool isHost, byte playerGID)
 		{
-			NetworkGamer networkGamer = new NetworkGamer(gmr, this._networkSession, false, isHost, playerGID, steamId);
-			this.FinishAddingRemoteGamer(networkGamer, isHost, playerGID);
-			return networkGamer;
+			NetworkGamer ng = new NetworkGamer(gmr, this._networkSession, false, isHost, playerGID, steamId);
+			this.FinishAddingRemoteGamer(ng, isHost, playerGID);
+			return ng;
 		}
 
 		protected void RemoveGamer(NetworkGamer gamer)
@@ -285,10 +285,10 @@ namespace DNA.Net.GamerServices
 
 		public virtual NetworkGamer FindGamerById(byte gamerId)
 		{
-			NetworkGamer networkGamer;
-			if (this._idToGamer.TryGetValue(gamerId, out networkGamer))
+			NetworkGamer result;
+			if (this._idToGamer.TryGetValue(gamerId, out result))
 			{
-				return networkGamer;
+				return result;
 			}
 			return null;
 		}
@@ -394,12 +394,12 @@ namespace DNA.Net.GamerServices
 		{
 			get
 			{
-				GamerCollection<LocalNetworkGamer> localGamerCollection2;
+				GamerCollection<LocalNetworkGamer> result;
 				lock (this._localGamerCollection)
 				{
-					localGamerCollection2 = this._localGamerCollection;
+					result = this._localGamerCollection;
 				}
-				return localGamerCollection2;
+				return result;
 			}
 		}
 

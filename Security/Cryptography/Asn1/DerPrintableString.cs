@@ -67,8 +67,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerPrintableString derPrintableString = asn1Object as DerPrintableString;
-			return derPrintableString != null && this.str.Equals(derPrintableString.str);
+			DerPrintableString other = asn1Object as DerPrintableString;
+			return other != null && this.str.Equals(other.str);
 		}
 
 		public static bool IsPrintableString(string str)
@@ -76,13 +76,13 @@ namespace DNA.Security.Cryptography.Asn1
 			int i = 0;
 			while (i < str.Length)
 			{
-				char c = str[i];
-				if (c <= '\u007f')
+				char ch = str[i];
+				if (ch <= '\u007f')
 				{
-					if (!char.IsLetterOrDigit(c))
+					if (!char.IsLetterOrDigit(ch))
 					{
-						char c2 = c;
-						switch (c2)
+						char c = ch;
+						switch (c)
 						{
 						case ' ':
 						case '\'':
@@ -103,11 +103,11 @@ namespace DNA.Security.Cryptography.Asn1
 						case '*':
 							break;
 						default:
-							if (c2 == ':')
+							if (c == ':')
 							{
 								goto IL_0092;
 							}
-							switch (c2)
+							switch (c)
 							{
 							case '=':
 							case '?':

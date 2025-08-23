@@ -64,26 +64,26 @@ namespace DNA.IO.Storage
 				{
 					dataToSave = SecurityTools.EncryptData(this.LocalKey, dataToSave);
 				}
-				MD5HashProvider md5HashProvider = new MD5HashProvider();
-				Hash hash = md5HashProvider.Compute(dataToSave);
-				MemoryStream memoryStream = new MemoryStream(dataToSave.Length + hash.Data.Length + 8);
-				BinaryWriter binaryWriter = new BinaryWriter(memoryStream);
-				binaryWriter.Write(hash.Data.Length);
-				binaryWriter.Write(hash.Data);
-				binaryWriter.Write(dataToSave.Length);
-				binaryWriter.Write(dataToSave);
-				binaryWriter.Flush();
-				dataToSave = memoryStream.ToArray();
+				MD5HashProvider hasher = new MD5HashProvider();
+				Hash hash = hasher.Compute(dataToSave);
+				MemoryStream hashedStream = new MemoryStream(dataToSave.Length + hash.Data.Length + 8);
+				BinaryWriter writer = new BinaryWriter(hashedStream);
+				writer.Write(hash.Data.Length);
+				writer.Write(hash.Data);
+				writer.Write(dataToSave.Length);
+				writer.Write(dataToSave);
+				writer.Flush();
+				dataToSave = hashedStream.ToArray();
 			}
 			using (Stream stream = this.DeviceOpenFile(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
 			{
-				BinaryWriter binaryWriter2 = new BinaryWriter(stream);
-				binaryWriter2.Write(1146311762);
-				binaryWriter2.Write(5);
-				binaryWriter2.Write((uint)fileOptions);
-				binaryWriter2.Write(dataToSave.Length);
-				binaryWriter2.Write(dataToSave);
-				binaryWriter2.Flush();
+				BinaryWriter outWriter = new BinaryWriter(stream);
+				outWriter.Write(1146311762);
+				outWriter.Write(5);
+				outWriter.Write((uint)fileOptions);
+				outWriter.Write(dataToSave.Length);
+				outWriter.Write(dataToSave);
+				outWriter.Flush();
 			}
 		}
 
@@ -92,82 +92,82 @@ namespace DNA.IO.Storage
 			this.VerifyIsReady();
 			lock (this)
 			{
-				MemoryStream memoryStream = new MemoryStream(1024);
-				saveAction(memoryStream);
-				byte[] array = memoryStream.ToArray();
-				this.Save(fileName, array, tamperProof, compressed);
+				MemoryStream memstream = new MemoryStream(1024);
+				saveAction(memstream);
+				byte[] dataToSave = memstream.ToArray();
+				this.Save(fileName, dataToSave, tamperProof, compressed);
 			}
 		}
 
 		public byte[] LoadData(string fileName)
 		{
 			this.VerifyIsReady();
-			byte[] array2;
+			byte[] array;
 			lock (this)
 			{
-				int num2;
+				int version;
 				SaveDevice.FileOptions fileOptions;
-				byte[] array;
-				using (Stream stream = this.DeviceOpenFile(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+				byte[] data;
+				using (Stream inputStream = this.DeviceOpenFile(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
 				{
-					BinaryReader binaryReader = new BinaryReader(stream);
-					int num = binaryReader.ReadInt32();
-					if (num != 1146311762)
+					BinaryReader sReader = new BinaryReader(inputStream);
+					int ident = sReader.ReadInt32();
+					if (ident != 1146311762)
 					{
 						throw new Exception();
 					}
-					num2 = binaryReader.ReadInt32();
-					if (num2 < 3 || num2 > 5)
+					version = sReader.ReadInt32();
+					if (version < 3 || version > 5)
 					{
 						throw new Exception();
 					}
-					fileOptions = (SaveDevice.FileOptions)binaryReader.ReadUInt32();
-					int num3 = binaryReader.ReadInt32();
-					array = binaryReader.ReadBytes(num3);
+					fileOptions = (SaveDevice.FileOptions)sReader.ReadUInt32();
+					int dataLength = sReader.ReadInt32();
+					data = sReader.ReadBytes(dataLength);
 				}
 				if ((SaveDevice.FileOptions.Encrypted & fileOptions) != SaveDevice.FileOptions.None)
 				{
-					MemoryStream memoryStream = new MemoryStream(array);
-					BinaryReader binaryReader2 = new BinaryReader(memoryStream);
-					MD5HashProvider md5HashProvider = new MD5HashProvider();
-					int num4 = binaryReader2.ReadInt32();
-					Hash hash = md5HashProvider.CreateHash(binaryReader2.ReadBytes(num4));
-					int num5 = binaryReader2.ReadInt32();
-					array = binaryReader2.ReadBytes(num5);
-					Hash hash2 = md5HashProvider.Compute(array);
-					if (!hash2.Equals(hash))
+					MemoryStream mStream = new MemoryStream(data);
+					BinaryReader reader = new BinaryReader(mStream);
+					MD5HashProvider hasher = new MD5HashProvider();
+					int hashLength = reader.ReadInt32();
+					Hash hash = hasher.CreateHash(reader.ReadBytes(hashLength));
+					int dataLength2 = reader.ReadInt32();
+					data = reader.ReadBytes(dataLength2);
+					Hash fileHash = hasher.Compute(data);
+					if (!fileHash.Equals(hash))
 					{
 						throw new Exception();
 					}
 					if (this.LocalKey == null)
 					{
-						array = SecurityTools.DecryptData(SaveDevice.CommonKey, array);
+						data = SecurityTools.DecryptData(SaveDevice.CommonKey, data);
 					}
 					else
 					{
-						array = SecurityTools.DecryptData(this.LocalKey, array);
+						data = SecurityTools.DecryptData(this.LocalKey, data);
 					}
 				}
 				if ((SaveDevice.FileOptions.Compressesd & fileOptions) != SaveDevice.FileOptions.None)
 				{
-					array = this.compressionTools.Decompress(array);
+					data = this.compressionTools.Decompress(data);
 				}
-				if (num2 < 5)
+				if (version < 5)
 				{
-					this.Save(fileName, array, (SaveDevice.FileOptions.Compressesd & fileOptions) != SaveDevice.FileOptions.None, (SaveDevice.FileOptions.Encrypted & fileOptions) != SaveDevice.FileOptions.None);
+					this.Save(fileName, data, (SaveDevice.FileOptions.Compressesd & fileOptions) != SaveDevice.FileOptions.None, (SaveDevice.FileOptions.Encrypted & fileOptions) != SaveDevice.FileOptions.None);
 				}
-				array2 = array;
+				array = data;
 			}
-			return array2;
+			return array;
 		}
 
 		public void Load(string fileName, FileAction loadAction)
 		{
 			lock (this)
 			{
-				byte[] array = this.LoadData(fileName);
-				MemoryStream memoryStream = new MemoryStream(array);
-				loadAction(memoryStream);
+				byte[] data = this.LoadData(fileName);
+				MemoryStream stream = new MemoryStream(data);
+				loadAction(stream);
 			}
 		}
 
@@ -233,10 +233,10 @@ namespace DNA.IO.Storage
 		public void DeleteDirectoryAsync(string path, object userState)
 		{
 			this.PendingOperationsIncrement();
-			SaveDevice.FileOperationState fileOperationState = this.GetFileOperationState();
-			fileOperationState.File = path;
-			fileOperationState.UserState = userState;
-			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoDeleteDirectoryAsync), fileOperationState);
+			SaveDevice.FileOperationState state = this.GetFileOperationState();
+			state.File = path;
+			state.UserState = userState;
+			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoDeleteDirectoryAsync), state);
 		}
 
 		public string[] GetDirectories(string path)
@@ -287,15 +287,15 @@ namespace DNA.IO.Storage
 
 		private void DeleteDirectoryInternal(string path)
 		{
-			string[] array = this.DeviceGetDirectoryNames(Path.Combine(path, "*"));
-			foreach (string text in array)
+			string[] dirnames = this.DeviceGetDirectoryNames(Path.Combine(path, "*"));
+			foreach (string dir in dirnames)
 			{
-				this.DeleteDirectoryInternal(text);
+				this.DeleteDirectoryInternal(dir);
 			}
-			string[] array3 = this.DeviceGetFileNames(Path.Combine(path, "*"));
-			foreach (string text2 in array3)
+			string[] fileNames = this.DeviceGetFileNames(Path.Combine(path, "*"));
+			foreach (string file in fileNames)
 			{
-				this.DeviceDeleteFile(text2);
+				this.DeviceDeleteFile(file);
 			}
 			this.DeviceDeleteDirectory(path);
 		}
@@ -391,13 +391,13 @@ namespace DNA.IO.Storage
 		public void SaveAsync(string fileName, bool tamperProof, bool compressed, FileAction saveAction, object userState)
 		{
 			this.PendingOperationsIncrement();
-			SaveDevice.FileOperationState fileOperationState = this.GetFileOperationState();
-			fileOperationState.File = fileName;
-			fileOperationState.TamperProof = tamperProof;
-			fileOperationState.Compressed = compressed;
-			fileOperationState.Action = saveAction;
-			fileOperationState.UserState = userState;
-			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoSaveAsync), fileOperationState);
+			SaveDevice.FileOperationState state = this.GetFileOperationState();
+			state.File = fileName;
+			state.TamperProof = tamperProof;
+			state.Compressed = compressed;
+			state.Action = saveAction;
+			state.UserState = userState;
+			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoSaveAsync), state);
 		}
 
 		public void LoadAsync(string fileName, FileAction loadAction)
@@ -408,11 +408,11 @@ namespace DNA.IO.Storage
 		public void LoadAsync(string fileName, FileAction loadAction, object userState)
 		{
 			this.PendingOperationsIncrement();
-			SaveDevice.FileOperationState fileOperationState = this.GetFileOperationState();
-			fileOperationState.File = fileName;
-			fileOperationState.Action = loadAction;
-			fileOperationState.UserState = userState;
-			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoLoadAsync), fileOperationState);
+			SaveDevice.FileOperationState state = this.GetFileOperationState();
+			state.File = fileName;
+			state.Action = loadAction;
+			state.UserState = userState;
+			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoLoadAsync), state);
 		}
 
 		public void DeleteAsync(string fileName)
@@ -423,10 +423,10 @@ namespace DNA.IO.Storage
 		public void DeleteAsync(string fileName, object userState)
 		{
 			this.PendingOperationsIncrement();
-			SaveDevice.FileOperationState fileOperationState = this.GetFileOperationState();
-			fileOperationState.File = fileName;
-			fileOperationState.UserState = userState;
-			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoDeleteAsync), fileOperationState);
+			SaveDevice.FileOperationState state = this.GetFileOperationState();
+			state.File = fileName;
+			state.UserState = userState;
+			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoDeleteAsync), state);
 		}
 
 		public void FileExistsAsync(string fileName)
@@ -437,10 +437,10 @@ namespace DNA.IO.Storage
 		public void FileExistsAsync(string fileName, object userState)
 		{
 			this.PendingOperationsIncrement();
-			SaveDevice.FileOperationState fileOperationState = this.GetFileOperationState();
-			fileOperationState.File = fileName;
-			fileOperationState.UserState = userState;
-			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoFileExistsAsync), fileOperationState);
+			SaveDevice.FileOperationState state = this.GetFileOperationState();
+			state.File = fileName;
+			state.UserState = userState;
+			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoFileExistsAsync), state);
 		}
 
 		public void GetFilesAsync()
@@ -461,10 +461,10 @@ namespace DNA.IO.Storage
 		public void GetFilesAsync(string pattern, object userState)
 		{
 			this.PendingOperationsIncrement();
-			SaveDevice.FileOperationState fileOperationState = this.GetFileOperationState();
-			fileOperationState.Pattern = pattern;
-			fileOperationState.UserState = userState;
-			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoGetFilesAsync), fileOperationState);
+			SaveDevice.FileOperationState state = this.GetFileOperationState();
+			state.Pattern = pattern;
+			state.UserState = userState;
+			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoGetFilesAsync), state);
 		}
 
 		private void SetProcessorAffinity()
@@ -474,134 +474,134 @@ namespace DNA.IO.Storage
 		private void DoSaveAsync(object asyncState)
 		{
 			this.SetProcessorAffinity();
-			SaveDevice.FileOperationState fileOperationState = asyncState as SaveDevice.FileOperationState;
-			Exception ex = null;
+			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
+			Exception error = null;
 			try
 			{
-				this.Save(fileOperationState.File, fileOperationState.TamperProof, fileOperationState.Compressed, fileOperationState.Action);
+				this.Save(state.File, state.TamperProof, state.Compressed, state.Action);
 			}
-			catch (Exception ex2)
+			catch (Exception e)
 			{
-				ex = ex2;
+				error = e;
 			}
-			FileActionCompletedEventArgs fileActionCompletedEventArgs = new FileActionCompletedEventArgs(ex, fileOperationState.UserState);
+			FileActionCompletedEventArgs args = new FileActionCompletedEventArgs(error, state.UserState);
 			if (this.SaveCompleted != null)
 			{
-				this.SaveCompleted(this, fileActionCompletedEventArgs);
+				this.SaveCompleted(this, args);
 			}
-			this.ReturnFileOperationState(fileOperationState);
+			this.ReturnFileOperationState(state);
 			this.PendingOperationsDecrement();
 		}
 
 		private void DoLoadAsync(object asyncState)
 		{
 			this.SetProcessorAffinity();
-			SaveDevice.FileOperationState fileOperationState = asyncState as SaveDevice.FileOperationState;
-			Exception ex = null;
+			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
+			Exception error = null;
 			try
 			{
-				this.Load(fileOperationState.File, fileOperationState.Action);
+				this.Load(state.File, state.Action);
 			}
-			catch (Exception ex2)
+			catch (Exception e)
 			{
-				ex = ex2;
+				error = e;
 			}
-			FileActionCompletedEventArgs fileActionCompletedEventArgs = new FileActionCompletedEventArgs(ex, fileOperationState.UserState);
+			FileActionCompletedEventArgs args = new FileActionCompletedEventArgs(error, state.UserState);
 			if (this.LoadCompleted != null)
 			{
-				this.LoadCompleted(this, fileActionCompletedEventArgs);
+				this.LoadCompleted(this, args);
 			}
-			this.ReturnFileOperationState(fileOperationState);
+			this.ReturnFileOperationState(state);
 			this.PendingOperationsDecrement();
 		}
 
 		private void DoDeleteDirectoryAsync(object asyncState)
 		{
 			this.SetProcessorAffinity();
-			SaveDevice.FileOperationState fileOperationState = asyncState as SaveDevice.FileOperationState;
-			Exception ex = null;
+			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
+			Exception error = null;
 			try
 			{
-				this.DeleteDirectory(fileOperationState.File);
+				this.DeleteDirectory(state.File);
 			}
-			catch (Exception ex2)
+			catch (Exception e)
 			{
-				ex = ex2;
+				error = e;
 			}
-			FileActionCompletedEventArgs fileActionCompletedEventArgs = new FileActionCompletedEventArgs(ex, fileOperationState.UserState);
+			FileActionCompletedEventArgs args = new FileActionCompletedEventArgs(error, state.UserState);
 			if (this.DeleteDirectoryCompleted != null)
 			{
-				this.DeleteDirectoryCompleted(this, fileActionCompletedEventArgs);
+				this.DeleteDirectoryCompleted(this, args);
 			}
-			this.ReturnFileOperationState(fileOperationState);
+			this.ReturnFileOperationState(state);
 			this.PendingOperationsDecrement();
 		}
 
 		private void DoDeleteAsync(object asyncState)
 		{
 			this.SetProcessorAffinity();
-			SaveDevice.FileOperationState fileOperationState = asyncState as SaveDevice.FileOperationState;
-			Exception ex = null;
+			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
+			Exception error = null;
 			try
 			{
-				this.Delete(fileOperationState.File);
+				this.Delete(state.File);
 			}
-			catch (Exception ex2)
+			catch (Exception e)
 			{
-				ex = ex2;
+				error = e;
 			}
-			FileActionCompletedEventArgs fileActionCompletedEventArgs = new FileActionCompletedEventArgs(ex, fileOperationState.UserState);
+			FileActionCompletedEventArgs args = new FileActionCompletedEventArgs(error, state.UserState);
 			if (this.DeleteCompleted != null)
 			{
-				this.DeleteCompleted(this, fileActionCompletedEventArgs);
+				this.DeleteCompleted(this, args);
 			}
-			this.ReturnFileOperationState(fileOperationState);
+			this.ReturnFileOperationState(state);
 			this.PendingOperationsDecrement();
 		}
 
 		private void DoFileExistsAsync(object asyncState)
 		{
 			this.SetProcessorAffinity();
-			SaveDevice.FileOperationState fileOperationState = asyncState as SaveDevice.FileOperationState;
-			Exception ex = null;
-			bool flag = false;
+			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
+			Exception error = null;
+			bool result = false;
 			try
 			{
-				flag = this.FileExists(fileOperationState.File);
+				result = this.FileExists(state.File);
 			}
-			catch (Exception ex2)
+			catch (Exception e)
 			{
-				ex = ex2;
+				error = e;
 			}
-			FileExistsCompletedEventArgs fileExistsCompletedEventArgs = new FileExistsCompletedEventArgs(ex, flag, fileOperationState.UserState);
+			FileExistsCompletedEventArgs args = new FileExistsCompletedEventArgs(error, result, state.UserState);
 			if (this.FileExistsCompleted != null)
 			{
-				this.FileExistsCompleted(this, fileExistsCompletedEventArgs);
+				this.FileExistsCompleted(this, args);
 			}
-			this.ReturnFileOperationState(fileOperationState);
+			this.ReturnFileOperationState(state);
 			this.PendingOperationsDecrement();
 		}
 
 		private void DoGetFilesAsync(object asyncState)
 		{
 			this.SetProcessorAffinity();
-			SaveDevice.FileOperationState fileOperationState = asyncState as SaveDevice.FileOperationState;
-			Exception ex = null;
-			string[] array = null;
+			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
+			Exception error = null;
+			string[] result = null;
 			try
 			{
-				array = this.GetFiles(fileOperationState.Pattern);
+				result = this.GetFiles(state.Pattern);
 			}
-			catch (Exception ex2)
+			catch (Exception e)
 			{
-				ex = ex2;
+				error = e;
 			}
-			GetFilesCompletedEventArgs getFilesCompletedEventArgs = new GetFilesCompletedEventArgs(ex, array, fileOperationState.UserState);
+			GetFilesCompletedEventArgs args = new GetFilesCompletedEventArgs(error, result, state.UserState);
 			if (this.GetFilesCompleted != null)
 			{
-				this.GetFilesCompleted(this, getFilesCompletedEventArgs);
+				this.GetFilesCompleted(this, args);
 			}
-			this.ReturnFileOperationState(fileOperationState);
+			this.ReturnFileOperationState(state);
 			this.PendingOperationsDecrement();
 		}
 
@@ -623,21 +623,21 @@ namespace DNA.IO.Storage
 
 		private SaveDevice.FileOperationState GetFileOperationState()
 		{
-			SaveDevice.FileOperationState fileOperationState2;
+			SaveDevice.FileOperationState fileOperationState;
 			lock (this.pendingStates)
 			{
 				if (this.pendingStates.Count > 0)
 				{
-					SaveDevice.FileOperationState fileOperationState = this.pendingStates.Dequeue();
-					fileOperationState.Reset();
-					fileOperationState2 = fileOperationState;
+					SaveDevice.FileOperationState state = this.pendingStates.Dequeue();
+					state.Reset();
+					fileOperationState = state;
 				}
 				else
 				{
-					fileOperationState2 = new SaveDevice.FileOperationState();
+					fileOperationState = new SaveDevice.FileOperationState();
 				}
 			}
-			return fileOperationState2;
+			return fileOperationState;
 		}
 
 		private void ReturnFileOperationState(SaveDevice.FileOperationState state)

@@ -15,13 +15,13 @@ namespace DNA.Drawing.Imaging
 	{
 		private static bool IsPowerOfTwo(int x)
 		{
-			int num = 0;
+			int count = 0;
 			while (x != 0)
 			{
-				num += x & 1;
+				count += x & 1;
 				x >>= 1;
 			}
-			return num == 1;
+			return count == 1;
 		}
 
 		private static Byte4[] MakeMipmap(Byte4[] source, ref int width, ref int height, bool treatDataAsNormals)
@@ -30,78 +30,78 @@ namespace DNA.Drawing.Imaging
 			{
 				return null;
 			}
-			int num = 0;
+			int tindex = 0;
 			TextureLoader._mipmapOffsets[2] = width;
 			TextureLoader._mipmapOffsets[3] = width + 1;
-			Byte4[] array = new Byte4[width * height / 4];
-			for (int i = 0; i < height; i += 2)
+			Byte4[] result = new Byte4[width * height / 4];
+			for (int y = 0; y < height; y += 2)
 			{
-				int num2 = i * width;
-				for (int j = 0; j < width; j += 2)
+				int sindex = y * width;
+				for (int x = 0; x < width; x += 2)
 				{
-					Vector4 vector = Vector4.Zero;
-					int num3 = 0;
+					Vector4 sum = Vector4.Zero;
+					int count = 0;
 					if (treatDataAsNormals)
 					{
-						for (int k = 0; k < 4; k++)
+						for (int i = 0; i < 4; i++)
 						{
-							vector += source[num2 + TextureLoader._mipmapOffsets[k]].ToVector4();
+							sum += source[sindex + TextureLoader._mipmapOffsets[i]].ToVector4();
 						}
 					}
 					else
 					{
-						for (int l = 0; l < 4; l++)
+						for (int j = 0; j < 4; j++)
 						{
-							Vector4 vector2 = source[num2 + TextureLoader._mipmapOffsets[l]].ToVector4();
-							if (vector2.W > 5f)
+							Vector4 p = source[sindex + TextureLoader._mipmapOffsets[j]].ToVector4();
+							if (p.W > 5f)
 							{
-								vector += vector2;
-								num3++;
+								sum += p;
+								count++;
 							}
 						}
 					}
 					if (treatDataAsNormals)
 					{
-						float num4 = vector.W / 4f;
-						vector.W = 0f;
-						vector.Normalize();
-						vector *= 255f;
-						vector.W = MathHelper.Clamp((float)Math.Floor((double)num4), 0f, 255f);
+						float w = sum.W / 4f;
+						sum.W = 0f;
+						sum.Normalize();
+						sum *= 255f;
+						sum.W = MathHelper.Clamp((float)Math.Floor((double)w), 0f, 255f);
 					}
 					else
 					{
-						if (num3 > 0)
+						if (count > 0)
 						{
-							vector *= 1f / (float)num3;
+							sum *= 1f / (float)count;
 						}
-						if (vector.W >= 128f)
+						if (sum.W >= 128f)
 						{
-							vector.W = 255f;
+							sum.W = 255f;
 						}
 						else
 						{
-							vector.W = 0f;
+							sum.W = 0f;
 						}
 					}
-					vector.X = MathHelper.Clamp((float)Math.Floor((double)vector.X), 0f, 255f);
-					vector.Y = MathHelper.Clamp((float)Math.Floor((double)vector.Y), 0f, 255f);
-					vector.Z = MathHelper.Clamp((float)Math.Floor((double)vector.Z), 0f, 255f);
-					array[num++] = new Byte4(vector);
-					num2 += 2;
+					sum.X = MathHelper.Clamp((float)Math.Floor((double)sum.X), 0f, 255f);
+					sum.Y = MathHelper.Clamp((float)Math.Floor((double)sum.Y), 0f, 255f);
+					sum.Z = MathHelper.Clamp((float)Math.Floor((double)sum.Z), 0f, 255f);
+					result[tindex++] = new Byte4(sum);
+					sindex += 2;
 				}
 			}
 			width >>= 1;
 			height >>= 1;
-			return array;
+			return result;
 		}
 
 		private static void SwapChannels(byte[] data)
 		{
 			for (int i = 0; i < data.Length; i += 4)
 			{
-				byte b = data[i];
+				byte t = data[i];
 				data[i] = data[i + 2];
-				data[i + 2] = b;
+				data[i + 2] = t;
 			}
 		}
 
@@ -109,8 +109,8 @@ namespace DNA.Drawing.Imaging
 		{
 			Texture2D result = null;
 			Bitmap bitmap = Image.FromFile(filename) as Bitmap;
-			PixelFormat pixelFormat = bitmap.PixelFormat;
-			if (pixelFormat != PixelFormat.Format32bppArgb && pixelFormat != PixelFormat.Format32bppRgb)
+			PixelFormat pxf = bitmap.PixelFormat;
+			if (pxf != PixelFormat.Format32bppArgb && pxf != PixelFormat.Format32bppRgb)
 			{
 				throw new TextureLoader.FormatException(string.Concat(new string[]
 				{
@@ -121,16 +121,16 @@ namespace DNA.Drawing.Imaging
 					") must be 32 bit ARGB"
 				}));
 			}
-			int width = bitmap.Width;
-			int height = bitmap.Height;
-			BitmapData bitmapData = bitmap.LockBits(new global::System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-			int num = bitmapData.Stride * bitmapData.Height;
-			int stride = bitmapData.Stride;
-			byte[] tmp = new byte[num];
-			Marshal.Copy(bitmapData.Scan0, tmp, 0, num);
-			bitmap.UnlockBits(bitmapData);
+			int w = bitmap.Width;
+			int h = bitmap.Height;
+			BitmapData data = bitmap.LockBits(new global::System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+			int length = data.Stride * data.Height;
+			int stride = data.Stride;
+			byte[] tmp = new byte[length];
+			Marshal.Copy(data.Scan0, tmp, 0, length);
+			bitmap.UnlockBits(data);
 			bitmap.Dispose();
-			if (pixelFormat == PixelFormat.Format32bppRgb)
+			if (pxf == PixelFormat.Format32bppRgb)
 			{
 				for (int i = 3; i < tmp.Length; i += 4)
 				{
@@ -138,22 +138,22 @@ namespace DNA.Drawing.Imaging
 				}
 			}
 			TextureLoader.SwapChannels(tmp);
-			bool flag = makeMipmaps && TextureLoader.IsPowerOfTwo(width) && TextureLoader.IsPowerOfTwo(height);
-			result = new Texture2D(gd, width, height, flag, SurfaceFormat.Color);
-			if (makeMipmaps && TextureLoader.IsPowerOfTwo(width) && TextureLoader.IsPowerOfTwo(height))
+			bool doMipMaps = makeMipmaps && TextureLoader.IsPowerOfTwo(w) && TextureLoader.IsPowerOfTwo(h);
+			result = new Texture2D(gd, w, h, doMipMaps, SurfaceFormat.Color);
+			if (makeMipmaps && TextureLoader.IsPowerOfTwo(w) && TextureLoader.IsPowerOfTwo(h))
 			{
-				Byte4[] array = new Byte4[width * height];
-				array.AsUintArray(delegate(uint[] value)
+				Byte4[] d = new Byte4[w * h];
+				d.AsUintArray(delegate(uint[] value)
 				{
 					Buffer.BlockCopy(tmp, 0, value, 0, tmp.Length);
 				});
-				int num2 = width;
-				int num3 = height;
-				int num4 = 0;
-				while (array != null)
+				int width = w;
+				int height = h;
+				int mip = 0;
+				while (d != null)
 				{
-					result.SetData<Byte4>(num4++, null, array, 0, array.Length);
-					array = TextureLoader.MakeMipmap(array, ref num2, ref num3, normalizeMipmaps);
+					result.SetData<Byte4>(mip++, null, d, 0, d.Length);
+					d = TextureLoader.MakeMipmap(d, ref width, ref height, normalizeMipmaps);
 				}
 			}
 			else
@@ -168,29 +168,29 @@ namespace DNA.Drawing.Imaging
 
 		private static Texture2D LoadFromDDS(GraphicsDevice gd, string filename)
 		{
-			Texture2D texture2D = null;
-			using (FileStream fileStream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+			Texture2D result = null;
+			using (FileStream stream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				BinaryReader binaryReader = new BinaryReader(fileStream);
-				TextureLoader.DDSFile ddsfile = default(TextureLoader.DDSFile);
-				ddsfile.Read(filename, binaryReader);
-				bool flag = false;
-				bool flag2 = false;
-				SurfaceFormat surfaceFormat;
-				if ((ddsfile.Header.PixelFormat.Flags & 64U) != 0U)
+				BinaryReader reader = new BinaryReader(stream);
+				TextureLoader.DDSFile ddsFile = default(TextureLoader.DDSFile);
+				ddsFile.Read(filename, reader);
+				bool dxtFormat = false;
+				bool sixteenBit = false;
+				SurfaceFormat format;
+				if ((ddsFile.Header.PixelFormat.Flags & 64U) != 0U)
 				{
-					if (ddsfile.Header.PixelFormat.RGBBitCount == 32U)
+					if (ddsFile.Header.PixelFormat.RGBBitCount == 32U)
 					{
-						surfaceFormat = SurfaceFormat.Color;
+						format = SurfaceFormat.Color;
 					}
 					else
 					{
-						if (ddsfile.Header.PixelFormat.RGBBitCount != 16U)
+						if (ddsFile.Header.PixelFormat.RGBBitCount != 16U)
 						{
 							throw new TextureLoader.FormatException("Uncompressed DDS Surface format must be 32bit RGBA or ABGR, or  16 bit BGR565, BGRA4444, or BGRA5551: " + filename);
 						}
-						flag2 = true;
-						uint rgbbitCount = ddsfile.Header.PixelFormat.RGBBitCount;
+						sixteenBit = true;
+						uint rgbbitCount = ddsFile.Header.PixelFormat.RGBBitCount;
 						if (rgbbitCount != 1984U)
 						{
 							if (rgbbitCount != 2016U)
@@ -199,23 +199,23 @@ namespace DNA.Drawing.Imaging
 								{
 									throw new TextureLoader.FormatException("Uncompressed DDS Surface format must be 32bit RGBA or ABGR, or  16 bit BGR565, BGRA4444, or BGRA5551: " + filename);
 								}
-								surfaceFormat = SurfaceFormat.Bgra4444;
+								format = SurfaceFormat.Bgra4444;
 							}
 							else
 							{
-								surfaceFormat = SurfaceFormat.Bgr565;
+								format = SurfaceFormat.Bgr565;
 							}
 						}
 						else
 						{
-							surfaceFormat = SurfaceFormat.Bgra5551;
+							format = SurfaceFormat.Bgra5551;
 						}
 					}
 				}
 				else
 				{
-					flag = true;
-					uint fourCC = ddsfile.Header.PixelFormat.FourCC;
+					dxtFormat = true;
+					uint fourCC = ddsFile.Header.PixelFormat.FourCC;
 					if (fourCC != 827611204U)
 					{
 						if (fourCC != 861165636U)
@@ -224,74 +224,74 @@ namespace DNA.Drawing.Imaging
 							{
 								throw new TextureLoader.FormatException("Compressed DDS Surface format must be DXT1, DXT3, DXT5: " + filename);
 							}
-							surfaceFormat = SurfaceFormat.Dxt5;
+							format = SurfaceFormat.Dxt5;
 						}
 						else
 						{
-							surfaceFormat = SurfaceFormat.Dxt3;
+							format = SurfaceFormat.Dxt3;
 						}
 					}
 					else
 					{
-						surfaceFormat = SurfaceFormat.Dxt1;
+						format = SurfaceFormat.Dxt1;
 					}
 				}
-				texture2D = new Texture2D(gd, (int)ddsfile.Header.Width, (int)ddsfile.Header.Height, ddsfile.Header.MipMapCount > 0U, surfaceFormat);
-				int num = (int)ddsfile.Header.Width;
-				int num2 = (int)ddsfile.Header.Height;
-				for (int i = 0; i < (int)(1U + ddsfile.Header.MipMapCount); i++)
+				result = new Texture2D(gd, (int)ddsFile.Header.Width, (int)ddsFile.Header.Height, ddsFile.Header.MipMapCount > 0U, format);
+				int width = (int)ddsFile.Header.Width;
+				int height = (int)ddsFile.Header.Height;
+				for (int i = 0; i < (int)(1U + ddsFile.Header.MipMapCount); i++)
 				{
-					if (flag)
+					if (dxtFormat)
 					{
-						int num3 = Math.Max(1, (num + 3) / 4) * Math.Max(1, (num2 + 3) / 4) * ((surfaceFormat == SurfaceFormat.Dxt1) ? 8 : 16);
-						byte[] array = binaryReader.ReadBytes(num3);
-						if (array.Length != 0)
+						int size = Math.Max(1, (width + 3) / 4) * Math.Max(1, (height + 3) / 4) * ((format == SurfaceFormat.Dxt1) ? 8 : 16);
+						byte[] byteData = reader.ReadBytes(size);
+						if (byteData.Length != 0)
 						{
-							texture2D.SetData<byte>(i, null, array, 0, array.Length);
+							result.SetData<byte>(i, null, byteData, 0, byteData.Length);
 						}
 					}
-					else if (flag2)
+					else if (sixteenBit)
 					{
-						int num3 = num * num2 * 2;
-						short[] array2 = new short[num3 / 2];
-						byte[] array = binaryReader.ReadBytes(num3);
-						if (array.Length != 0)
+						int size = width * height * 2;
+						short[] sdata = new short[size / 2];
+						byte[] byteData = reader.ReadBytes(size);
+						if (byteData.Length != 0)
 						{
-							Buffer.BlockCopy(array, 0, array2, 0, array.Length);
-							texture2D.SetData<short>(i, null, array2, 0, array2.Length);
+							Buffer.BlockCopy(byteData, 0, sdata, 0, byteData.Length);
+							result.SetData<short>(i, null, sdata, 0, sdata.Length);
 						}
 					}
 					else
 					{
-						int num3 = num * num2 * 4;
-						int[] array3 = new int[num3 / 4];
-						byte[] array = binaryReader.ReadBytes(num3);
-						if (array.Length != 0)
+						int size = width * height * 4;
+						int[] idata = new int[size / 4];
+						byte[] byteData = reader.ReadBytes(size);
+						if (byteData.Length != 0)
 						{
-							Buffer.BlockCopy(array, 0, array3, 0, array.Length);
-							texture2D.SetData<int>(i, null, array3, 0, array3.Length);
+							Buffer.BlockCopy(byteData, 0, idata, 0, byteData.Length);
+							result.SetData<int>(i, null, idata, 0, idata.Length);
 						}
 					}
-					num /= 2;
-					num2 /= 2;
+					width /= 2;
+					height /= 2;
 				}
 			}
-			return texture2D;
+			return result;
 		}
 
 		public static Texture2D LoadFromFile(GraphicsDevice gd, string filename, bool makeMipmaps, bool normalizeMipmaps)
 		{
-			string text = Path.GetExtension(filename).ToLower();
-			Texture2D texture2D;
-			if (text == ".dds")
+			string ext = Path.GetExtension(filename).ToLower();
+			Texture2D result;
+			if (ext == ".dds")
 			{
-				texture2D = TextureLoader.LoadFromDDS(gd, filename);
+				result = TextureLoader.LoadFromDDS(gd, filename);
 			}
 			else
 			{
-				texture2D = TextureLoader.LoadThroughBitmap(gd, filename, makeMipmaps, normalizeMipmaps);
+				result = TextureLoader.LoadThroughBitmap(gd, filename, makeMipmaps, normalizeMipmaps);
 			}
-			return texture2D;
+			return result;
 		}
 
 		private static int[] _mipmapOffsets = new int[] { 0, 1, 0, 1 };

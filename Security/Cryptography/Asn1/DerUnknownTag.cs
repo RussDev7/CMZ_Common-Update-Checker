@@ -49,8 +49,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerUnknownTag derUnknownTag = asn1Object as DerUnknownTag;
-			return derUnknownTag != null && (this.isConstructed == derUnknownTag.isConstructed && this.tag == derUnknownTag.tag) && Arrays.AreEqual(this.data, derUnknownTag.data);
+			DerUnknownTag other = asn1Object as DerUnknownTag;
+			return other != null && (this.isConstructed == other.isConstructed && this.tag == other.tag) && Arrays.AreEqual(this.data, other.data);
 		}
 
 		protected override int Asn1GetHashCode()

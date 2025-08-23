@@ -15,8 +15,8 @@ namespace DNA.Net.Lidgren
 
 		public bool PeekBoolean()
 		{
-			byte b = NetBitWriter.ReadByte(this.m_data, 1, this.m_readPosition);
-			return b > 0;
+			byte retval = NetBitWriter.ReadByte(this.m_data, 1, this.m_readPosition);
+			return retval > 0;
 		}
 
 		public byte PeekByte()
@@ -27,8 +27,8 @@ namespace DNA.Net.Lidgren
 		[CLSCompliant(false)]
 		public sbyte PeekSByte()
 		{
-			byte b = NetBitWriter.ReadByte(this.m_data, 8, this.m_readPosition);
-			return (sbyte)b;
+			byte retval = NetBitWriter.ReadByte(this.m_data, 8, this.m_readPosition);
+			return (sbyte)retval;
 		}
 
 		public byte PeekByte(int numberOfBits)
@@ -38,9 +38,9 @@ namespace DNA.Net.Lidgren
 
 		public byte[] PeekBytes(int numberOfBytes)
 		{
-			byte[] array = new byte[numberOfBytes];
-			NetBitWriter.ReadBytes(this.m_data, numberOfBytes, this.m_readPosition, array, 0);
-			return array;
+			byte[] retval = new byte[numberOfBytes];
+			NetBitWriter.ReadBytes(this.m_data, numberOfBytes, this.m_readPosition, retval, 0);
+			return retval;
 		}
 
 		public void PeekBytes(byte[] into, int offset, int numberOfBytes)
@@ -50,15 +50,15 @@ namespace DNA.Net.Lidgren
 
 		public short PeekInt16()
 		{
-			uint num = (uint)NetBitWriter.ReadUInt16(this.m_data, 16, this.m_readPosition);
-			return (short)num;
+			uint retval = (uint)NetBitWriter.ReadUInt16(this.m_data, 16, this.m_readPosition);
+			return (short)retval;
 		}
 
 		[CLSCompliant(false)]
 		public ushort PeekUInt16()
 		{
-			uint num = (uint)NetBitWriter.ReadUInt16(this.m_data, 16, this.m_readPosition);
-			return (ushort)num;
+			uint retval = (uint)NetBitWriter.ReadUInt16(this.m_data, 16, this.m_readPosition);
+			return (ushort)retval;
 		}
 
 		public int PeekInt32()
@@ -68,19 +68,19 @@ namespace DNA.Net.Lidgren
 
 		public int PeekInt32(int numberOfBits)
 		{
-			uint num = NetBitWriter.ReadUInt32(this.m_data, numberOfBits, this.m_readPosition);
+			uint retval = NetBitWriter.ReadUInt32(this.m_data, numberOfBits, this.m_readPosition);
 			if (numberOfBits == 32)
 			{
-				return (int)num;
+				return (int)retval;
 			}
-			int num2 = 1 << numberOfBits - 1;
-			if (((ulong)num & (ulong)((long)num2)) == 0UL)
+			int signBit = 1 << numberOfBits - 1;
+			if (((ulong)retval & (ulong)((long)signBit)) == 0UL)
 			{
-				return (int)num;
+				return (int)retval;
 			}
-			uint num3 = uint.MaxValue >> 33 - numberOfBits;
-			uint num4 = (num & num3) + 1U;
-			return (int)(-(int)num4);
+			uint mask = uint.MaxValue >> 33 - numberOfBits;
+			uint tmp = (retval & mask) + 1U;
+			return (int)(-(int)tmp);
 		}
 
 		[CLSCompliant(false)]
@@ -98,9 +98,9 @@ namespace DNA.Net.Lidgren
 		[CLSCompliant(false)]
 		public ulong PeekUInt64()
 		{
-			ulong num = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
-			ulong num2 = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition + 32);
-			return num + (num2 << 32);
+			ulong low = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
+			ulong high = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition + 32);
+			return low + (high << 32);
 		}
 
 		public long PeekInt64()
@@ -111,17 +111,17 @@ namespace DNA.Net.Lidgren
 		[CLSCompliant(false)]
 		public ulong PeekUInt64(int numberOfBits)
 		{
-			ulong num;
+			ulong retval;
 			if (numberOfBits <= 32)
 			{
-				num = (ulong)NetBitWriter.ReadUInt32(this.m_data, numberOfBits, this.m_readPosition);
+				retval = (ulong)NetBitWriter.ReadUInt32(this.m_data, numberOfBits, this.m_readPosition);
 			}
 			else
 			{
-				num = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
-				num |= (ulong)NetBitWriter.ReadUInt32(this.m_data, numberOfBits - 32, this.m_readPosition);
+				retval = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
+				retval |= (ulong)NetBitWriter.ReadUInt32(this.m_data, numberOfBits - 32, this.m_readPosition);
 			}
-			return num;
+			return retval;
 		}
 
 		public long PeekInt64(int numberOfBits)
@@ -140,8 +140,8 @@ namespace DNA.Net.Lidgren
 			{
 				return BitConverter.ToSingle(this.m_data, this.m_readPosition >> 3);
 			}
-			byte[] array = this.PeekBytes(4);
-			return BitConverter.ToSingle(array, 0);
+			byte[] bytes = this.PeekBytes(4);
+			return BitConverter.ToSingle(bytes, 0);
 		}
 
 		public double PeekDouble()
@@ -150,16 +150,16 @@ namespace DNA.Net.Lidgren
 			{
 				return BitConverter.ToDouble(this.m_data, this.m_readPosition >> 3);
 			}
-			byte[] array = this.PeekBytes(8);
-			return BitConverter.ToDouble(array, 0);
+			byte[] bytes = this.PeekBytes(8);
+			return BitConverter.ToDouble(bytes, 0);
 		}
 
 		public string PeekString()
 		{
-			int readPosition = this.m_readPosition;
-			string text = this.ReadString();
-			this.m_readPosition = readPosition;
-			return text;
+			int wasReadPosition = this.m_readPosition;
+			string retval = this.ReadString();
+			this.m_readPosition = wasReadPosition;
+			return retval;
 		}
 
 		public void ReadAllFields(object target)
@@ -173,16 +173,16 @@ namespace DNA.Net.Lidgren
 			{
 				return;
 			}
-			Type type = target.GetType();
-			FieldInfo[] fields = type.GetFields(flags);
+			Type tp = target.GetType();
+			FieldInfo[] fields = tp.GetFields(flags);
 			NetUtility.SortMembersList(fields);
-			foreach (FieldInfo fieldInfo in fields)
+			foreach (FieldInfo fi in fields)
 			{
-				MethodInfo methodInfo;
-				if (NetBuffer.s_readMethods.TryGetValue(fieldInfo.FieldType, out methodInfo))
+				MethodInfo readMethod;
+				if (NetBuffer.s_readMethods.TryGetValue(fi.FieldType, out readMethod))
 				{
-					object obj = methodInfo.Invoke(this, null);
-					fieldInfo.SetValue(target, obj);
+					object value = readMethod.Invoke(this, null);
+					fi.SetValue(target, value);
 				}
 			}
 		}
@@ -202,33 +202,33 @@ namespace DNA.Net.Lidgren
 			{
 				return;
 			}
-			Type type = target.GetType();
-			PropertyInfo[] properties = type.GetProperties(flags);
-			NetUtility.SortMembersList(properties);
-			foreach (PropertyInfo propertyInfo in properties)
+			Type tp = target.GetType();
+			PropertyInfo[] fields = tp.GetProperties(flags);
+			NetUtility.SortMembersList(fields);
+			foreach (PropertyInfo fi in fields)
 			{
-				MethodInfo methodInfo;
-				if (NetBuffer.s_readMethods.TryGetValue(propertyInfo.PropertyType, out methodInfo))
+				MethodInfo readMethod;
+				if (NetBuffer.s_readMethods.TryGetValue(fi.PropertyType, out readMethod))
 				{
-					object obj = methodInfo.Invoke(this, null);
-					MethodInfo setMethod = propertyInfo.GetSetMethod((flags & BindingFlags.NonPublic) == BindingFlags.NonPublic);
-					setMethod.Invoke(target, new object[] { obj });
+					object value = readMethod.Invoke(this, null);
+					MethodInfo setMethod = fi.GetSetMethod((flags & BindingFlags.NonPublic) == BindingFlags.NonPublic);
+					setMethod.Invoke(target, new object[] { value });
 				}
 			}
 		}
 
 		public bool ReadBoolean()
 		{
-			byte b = NetBitWriter.ReadByte(this.m_data, 1, this.m_readPosition);
+			byte retval = NetBitWriter.ReadByte(this.m_data, 1, this.m_readPosition);
 			this.m_readPosition++;
-			return b > 0;
+			return retval > 0;
 		}
 
 		public byte ReadByte()
 		{
-			byte b = NetBitWriter.ReadByte(this.m_data, 8, this.m_readPosition);
+			byte retval = NetBitWriter.ReadByte(this.m_data, 8, this.m_readPosition);
 			this.m_readPosition += 8;
-			return b;
+			return retval;
 		}
 
 		public bool ReadByte(out byte result)
@@ -246,24 +246,24 @@ namespace DNA.Net.Lidgren
 		[CLSCompliant(false)]
 		public sbyte ReadSByte()
 		{
-			byte b = NetBitWriter.ReadByte(this.m_data, 8, this.m_readPosition);
+			byte retval = NetBitWriter.ReadByte(this.m_data, 8, this.m_readPosition);
 			this.m_readPosition += 8;
-			return (sbyte)b;
+			return (sbyte)retval;
 		}
 
 		public byte ReadByte(int numberOfBits)
 		{
-			byte b = NetBitWriter.ReadByte(this.m_data, numberOfBits, this.m_readPosition);
+			byte retval = NetBitWriter.ReadByte(this.m_data, numberOfBits, this.m_readPosition);
 			this.m_readPosition += numberOfBits;
-			return b;
+			return retval;
 		}
 
 		public byte[] ReadBytes(int numberOfBytes)
 		{
-			byte[] array = new byte[numberOfBytes];
-			NetBitWriter.ReadBytes(this.m_data, numberOfBytes, this.m_readPosition, array, 0);
+			byte[] retval = new byte[numberOfBytes];
+			NetBitWriter.ReadBytes(this.m_data, numberOfBytes, this.m_readPosition, retval, 0);
 			this.m_readPosition += 8 * numberOfBytes;
-			return array;
+			return retval;
 		}
 
 		public bool ReadBytes(int numberOfBytes, out byte[] result)
@@ -300,36 +300,36 @@ namespace DNA.Net.Lidgren
 
 		public void ReadBits(byte[] into, int offset, int numberOfBits)
 		{
-			int num = numberOfBits / 8;
-			int num2 = numberOfBits - num * 8;
-			NetBitWriter.ReadBytes(this.m_data, num, this.m_readPosition, into, offset);
-			this.m_readPosition += 8 * num;
-			if (num2 > 0)
+			int numberOfWholeBytes = numberOfBits / 8;
+			int extraBits = numberOfBits - numberOfWholeBytes * 8;
+			NetBitWriter.ReadBytes(this.m_data, numberOfWholeBytes, this.m_readPosition, into, offset);
+			this.m_readPosition += 8 * numberOfWholeBytes;
+			if (extraBits > 0)
 			{
-				into[offset + num] = this.ReadByte(num2);
+				into[offset + numberOfWholeBytes] = this.ReadByte(extraBits);
 			}
 		}
 
 		public short ReadInt16()
 		{
-			uint num = (uint)NetBitWriter.ReadUInt16(this.m_data, 16, this.m_readPosition);
+			uint retval = (uint)NetBitWriter.ReadUInt16(this.m_data, 16, this.m_readPosition);
 			this.m_readPosition += 16;
-			return (short)num;
+			return (short)retval;
 		}
 
 		[CLSCompliant(false)]
 		public ushort ReadUInt16()
 		{
-			uint num = (uint)NetBitWriter.ReadUInt16(this.m_data, 16, this.m_readPosition);
+			uint retval = (uint)NetBitWriter.ReadUInt16(this.m_data, 16, this.m_readPosition);
 			this.m_readPosition += 16;
-			return (ushort)num;
+			return (ushort)retval;
 		}
 
 		public int ReadInt32()
 		{
-			uint num = NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
+			uint retval = NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
 			this.m_readPosition += 32;
-			return (int)num;
+			return (int)retval;
 		}
 
 		[CLSCompliant(false)]
@@ -347,28 +347,28 @@ namespace DNA.Net.Lidgren
 
 		public int ReadInt32(int numberOfBits)
 		{
-			uint num = NetBitWriter.ReadUInt32(this.m_data, numberOfBits, this.m_readPosition);
+			uint retval = NetBitWriter.ReadUInt32(this.m_data, numberOfBits, this.m_readPosition);
 			this.m_readPosition += numberOfBits;
 			if (numberOfBits == 32)
 			{
-				return (int)num;
+				return (int)retval;
 			}
-			int num2 = 1 << numberOfBits - 1;
-			if (((ulong)num & (ulong)((long)num2)) == 0UL)
+			int signBit = 1 << numberOfBits - 1;
+			if (((ulong)retval & (ulong)((long)signBit)) == 0UL)
 			{
-				return (int)num;
+				return (int)retval;
 			}
-			uint num3 = uint.MaxValue >> 33 - numberOfBits;
-			uint num4 = (num & num3) + 1U;
-			return (int)(-(int)num4);
+			uint mask = uint.MaxValue >> 33 - numberOfBits;
+			uint tmp = (retval & mask) + 1U;
+			return (int)(-(int)tmp);
 		}
 
 		[CLSCompliant(false)]
 		public uint ReadUInt32()
 		{
-			uint num = NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
+			uint retval = NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
 			this.m_readPosition += 32;
-			return num;
+			return retval;
 		}
 
 		[CLSCompliant(false)]
@@ -387,20 +387,20 @@ namespace DNA.Net.Lidgren
 		[CLSCompliant(false)]
 		public uint ReadUInt32(int numberOfBits)
 		{
-			uint num = NetBitWriter.ReadUInt32(this.m_data, numberOfBits, this.m_readPosition);
+			uint retval = NetBitWriter.ReadUInt32(this.m_data, numberOfBits, this.m_readPosition);
 			this.m_readPosition += numberOfBits;
-			return num;
+			return retval;
 		}
 
 		[CLSCompliant(false)]
 		public ulong ReadUInt64()
 		{
-			ulong num = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
+			ulong low = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
 			this.m_readPosition += 32;
-			ulong num2 = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
-			ulong num3 = num + (num2 << 32);
+			ulong high = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
+			ulong retval = low + (high << 32);
 			this.m_readPosition += 32;
-			return num3;
+			return retval;
 		}
 
 		public long ReadInt64()
@@ -411,18 +411,18 @@ namespace DNA.Net.Lidgren
 		[CLSCompliant(false)]
 		public ulong ReadUInt64(int numberOfBits)
 		{
-			ulong num;
+			ulong retval;
 			if (numberOfBits <= 32)
 			{
-				num = (ulong)NetBitWriter.ReadUInt32(this.m_data, numberOfBits, this.m_readPosition);
+				retval = (ulong)NetBitWriter.ReadUInt32(this.m_data, numberOfBits, this.m_readPosition);
 			}
 			else
 			{
-				num = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
-				num |= (ulong)NetBitWriter.ReadUInt32(this.m_data, numberOfBits - 32, this.m_readPosition);
+				retval = (ulong)NetBitWriter.ReadUInt32(this.m_data, 32, this.m_readPosition);
+				retval |= (ulong)NetBitWriter.ReadUInt32(this.m_data, numberOfBits - 32, this.m_readPosition);
 			}
 			this.m_readPosition += numberOfBits;
-			return num;
+			return retval;
 		}
 
 		public long ReadInt64(int numberOfBits)
@@ -439,12 +439,12 @@ namespace DNA.Net.Lidgren
 		{
 			if ((this.m_readPosition & 7) == 0)
 			{
-				float num = BitConverter.ToSingle(this.m_data, this.m_readPosition >> 3);
+				float retval = BitConverter.ToSingle(this.m_data, this.m_readPosition >> 3);
 				this.m_readPosition += 32;
-				return num;
+				return retval;
 			}
-			byte[] array = this.ReadBytes(4);
-			return BitConverter.ToSingle(array, 0);
+			byte[] bytes = this.ReadBytes(4);
+			return BitConverter.ToSingle(bytes, 0);
 		}
 
 		public bool ReadSingle(out float result)
@@ -460,8 +460,8 @@ namespace DNA.Net.Lidgren
 				this.m_readPosition += 32;
 				return true;
 			}
-			byte[] array = this.ReadBytes(4);
-			result = BitConverter.ToSingle(array, 0);
+			byte[] bytes = this.ReadBytes(4);
+			result = BitConverter.ToSingle(bytes, 0);
 			return true;
 		}
 
@@ -469,12 +469,12 @@ namespace DNA.Net.Lidgren
 		{
 			if ((this.m_readPosition & 7) == 0)
 			{
-				double num = BitConverter.ToDouble(this.m_data, this.m_readPosition >> 3);
+				double retval = BitConverter.ToDouble(this.m_data, this.m_readPosition >> 3);
 				this.m_readPosition += 64;
-				return num;
+				return retval;
 			}
-			byte[] array = this.ReadBytes(8);
-			return BitConverter.ToDouble(array, 0);
+			byte[] bytes = this.ReadBytes(8);
+			return BitConverter.ToDouble(bytes, 0);
 		}
 
 		[CLSCompliant(false)]
@@ -482,14 +482,14 @@ namespace DNA.Net.Lidgren
 		{
 			int num = 0;
 			int num2 = 0;
-			byte b;
+			byte num3;
 			do
 			{
-				b = this.ReadByte();
-				num |= (int)(b & 127) << num2;
+				num3 = this.ReadByte();
+				num |= (int)(num3 & 127) << num2;
 				num2 += 7;
 			}
-			while ((b & 128) != 0);
+			while ((num3 & 128) != 0);
 			return (uint)num;
 		}
 
@@ -498,12 +498,12 @@ namespace DNA.Net.Lidgren
 		{
 			int num = 0;
 			int num2 = 0;
-			byte b;
-			while (this.ReadByte(out b))
+			byte num3;
+			while (this.ReadByte(out num3))
 			{
-				num |= (int)(b & 127) << num2;
+				num |= (int)(num3 & 127) << num2;
 				num2 += 7;
-				if ((b & 128) == 0)
+				if ((num3 & 128) == 0)
 				{
 					result = (uint)num;
 					return true;
@@ -515,14 +515,14 @@ namespace DNA.Net.Lidgren
 
 		public int ReadVariableInt32()
 		{
-			uint num = this.ReadVariableUInt32();
-			return (int)((num >> 1) ^ -(int)(num & 1U));
+			uint i = this.ReadVariableUInt32();
+			return (int)((i >> 1) ^ -(int)(i & 1U));
 		}
 
 		public long ReadVariableInt64()
 		{
-			ulong num = this.ReadVariableUInt64();
-			return (long)((num >> 1) ^ -(long)(num & 1UL));
+			ulong i = this.ReadVariableUInt64();
+			return (long)((i >> 1) ^ -(long)(i & 1UL));
 		}
 
 		[CLSCompliant(false)]
@@ -530,116 +530,116 @@ namespace DNA.Net.Lidgren
 		{
 			ulong num = 0UL;
 			int num2 = 0;
-			byte b;
+			byte num3;
 			do
 			{
-				b = this.ReadByte();
-				num |= ((ulong)b & 127UL) << num2;
+				num3 = this.ReadByte();
+				num |= ((ulong)num3 & 127UL) << num2;
 				num2 += 7;
 			}
-			while ((b & 128) != 0);
+			while ((num3 & 128) != 0);
 			return num;
 		}
 
 		public float ReadSignedSingle(int numberOfBits)
 		{
-			uint num = this.ReadUInt32(numberOfBits);
-			int num2 = (1 << numberOfBits) - 1;
-			return ((num + 1U) / (float)(num2 + 1) - 0.5f) * 2f;
+			uint encodedVal = this.ReadUInt32(numberOfBits);
+			int maxVal = (1 << numberOfBits) - 1;
+			return ((encodedVal + 1U) / (float)(maxVal + 1) - 0.5f) * 2f;
 		}
 
 		public float ReadUnitSingle(int numberOfBits)
 		{
-			uint num = this.ReadUInt32(numberOfBits);
-			int num2 = (1 << numberOfBits) - 1;
-			return (num + 1U) / (float)(num2 + 1);
+			uint encodedVal = this.ReadUInt32(numberOfBits);
+			int maxVal = (1 << numberOfBits) - 1;
+			return (encodedVal + 1U) / (float)(maxVal + 1);
 		}
 
 		public float ReadRangedSingle(float min, float max, int numberOfBits)
 		{
-			float num = max - min;
-			int num2 = (1 << numberOfBits) - 1;
-			float num3 = this.ReadUInt32(numberOfBits);
-			float num4 = num3 / (float)num2;
-			return min + num4 * num;
+			float range = max - min;
+			int maxVal = (1 << numberOfBits) - 1;
+			float encodedVal = this.ReadUInt32(numberOfBits);
+			float unit = encodedVal / (float)maxVal;
+			return min + unit * range;
 		}
 
 		public int ReadRangedInteger(int min, int max)
 		{
-			uint num = (uint)(max - min);
-			int num2 = NetUtility.BitsToHoldUInt(num);
-			uint num3 = this.ReadUInt32(num2);
-			return (int)((long)min + (long)((ulong)num3));
+			uint range = (uint)(max - min);
+			int numBits = NetUtility.BitsToHoldUInt(range);
+			uint rvalue = this.ReadUInt32(numBits);
+			return (int)((long)min + (long)((ulong)rvalue));
 		}
 
 		public string ReadString()
 		{
-			int num = (int)this.ReadVariableUInt32();
-			if (num == 0)
+			int byteLen = (int)this.ReadVariableUInt32();
+			if (byteLen == 0)
 			{
 				return string.Empty;
 			}
 			if ((this.m_readPosition & 7) == 0)
 			{
-				string @string = Encoding.UTF8.GetString(this.m_data, this.m_readPosition >> 3, num);
-				this.m_readPosition += 8 * num;
-				return @string;
+				string retval = Encoding.UTF8.GetString(this.m_data, this.m_readPosition >> 3, byteLen);
+				this.m_readPosition += 8 * byteLen;
+				return retval;
 			}
-			byte[] array = this.ReadBytes(num);
-			return Encoding.UTF8.GetString(array, 0, array.Length);
+			byte[] bytes = this.ReadBytes(byteLen);
+			return Encoding.UTF8.GetString(bytes, 0, bytes.Length);
 		}
 
 		public bool ReadString(out string result)
 		{
-			uint num;
-			if (!this.ReadVariableUInt32(out num))
+			uint byteLen;
+			if (!this.ReadVariableUInt32(out byteLen))
 			{
 				result = string.Empty;
 				return false;
 			}
-			if (num == 0U)
+			if (byteLen == 0U)
 			{
 				result = string.Empty;
 				return true;
 			}
-			if ((long)(this.m_bitLength - this.m_readPosition) < (long)((ulong)(num * 8U)))
+			if ((long)(this.m_bitLength - this.m_readPosition) < (long)((ulong)(byteLen * 8U)))
 			{
 				result = string.Empty;
 				return false;
 			}
 			if ((this.m_readPosition & 7) == 0)
 			{
-				result = Encoding.UTF8.GetString(this.m_data, this.m_readPosition >> 3, (int)num);
-				this.m_readPosition += (int)(8U * num);
+				result = Encoding.UTF8.GetString(this.m_data, this.m_readPosition >> 3, (int)byteLen);
+				this.m_readPosition += (int)(8U * byteLen);
 				return true;
 			}
-			byte[] array;
-			if (!this.ReadBytes((int)num, out array))
+			byte[] bytes;
+			if (!this.ReadBytes((int)byteLen, out bytes))
 			{
 				result = string.Empty;
 				return false;
 			}
-			result = Encoding.UTF8.GetString(array, 0, array.Length);
+			result = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
 			return true;
 		}
 
 		public double ReadTime(NetConnection connection, bool highPrecision)
 		{
-			double num = (highPrecision ? this.ReadDouble() : ((double)this.ReadSingle()));
+			double remoteTime = (highPrecision ? this.ReadDouble() : ((double)this.ReadSingle()));
 			if (connection == null)
 			{
 				throw new NetException("Cannot call ReadTime() on message without a connected sender (ie. unconnected messages)");
 			}
-			return num - connection.m_remoteTimeOffset;
+			return remoteTime - connection.m_remoteTimeOffset;
 		}
 
 		public IPEndPoint ReadIPEndPoint()
 		{
-			byte b = this.ReadByte();
-			byte[] array = this.ReadBytes((int)b);
-			int num = (int)this.ReadUInt16();
-			IPAddress ipaddress = new IPAddress(array);
-			return new IPEndPoint(ipaddress, num);
+			byte len = this.ReadByte();
+			byte[] addressBytes = this.ReadBytes((int)len);
+			int port = (int)this.ReadUInt16();
+			IPAddress address = new IPAddress(addressBytes);
+			return new IPEndPoint(address, port);
 		}
 
 		public void SkipPadBits()
@@ -659,29 +659,29 @@ namespace DNA.Net.Lidgren
 
 		public void EnsureBufferSize(int numberOfBits)
 		{
-			int num = numberOfBits + 7 >> 3;
+			int byteLen = numberOfBits + 7 >> 3;
 			if (this.m_data == null)
 			{
-				this.m_data = new byte[num + 4];
+				this.m_data = new byte[byteLen + 4];
 				return;
 			}
-			if (this.m_data.Length < num)
+			if (this.m_data.Length < byteLen)
 			{
-				Array.Resize<byte>(ref this.m_data, num + 4);
+				Array.Resize<byte>(ref this.m_data, byteLen + 4);
 			}
 		}
 
 		internal void InternalEnsureBufferSize(int numberOfBits)
 		{
-			int num = numberOfBits + 7 >> 3;
+			int byteLen = numberOfBits + 7 >> 3;
 			if (this.m_data == null)
 			{
-				this.m_data = new byte[num];
+				this.m_data = new byte[byteLen];
 				return;
 			}
-			if (this.m_data.Length < num)
+			if (this.m_data.Length < byteLen)
 			{
-				Array.Resize<byte>(ref this.m_data, num);
+				Array.Resize<byte>(ref this.m_data, byteLen);
 			}
 		}
 
@@ -720,10 +720,10 @@ namespace DNA.Net.Lidgren
 			{
 				throw new ArgumentNullException("source");
 			}
-			int num = source.Length * 8;
-			this.EnsureBufferSize(this.m_bitLength + num);
+			int bits = source.Length * 8;
+			this.EnsureBufferSize(this.m_bitLength + bits);
 			NetBitWriter.WriteBytes(source, 0, source.Length, this.m_data, this.m_bitLength);
-			this.m_bitLength += num;
+			this.m_bitLength += bits;
 		}
 
 		public void Write(byte[] source, int offsetInBytes, int numberOfBytes)
@@ -732,10 +732,10 @@ namespace DNA.Net.Lidgren
 			{
 				throw new ArgumentNullException("source");
 			}
-			int num = numberOfBytes * 8;
-			this.EnsureBufferSize(this.m_bitLength + num);
+			int bits = numberOfBytes * 8;
+			this.EnsureBufferSize(this.m_bitLength + bits);
 			NetBitWriter.WriteBytes(source, offsetInBytes, numberOfBytes, this.m_data, this.m_bitLength);
-			this.m_bitLength += num;
+			this.m_bitLength += bits;
 		}
 
 		public void CopyBytesFrom(NetBuffer src, int numberOfBytes)
@@ -744,8 +744,8 @@ namespace DNA.Net.Lidgren
 			{
 				throw new ArgumentNullException("source");
 			}
-			int num = numberOfBytes * 8;
-			this.EnsureBufferSize(this.m_bitLength + num);
+			int bits = numberOfBytes * 8;
+			this.EnsureBufferSize(this.m_bitLength + bits);
 			if (src.m_bitLength - src.m_readPosition + 7 < numberOfBytes * 8)
 			{
 				return;
@@ -757,10 +757,10 @@ namespace DNA.Net.Lidgren
 				this.m_bitLength += numberOfBytes * 8;
 				return;
 			}
-			byte[] array = src.ReadBytes(numberOfBytes);
-			if (array != null)
+			byte[] source = src.ReadBytes(numberOfBytes);
+			if (source != null)
 			{
-				NetBitWriter.WriteBytes(array, 0, numberOfBytes, this.m_data, this.m_bitLength);
+				NetBitWriter.WriteBytes(source, 0, numberOfBytes, this.m_data, this.m_bitLength);
 				this.m_bitLength += numberOfBytes * 8;
 			}
 		}
@@ -816,14 +816,14 @@ namespace DNA.Net.Lidgren
 			this.EnsureBufferSize(this.m_bitLength + numberOfBits);
 			if (numberOfBits != 32)
 			{
-				int num = 1 << numberOfBits - 1;
+				int signBit = 1 << numberOfBits - 1;
 				if (source < 0)
 				{
-					source = (-source - 1) | num;
+					source = (-source - 1) | signBit;
 				}
 				else
 				{
-					source &= ~num;
+					source &= ~signBit;
 				}
 			}
 			NetBitWriter.WriteUInt32((uint)source, numberOfBits, this.m_data, this.m_bitLength);
@@ -862,90 +862,90 @@ namespace DNA.Net.Lidgren
 
 		public void Write(float source)
 		{
-			SingleUIntUnion singleUIntUnion;
-			singleUIntUnion.UIntValue = 0U;
-			singleUIntUnion.SingleValue = source;
-			this.Write(singleUIntUnion.UIntValue);
+			SingleUIntUnion su;
+			su.UIntValue = 0U;
+			su.SingleValue = source;
+			this.Write(su.UIntValue);
 		}
 
 		public void Write(double source)
 		{
-			byte[] bytes = BitConverter.GetBytes(source);
-			this.Write(bytes);
+			byte[] val = BitConverter.GetBytes(source);
+			this.Write(val);
 		}
 
 		[CLSCompliant(false)]
 		public int WriteVariableUInt32(uint value)
 		{
-			int num = 1;
-			uint num2 = value;
-			while (num2 >= 128U)
+			int retval = 1;
+			uint num = value;
+			while (num >= 128U)
 			{
-				this.Write((byte)(num2 | 128U));
-				num2 >>= 7;
-				num++;
+				this.Write((byte)(num | 128U));
+				num >>= 7;
+				retval++;
 			}
-			this.Write((byte)num2);
-			return num;
+			this.Write((byte)num);
+			return retval;
 		}
 
 		public int WriteVariableInt32(int value)
 		{
-			uint num = (uint)((value << 1) ^ (value >> 31));
-			return this.WriteVariableUInt32(num);
+			uint zigzag = (uint)((value << 1) ^ (value >> 31));
+			return this.WriteVariableUInt32(zigzag);
 		}
 
 		public int WriteVariableInt64(long value)
 		{
-			ulong num = (ulong)((value << 1) ^ (value >> 63));
-			return this.WriteVariableUInt64(num);
+			ulong zigzag = (ulong)((value << 1) ^ (value >> 63));
+			return this.WriteVariableUInt64(zigzag);
 		}
 
 		[CLSCompliant(false)]
 		public int WriteVariableUInt64(ulong value)
 		{
-			int num = 1;
-			ulong num2 = value;
-			while (num2 >= 128UL)
+			int retval = 1;
+			ulong num = value;
+			while (num >= 128UL)
 			{
-				this.Write((byte)(num2 | 128UL));
-				num2 >>= 7;
-				num++;
+				this.Write((byte)(num | 128UL));
+				num >>= 7;
+				retval++;
 			}
-			this.Write((byte)num2);
-			return num;
+			this.Write((byte)num);
+			return retval;
 		}
 
 		public void WriteSignedSingle(float value, int numberOfBits)
 		{
-			float num = (value + 1f) * 0.5f;
-			int num2 = (1 << numberOfBits) - 1;
-			uint num3 = (uint)(num * (float)num2);
-			this.Write(num3, numberOfBits);
+			float unit = (value + 1f) * 0.5f;
+			int maxVal = (1 << numberOfBits) - 1;
+			uint writeVal = (uint)(unit * (float)maxVal);
+			this.Write(writeVal, numberOfBits);
 		}
 
 		public void WriteUnitSingle(float value, int numberOfBits)
 		{
-			int num = (1 << numberOfBits) - 1;
-			uint num2 = (uint)(value * (float)num);
-			this.Write(num2, numberOfBits);
+			int maxValue = (1 << numberOfBits) - 1;
+			uint writeVal = (uint)(value * (float)maxValue);
+			this.Write(writeVal, numberOfBits);
 		}
 
 		public void WriteRangedSingle(float value, float min, float max, int numberOfBits)
 		{
-			float num = max - min;
-			float num2 = (value - min) / num;
-			int num3 = (1 << numberOfBits) - 1;
-			this.Write((uint)((float)num3 * num2), numberOfBits);
+			float range = max - min;
+			float unit = (value - min) / range;
+			int maxVal = (1 << numberOfBits) - 1;
+			this.Write((uint)((float)maxVal * unit), numberOfBits);
 		}
 
 		public int WriteRangedInteger(int min, int max, int value)
 		{
-			uint num = (uint)(max - min);
-			int num2 = NetUtility.BitsToHoldUInt(num);
-			uint num3 = (uint)(value - min);
-			this.Write(num3, num2);
-			return num2;
+			uint range = (uint)(max - min);
+			int numBits = NetUtility.BitsToHoldUInt(range);
+			uint rvalue = (uint)(value - min);
+			this.Write(rvalue, numBits);
+			return numBits;
 		}
 
 		public void Write(string source)
@@ -964,21 +964,21 @@ namespace DNA.Net.Lidgren
 
 		public void Write(IPEndPoint endPoint)
 		{
-			byte[] addressBytes = endPoint.Address.GetAddressBytes();
-			this.Write((byte)addressBytes.Length);
-			this.Write(addressBytes);
+			byte[] bytes = endPoint.Address.GetAddressBytes();
+			this.Write((byte)bytes.Length);
+			this.Write(bytes);
 			this.Write((ushort)endPoint.Port);
 		}
 
 		public void WriteTime(bool highPrecision)
 		{
-			double now = NetTime.Now;
+			double localTime = NetTime.Now;
 			if (highPrecision)
 			{
-				this.Write(now);
+				this.Write(localTime);
 				return;
 			}
-			this.Write((float)now);
+			this.Write((float)localTime);
 		}
 
 		public void WriteTime(double localTime, bool highPrecision)
@@ -1007,11 +1007,11 @@ namespace DNA.Net.Lidgren
 		{
 			this.EnsureBufferSize(this.m_bitLength + message.LengthBytes * 8);
 			this.Write(message.m_data, 0, message.LengthBytes);
-			int num = message.m_bitLength % 8;
-			if (num != 0)
+			int bitsInLastByte = message.m_bitLength % 8;
+			if (bitsInLastByte != 0)
 			{
-				int num2 = 8 - num;
-				this.m_bitLength -= num2;
+				int excessBits = 8 - bitsInLastByte;
+				this.m_bitLength -= excessBits;
 			}
 		}
 
@@ -1019,11 +1019,11 @@ namespace DNA.Net.Lidgren
 		{
 			this.EnsureBufferSize(this.m_bitLength + message.LengthBytes * 8);
 			this.Write(message.m_data, 0, message.LengthBytes);
-			int num = message.m_bitLength % 8;
-			if (num != 0)
+			int bitsInLastByte = message.m_bitLength % 8;
+			if (bitsInLastByte != 0)
 			{
-				int num2 = 8 - num;
-				this.m_bitLength -= num2;
+				int excessBits = 8 - bitsInLastByte;
+				this.m_bitLength -= excessBits;
 			}
 		}
 
@@ -1089,24 +1089,24 @@ namespace DNA.Net.Lidgren
 		{
 			typeof(byte).Assembly.GetTypes();
 			NetBuffer.s_readMethods = new Dictionary<Type, MethodInfo>();
-			MethodInfo[] array = typeof(NetIncomingMessage).GetMethods(BindingFlags.Instance | BindingFlags.Public);
-			foreach (MethodInfo methodInfo in array)
+			MethodInfo[] methods = typeof(NetIncomingMessage).GetMethods(BindingFlags.Instance | BindingFlags.Public);
+			foreach (MethodInfo mi in methods)
 			{
-				if (methodInfo.GetParameters().Length == 0 && methodInfo.Name.StartsWith("Read", StringComparison.InvariantCulture) && methodInfo.Name.Substring(4) == methodInfo.ReturnType.Name)
+				if (mi.GetParameters().Length == 0 && mi.Name.StartsWith("Read", StringComparison.InvariantCulture) && mi.Name.Substring(4) == mi.ReturnType.Name)
 				{
-					NetBuffer.s_readMethods[methodInfo.ReturnType] = methodInfo;
+					NetBuffer.s_readMethods[mi.ReturnType] = mi;
 				}
 			}
 			NetBuffer.s_writeMethods = new Dictionary<Type, MethodInfo>();
-			array = typeof(NetOutgoingMessage).GetMethods(BindingFlags.Instance | BindingFlags.Public);
-			foreach (MethodInfo methodInfo2 in array)
+			methods = typeof(NetOutgoingMessage).GetMethods(BindingFlags.Instance | BindingFlags.Public);
+			foreach (MethodInfo mi2 in methods)
 			{
-				if (methodInfo2.Name.Equals("Write", StringComparison.InvariantCulture))
+				if (mi2.Name.Equals("Write", StringComparison.InvariantCulture))
 				{
-					ParameterInfo[] parameters = methodInfo2.GetParameters();
-					if (parameters.Length == 1)
+					ParameterInfo[] pis = mi2.GetParameters();
+					if (pis.Length == 1)
 					{
-						NetBuffer.s_writeMethods[parameters[0].ParameterType] = methodInfo2;
+						NetBuffer.s_writeMethods[pis[0].ParameterType] = mi2;
 					}
 				}
 			}
@@ -1123,18 +1123,18 @@ namespace DNA.Net.Lidgren
 			{
 				return;
 			}
-			Type type = ob.GetType();
-			FieldInfo[] fields = type.GetFields(flags);
+			Type tp = ob.GetType();
+			FieldInfo[] fields = tp.GetFields(flags);
 			NetUtility.SortMembersList(fields);
-			foreach (FieldInfo fieldInfo in fields)
+			foreach (FieldInfo fi in fields)
 			{
-				object value = fieldInfo.GetValue(ob);
-				MethodInfo methodInfo;
-				if (!NetBuffer.s_writeMethods.TryGetValue(fieldInfo.FieldType, out methodInfo))
+				object value = fi.GetValue(ob);
+				MethodInfo writeMethod;
+				if (!NetBuffer.s_writeMethods.TryGetValue(fi.FieldType, out writeMethod))
 				{
-					throw new NetException("Failed to find write method for type " + fieldInfo.FieldType);
+					throw new NetException("Failed to find write method for type " + fi.FieldType);
 				}
-				methodInfo.Invoke(this, new object[] { value });
+				writeMethod.Invoke(this, new object[] { value });
 			}
 		}
 
@@ -1149,17 +1149,17 @@ namespace DNA.Net.Lidgren
 			{
 				return;
 			}
-			Type type = ob.GetType();
-			PropertyInfo[] properties = type.GetProperties(flags);
-			NetUtility.SortMembersList(properties);
-			foreach (PropertyInfo propertyInfo in properties)
+			Type tp = ob.GetType();
+			PropertyInfo[] fields = tp.GetProperties(flags);
+			NetUtility.SortMembersList(fields);
+			foreach (PropertyInfo fi in fields)
 			{
-				MethodInfo getMethod = propertyInfo.GetGetMethod((flags & BindingFlags.NonPublic) == BindingFlags.NonPublic);
-				object obj = getMethod.Invoke(ob, null);
-				MethodInfo methodInfo;
-				if (NetBuffer.s_writeMethods.TryGetValue(propertyInfo.PropertyType, out methodInfo))
+				MethodInfo getMethod = fi.GetGetMethod((flags & BindingFlags.NonPublic) == BindingFlags.NonPublic);
+				object value = getMethod.Invoke(ob, null);
+				MethodInfo writeMethod;
+				if (NetBuffer.s_writeMethods.TryGetValue(fi.PropertyType, out writeMethod))
 				{
-					methodInfo.Invoke(this, new object[] { obj });
+					writeMethod.Invoke(this, new object[] { value });
 				}
 			}
 		}

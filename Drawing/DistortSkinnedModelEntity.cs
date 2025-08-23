@@ -47,22 +47,22 @@ namespace DNA.Drawing
 		{
 			this._backgroundImage = backgroundImage;
 			this.AlphaSort = true;
-			foreach (ModelMesh modelMesh in model.Meshes)
+			foreach (ModelMesh mesh in model.Meshes)
 			{
-				foreach (ModelMeshPart modelMeshPart in modelMesh.MeshParts)
+				foreach (ModelMeshPart part in mesh.MeshParts)
 				{
-					modelMeshPart.Effect = new DistortSkinnedEffect(game);
+					part.Effect = new DistortSkinnedEffect(game);
 				}
 			}
 		}
 
 		protected override bool SetEffectParams(ModelMesh mesh, Effect effect, GameTime gameTime, Matrix world, Matrix view, Matrix projection)
 		{
-			DistortSkinnedEffect distortSkinnedEffect = (DistortSkinnedEffect)effect;
-			distortSkinnedEffect.Texture = this._backgroundImage;
-			distortSkinnedEffect.SetBoneTransforms(this._skinTransforms);
-			distortSkinnedEffect.DistortionScale = this._distortionScale;
-			distortSkinnedEffect.Blur = this._blur;
+			DistortSkinnedEffect deffect = (DistortSkinnedEffect)effect;
+			deffect.Texture = this._backgroundImage;
+			deffect.SetBoneTransforms(this._skinTransforms);
+			deffect.DistortionScale = this._distortionScale;
+			deffect.Blur = this._blur;
 			return base.SetEffectParams(mesh, effect, gameTime, world, view, projection);
 		}
 

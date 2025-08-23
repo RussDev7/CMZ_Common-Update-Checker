@@ -67,15 +67,15 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerNumericString derNumericString = asn1Object as DerNumericString;
-			return derNumericString != null && this.str.Equals(derNumericString.str);
+			DerNumericString other = asn1Object as DerNumericString;
+			return other != null && this.str.Equals(other.str);
 		}
 
 		public static bool IsNumericString(string str)
 		{
-			foreach (char c in str)
+			foreach (char ch in str)
 			{
-				if (c > '\u007f' || (c != ' ' && !char.IsDigit(c)))
+				if (ch > '\u007f' || (ch != ' ' && !char.IsDigit(ch)))
 				{
 					return false;
 				}

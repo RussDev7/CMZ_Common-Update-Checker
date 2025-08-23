@@ -8,9 +8,9 @@ namespace DNA.IO
 	{
 		public static void ReadFile(this Stream destination, string sourcePath)
 		{
-			using (FileStream fileStream = File.Open(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+			using (FileStream stream = File.Open(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				destination.CopyStream(fileStream);
+				destination.CopyStream(stream);
 			}
 		}
 
@@ -40,41 +40,41 @@ namespace DNA.IO
 			{
 				return;
 			}
-			byte[] array = new byte[4096];
-			int i = (int)(stream.Length - stream.Position);
+			byte[] buffer = new byte[4096];
+			int bytesLeft = (int)(stream.Length - stream.Position);
 			if (shiftBytes > 0)
 			{
-				long num = stream.Length;
+				long position = stream.Length;
 				stream.SetLength(stream.Length + (long)shiftBytes);
-				while (i > 4096)
+				while (bytesLeft > 4096)
 				{
-					stream.Position = num - 4096L;
-					stream.Read(array, 0, 4096);
-					stream.Position = num + (long)shiftBytes;
-					stream.Write(array, 0, 4096);
-					num -= 4096L;
-					i -= i;
+					stream.Position = position - 4096L;
+					stream.Read(buffer, 0, 4096);
+					stream.Position = position + (long)shiftBytes;
+					stream.Write(buffer, 0, 4096);
+					position -= 4096L;
+					bytesLeft -= bytesLeft;
 				}
-				stream.Position = num - (long)i;
-				stream.Read(array, 0, i);
-				stream.Position = num + (long)shiftBytes;
-				stream.Write(array, 0, i);
+				stream.Position = position - (long)bytesLeft;
+				stream.Read(buffer, 0, bytesLeft);
+				stream.Position = position + (long)shiftBytes;
+				stream.Write(buffer, 0, bytesLeft);
 				return;
 			}
-			long num2 = stream.Position;
-			while (i > 4096)
+			long position2 = stream.Position;
+			while (bytesLeft > 4096)
 			{
-				stream.Position = num2 - 4096L;
-				stream.Read(array, 0, 4096);
-				stream.Position = num2 + (long)shiftBytes;
-				stream.Write(array, 0, 4096);
-				num2 += 4096L;
-				i -= i;
+				stream.Position = position2 - 4096L;
+				stream.Read(buffer, 0, 4096);
+				stream.Position = position2 + (long)shiftBytes;
+				stream.Write(buffer, 0, 4096);
+				position2 += 4096L;
+				bytesLeft -= bytesLeft;
 			}
-			stream.Position = num2 - (long)i;
-			stream.Read(array, 0, i);
-			stream.Position = num2 + (long)shiftBytes;
-			stream.Write(array, 0, i);
+			stream.Position = position2 - (long)bytesLeft;
+			stream.Read(buffer, 0, bytesLeft);
+			stream.Position = position2 + (long)shiftBytes;
+			stream.Write(buffer, 0, bytesLeft);
 			stream.SetLength(stream.Length + (long)shiftBytes);
 		}
 
@@ -84,32 +84,32 @@ namespace DNA.IO
 			{
 				progress.StatusText = "Copying Streams";
 			}
-			byte[] array = new byte[4096];
-			long num = length;
-			long num2 = 0L;
-			int num3 = 0;
-			int num4 = (int)((num < 4096L) ? num : 4096L);
+			byte[] buffer = new byte[4096];
+			long bytesLeft = length;
+			long position = 0L;
+			int count = 0;
+			int chunksize = (int)((bytesLeft < 4096L) ? bytesLeft : 4096L);
 			source.Position = startPosition;
-			while (num > 0L)
+			while (bytesLeft > 0L)
 			{
-				int num5 = source.Read(array, 0, num4);
-				if (num5 == 0)
+				int currentLength = source.Read(buffer, 0, chunksize);
+				if (currentLength == 0)
 				{
 					throw new Exception("Stream Terminated early");
 				}
-				destination.Write(array, 0, num5);
-				num2 += (long)num5;
-				num -= (long)num5;
+				destination.Write(buffer, 0, currentLength);
+				position += (long)currentLength;
+				bytesLeft -= (long)currentLength;
 				if (progress != null)
 				{
-					num3++;
-					if (num3 == 10)
+					count++;
+					if (count == 10)
 					{
-						progress.Complete = Percentage.FromFraction((float)num2 / (float)length);
-						num3 = 0;
+						progress.Complete = Percentage.FromFraction((float)position / (float)length);
+						count = 0;
 					}
 				}
-				num4 = (int)((num < 4096L) ? num : 4096L);
+				chunksize = (int)((bytesLeft < 4096L) ? bytesLeft : 4096L);
 			}
 			if (progress != null)
 			{

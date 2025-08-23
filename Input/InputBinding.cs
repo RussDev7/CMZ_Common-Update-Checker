@@ -16,7 +16,7 @@ namespace DNA.Input
 
 		private static string SplitBindableName(string name)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder result = new StringBuilder();
 			if (name.StartsWith("Key"))
 			{
 				name = name.Substring("Key".Length);
@@ -25,23 +25,23 @@ namespace DNA.Input
 			{
 				name = name.Substring("Button".Length);
 			}
-			bool flag = true;
-			bool flag2 = true;
+			bool first = true;
+			bool lastWasNumber = true;
 			foreach (char c in name)
 			{
-				if (!flag && char.ToUpper(c) == c)
+				if (!first && char.ToUpper(c) == c)
 				{
-					stringBuilder.Append(' ');
+					result.Append(' ');
 				}
-				else if (!flag2 && char.IsDigit(c))
+				else if (!lastWasNumber && char.IsDigit(c))
 				{
-					stringBuilder.Append(' ');
+					result.Append(' ');
 				}
-				flag2 = char.IsDigit(c);
-				flag = false;
-				stringBuilder.Append(c);
+				lastWasNumber = char.IsDigit(c);
+				first = false;
+				result.Append(c);
 			}
-			return stringBuilder.ToString();
+			return result.ToString();
 		}
 
 		static InputBinding()
@@ -280,67 +280,67 @@ namespace DNA.Input
 			InputBinding._validKeys.Add(Keys.Zoom);
 			InputBinding._validKeys.Add(Keys.Pa1);
 			InputBinding._validKeys.Add(Keys.OemClear);
-			foreach (InputBinding.Bindable bindable in Enum.GetValues(typeof(InputBinding.Bindable)).Cast<InputBinding.Bindable>())
+			foreach (InputBinding.Bindable value in Enum.GetValues(typeof(InputBinding.Bindable)).Cast<InputBinding.Bindable>())
 			{
-				InputBinding.Bindable bindable2 = bindable;
-				string text;
-				switch (bindable2)
+				InputBinding.Bindable bindable = value;
+				string friendly;
+				switch (bindable)
 				{
 				case InputBinding.Bindable.KeyD1:
-					text = "1";
+					friendly = "1";
 					break;
 				case InputBinding.Bindable.KeyD2:
-					text = "2";
+					friendly = "2";
 					break;
 				case InputBinding.Bindable.KeyD3:
-					text = "3";
+					friendly = "3";
 					break;
 				case InputBinding.Bindable.KeyD4:
-					text = "4";
+					friendly = "4";
 					break;
 				case InputBinding.Bindable.KeyD5:
-					text = "5";
+					friendly = "5";
 					break;
 				case InputBinding.Bindable.KeyD6:
-					text = "6";
+					friendly = "6";
 					break;
 				case InputBinding.Bindable.KeyD7:
-					text = "7";
+					friendly = "7";
 					break;
 				case InputBinding.Bindable.KeyD8:
-					text = "8";
+					friendly = "8";
 					break;
 				default:
-					switch (bindable2)
+					switch (bindable)
 					{
 					case InputBinding.Bindable.MouseButtonLeft:
-						text = "Left Click";
+						friendly = "Left Click";
 						break;
 					case InputBinding.Bindable.MouseButtonMiddle:
-						text = "Middle Click";
+						friendly = "Middle Click";
 						break;
 					case InputBinding.Bindable.MouseButtonRight:
-						text = "Right Click";
+						friendly = "Right Click";
 						break;
 					case InputBinding.Bindable.MouseButton3:
-						text = "Mouse Button 3";
+						friendly = "Mouse Button 3";
 						break;
 					case InputBinding.Bindable.MouseButton4:
-						text = "Mouse Button 4";
+						friendly = "Mouse Button 4";
 						break;
 					case InputBinding.Bindable.MouseWheelUp:
-						text = "Scroll Up";
+						friendly = "Scroll Up";
 						break;
 					case InputBinding.Bindable.MouseWheelDown:
-						text = "Scroll Down";
+						friendly = "Scroll Down";
 						break;
 					default:
-						text = InputBinding.SplitBindableName(bindable.ToString());
+						friendly = InputBinding.SplitBindableName(value.ToString());
 						break;
 					}
 					break;
 				}
-				InputBinding._bindableNames.Add(bindable, text);
+				InputBinding._bindableNames.Add(value, friendly);
 			}
 		}
 
@@ -352,37 +352,37 @@ namespace DNA.Input
 
 		public void SaveData(BinaryWriter writer)
 		{
-			int num = 0;
-			foreach (InputBinding.Bindable[] array in this._bindings.Values)
+			int keyCount = 0;
+			foreach (InputBinding.Bindable[] v in this._bindings.Values)
 			{
 				for (int i = 0; i < 3; i++)
 				{
-					if (array[i] != InputBinding.Bindable.None)
+					if (v[i] != InputBinding.Bindable.None)
 					{
-						num++;
+						keyCount++;
 						break;
 					}
 				}
 			}
 			writer.Write(0);
-			writer.Write(num);
-			foreach (KeyValuePair<int, InputBinding.Bindable[]> keyValuePair in this._bindings)
+			writer.Write(keyCount);
+			foreach (KeyValuePair<int, InputBinding.Bindable[]> kv in this._bindings)
 			{
-				bool flag = false;
+				bool writeable = false;
 				for (int j = 0; j < 3; j++)
 				{
-					if (keyValuePair.Value[j] != InputBinding.Bindable.None)
+					if (kv.Value[j] != InputBinding.Bindable.None)
 					{
-						flag = true;
+						writeable = true;
 						break;
 					}
 				}
-				if (flag)
+				if (writeable)
 				{
-					writer.Write(keyValuePair.Key);
+					writer.Write(kv.Key);
 					for (int k = 0; k < 3; k++)
 					{
-						writer.Write((int)keyValuePair.Value[k]);
+						writer.Write((int)kv.Value[k]);
 					}
 				}
 			}
@@ -390,22 +390,22 @@ namespace DNA.Input
 
 		public void LoadData(BinaryReader reader)
 		{
-			InputBinding.FileVersion fileVersion = (InputBinding.FileVersion)reader.ReadInt32();
-			if (fileVersion < InputBinding.FileVersion.CurrentVersion || fileVersion > InputBinding.FileVersion.CurrentVersion)
+			InputBinding.FileVersion version = (InputBinding.FileVersion)reader.ReadInt32();
+			if (version < InputBinding.FileVersion.CurrentVersion || version > InputBinding.FileVersion.CurrentVersion)
 			{
 				return;
 			}
 			this._bindings.Clear();
-			int num = reader.ReadInt32();
-			for (int i = 0; i < num; i++)
+			int keyCount = reader.ReadInt32();
+			for (int i = 0; i < keyCount; i++)
 			{
-				int num2 = reader.ReadInt32();
-				InputBinding.Bindable[] array = new InputBinding.Bindable[3];
+				int key = reader.ReadInt32();
+				InputBinding.Bindable[] vlist = new InputBinding.Bindable[3];
 				for (int j = 0; j < 3; j++)
 				{
-					array[j] = (InputBinding.Bindable)reader.ReadInt32();
+					vlist[j] = (InputBinding.Bindable)reader.ReadInt32();
 				}
-				this._bindings.Add(num2, array);
+				this._bindings.Add(key, vlist);
 			}
 			this.Initialized = true;
 		}
@@ -420,25 +420,25 @@ namespace DNA.Input
 		public void Bind(int function, InputBinding.Slot slot, InputBinding.Bindable btn)
 		{
 			this.RemoveBinding(btn);
-			InputBinding.Bindable[] array;
-			if (!this._bindings.TryGetValue(function, out array))
+			InputBinding.Bindable[] binds;
+			if (!this._bindings.TryGetValue(function, out binds))
 			{
-				array = new InputBinding.Bindable[3];
-				array[0] = (array[1] = (array[2] = InputBinding.Bindable.None));
-				this._bindings.Add(function, array);
+				binds = new InputBinding.Bindable[3];
+				binds[0] = (binds[1] = (binds[2] = InputBinding.Bindable.None));
+				this._bindings.Add(function, binds);
 			}
-			array[(int)slot] = btn;
+			binds[(int)slot] = btn;
 		}
 
 		public InputBinding.Bindable GetBinding(int function, InputBinding.Slot slot)
 		{
-			InputBinding.Bindable[] array;
-			this._bindings.TryGetValue(function, out array);
-			if (array == null)
+			InputBinding.Bindable[] binds;
+			this._bindings.TryGetValue(function, out binds);
+			if (binds == null)
 			{
 				return InputBinding.Bindable.None;
 			}
-			return array[(int)slot];
+			return binds[(int)slot];
 		}
 
 		public static bool IsKeyMouse(InputBinding.Bindable value)
@@ -460,13 +460,13 @@ namespace DNA.Input
 		{
 			if (btn != InputBinding.Bindable.None)
 			{
-				foreach (InputBinding.Bindable[] array in this._bindings.Values)
+				foreach (InputBinding.Bindable[] binds in this._bindings.Values)
 				{
 					for (int i = 0; i < 3; i++)
 					{
-						if (array[i] == btn)
+						if (binds[i] == btn)
 						{
-							array[i] = InputBinding.Bindable.None;
+							binds[i] = InputBinding.Bindable.None;
 							return;
 						}
 					}
@@ -539,7 +539,7 @@ namespace DNA.Input
 
 		public InputBinding.Bindable SenseBindable(InputBinding.Slot slot, KeyboardInput keyboard, MouseInput mouse, GameController controller)
 		{
-			InputBinding.Bindable bindable = InputBinding.Bindable.None;
+			InputBinding.Bindable result = InputBinding.Bindable.None;
 			InputBinding.Constraint constraint = InputBinding.Constraint.AllowKeyboardMouse;
 			if (slot == InputBinding.Slot.Controller)
 			{
@@ -566,70 +566,70 @@ namespace DNA.Input
 			}
 			else if (this.GetButtonValue(this._keySensed, InputBinding.ButtonFunction.Released, keyboard, mouse, controller))
 			{
-				bindable = this._keySensed;
+				result = this._keySensed;
 			}
-			return bindable;
+			return result;
 		}
 
 		private bool GetKeyboardValue(InputBinding.Bindable btn, InputBinding.ButtonFunction fn, KeyboardInput keyboard)
 		{
-			Keys keys = (Keys)(btn ^ (InputBinding.Bindable)512);
-			bool flag = false;
+			Keys key = (Keys)(btn ^ (InputBinding.Bindable)512);
+			bool result = false;
 			switch (fn)
 			{
 			case InputBinding.ButtonFunction.Pressed:
 				if (btn == InputBinding.Bindable.KeyTab && this.AvoidShiftTab)
 				{
-					flag = keyboard.WasKeyPressed(Keys.Tab) && !keyboard.IsKeyDown(Keys.LeftShift) && !keyboard.IsKeyDown(Keys.RightShift);
+					result = keyboard.WasKeyPressed(Keys.Tab) && !keyboard.IsKeyDown(Keys.LeftShift) && !keyboard.IsKeyDown(Keys.RightShift);
 				}
 				else
 				{
-					flag = keyboard.WasKeyPressed(keys);
+					result = keyboard.WasKeyPressed(key);
 				}
 				break;
 			case InputBinding.ButtonFunction.Released:
-				flag = keyboard.WasKeyReleased(keys);
+				result = keyboard.WasKeyReleased(key);
 				break;
 			case InputBinding.ButtonFunction.Held:
-				flag = keyboard.IsKeyDown(keys);
+				result = keyboard.IsKeyDown(key);
 				break;
 			}
-			return flag;
+			return result;
 		}
 
 		private Trigger GetKeyboardValue(InputBinding.Bindable btn, KeyboardInput keyboard)
 		{
-			Keys keys = (Keys)(btn ^ (InputBinding.Bindable)512);
-			Trigger trigger = default(Trigger);
+			Keys key = (Keys)(btn ^ (InputBinding.Bindable)512);
+			Trigger result = default(Trigger);
 			if (btn == InputBinding.Bindable.KeyTab && this.AvoidShiftTab)
 			{
-				trigger.Pressed = keyboard.WasKeyPressed(Keys.Tab) && !keyboard.IsKeyDown(Keys.LeftShift) && !keyboard.IsKeyDown(Keys.RightShift);
+				result.Pressed = keyboard.WasKeyPressed(Keys.Tab) && !keyboard.IsKeyDown(Keys.LeftShift) && !keyboard.IsKeyDown(Keys.RightShift);
 			}
 			else
 			{
-				trigger.Pressed = keyboard.WasKeyPressed(keys);
+				result.Pressed = keyboard.WasKeyPressed(key);
 			}
-			trigger.Released = keyboard.WasKeyReleased(keys);
-			trigger.Held = keyboard.IsKeyDown(keys);
-			return trigger;
+			result.Released = keyboard.WasKeyReleased(key);
+			result.Held = keyboard.IsKeyDown(key);
+			return result;
 		}
 
 		private bool GetMouseValue(InputBinding.Bindable btn, InputBinding.ButtonFunction fn, MouseInput mouse)
 		{
-			bool flag = false;
+			bool result = false;
 			switch (btn)
 			{
 			case InputBinding.Bindable.MouseButtonLeft:
 				switch (fn)
 				{
 				case InputBinding.ButtonFunction.Pressed:
-					flag = mouse.LeftButtonPressed;
+					result = mouse.LeftButtonPressed;
 					break;
 				case InputBinding.ButtonFunction.Released:
-					flag = mouse.LeftButtonReleased;
+					result = mouse.LeftButtonReleased;
 					break;
 				case InputBinding.ButtonFunction.Held:
-					flag = mouse.LeftButtonDown;
+					result = mouse.LeftButtonDown;
 					break;
 				}
 				break;
@@ -637,13 +637,13 @@ namespace DNA.Input
 				switch (fn)
 				{
 				case InputBinding.ButtonFunction.Pressed:
-					flag = mouse.MiddleButtonPressed;
+					result = mouse.MiddleButtonPressed;
 					break;
 				case InputBinding.ButtonFunction.Released:
-					flag = mouse.MiddleButtonReleased;
+					result = mouse.MiddleButtonReleased;
 					break;
 				case InputBinding.ButtonFunction.Held:
-					flag = mouse.MiddleButtonDown;
+					result = mouse.MiddleButtonDown;
 					break;
 				}
 				break;
@@ -651,13 +651,13 @@ namespace DNA.Input
 				switch (fn)
 				{
 				case InputBinding.ButtonFunction.Pressed:
-					flag = mouse.RightButtonPressed;
+					result = mouse.RightButtonPressed;
 					break;
 				case InputBinding.ButtonFunction.Released:
-					flag = mouse.RightButtonReleased;
+					result = mouse.RightButtonReleased;
 					break;
 				case InputBinding.ButtonFunction.Held:
-					flag = mouse.RightButtonDown;
+					result = mouse.RightButtonDown;
 					break;
 				}
 				break;
@@ -665,13 +665,13 @@ namespace DNA.Input
 				switch (fn)
 				{
 				case InputBinding.ButtonFunction.Pressed:
-					flag = mouse.XButton1Pressed;
+					result = mouse.XButton1Pressed;
 					break;
 				case InputBinding.ButtonFunction.Released:
-					flag = mouse.XButton1Released;
+					result = mouse.XButton1Released;
 					break;
 				case InputBinding.ButtonFunction.Held:
-					flag = mouse.XButton1Down;
+					result = mouse.XButton1Down;
 					break;
 				}
 				break;
@@ -679,13 +679,13 @@ namespace DNA.Input
 				switch (fn)
 				{
 				case InputBinding.ButtonFunction.Pressed:
-					flag = mouse.XButton2Pressed;
+					result = mouse.XButton2Pressed;
 					break;
 				case InputBinding.ButtonFunction.Released:
-					flag = mouse.XButton2Released;
+					result = mouse.XButton2Released;
 					break;
 				case InputBinding.ButtonFunction.Held:
-					flag = mouse.XButton2Down;
+					result = mouse.XButton2Down;
 					break;
 				}
 				break;
@@ -693,13 +693,13 @@ namespace DNA.Input
 				switch (fn)
 				{
 				case InputBinding.ButtonFunction.Pressed:
-					flag = mouse.WheelUpPressed;
+					result = mouse.WheelUpPressed;
 					break;
 				case InputBinding.ButtonFunction.Released:
-					flag = mouse.WheelUpReleased;
+					result = mouse.WheelUpReleased;
 					break;
 				case InputBinding.ButtonFunction.Held:
-					flag = mouse.WheelUpDown;
+					result = mouse.WheelUpDown;
 					break;
 				}
 				break;
@@ -707,96 +707,96 @@ namespace DNA.Input
 				switch (fn)
 				{
 				case InputBinding.ButtonFunction.Pressed:
-					flag = mouse.WheelDownPressed;
+					result = mouse.WheelDownPressed;
 					break;
 				case InputBinding.ButtonFunction.Released:
-					flag = mouse.WheelDownReleased;
+					result = mouse.WheelDownReleased;
 					break;
 				case InputBinding.ButtonFunction.Held:
-					flag = mouse.WheelDownDown;
+					result = mouse.WheelDownDown;
 					break;
 				}
 				break;
 			}
-			return flag;
+			return result;
 		}
 
 		private Trigger GetMouseValue(InputBinding.Bindable btn, MouseInput mouse)
 		{
-			Trigger trigger = default(Trigger);
+			Trigger result = default(Trigger);
 			switch (btn)
 			{
 			case InputBinding.Bindable.MouseButtonLeft:
-				trigger.Pressed = mouse.LeftButtonPressed;
-				trigger.Released = mouse.LeftButtonReleased;
-				trigger.Held = mouse.LeftButtonDown;
+				result.Pressed = mouse.LeftButtonPressed;
+				result.Released = mouse.LeftButtonReleased;
+				result.Held = mouse.LeftButtonDown;
 				break;
 			case InputBinding.Bindable.MouseButtonMiddle:
-				trigger.Pressed = mouse.MiddleButtonPressed;
-				trigger.Released = mouse.MiddleButtonReleased;
-				trigger.Held = mouse.MiddleButtonDown;
+				result.Pressed = mouse.MiddleButtonPressed;
+				result.Released = mouse.MiddleButtonReleased;
+				result.Held = mouse.MiddleButtonDown;
 				break;
 			case InputBinding.Bindable.MouseButtonRight:
-				trigger.Pressed = mouse.RightButtonPressed;
-				trigger.Released = mouse.RightButtonReleased;
-				trigger.Held = mouse.RightButtonDown;
+				result.Pressed = mouse.RightButtonPressed;
+				result.Released = mouse.RightButtonReleased;
+				result.Held = mouse.RightButtonDown;
 				break;
 			case InputBinding.Bindable.MouseButton3:
-				trigger.Pressed = mouse.XButton1Pressed;
-				trigger.Released = mouse.XButton1Released;
-				trigger.Held = mouse.XButton1Down;
+				result.Pressed = mouse.XButton1Pressed;
+				result.Released = mouse.XButton1Released;
+				result.Held = mouse.XButton1Down;
 				break;
 			case InputBinding.Bindable.MouseButton4:
-				trigger.Pressed = mouse.XButton2Pressed;
-				trigger.Released = mouse.XButton2Released;
-				trigger.Held = mouse.XButton2Down;
+				result.Pressed = mouse.XButton2Pressed;
+				result.Released = mouse.XButton2Released;
+				result.Held = mouse.XButton2Down;
 				break;
 			case InputBinding.Bindable.MouseWheelUp:
-				trigger.Pressed = mouse.WheelUpPressed;
-				trigger.Released = mouse.WheelUpReleased;
-				trigger.Held = mouse.WheelUpDown;
+				result.Pressed = mouse.WheelUpPressed;
+				result.Released = mouse.WheelUpReleased;
+				result.Held = mouse.WheelUpDown;
 				break;
 			case InputBinding.Bindable.MouseWheelDown:
-				trigger.Pressed = mouse.WheelDownPressed;
-				trigger.Released = mouse.WheelDownReleased;
-				trigger.Held = mouse.WheelDownDown;
+				result.Pressed = mouse.WheelDownPressed;
+				result.Released = mouse.WheelDownReleased;
+				result.Held = mouse.WheelDownDown;
 				break;
 			}
-			return trigger;
+			return result;
 		}
 
 		private bool GetControllerValue(InputBinding.Bindable btn, InputBinding.ButtonFunction fn, GameController controller)
 		{
-			Buttons buttons = InputBinding._bindableToButtons[btn];
-			bool flag = false;
+			Buttons button = InputBinding._bindableToButtons[btn];
+			bool result = false;
 			switch (fn)
 			{
 			case InputBinding.ButtonFunction.Pressed:
-				flag = controller.GetButtonPressed(buttons);
+				result = controller.GetButtonPressed(button);
 				break;
 			case InputBinding.ButtonFunction.Released:
-				flag = controller.GetButtonPressed(buttons);
+				result = controller.GetButtonPressed(button);
 				break;
 			case InputBinding.ButtonFunction.Held:
-				flag = controller.GetButtonHeld(buttons);
+				result = controller.GetButtonHeld(button);
 				break;
 			}
-			return flag;
+			return result;
 		}
 
 		private Trigger GetControllerValue(InputBinding.Bindable btn, GameController controller)
 		{
-			Trigger trigger = default(Trigger);
-			Buttons buttons = InputBinding._bindableToButtons[btn];
-			trigger.Pressed = controller.GetButtonPressed(buttons);
-			trigger.Released = controller.GetButtonPressed(buttons);
-			trigger.Held = controller.GetButtonHeld(buttons);
-			return trigger;
+			Trigger result = default(Trigger);
+			Buttons button = InputBinding._bindableToButtons[btn];
+			result.Pressed = controller.GetButtonPressed(button);
+			result.Released = controller.GetButtonPressed(button);
+			result.Held = controller.GetButtonHeld(button);
+			return result;
 		}
 
 		private bool GetButtonValue(InputBinding.Bindable btn, InputBinding.ButtonFunction fn, KeyboardInput keyboard, MouseInput mouse, GameController controller)
 		{
-			bool flag = false;
+			bool result = false;
 			int num = (int)(btn & (InputBinding.Bindable)3584);
 			if (num != 512)
 			{
@@ -804,24 +804,24 @@ namespace DNA.Input
 				{
 					if (num == 2048)
 					{
-						flag = this.GetControllerValue(btn, fn, controller);
+						result = this.GetControllerValue(btn, fn, controller);
 					}
 				}
 				else
 				{
-					flag = this.GetMouseValue(btn, fn, mouse);
+					result = this.GetMouseValue(btn, fn, mouse);
 				}
 			}
 			else
 			{
-				flag = this.GetKeyboardValue(btn, fn, keyboard);
+				result = this.GetKeyboardValue(btn, fn, keyboard);
 			}
-			return flag;
+			return result;
 		}
 
 		private Trigger GetButtonValue(InputBinding.Bindable btn, KeyboardInput keyboard, MouseInput mouse, GameController controller)
 		{
-			Trigger trigger = default(Trigger);
+			Trigger result = default(Trigger);
 			int num = (int)(btn & (InputBinding.Bindable)3584);
 			if (num != 512)
 			{
@@ -829,29 +829,29 @@ namespace DNA.Input
 				{
 					if (num == 2048)
 					{
-						trigger = this.GetControllerValue(btn, controller);
+						result = this.GetControllerValue(btn, controller);
 					}
 				}
 				else
 				{
-					trigger = this.GetMouseValue(btn, mouse);
+					result = this.GetMouseValue(btn, mouse);
 				}
 			}
 			else
 			{
-				trigger = this.GetKeyboardValue(btn, keyboard);
+				result = this.GetKeyboardValue(btn, keyboard);
 			}
-			return trigger;
+			return result;
 		}
 
 		private bool GetButtonValue(int function, InputBinding.ButtonFunction fn, KeyboardInput keyboard, MouseInput mouse, GameController controller)
 		{
-			InputBinding.Bindable[] array;
-			if (this._bindings.TryGetValue(function, out array))
+			InputBinding.Bindable[] binds;
+			if (this._bindings.TryGetValue(function, out binds))
 			{
 				for (int i = 0; i < 3; i++)
 				{
-					if (this.GetButtonValue(array[i], fn, keyboard, mouse, controller))
+					if (this.GetButtonValue(binds[i], fn, keyboard, mouse, controller))
 					{
 						return true;
 					}
@@ -877,16 +877,16 @@ namespace DNA.Input
 
 		public Trigger GetFunction(int function, KeyboardInput keyboard, MouseInput mouse, GameController controller)
 		{
-			Trigger trigger = default(Trigger);
-			InputBinding.Bindable[] array;
-			if (this._bindings.TryGetValue(function, out array))
+			Trigger result = default(Trigger);
+			InputBinding.Bindable[] binds;
+			if (this._bindings.TryGetValue(function, out binds))
 			{
 				for (int i = 0; i < 3; i++)
 				{
-					trigger = this.GetButtonValue(array[i], keyboard, mouse, controller) | trigger;
+					result = this.GetButtonValue(binds[i], keyboard, mouse, controller) | result;
 				}
 			}
-			return trigger;
+			return result;
 		}
 
 		private static Dictionary<InputBinding.Bindable, Buttons> _bindableToButtons = new Dictionary<InputBinding.Bindable, Buttons>();

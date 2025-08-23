@@ -46,9 +46,9 @@ namespace DNA.Drawing.UI.Controls
 		{
 			get
 			{
-				Vector2 vector = Vector2.Zero;
-				vector = this.Font.MeasureString(this.Text);
-				return new Size((int)((vector.X + (float)this.UncheckedImage.Width + 5f) * this.Scale), (int)(((vector.Y > (float)this.UncheckedImage.Height) ? vector.Y : ((float)this.UncheckedImage.Height)) * this.Scale));
+				Vector2 textSize = Vector2.Zero;
+				textSize = this.Font.MeasureString(this.Text);
+				return new Size((int)((textSize.X + (float)this.UncheckedImage.Width + 5f) * this.Scale), (int)(((textSize.Y > (float)this.UncheckedImage.Height) ? textSize.Y : ((float)this.UncheckedImage.Height)) * this.Scale));
 			}
 			set
 			{
@@ -58,34 +58,34 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			Rectangle screenBounds = base.ScreenBounds;
-			Vector2 vector = this.Font.MeasureString(this.Text) * this.Scale;
-			Color color = this.CheckColor;
+			Rectangle dest = base.ScreenBounds;
+			Vector2 textSize = this.Font.MeasureString(this.Text) * this.Scale;
+			Color buttonColor = this.CheckColor;
 			if (base.Hovering || base.CaptureInput)
 			{
-				color = this.CheckPressedColor;
+				buttonColor = this.CheckPressedColor;
 			}
-			float num = (float)this.UncheckedImage.Height * this.Scale;
-			float num2 = (float)this.Font.LineSpacing * this.Scale;
-			float num3 = 2f * this.Scale;
-			float num4 = 5f * this.Scale;
+			float height = (float)this.UncheckedImage.Height * this.Scale;
+			float lineSpacing = (float)this.Font.LineSpacing * this.Scale;
+			float offset = 2f * this.Scale;
+			float checkSpace = 5f * this.Scale;
 			if (this.TextOnRight)
 			{
-				spriteBatch.DrawString(this.Font, this.Text, new Vector2((float)(screenBounds.X + this.UncheckedImage.Width) + num4, (float)screenBounds.Y), this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
-				spriteBatch.Draw(this.UncheckedImage, new Vector2((float)screenBounds.X, (float)screenBounds.Y + num3 + num2 / 2f - num / 2f), this.Scale, color);
+				spriteBatch.DrawString(this.Font, this.Text, new Vector2((float)(dest.X + this.UncheckedImage.Width) + checkSpace, (float)dest.Y), this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+				spriteBatch.Draw(this.UncheckedImage, new Vector2((float)dest.X, (float)dest.Y + offset + lineSpacing / 2f - height / 2f), this.Scale, buttonColor);
 				if (this.Checked)
 				{
-					spriteBatch.Draw(this.CheckedImage, new Vector2((float)screenBounds.X, (float)screenBounds.Y + num3 + num2 / 2f - num / 2f), this.Scale, color);
+					spriteBatch.Draw(this.CheckedImage, new Vector2((float)dest.X, (float)dest.Y + offset + lineSpacing / 2f - height / 2f), this.Scale, buttonColor);
 					return;
 				}
 			}
 			else
 			{
-				spriteBatch.DrawString(this.Font, this.Text, new Vector2((float)screenBounds.Left, (float)screenBounds.Y), this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
-				spriteBatch.Draw(this.UncheckedImage, new Vector2((float)screenBounds.X + vector.X + num4, (float)screenBounds.Y + num3 + num2 / 2f - num / 2f), this.Scale, color);
+				spriteBatch.DrawString(this.Font, this.Text, new Vector2((float)dest.Left, (float)dest.Y), this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+				spriteBatch.Draw(this.UncheckedImage, new Vector2((float)dest.X + textSize.X + checkSpace, (float)dest.Y + offset + lineSpacing / 2f - height / 2f), this.Scale, buttonColor);
 				if (this.Checked)
 				{
-					spriteBatch.Draw(this.CheckedImage, new Vector2((float)screenBounds.X + vector.X + num4, (float)screenBounds.Y + num3 + num2 / 2f - num / 2f), this.Scale, color);
+					spriteBatch.Draw(this.CheckedImage, new Vector2((float)dest.X + textSize.X + checkSpace, (float)dest.Y + offset + lineSpacing / 2f - height / 2f), this.Scale, buttonColor);
 				}
 			}
 		}

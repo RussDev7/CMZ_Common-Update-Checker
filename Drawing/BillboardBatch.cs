@@ -44,18 +44,18 @@ namespace DNA.Drawing
 		private void Initialize(GraphicsDevice device, int cards)
 		{
 			this._vertexBuffer = new DynamicVertexBuffer(device, BillboardVertex.VertexDeclaration, cards * 4, BufferUsage.WriteOnly);
-			uint[] array = new uint[cards * 6];
+			uint[] indices = new uint[cards * 6];
 			for (int i = 0; i < cards; i++)
 			{
-				array[i * 6] = (uint)(i * 4);
-				array[i * 6 + 1] = (uint)(i * 4 + 1);
-				array[i * 6 + 2] = (uint)(i * 4 + 2);
-				array[i * 6 + 3] = (uint)(i * 4);
-				array[i * 6 + 4] = (uint)(i * 4 + 2);
-				array[i * 6 + 5] = (uint)(i * 4 + 3);
+				indices[i * 6] = (uint)(i * 4);
+				indices[i * 6 + 1] = (uint)(i * 4 + 1);
+				indices[i * 6 + 2] = (uint)(i * 4 + 2);
+				indices[i * 6 + 3] = (uint)(i * 4);
+				indices[i * 6 + 4] = (uint)(i * 4 + 2);
+				indices[i * 6 + 5] = (uint)(i * 4 + 3);
 			}
-			this._indexBuffer = new IndexBuffer(device, typeof(uint), array.Length, BufferUsage.WriteOnly);
-			this._indexBuffer.SetData<uint>(array);
+			this._indexBuffer = new IndexBuffer(device, typeof(uint), indices.Length, BufferUsage.WriteOnly);
+			this._indexBuffer.SetData<uint>(indices);
 		}
 
 		public void Begin(BillBoardMode mode)
@@ -114,8 +114,8 @@ namespace DNA.Drawing
 			device.Indices = this._indexBuffer;
 			for (int i = 0; i < this._cardEffect.CurrentTechnique.Passes.Count; i++)
 			{
-				EffectPass effectPass = this._cardEffect.CurrentTechnique.Passes[i];
-				effectPass.Apply();
+				EffectPass pass = this._cardEffect.CurrentTechnique.Passes[i];
+				pass.Apply();
 				device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, this.cardCount * 4, 0, this.cardCount * 2);
 			}
 			device.SetVertexBuffer(null);
@@ -123,9 +123,9 @@ namespace DNA.Drawing
 
 		private void GrowArray()
 		{
-			BillboardVertex[] array = new BillboardVertex[this.billboardVerticies.Length * 2];
-			Array.Copy(this.billboardVerticies, array, this.cardCount * 4);
-			this.billboardVerticies = array;
+			BillboardVertex[] newArray = new BillboardVertex[this.billboardVerticies.Length * 2];
+			Array.Copy(this.billboardVerticies, newArray, this.cardCount * 4);
+			this.billboardVerticies = newArray;
 			if (this._vertexBuffer != null)
 			{
 				this._vertexBuffer.Dispose();
@@ -145,11 +145,11 @@ namespace DNA.Drawing
 			{
 				this.GrowArray();
 			}
-			int num = this.cardCount * 4;
-			this.billboardVerticies[num] = new BillboardVertex(position, scale, axis, new Vector2(0f, 0f), color);
-			this.billboardVerticies[num + 1] = new BillboardVertex(position, scale, axis, new Vector2(1f, 0f), color);
-			this.billboardVerticies[num + 2] = new BillboardVertex(position, scale, axis, new Vector2(1f, 1f), color);
-			this.billboardVerticies[num + 3] = new BillboardVertex(position, scale, axis, new Vector2(0f, 1f), color);
+			int pos = this.cardCount * 4;
+			this.billboardVerticies[pos] = new BillboardVertex(position, scale, axis, new Vector2(0f, 0f), color);
+			this.billboardVerticies[pos + 1] = new BillboardVertex(position, scale, axis, new Vector2(1f, 0f), color);
+			this.billboardVerticies[pos + 2] = new BillboardVertex(position, scale, axis, new Vector2(1f, 1f), color);
+			this.billboardVerticies[pos + 3] = new BillboardVertex(position, scale, axis, new Vector2(0f, 1f), color);
 			this.cardCount++;
 		}
 

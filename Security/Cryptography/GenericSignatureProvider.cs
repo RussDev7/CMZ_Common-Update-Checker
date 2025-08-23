@@ -26,13 +26,13 @@ namespace DNA.Security.Cryptography
 
 		public virtual Signature GetFileSignature(string path)
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			FileInfo fileInfo = new FileInfo(path);
-			using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+			MemoryStream memStream = new MemoryStream();
+			FileInfo info = new FileInfo(path);
+			using (FileStream fstream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				memoryStream.CopyStream(fileStream, fileInfo.Length);
+				memStream.CopyStream(fstream, info.Length);
 			}
-			return this.Sign(memoryStream.GetBuffer(), fileInfo.Length);
+			return this.Sign(memStream.GetBuffer(), info.Length);
 		}
 
 		public Signature Sign(byte[] data)

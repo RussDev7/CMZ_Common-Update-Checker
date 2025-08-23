@@ -8,8 +8,8 @@ namespace DNA.Drawing.Imaging.Photoshop
 	{
 		public unsafe static void Fill(byte* ptr, byte value, int size)
 		{
-			byte* ptr2 = ptr + size;
-			while (ptr < ptr2)
+			byte* pEnd = ptr + size;
+			while (ptr < pEnd)
 			{
 				*ptr = byte.MaxValue;
 				ptr++;
@@ -18,65 +18,65 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		public unsafe static void SwapBytes2(byte* ptr)
 		{
-			byte b = *ptr;
+			byte byte0 = *ptr;
 			*ptr = ptr[1];
-			ptr[1] = b;
+			ptr[1] = byte0;
 		}
 
 		public unsafe static void SwapBytes4(byte* ptr)
 		{
-			byte b = *ptr;
-			byte b2 = ptr[1];
+			byte byte0 = *ptr;
+			byte @byte = ptr[1];
 			*ptr = ptr[3];
 			ptr[1] = ptr[2];
-			ptr[2] = b2;
-			ptr[3] = b;
+			ptr[2] = @byte;
+			ptr[3] = byte0;
 		}
 
 		public unsafe static void SwapBytes(byte* ptr, int nLength)
 		{
-			for (long num = 0L; num < (long)(nLength / 2); num += 1L)
+			for (long i = 0L; i < (long)(nLength / 2); i += 1L)
 			{
-				byte b = ptr[num];
-				ptr[num] = *(ptr + nLength - num - 1);
-				*(ptr + nLength - num - 1) = b;
+				byte t = ptr[i];
+				ptr[i] = *(ptr + nLength - i - 1);
+				*(ptr + nLength - i - 1) = t;
 			}
 		}
 
 		public unsafe static void SwapByteArray2(byte[] byteArray, int startIdx, int count)
 		{
-			int num = startIdx + count * 2;
-			if (byteArray.Length < num)
+			int endIdx = startIdx + count * 2;
+			if (byteArray.Length < endIdx)
 			{
 				throw new IndexOutOfRangeException();
 			}
-			fixed (byte* ptr = &byteArray[0])
+			fixed (byte* arrayPtr = &byteArray[0])
 			{
-				byte* ptr2 = ptr + startIdx;
-				byte* ptr3 = ptr + num;
-				while (ptr2 < ptr3)
+				byte* ptr = arrayPtr + startIdx;
+				byte* endPtr = arrayPtr + endIdx;
+				while (ptr < endPtr)
 				{
-					Util.SwapBytes2(ptr2);
-					ptr2 += 2;
+					Util.SwapBytes2(ptr);
+					ptr += 2;
 				}
 			}
 		}
 
 		public unsafe static void SwapByteArray4(byte[] byteArray, int startIdx, int count)
 		{
-			int num = startIdx + count * 4;
-			if (byteArray.Length < num)
+			int endIdx = startIdx + count * 4;
+			if (byteArray.Length < endIdx)
 			{
 				throw new IndexOutOfRangeException();
 			}
-			fixed (byte* ptr = &byteArray[0])
+			fixed (byte* arrayPtr = &byteArray[0])
 			{
-				byte* ptr2 = ptr + startIdx;
-				byte* ptr3 = ptr + num;
-				while (ptr2 < ptr3)
+				byte* ptr = arrayPtr + startIdx;
+				byte* endPtr = arrayPtr + endIdx;
+				while (ptr < endPtr)
 				{
-					Util.SwapBytes4(ptr2);
-					ptr2 += 4;
+					Util.SwapBytes4(ptr);
+					ptr += 4;
 				}
 			}
 		}

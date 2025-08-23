@@ -25,48 +25,48 @@ namespace DNA.Security.Cryptography.Asn1
 
 		public DerApplicationSpecific(bool isExplicit, int tag, Asn1Encodable obj)
 		{
-			byte[] derEncoded = obj.GetDerEncoded();
+			byte[] data = obj.GetDerEncoded();
 			this.isConstructed = isExplicit;
 			this.tag = tag;
 			if (isExplicit)
 			{
-				this.octets = derEncoded;
+				this.octets = data;
 				return;
 			}
-			int lengthOfLength = this.GetLengthOfLength(derEncoded);
-			byte[] array = new byte[derEncoded.Length - lengthOfLength];
-			Array.Copy(derEncoded, lengthOfLength, array, 0, array.Length);
-			this.octets = array;
+			int lenBytes = this.GetLengthOfLength(data);
+			byte[] tmp = new byte[data.Length - lenBytes];
+			Array.Copy(data, lenBytes, tmp, 0, tmp.Length);
+			this.octets = tmp;
 		}
 
 		public DerApplicationSpecific(int tagNo, Asn1EncodableVector vec)
 		{
 			this.tag = tagNo;
 			this.isConstructed = true;
-			MemoryStream memoryStream = new MemoryStream();
-			for (int num = 0; num != vec.Count; num++)
+			MemoryStream bOut = new MemoryStream();
+			for (int i = 0; i != vec.Count; i++)
 			{
 				try
 				{
-					byte[] encoded = vec[num].GetEncoded();
-					memoryStream.Write(encoded, 0, encoded.Length);
+					byte[] bs = vec[i].GetEncoded();
+					bOut.Write(bs, 0, bs.Length);
 				}
-				catch (IOException ex)
+				catch (IOException e)
 				{
-					throw new InvalidOperationException("malformed object", ex);
+					throw new InvalidOperationException("malformed object", e);
 				}
 			}
-			this.octets = memoryStream.ToArray();
+			this.octets = bOut.ToArray();
 		}
 
 		private int GetLengthOfLength(byte[] data)
 		{
-			int num = 2;
-			while ((data[num - 1] & 128) != 0)
+			int count = 2;
+			while ((data[count - 1] & 128) != 0)
 			{
-				num++;
+				count++;
 			}
-			return num;
+			return count;
 		}
 
 		public bool IsConstructed()
@@ -98,31 +98,31 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				throw new IOException("unsupported tag number");
 			}
-			byte[] encoded = base.GetEncoded();
-			byte[] array = this.ReplaceTagNumber(derTagNo, encoded);
-			if ((encoded[0] & 32) != 0)
+			byte[] orig = base.GetEncoded();
+			byte[] tmp = this.ReplaceTagNumber(derTagNo, orig);
+			if ((orig[0] & 32) != 0)
 			{
-				byte[] array2 = array;
+				byte[] array = tmp;
 				int num = 0;
-				array2[num] |= 32;
+				array[num] |= 32;
 			}
-			return Asn1Object.FromByteArray(array);
+			return Asn1Object.FromByteArray(tmp);
 		}
 
 		internal override void Encode(DerOutputStream derOut)
 		{
-			int num = 64;
+			int classBits = 64;
 			if (this.isConstructed)
 			{
-				num |= 32;
+				classBits |= 32;
 			}
-			derOut.WriteEncoded(num, this.tag, this.octets);
+			derOut.WriteEncoded(classBits, this.tag, this.octets);
 		}
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerApplicationSpecific derApplicationSpecific = asn1Object as DerApplicationSpecific;
-			return derApplicationSpecific != null && (this.isConstructed == derApplicationSpecific.isConstructed && this.tag == derApplicationSpecific.tag) && Arrays.AreEqual(this.octets, derApplicationSpecific.octets);
+			DerApplicationSpecific other = asn1Object as DerApplicationSpecific;
+			return other != null && (this.isConstructed == other.isConstructed && this.tag == other.tag) && Arrays.AreEqual(this.octets, other.octets);
 		}
 
 		protected override int Asn1GetHashCode()
@@ -132,28 +132,28 @@ namespace DNA.Security.Cryptography.Asn1
 
 		private byte[] ReplaceTagNumber(int newTag, byte[] input)
 		{
-			int num = (int)(input[0] & 31);
-			int num2 = 1;
-			if (num == 31)
+			int tagNo = (int)(input[0] & 31);
+			int index = 1;
+			if (tagNo == 31)
 			{
-				num = 0;
-				int num3 = (int)(input[num2++] & byte.MaxValue);
-				if ((num3 & 127) == 0)
+				tagNo = 0;
+				int b = (int)(input[index++] & byte.MaxValue);
+				if ((b & 127) == 0)
 				{
 					throw new InvalidOperationException("corrupted stream - invalid high tag number found");
 				}
-				while (num3 >= 0 && (num3 & 128) != 0)
+				while (b >= 0 && (b & 128) != 0)
 				{
-					num |= num3 & 127;
-					num <<= 7;
-					num3 = (int)(input[num2++] & byte.MaxValue);
+					tagNo |= b & 127;
+					tagNo <<= 7;
+					b = (int)(input[index++] & byte.MaxValue);
 				}
-				num |= num3 & 127;
+				tagNo |= b & 127;
 			}
-			byte[] array = new byte[input.Length - num2 + 1];
-			Array.Copy(input, num2, array, 1, array.Length - 1);
-			array[0] = (byte)newTag;
-			return array;
+			byte[] tmp = new byte[input.Length - index + 1];
+			Array.Copy(input, index, tmp, 1, tmp.Length - 1);
+			tmp[0] = (byte)newTag;
+			return tmp;
 		}
 
 		private readonly bool isConstructed;

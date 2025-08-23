@@ -10,39 +10,39 @@ namespace DNA.Net.Lidgren
 	{
 		static NetRC2Encryption()
 		{
-			RC2CryptoServiceProvider rc2CryptoServiceProvider = new RC2CryptoServiceProvider();
-			List<int> list = new List<int>();
-			foreach (KeySizes keySizes in rc2CryptoServiceProvider.LegalKeySizes)
+			RC2CryptoServiceProvider rc2 = new RC2CryptoServiceProvider();
+			List<int> temp = new List<int>();
+			foreach (KeySizes keysize in rc2.LegalKeySizes)
 			{
-				for (int j = keySizes.MinSize; j <= keySizes.MaxSize; j += keySizes.SkipSize)
+				for (int i = keysize.MinSize; i <= keysize.MaxSize; i += keysize.SkipSize)
 				{
-					if (!list.Contains(j))
+					if (!temp.Contains(i))
 					{
-						list.Add(j);
+						temp.Add(i);
 					}
-					if (j == keySizes.MaxSize)
+					if (i == keysize.MaxSize)
 					{
 						break;
 					}
 				}
 			}
-			NetRC2Encryption.m_keysizes = list;
-			list = new List<int>();
-			foreach (KeySizes keySizes2 in rc2CryptoServiceProvider.LegalBlockSizes)
+			NetRC2Encryption.m_keysizes = temp;
+			temp = new List<int>();
+			foreach (KeySizes keysize2 in rc2.LegalBlockSizes)
 			{
-				for (int l = keySizes2.MinSize; l <= keySizes2.MaxSize; l += keySizes2.SkipSize)
+				for (int j = keysize2.MinSize; j <= keysize2.MaxSize; j += keysize2.SkipSize)
 				{
-					if (!list.Contains(l))
+					if (!temp.Contains(j))
 					{
-						list.Add(l);
+						temp.Add(j);
 					}
-					if (l == keySizes2.MaxSize)
+					if (j == keysize2.MaxSize)
 					{
 						break;
 					}
 				}
 			}
-			NetRC2Encryption.m_blocksizes = list;
+			NetRC2Encryption.m_blocksizes = temp;
 		}
 
 		public NetRC2Encryption(byte[] key, byte[] iv)
@@ -66,18 +66,18 @@ namespace DNA.Net.Lidgren
 			{
 				throw new NetException(string.Format("Not a valid key size. (Valid values are: {0})", NetUtility.MakeCommaDelimitedList<int>(NetRC2Encryption.m_keysizes)));
 			}
-			byte[] array = Encoding.UTF32.GetBytes(key);
-			HMACSHA512 hmacsha = new HMACSHA512(Convert.FromBase64String("i88NEiez3c50bHqr3YGasDc4p8jRrxJAaiRiqixpvp4XNAStP5YNoC2fXnWkURtkha6M8yY901Gj07IRVIRyGL=="));
-			hmacsha.Initialize();
+			byte[] entropy = Encoding.UTF32.GetBytes(key);
+			HMACSHA512 hmacsha512 = new HMACSHA512(Convert.FromBase64String("i88NEiez3c50bHqr3YGasDc4p8jRrxJAaiRiqixpvp4XNAStP5YNoC2fXnWkURtkha6M8yY901Gj07IRVIRyGL=="));
+			hmacsha512.Initialize();
 			for (int i = 0; i < 1000; i++)
 			{
-				array = hmacsha.ComputeHash(array);
+				entropy = hmacsha512.ComputeHash(entropy);
 			}
-			int num = bitsize / 8;
-			this.m_key = new byte[num];
-			Buffer.BlockCopy(array, 0, this.m_key, 0, num);
+			int keylen = bitsize / 8;
+			this.m_key = new byte[keylen];
+			Buffer.BlockCopy(entropy, 0, this.m_key, 0, keylen);
 			this.m_iv = new byte[NetRC2Encryption.m_blocksizes[0] / 8];
-			Buffer.BlockCopy(array, array.Length - this.m_iv.Length - 1, this.m_iv, 0, this.m_iv.Length);
+			Buffer.BlockCopy(entropy, entropy.Length - this.m_iv.Length - 1, this.m_iv, 0, this.m_iv.Length);
 			this.m_bitSize = bitsize;
 		}
 

@@ -67,22 +67,22 @@ namespace DNA.Drawing.Imaging.Photoshop
 			long position = reader.BaseStream.Position;
 			int length = this.Length;
 			this.ImageCompression = (ImageCompression)reader.ReadInt16();
-			int num = this.Length - 2;
+			int dataLength = this.Length - 2;
 			switch (this.ImageCompression)
 			{
 			case ImageCompression.Raw:
-				this.ImageData = reader.ReadBytes(num);
+				this.ImageData = reader.ReadBytes(dataLength);
 				return;
 			case ImageCompression.Rle:
 			{
 				reader.ReadBytes(2 * rect.Height);
-				int num2 = num - 2 * rect.Height;
-				this.Data = reader.ReadBytes(num2);
+				int rleDataLength = dataLength - 2 * rect.Height;
+				this.Data = reader.ReadBytes(rleDataLength);
 				return;
 			}
 			case ImageCompression.Zip:
 			case ImageCompression.ZipPrediction:
-				this.Data = reader.ReadBytes(num);
+				this.Data = reader.ReadBytes(dataLength);
 				return;
 			default:
 				return;
@@ -95,37 +95,37 @@ namespace DNA.Drawing.Imaging.Photoshop
 			{
 				return;
 			}
-			int num = Util.BytesPerRow(rect, this.Layer.PsdFile.BitDepth);
-			int num2 = rect.Height * num;
+			int bytesPerRow = Util.BytesPerRow(rect, this.Layer.PsdFile.BitDepth);
+			int bytesTotal = rect.Height * bytesPerRow;
 			if (this.ImageCompression != ImageCompression.Raw)
 			{
-				this.imageData = new byte[num2];
-				MemoryStream memoryStream = new MemoryStream(this.Data);
+				this.imageData = new byte[bytesTotal];
+				MemoryStream stream = new MemoryStream(this.Data);
 				switch (this.ImageCompression)
 				{
 				case ImageCompression.Rle:
 				{
-					RleReader rleReader = new RleReader(memoryStream);
+					RleReader rleReader = new RleReader(stream);
 					for (int i = 0; i < rect.Height; i++)
 					{
-						int num3 = i * num;
-						rleReader.Read(this.imageData, num3, num);
+						int rowIndex = i * bytesPerRow;
+						rleReader.Read(this.imageData, rowIndex, bytesPerRow);
 					}
 					break;
 				}
 				case ImageCompression.Zip:
 				case ImageCompression.ZipPrediction:
 				{
-					memoryStream.ReadByte();
-					memoryStream.ReadByte();
-					DeflateStream deflateStream = new DeflateStream(memoryStream, CompressionMode.Decompress);
-					deflateStream.Read(this.imageData, 0, num2);
+					stream.ReadByte();
+					stream.ReadByte();
+					DeflateStream deflateStream = new DeflateStream(stream, CompressionMode.Decompress);
+					deflateStream.Read(this.imageData, 0, bytesTotal);
 					break;
 				}
 				}
 			}
-			bool flag = this.Layer.PsdFile.BitDepth == 16 || (this.Layer.PsdFile.BitDepth == 32 && this.ImageCompression != ImageCompression.ZipPrediction);
-			if (flag)
+			bool fReverseEndianness = this.Layer.PsdFile.BitDepth == 16 || (this.Layer.PsdFile.BitDepth == 32 && this.ImageCompression != ImageCompression.ZipPrediction);
+			if (fReverseEndianness)
 			{
 				this.ReverseEndianness(this.imageData, rect);
 			}
@@ -138,23 +138,23 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		private void ReverseEndianness(byte[] buffer, Rectangle rect)
 		{
-			int num = Util.BytesFromBitDepth(this.Layer.PsdFile.BitDepth);
-			int num2 = rect.Width * rect.Height;
-			if (num2 == 0)
+			int byteDepth = Util.BytesFromBitDepth(this.Layer.PsdFile.BitDepth);
+			int pixelsTotal = rect.Width * rect.Height;
+			if (pixelsTotal == 0)
 			{
 				return;
 			}
-			if (num == 2)
+			if (byteDepth == 2)
 			{
-				Util.SwapByteArray2(buffer, 0, num2);
+				Util.SwapByteArray2(buffer, 0, pixelsTotal);
 				return;
 			}
-			if (num == 4)
+			if (byteDepth == 4)
 			{
-				Util.SwapByteArray4(buffer, 0, num2);
+				Util.SwapByteArray4(buffer, 0, pixelsTotal);
 				return;
 			}
-			if (num > 1)
+			if (byteDepth > 1)
 			{
 				throw new NotImplementedException("Byte-swapping implemented only for 16-bit and 32-bit depths.");
 			}
@@ -164,15 +164,15 @@ namespace DNA.Drawing.Imaging.Photoshop
 		{
 			if (this.Layer.PsdFile.BitDepth == 16)
 			{
-				fixed (byte* ptr = &this.imageData[0])
+				fixed (byte* ptrData = &this.imageData[0])
 				{
-					for (int i = 0; i < rect.Height; i++)
+					for (int iRow = 0; iRow < rect.Height; iRow++)
 					{
-						ushort* ptr2 = (ushort*)ptr + i * rect.Width;
-						ushort* ptr3 = (ushort*)ptr + (i + 1) * rect.Width;
-						for (ptr2++; ptr2 < ptr3; ptr2++)
+						ushort* ptr = (ushort*)ptrData + iRow * rect.Width;
+						ushort* ptrEnd = (ushort*)ptrData + (iRow + 1) * rect.Width;
+						for (ptr++; ptr < ptrEnd; ptr++)
 						{
-							*ptr2 += *(ptr2 - 1);
+							*ptr += *(ptr - 1);
 						}
 					}
 				}
@@ -180,40 +180,40 @@ namespace DNA.Drawing.Imaging.Photoshop
 			}
 			if (this.Layer.PsdFile.BitDepth == 32)
 			{
-				byte[] array = new byte[this.imageData.Length];
-				fixed (byte* ptr4 = &this.imageData[0])
+				byte[] reorderedData = new byte[this.imageData.Length];
+				fixed (byte* ptrData2 = &this.imageData[0])
 				{
-					for (int j = 0; j < rect.Height; j++)
+					for (int iRow2 = 0; iRow2 < rect.Height; iRow2++)
 					{
-						byte* ptr5 = ptr4 + (IntPtr)(j * rect.Width) * 4;
-						byte* ptr6 = ptr4 + (IntPtr)((j + 1) * rect.Width) * 4;
-						for (ptr5++; ptr5 < ptr6; ptr5++)
+						byte* ptr2 = ptrData2 + (IntPtr)(iRow2 * rect.Width) * 4;
+						byte* ptrEnd2 = ptrData2 + (IntPtr)((iRow2 + 1) * rect.Width) * 4;
+						for (ptr2++; ptr2 < ptrEnd2; ptr2++)
 						{
-							*ptr5 += *(ptr5 - 1);
+							*ptr2 += *(ptr2 - 1);
 						}
 					}
-					int width = rect.Width;
-					int num = 2 * width;
-					int num2 = 3 * width;
-					fixed (byte* ptr7 = &array[0])
+					int offset = rect.Width;
+					int offset2 = 2 * offset;
+					int offset3 = 3 * offset;
+					fixed (byte* dstPtrData = &reorderedData[0])
 					{
-						for (int k = 0; k < rect.Height; k++)
+						for (int iRow3 = 0; iRow3 < rect.Height; iRow3++)
 						{
-							byte* ptr8 = ptr7 + (IntPtr)(k * rect.Width) * 4;
-							byte* ptr9 = ptr7 + (IntPtr)((k + 1) * rect.Width) * 4;
-							byte* ptr10 = ptr4 + (IntPtr)(k * rect.Width) * 4;
-							while (ptr8 < ptr9)
+							byte* dstPtr = dstPtrData + (IntPtr)(iRow3 * rect.Width) * 4;
+							byte* dstPtrEnd = dstPtrData + (IntPtr)((iRow3 + 1) * rect.Width) * 4;
+							byte* srcPtr = ptrData2 + (IntPtr)(iRow3 * rect.Width) * 4;
+							while (dstPtr < dstPtrEnd)
 							{
-								*(ptr8++) = ptr10[num2];
-								*(ptr8++) = ptr10[num];
-								*(ptr8++) = ptr10[width];
-								*(ptr8++) = *ptr10;
-								ptr10++;
+								*(dstPtr++) = srcPtr[offset3];
+								*(dstPtr++) = srcPtr[offset2];
+								*(dstPtr++) = srcPtr[offset];
+								*(dstPtr++) = *srcPtr;
+								srcPtr++;
 							}
 						}
 					}
 				}
-				this.imageData = array;
+				this.imageData = reorderedData;
 				return;
 			}
 			throw new PsdInvalidException("ZIP with prediction is only available for 16 and 32 bit depths.");
@@ -227,27 +227,27 @@ namespace DNA.Drawing.Imaging.Photoshop
 			}
 			if (this.ImageCompression == ImageCompression.Rle)
 			{
-				MemoryStream memoryStream = new MemoryStream();
-				MemoryStream memoryStream2 = new MemoryStream();
-				RleWriter rleWriter = new RleWriter(memoryStream);
-				PsdBinaryWriter psdBinaryWriter = new PsdBinaryWriter(memoryStream2);
-				ushort[] array = new ushort[this.Layer.Rect.Height];
-				int num = Util.BytesPerRow(this.Layer.Rect, this.Layer.PsdFile.BitDepth);
-				for (int i = 0; i < this.Layer.Rect.Height; i++)
+				MemoryStream dataStream = new MemoryStream();
+				MemoryStream headerStream = new MemoryStream();
+				RleWriter rleWriter = new RleWriter(dataStream);
+				PsdBinaryWriter headerWriter = new PsdBinaryWriter(headerStream);
+				ushort[] rleRowLengths = new ushort[this.Layer.Rect.Height];
+				int bytesPerRow = Util.BytesPerRow(this.Layer.Rect, this.Layer.PsdFile.BitDepth);
+				for (int row = 0; row < this.Layer.Rect.Height; row++)
 				{
-					int num2 = i * this.Layer.Rect.Width;
-					array[i] = (ushort)rleWriter.Write(this.ImageData, num2, num);
+					int rowIndex = row * this.Layer.Rect.Width;
+					rleRowLengths[row] = (ushort)rleWriter.Write(this.ImageData, rowIndex, bytesPerRow);
 				}
-				for (int j = 0; j < array.Length; j++)
+				for (int i = 0; i < rleRowLengths.Length; i++)
 				{
-					psdBinaryWriter.Write(array[j]);
+					headerWriter.Write(rleRowLengths[i]);
 				}
-				memoryStream2.Flush();
-				this.RleHeader = memoryStream2.ToArray();
-				memoryStream2.Close();
-				memoryStream.Flush();
-				this.data = memoryStream.ToArray();
-				memoryStream.Close();
+				headerStream.Flush();
+				this.RleHeader = headerStream.ToArray();
+				headerStream.Close();
+				dataStream.Flush();
+				this.data = dataStream.ToArray();
+				dataStream.Close();
 				this.Length = 2 + this.RleHeader.Length + this.Data.Length;
 			}
 			else

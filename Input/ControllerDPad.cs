@@ -59,28 +59,28 @@ namespace DNA.Input
 		{
 			get
 			{
-				bool flag = false;
+				bool result = false;
 				switch (btn)
 				{
 				case Buttons.DPadUp:
-					flag = this._up;
+					result = this._up;
 					break;
 				case Buttons.DPadDown:
-					flag = this._down;
+					result = this._down;
 					break;
 				case Buttons.DPadUp | Buttons.DPadDown:
 					break;
 				case Buttons.DPadLeft:
-					flag = this._left;
+					result = this._left;
 					break;
 				default:
 					if (btn == Buttons.DPadRight)
 					{
-						flag = this._right;
+						result = this._right;
 					}
 					break;
 				}
-				return flag;
+				return result;
 			}
 		}
 
@@ -88,8 +88,8 @@ namespace DNA.Input
 		{
 			if (obj is ControllerDPad)
 			{
-				ControllerDPad controllerDPad = (ControllerDPad)obj;
-				return this == controllerDPad;
+				ControllerDPad b = (ControllerDPad)obj;
+				return this == b;
 			}
 			return false;
 		}
@@ -101,36 +101,36 @@ namespace DNA.Input
 
 		public override string ToString()
 		{
-			string text = "";
+			string ret = "";
 			if (this._up)
 			{
-				return text + "Up";
+				return ret + "Up";
 			}
 			if (this._down)
 			{
-				if (text.Length > 0)
+				if (ret.Length > 0)
 				{
-					text += "|";
+					ret += "|";
 				}
-				return text + "Down";
+				return ret + "Down";
 			}
 			if (this._left)
 			{
-				if (text.Length > 0)
+				if (ret.Length > 0)
 				{
-					text += "|";
+					ret += "|";
 				}
-				return text + "Left";
+				return ret + "Left";
 			}
 			if (this._right)
 			{
-				if (text.Length > 0)
+				if (ret.Length > 0)
 				{
-					text += "|";
+					ret += "|";
 				}
-				return text + "Right";
+				return ret + "Right";
 			}
-			return text;
+			return ret;
 		}
 
 		private bool _up;

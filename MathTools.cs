@@ -35,11 +35,11 @@ namespace DNA
 		{
 			v1.Normalize();
 			v2.Normalize();
-			float num = Vector3.Dot(v1, v2);
-			num = Math.Min(num, 1f);
-			num = Math.Max(num, -1f);
-			float num2 = (float)Math.Acos((double)num);
-			return Angle.FromRadians(num2);
+			float dot = Vector3.Dot(v1, v2);
+			dot = Math.Min(dot, 1f);
+			dot = Math.Max(dot, -1f);
+			float rads = (float)Math.Acos((double)dot);
+			return Angle.FromRadians(rads);
 		}
 
 		public static bool Coincident(this Vector3 v1, Vector3 v2)
@@ -56,8 +56,8 @@ namespace DNA
 		{
 			v1.Normalize();
 			v2.Normalize();
-			Vector3 vector = Vector3.Cross(v1, v2);
-			return new Quaternion(vector.X, vector.Y, vector.Z, 1f + Vector3.Dot(v1, v2));
+			Vector3 cross = Vector3.Cross(v1, v2);
+			return new Quaternion(cross.X, cross.Y, cross.Z, 1f + Vector3.Dot(v1, v2));
 		}
 
 		public static Vector3 GetValidUpVector(Vector3 forward)
@@ -76,9 +76,9 @@ namespace DNA
 
 		public static double Distance(this Point p1, Point p2)
 		{
-			int num = p2.X - p1.X;
-			int num2 = p2.Y - p1.Y;
-			return Math.Sqrt((double)(num * num + num2 * num2));
+			int dx = p2.X - p1.X;
+			int dy = p2.Y - p1.Y;
+			return Math.Sqrt((double)(dx * dx + dy * dy));
 		}
 
 		public static float Cross(this Vector2 v1, Vector2 v2)
@@ -108,26 +108,26 @@ namespace DNA
 
 		public static int[] RandomArray(this Random rand, int start, int length)
 		{
-			int[] array = new int[length];
+			int[] nums = new int[length];
 			for (int i = 0; i < length; i++)
 			{
-				array[i] = start + i;
+				nums[i] = start + i;
 			}
-			ArrayTools.Randomize<int>(array, rand);
-			return array;
+			ArrayTools.Randomize<int>(nums, rand);
+			return nums;
 		}
 
 		public static double RandomDouble(this Random rand, double min, double max)
 		{
 			if (max < min)
 			{
-				double num = max;
+				double temp = max;
 				max = min;
-				min = num;
+				min = temp;
 			}
-			double num2 = max - min;
-			double num3 = num2 * rand.NextDouble();
-			return min + num3;
+			double delta = max - min;
+			double scaledDelta = delta * rand.NextDouble();
+			return min + scaledDelta;
 		}
 
 		public static float RandomFloat()
@@ -187,8 +187,8 @@ namespace DNA
 
 		public static float MapAndLerp(float value, float map1, float map2, float lerp1, float lerp2)
 		{
-			float num = ((value - map1) / (map2 - map1)).Clamp(0f, 1f);
-			return MathHelper.Lerp(lerp1, lerp2, num);
+			float t = ((value - map1) / (map2 - map1)).Clamp(0f, 1f);
+			return MathHelper.Lerp(lerp1, lerp2, t);
 		}
 
 		public static float GetTimeFixedLerpValue(float deltaTime, float timeToPercentage, float percentage)
@@ -197,8 +197,8 @@ namespace DNA
 			{
 				return 1f;
 			}
-			float num = deltaTime / timeToPercentage;
-			return 1f - (float)Math.Pow((double)percentage, (double)num);
+			float d = deltaTime / timeToPercentage;
+			return 1f - (float)Math.Pow((double)percentage, (double)d);
 		}
 
 		public static float GetTimeFixedLerpValue(float deltaTime, float timeToPercentage)
@@ -256,44 +256,44 @@ namespace DNA
 
 		public static int LogBase2(this uint v)
 		{
-			uint num;
-			if ((num = v >> 16) != 0U)
+			uint tt;
+			if ((tt = v >> 16) != 0U)
 			{
-				uint num2;
-				if ((num2 = num >> 8) == 0U)
+				uint t;
+				if ((t = tt >> 8) == 0U)
 				{
-					return (int)(16 + MathTools.LogTable256[(int)((UIntPtr)num)]);
+					return (int)(16 + MathTools.LogTable256[(int)((UIntPtr)tt)]);
 				}
-				return (int)(24 + MathTools.LogTable256[(int)((UIntPtr)num2)]);
+				return (int)(24 + MathTools.LogTable256[(int)((UIntPtr)t)]);
 			}
 			else
 			{
-				uint num2;
-				if ((num2 = v >> 8) == 0U)
+				uint t;
+				if ((t = v >> 8) == 0U)
 				{
 					return (int)MathTools.LogTable256[(int)((UIntPtr)v)];
 				}
-				return (int)(8 + MathTools.LogTable256[(int)((UIntPtr)num2)]);
+				return (int)(8 + MathTools.LogTable256[(int)((UIntPtr)t)]);
 			}
 		}
 
 		public static Matrix QuickInvert(this Matrix mat)
 		{
-			Matrix identity = Matrix.Identity;
-			Vector3 translation = mat.Translation;
-			identity.M11 = mat.M11;
-			identity.M12 = mat.M21;
-			identity.M13 = mat.M31;
-			identity.M21 = mat.M12;
-			identity.M22 = mat.M22;
-			identity.M23 = mat.M32;
-			identity.M31 = mat.M13;
-			identity.M32 = mat.M23;
-			identity.M33 = mat.M33;
-			identity.M41 = -Vector3.Dot(translation, mat.Right);
-			identity.M42 = -Vector3.Dot(translation, mat.Up);
-			identity.M43 = -Vector3.Dot(translation, mat.Forward);
-			return identity;
+			Matrix result = Matrix.Identity;
+			Vector3 w = mat.Translation;
+			result.M11 = mat.M11;
+			result.M12 = mat.M21;
+			result.M13 = mat.M31;
+			result.M21 = mat.M12;
+			result.M22 = mat.M22;
+			result.M23 = mat.M32;
+			result.M31 = mat.M13;
+			result.M32 = mat.M23;
+			result.M33 = mat.M33;
+			result.M41 = -Vector3.Dot(w, mat.Right);
+			result.M42 = -Vector3.Dot(w, mat.Up);
+			result.M43 = -Vector3.Dot(w, mat.Forward);
+			return result;
 		}
 
 		public static int TrailingZeroBits(this uint v)
@@ -591,35 +591,35 @@ namespace DNA
 
 		public static int DecimalToPow2Fraction(double val, out int denom, int maxDenom)
 		{
-			double num = 1.0;
-			int num2 = maxDenom;
+			double lfp = 1.0;
+			int ldenom = maxDenom;
 			for (int i = 1; i < maxDenom; i <<= 1)
 			{
-				double num3 = val * (double)i;
-				double num4 = num3 - Math.Floor(num3);
-				if (num4 == 0.0)
+				double num = val * (double)i;
+				double fp = num - Math.Floor(num);
+				if (fp == 0.0)
 				{
 					denom = i;
-					return (int)num3;
+					return (int)num;
 				}
-				if (num4 < num)
+				if (fp < lfp)
 				{
-					num = num4;
-					num2 = i;
+					lfp = fp;
+					ldenom = i;
 				}
 			}
-			denom = num2;
-			return (int)val * num2;
+			denom = ldenom;
+			return (int)val * ldenom;
 		}
 
 		public static int Factorial(int n)
 		{
-			int num = 1;
+			int res = 1;
 			for (int i = n; i > 1; i--)
 			{
-				num *= i;
+				res *= i;
 			}
-			return num;
+			return res;
 		}
 
 		public static int Permutations(int n, int r)
@@ -634,25 +634,25 @@ namespace DNA
 
 		public static int DecimalToFraction(double val, out int denom, int maxDenom)
 		{
-			double num = 1.0;
-			int num2 = maxDenom;
+			double lfp = 1.0;
+			int ldenom = maxDenom;
 			for (int i = 1; i < maxDenom; i++)
 			{
-				double num3 = val * (double)i;
-				double num4 = num3 - Math.Floor(num3);
-				if (num4 == 0.0)
+				double num = val * (double)i;
+				double fp = num - Math.Floor(num);
+				if (fp == 0.0)
 				{
 					denom = i;
-					return (int)num3;
+					return (int)num;
 				}
-				if (num4 < num)
+				if (fp < lfp)
 				{
-					num = num4;
-					num2 = i;
+					lfp = fp;
+					ldenom = i;
 				}
 			}
-			denom = num2;
-			return (int)val * num2;
+			denom = ldenom;
+			return (int)val * ldenom;
 		}
 
 		public static float Square(float x)
@@ -667,13 +667,13 @@ namespace DNA
 
 		public static bool CalculateInitialBallisticVector(Vector3 pt1, Vector3 pt2, float vel, out Vector3 res, float gravity)
 		{
-			float num = gravity * gravity;
-			float num2 = pt2.Y - pt1.Y;
-			float num3 = (float)Math.Sqrt((double)(MathTools.Square(pt1.X - pt2.X) + MathTools.Square(pt1.Z - pt2.Z)));
+			float gravitysq = gravity * gravity;
+			float Height = pt2.Y - pt1.Y;
+			float Dist = (float)Math.Sqrt((double)(MathTools.Square(pt1.X - pt2.X) + MathTools.Square(pt1.Z - pt2.Z)));
 			res = Vector3.Zero;
-			if (num3 == 0f)
+			if (Dist == 0f)
 			{
-				if (num2 >= 0f)
+				if (Height >= 0f)
 				{
 					res = new Vector3(0f, vel, 0f);
 				}
@@ -683,131 +683,131 @@ namespace DNA
 				}
 				return true;
 			}
-			float num4 = num2 * num2;
-			float num5 = num3 * num3;
-			float num6 = 2f * num4 + 2f * num5;
-			if (num6 == 0f)
+			float HeightSq = Height * Height;
+			float DistSq = Dist * Dist;
+			float sub4 = 2f * HeightSq + 2f * DistSq;
+			if (sub4 == 0f)
 			{
 				return false;
 			}
-			float num7 = vel * vel;
-			float num8 = 2f * gravity * num2 * num7 + num7 * num7 - num * num5;
-			if (num8 < 0f)
+			float velsq = vel * vel;
+			float sub5 = 2f * gravity * Height * velsq + velsq * velsq - gravitysq * DistSq;
+			if (sub5 < 0f)
 			{
 				return false;
 			}
-			num8 = (float)Math.Sqrt((double)num8);
-			float num9 = gravity * num2 + num7;
-			float num10 = num9 - num8;
-			float num11 = num9 + num8;
-			float num12 = num5 + num4;
-			num10 *= num12;
-			num11 *= num12;
-			num6 = 1.414213f * num3 / num6;
-			bool flag = false;
-			if (num10 >= 0f)
+			sub5 = (float)Math.Sqrt((double)sub5);
+			float sub6 = gravity * Height + velsq;
+			float suba = sub6 - sub5;
+			float subb = sub6 + sub5;
+			float sub7 = DistSq + HeightSq;
+			suba *= sub7;
+			subb *= sub7;
+			sub4 = 1.414213f * Dist / sub4;
+			bool gotit = false;
+			if (suba >= 0f)
 			{
-				num10 = (float)Math.Sqrt((double)num10) * num6;
-				flag = true;
+				suba = (float)Math.Sqrt((double)suba) * sub4;
+				gotit = true;
 			}
-			if (num11 >= 0f)
+			if (subb >= 0f)
 			{
-				num11 = (float)Math.Sqrt((double)num11) * num6;
-				if (!flag || num11 > num10)
+				subb = (float)Math.Sqrt((double)subb) * sub4;
+				if (!gotit || subb > suba)
 				{
-					flag = true;
-					num10 = num11;
+					gotit = true;
+					suba = subb;
 				}
 			}
-			if (flag)
+			if (gotit)
 			{
-				if (num10 <= 0f)
+				if (suba <= 0f)
 				{
 					return false;
 				}
-				float num13 = num10 * num10;
-				if (num13 > num7)
+				float suba1sq = suba * suba;
+				if (suba1sq > velsq)
 				{
 					return false;
 				}
-				float num14 = num3 / num10;
-				float num15 = (float)Math.Sqrt((double)(num7 - num13));
-				if (Math.Abs(num2 - (num15 * num14 + 0.5f * gravity * num14 * num14)) > Math.Abs(num2 - (-num15 * num14 + 0.5f * gravity * num14 * num14)))
+				float t = Dist / suba;
+				float h = (float)Math.Sqrt((double)(velsq - suba1sq));
+				if (Math.Abs(Height - (h * t + 0.5f * gravity * t * t)) > Math.Abs(Height - (-h * t + 0.5f * gravity * t * t)))
 				{
-					num15 = -num15;
+					h = -h;
 				}
-				Vector2 vector = new Vector2(pt2.X - pt1.X, pt2.Z - pt1.Z);
-				vector.Normalize();
-				res.X = num10 * vector.X;
-				res.Y = num15;
-				res.Z = num10 * vector.Y;
+				Vector2 nm = new Vector2(pt2.X - pt1.X, pt2.Z - pt1.Z);
+				nm.Normalize();
+				res.X = suba * nm.X;
+				res.Y = h;
+				res.Z = suba * nm.Y;
 			}
-			return flag;
+			return gotit;
 		}
 
 		public static float MoveTowardTarget(float current, float target, float rate, float dt)
 		{
-			float num3;
+			float result;
 			if (target != current)
 			{
-				float num = target - current;
-				float num2 = Math.Abs(num);
-				if (num2 > rate)
+				float dv = target - current;
+				float absdv = Math.Abs(dv);
+				if (absdv > rate)
 				{
-					num *= rate / num2;
+					dv *= rate / absdv;
 				}
-				num3 = current + num * dt;
-				if (Math.Abs(num3 - target) < 0.01f)
+				result = current + dv * dt;
+				if (Math.Abs(result - target) < 0.01f)
 				{
-					num3 = target;
+					result = target;
 				}
 			}
 			else
 			{
-				num3 = current;
+				result = current;
 			}
-			return num3;
+			return result;
 		}
 
 		public static float MoveTowardTargetAngle(float current, float target, float rate, float dt)
 		{
-			float num3;
+			float result;
 			if (target != current)
 			{
-				float num = MathHelper.WrapAngle(target - current);
-				float num2 = Math.Abs(num);
-				if (num2 > rate)
+				float dv = MathHelper.WrapAngle(target - current);
+				float absdv = Math.Abs(dv);
+				if (absdv > rate)
 				{
-					num *= rate / num2;
+					dv *= rate / absdv;
 				}
-				num3 = MathHelper.WrapAngle(current + num * dt);
-				if (Math.Abs(num3 - target) < 0.01f)
+				result = MathHelper.WrapAngle(current + dv * dt);
+				if (Math.Abs(result - target) < 0.01f)
 				{
-					num3 = target;
+					result = target;
 				}
 			}
 			else
 			{
-				num3 = current;
+				result = current;
 			}
-			return num3;
+			return result;
 		}
 
 		public static Vector3 Hermite1stDerivative(Vector3 Point1, Vector3 Tangent1, Vector3 Point2, Vector3 Tangent2, float t)
 		{
-			float num = t * t;
-			Vector3 vector = Point1 * (6f * (num - t));
-			vector += Tangent1 * (3f * num - 4f * t + 1f);
-			vector += Point2 * (6f * (t - num));
-			return vector + Tangent2 * (3f * num - 2f * t);
+			float tsq = t * t;
+			Vector3 result = Point1 * (6f * (tsq - t));
+			result += Tangent1 * (3f * tsq - 4f * t + 1f);
+			result += Point2 * (6f * (t - tsq));
+			return result + Tangent2 * (3f * tsq - 2f * t);
 		}
 
 		public static Vector3 Hermite2ndDerivative(Vector3 Point1, Vector3 Tangent1, Vector3 Point2, Vector3 Tangent2, float t)
 		{
-			Vector3 vector = Point1 * (12f * t - 6f);
-			vector += Tangent1 * (6f * t - 4f);
-			vector += Point2 * (6f - 12f * t);
-			return vector + Tangent2 * (6f * t - 2f);
+			Vector3 result = Point1 * (12f * t - 6f);
+			result += Tangent1 * (6f * t - 4f);
+			result += Point2 * (6f - 12f * t);
+			return result + Tangent2 * (6f * t - 2f);
 		}
 
 		public const float Sqrt2 = 1.414213f;

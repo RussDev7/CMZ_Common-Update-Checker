@@ -60,8 +60,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerBoolean derBoolean = asn1Object as DerBoolean;
-			return derBoolean != null && this.IsTrue == derBoolean.IsTrue;
+			DerBoolean other = asn1Object as DerBoolean;
+			return other != null && this.IsTrue == other.IsTrue;
 		}
 
 		protected override int Asn1GetHashCode()

@@ -34,9 +34,9 @@ namespace DNA.Drawing
 
 		private void UpdateSkinTransforms()
 		{
-			for (int i = 0; i < this._skinTransforms.Length; i++)
+			for (int bone = 0; bone < this._skinTransforms.Length; bone++)
 			{
-				this._skinTransforms[i] = this.SkinningData.InverseBindPose[i] * this._worldBoneTransforms[i];
+				this._skinTransforms[bone] = this.SkinningData.InverseBindPose[bone] * this._worldBoneTransforms[bone];
 			}
 		}
 
@@ -44,11 +44,11 @@ namespace DNA.Drawing
 		{
 			if (effect is SkinnedEffect)
 			{
-				SkinnedEffect skinnedEffect = (SkinnedEffect)effect;
-				skinnedEffect.SetBoneTransforms(this._skinTransforms);
-				skinnedEffect.EnableDefaultLighting();
-				skinnedEffect.SpecularColor = new Vector3(0.25f);
-				skinnedEffect.SpecularPower = 16f;
+				SkinnedEffect seffect = (SkinnedEffect)effect;
+				seffect.SetBoneTransforms(this._skinTransforms);
+				seffect.EnableDefaultLighting();
+				seffect.SpecularColor = new Vector3(0.25f);
+				seffect.SpecularPower = 16f;
 			}
 			else if (effect.Parameters["Bones"] != null)
 			{
@@ -61,13 +61,13 @@ namespace DNA.Drawing
 		{
 			for (int i = 0; i < base.Model.Meshes.Count; i++)
 			{
-				ModelMesh modelMesh = base.Model.Meshes[i];
-				for (int j = 0; j < modelMesh.Effects.Count; j++)
+				ModelMesh mesh = base.Model.Meshes[i];
+				for (int j = 0; j < mesh.Effects.Count; j++)
 				{
-					Effect effect = modelMesh.Effects[j];
-					this.SetEffectParams(modelMesh, effect, gameTime, base.LocalToWorld, view, projection);
+					Effect effect = mesh.Effects[j];
+					this.SetEffectParams(mesh, effect, gameTime, base.LocalToWorld, view, projection);
 				}
-				modelMesh.Draw();
+				mesh.Draw();
 			}
 			if (this.ShowSkeleton)
 			{

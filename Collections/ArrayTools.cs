@@ -7,34 +7,34 @@ namespace DNA.Collections
 	{
 		public static T[][] AllocSquareJaggedArray<T>(int x, int y)
 		{
-			T[][] array = new T[x][];
-			for (int i = 0; i < array.Length; i++)
+			T[][] ret = new T[x][];
+			for (int i = 0; i < ret.Length; i++)
 			{
-				array[i] = new T[y];
+				ret[i] = new T[y];
 			}
-			return array;
+			return ret;
 		}
 
 		public static void Randomize<T>(IList<T> array, Random rand)
 		{
 			if (array is T[])
 			{
-				T[] array2 = (T[])array;
-				for (int i = 0; i < array2.Length; i++)
+				T[] ary = (T[])array;
+				for (int i = 0; i < ary.Length; i++)
 				{
-					int num = i + rand.Next(array2.Length - i);
-					T t = array2[num];
-					array2[num] = array2[i];
-					array2[i] = t;
+					int swapIndex = i + rand.Next(ary.Length - i);
+					T temp = ary[swapIndex];
+					ary[swapIndex] = ary[i];
+					ary[i] = temp;
 				}
 				return;
 			}
 			for (int j = 0; j < array.Count; j++)
 			{
-				int num2 = j + rand.Next(array.Count - j);
-				T t2 = array[num2];
-				array[num2] = array[j];
-				array[j] = t2;
+				int swapIndex2 = j + rand.Next(array.Count - j);
+				T temp2 = array[swapIndex2];
+				array[swapIndex2] = array[j];
+				array[j] = temp2;
 			}
 		}
 
@@ -54,53 +54,53 @@ namespace DNA.Collections
 			{
 				return;
 			}
-			int num = h;
-			int num2 = d;
-			T t = list[(d + h) / 2];
+			int i = h;
+			int j = d;
+			T obj = list[(d + h) / 2];
 			do
 			{
 				if (direction == Order.Ascending)
 				{
-					while (comparison(list[num2], t) < 0)
+					while (comparison(list[j], obj) < 0)
 					{
-						num2++;
+						j++;
 					}
-					while (comparison(list[num], t) > 0)
+					while (comparison(list[i], obj) > 0)
 					{
-						num--;
+						i--;
 					}
 				}
 				else
 				{
-					while (comparison(list[num2], t) > 0)
+					while (comparison(list[j], obj) > 0)
 					{
-						num2++;
+						j++;
 					}
-					while (comparison(list[num], t) < 0)
+					while (comparison(list[i], obj) < 0)
 					{
-						num--;
+						i--;
 					}
 				}
-				if (num >= num2)
+				if (i >= j)
 				{
-					if (num != num2)
+					if (i != j)
 					{
-						T t2 = list[num];
-						list[num] = list[num2];
-						list[num2] = t2;
+						T zal = list[i];
+						list[i] = list[j];
+						list[j] = zal;
 					}
-					num--;
-					num2++;
+					i--;
+					j++;
 				}
 			}
-			while (num2 <= num);
-			if (d < num)
+			while (j <= i);
+			if (d < i)
 			{
-				ArrayTools.QSort_r<T>(list, comparison, d, num, direction);
+				ArrayTools.QSort_r<T>(list, comparison, d, i, direction);
 			}
-			if (num2 < h)
+			if (j < h)
 			{
-				ArrayTools.QSort_r<T>(list, comparison, num2, h, direction);
+				ArrayTools.QSort_r<T>(list, comparison, j, h, direction);
 			}
 		}
 
@@ -115,73 +115,73 @@ namespace DNA.Collections
 			{
 				return;
 			}
-			int num = h;
-			int num2 = d;
-			T t = list[(d + h) / 2];
+			int i = h;
+			int j = d;
+			T obj = list[(d + h) / 2];
 			do
 			{
 				if (direction == Order.Ascending)
 				{
 					for (;;)
 					{
-						T t2 = list[num2];
-						if (t2.CompareTo(t) >= 0)
+						T t = list[j];
+						if (t.CompareTo(obj) >= 0)
 						{
 							break;
 						}
-						num2++;
+						j++;
 					}
 					for (;;)
 					{
-						T t3 = list[num];
-						if (t3.CompareTo(t) <= 0)
+						T t2 = list[i];
+						if (t2.CompareTo(obj) <= 0)
 						{
 							break;
 						}
-						num--;
+						i--;
 					}
 				}
 				else
 				{
 					for (;;)
 					{
-						T t4 = list[num2];
-						if (t4.CompareTo(t) <= 0)
+						T t3 = list[j];
+						if (t3.CompareTo(obj) <= 0)
 						{
 							break;
 						}
-						num2++;
+						j++;
 					}
 					for (;;)
 					{
-						T t5 = list[num];
-						if (t5.CompareTo(t) >= 0)
+						T t4 = list[i];
+						if (t4.CompareTo(obj) >= 0)
 						{
 							break;
 						}
-						num--;
+						i--;
 					}
 				}
-				if (num >= num2)
+				if (i >= j)
 				{
-					if (num != num2)
+					if (i != j)
 					{
-						T t6 = list[num];
-						list[num] = list[num2];
-						list[num2] = t6;
+						T zal = list[i];
+						list[i] = list[j];
+						list[j] = zal;
 					}
-					num--;
-					num2++;
+					i--;
+					j++;
 				}
 			}
-			while (num2 <= num);
-			if (d < num)
+			while (j <= i);
+			if (d < i)
 			{
-				ArrayTools.QSort_r<T>(list, d, num, direction);
+				ArrayTools.QSort_r<T>(list, d, i, direction);
 			}
-			if (num2 < h)
+			if (j < h)
 			{
-				ArrayTools.QSort_r<T>(list, num2, h, direction);
+				ArrayTools.QSort_r<T>(list, j, h, direction);
 			}
 		}
 	}

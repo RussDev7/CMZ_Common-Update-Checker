@@ -13,27 +13,27 @@
 
 		private void InitializeComponent()
 		{
-			global::System.ComponentModel.ComponentResourceManager componentResourceManager = new global::System.ComponentModel.ComponentResourceManager(typeof(global::DNA.Distribution.AcceptTOSForm));
+			global::System.ComponentModel.ComponentResourceManager resources = new global::System.ComponentModel.ComponentResourceManager(typeof(global::DNA.Distribution.AcceptTOSForm));
 			this.linkLabel1 = new global::System.Windows.Forms.LinkLabel();
 			this.button1 = new global::System.Windows.Forms.Button();
 			this.button2 = new global::System.Windows.Forms.Button();
 			this.label1 = new global::System.Windows.Forms.Label();
 			base.SuspendLayout();
-			componentResourceManager.ApplyResources(this.linkLabel1, "linkLabel1");
+			resources.ApplyResources(this.linkLabel1, "linkLabel1");
 			this.linkLabel1.Name = "linkLabel1";
 			this.linkLabel1.TabStop = true;
 			this.linkLabel1.LinkClicked += new global::System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
-			componentResourceManager.ApplyResources(this.button1, "button1");
+			resources.ApplyResources(this.button1, "button1");
 			this.button1.DialogResult = global::System.Windows.Forms.DialogResult.Yes;
 			this.button1.Name = "button1";
 			this.button1.UseVisualStyleBackColor = true;
-			componentResourceManager.ApplyResources(this.button2, "button2");
+			resources.ApplyResources(this.button2, "button2");
 			this.button2.DialogResult = global::System.Windows.Forms.DialogResult.Cancel;
 			this.button2.Name = "button2";
 			this.button2.UseVisualStyleBackColor = true;
-			componentResourceManager.ApplyResources(this.label1, "label1");
+			resources.ApplyResources(this.label1, "label1");
 			this.label1.Name = "label1";
-			componentResourceManager.ApplyResources(this, "$this");
+			resources.ApplyResources(this, "$this");
 			base.AutoScaleMode = global::System.Windows.Forms.AutoScaleMode.Font;
 			base.Controls.Add(this.linkLabel1);
 			base.Controls.Add(this.label1);

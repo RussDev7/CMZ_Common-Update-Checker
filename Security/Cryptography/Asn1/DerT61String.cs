@@ -58,8 +58,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerT61String derT61String = asn1Object as DerT61String;
-			return derT61String != null && this.str.Equals(derT61String.str);
+			DerT61String other = asn1Object as DerT61String;
+			return other != null && this.str.Equals(other.str);
 		}
 
 		private readonly string str;

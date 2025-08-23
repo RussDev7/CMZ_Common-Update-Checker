@@ -20,23 +20,23 @@ namespace DNA.Drawing.Curves.Splines
 
 		public override Vector3 ComputeValue(float t)
 		{
-			int controlPointIndex = Spline.GetControlPointIndex(this._controlPoints.Count, ref t);
-			return QuadraticBezierCurve.ComputeValue(t, this.ControlPoints[controlPointIndex], this.ControlPoints[controlPointIndex + 1]);
+			int idx = Spline.GetControlPointIndex(this._controlPoints.Count, ref t);
+			return QuadraticBezierCurve.ComputeValue(t, this.ControlPoints[idx], this.ControlPoints[idx + 1]);
 		}
 
 		private static Vector3 ComputeValue(float t, QuadraticBezierCurve.ControlPoint cp1, QuadraticBezierCurve.ControlPoint cp2)
 		{
-			Vector3 location = cp1.Location;
-			Vector3 handle = cp1.Handle;
-			Vector3 location2 = cp2.Location;
-			float num = 1f - t;
-			float num2 = num * num;
-			float num3 = 2f * t * num;
-			float num4 = t * t;
-			float num5 = num2 * location.X + num3 * handle.X + num4 * location2.X;
-			float num6 = num2 * location.Y + num3 * handle.Y + num4 * location2.Y;
-			float num7 = num2 * location.Z + num3 * handle.Z + num4 * location2.Z;
-			return new Vector3(num5, num6, num7);
+			Vector3 p = cp1.Location;
+			Vector3 p2 = cp1.Handle;
+			Vector3 p3 = cp2.Location;
+			float omt = 1f - t;
+			float a = omt * omt;
+			float b = 2f * t * omt;
+			float c = t * t;
+			float x = a * p.X + b * p2.X + c * p3.X;
+			float y = a * p.Y + b * p2.Y + c * p3.Y;
+			float z = a * p.Z + b * p2.Z + c * p3.Z;
+			return new Vector3(x, y, z);
 		}
 
 		public override Vector3 ComputeVelocity(float t)
@@ -51,8 +51,8 @@ namespace DNA.Drawing.Curves.Splines
 
 		public override bool Equals(object obj)
 		{
-			QuadraticBezierCurve quadraticBezierCurve = obj as QuadraticBezierCurve;
-			return !(quadraticBezierCurve == null) && this == quadraticBezierCurve;
+			QuadraticBezierCurve val = obj as QuadraticBezierCurve;
+			return !(val == null) && this == val;
 		}
 
 		public override int GetHashCode()

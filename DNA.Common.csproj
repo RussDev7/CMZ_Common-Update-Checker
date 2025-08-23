@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
-    <ProjectGuid>{9F8117A1-54E1-438A-8DAC-BED5CD85DFB3}</ProjectGuid>
+    <ProjectGuid>{554E1E49-9E0A-463B-868A-8B74045B35E6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>DNA</RootNamespace>
     <AssemblyName>DNA.Common</AssemblyName>

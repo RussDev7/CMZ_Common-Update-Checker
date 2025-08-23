@@ -55,70 +55,70 @@ namespace DNA.Security.Cryptography
 
 		public static RSAKey Generate(int size)
 		{
-			RSAKey rsakey = new RSAKey();
-			RsaKeyPairGenerator rsaKeyPairGenerator = new RsaKeyPairGenerator();
-			rsaKeyPairGenerator.Init(new KeyGenerationParameters(new SecureRandom(), size));
-			AsymmetricCipherKeyPair asymmetricCipherKeyPair = rsaKeyPairGenerator.GenerateKeyPair();
-			rsakey._privateKeyParams = (RsaPrivateCrtKeyParameters)asymmetricCipherKeyPair.Private;
-			rsakey._publicKeyParams = (RsaKeyParameters)asymmetricCipherKeyPair.Public;
-			return rsakey;
+			RSAKey ret = new RSAKey();
+			RsaKeyPairGenerator rsaKeypairGenerator = new RsaKeyPairGenerator();
+			rsaKeypairGenerator.Init(new KeyGenerationParameters(new SecureRandom(), size));
+			AsymmetricCipherKeyPair keyPair = rsaKeypairGenerator.GenerateKeyPair();
+			ret._privateKeyParams = (RsaPrivateCrtKeyParameters)keyPair.Private;
+			ret._publicKeyParams = (RsaKeyParameters)keyPair.Public;
+			return ret;
 		}
 
 		public override string ToString()
 		{
-			HTFDocument htfdocument = new HTFDocument();
+			HTFDocument doc = new HTFDocument();
 			if (this._privateKeyParams != null)
 			{
-				htfdocument.Children.Add(new HTFElement("Modulus", this._privateKeyParams.Modulus.ToString(16)));
-				htfdocument.Children.Add(new HTFElement("PublicExponent", this._privateKeyParams.PublicExponent.ToString(16)));
-				htfdocument.Children.Add(new HTFElement("PrivateExponent", this._privateKeyParams.Exponent.ToString(16)));
-				htfdocument.Children.Add(new HTFElement("P", this._privateKeyParams.P.ToString(16)));
-				htfdocument.Children.Add(new HTFElement("Q", this._privateKeyParams.Q.ToString(16)));
-				htfdocument.Children.Add(new HTFElement("DP", this._privateKeyParams.DP.ToString(16)));
-				htfdocument.Children.Add(new HTFElement("dQ", this._privateKeyParams.DQ.ToString(16)));
-				htfdocument.Children.Add(new HTFElement("qInv", this._privateKeyParams.QInv.ToString(16)));
+				doc.Children.Add(new HTFElement("Modulus", this._privateKeyParams.Modulus.ToString(16)));
+				doc.Children.Add(new HTFElement("PublicExponent", this._privateKeyParams.PublicExponent.ToString(16)));
+				doc.Children.Add(new HTFElement("PrivateExponent", this._privateKeyParams.Exponent.ToString(16)));
+				doc.Children.Add(new HTFElement("P", this._privateKeyParams.P.ToString(16)));
+				doc.Children.Add(new HTFElement("Q", this._privateKeyParams.Q.ToString(16)));
+				doc.Children.Add(new HTFElement("DP", this._privateKeyParams.DP.ToString(16)));
+				doc.Children.Add(new HTFElement("dQ", this._privateKeyParams.DQ.ToString(16)));
+				doc.Children.Add(new HTFElement("qInv", this._privateKeyParams.QInv.ToString(16)));
 			}
 			else
 			{
-				htfdocument.Children.Add(new HTFElement("Modulus", this._publicKeyParams.Modulus.ToString(16)));
-				htfdocument.Children.Add(new HTFElement("PublicExponent", this._publicKeyParams.Exponent.ToString(16)));
+				doc.Children.Add(new HTFElement("Modulus", this._publicKeyParams.Modulus.ToString(16)));
+				doc.Children.Add(new HTFElement("PublicExponent", this._publicKeyParams.Exponent.ToString(16)));
 			}
-			return htfdocument.ToString();
+			return doc.ToString();
 		}
 
 		public static RSAKey Parse(string str)
 		{
-			RSAKey rsakey = new RSAKey();
-			HTFDocument htfdocument = new HTFDocument();
-			htfdocument.LoadFromString(str);
-			Dictionary<string, BigInteger> dictionary = new Dictionary<string, BigInteger>();
-			foreach (HTFElement htfelement in htfdocument.Children)
+			RSAKey ret = new RSAKey();
+			HTFDocument doc = new HTFDocument();
+			doc.LoadFromString(str);
+			Dictionary<string, BigInteger> table = new Dictionary<string, BigInteger>();
+			foreach (HTFElement ele in doc.Children)
 			{
-				dictionary[htfelement.ID] = new BigInteger(htfelement.Value, 16);
+				table[ele.ID] = new BigInteger(ele.Value, 16);
 			}
-			if (dictionary.ContainsKey("PrivateExponent"))
+			if (table.ContainsKey("PrivateExponent"))
 			{
-				rsakey._privateKeyParams = new RsaPrivateCrtKeyParameters(dictionary["Modulus"], dictionary["PublicExponent"], dictionary["PrivateExponent"], dictionary["P"], dictionary["Q"], dictionary["DP"], dictionary["dQ"], dictionary["qInv"]);
-				rsakey._publicKeyParams = new RsaKeyParameters(false, rsakey._privateKeyParams.Modulus, rsakey._privateKeyParams.PublicExponent);
+				ret._privateKeyParams = new RsaPrivateCrtKeyParameters(table["Modulus"], table["PublicExponent"], table["PrivateExponent"], table["P"], table["Q"], table["DP"], table["dQ"], table["qInv"]);
+				ret._publicKeyParams = new RsaKeyParameters(false, ret._privateKeyParams.Modulus, ret._privateKeyParams.PublicExponent);
 			}
 			else
 			{
-				rsakey._publicKeyParams = new RsaKeyParameters(false, dictionary["Modulus"], dictionary["PublicExponent"]);
+				ret._publicKeyParams = new RsaKeyParameters(false, table["Modulus"], table["PublicExponent"]);
 			}
-			return rsakey;
+			return ret;
 		}
 
 		private static void WriteBigInt(BinaryWriter writer, BigInteger bigInt)
 		{
-			byte[] array = bigInt.ToByteArray();
-			writer.Write(array.Length);
-			writer.Write(array);
+			byte[] data = bigInt.ToByteArray();
+			writer.Write(data.Length);
+			writer.Write(data);
 		}
 
 		private static BigInteger ReadBigInt(BinaryReader reader)
 		{
-			int num = reader.ReadInt32();
-			return new BigInteger(reader.ReadBytes(num));
+			int size = reader.ReadInt32();
+			return new BigInteger(reader.ReadBytes(size));
 		}
 
 		public void Write(BinaryWriter writer)
@@ -143,33 +143,33 @@ namespace DNA.Security.Cryptography
 
 		public static RSAKey Read(BinaryReader reader)
 		{
-			RSAKey rsakey = new RSAKey();
+			RSAKey ret = new RSAKey();
 			if (reader.ReadBoolean())
 			{
-				rsakey._privateKeyParams = new RsaPrivateCrtKeyParameters(RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader));
-				rsakey._publicKeyParams = new RsaKeyParameters(false, rsakey._privateKeyParams.Modulus, rsakey._privateKeyParams.PublicExponent);
+				ret._privateKeyParams = new RsaPrivateCrtKeyParameters(RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader));
+				ret._publicKeyParams = new RsaKeyParameters(false, ret._privateKeyParams.Modulus, ret._privateKeyParams.PublicExponent);
 			}
 			else
 			{
-				rsakey._publicKeyParams = new RsaKeyParameters(false, RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader));
+				ret._publicKeyParams = new RsaKeyParameters(false, RSAKey.ReadBigInt(reader), RSAKey.ReadBigInt(reader));
 			}
-			return rsakey;
+			return ret;
 		}
 
 		public byte[] ToByteArray()
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			BinaryWriter binaryWriter = new BinaryWriter(memoryStream);
-			this.Write(binaryWriter);
-			binaryWriter.Flush();
-			return memoryStream.ToArray();
+			MemoryStream stream = new MemoryStream();
+			BinaryWriter writer = new BinaryWriter(stream);
+			this.Write(writer);
+			writer.Flush();
+			return stream.ToArray();
 		}
 
 		public static RSAKey FromByteArray(byte[] data)
 		{
-			MemoryStream memoryStream = new MemoryStream(data);
-			BinaryReader binaryReader = new BinaryReader(memoryStream);
-			return RSAKey.Read(binaryReader);
+			MemoryStream stream = new MemoryStream(data);
+			BinaryReader reader = new BinaryReader(stream);
+			return RSAKey.Read(reader);
 		}
 
 		private RsaPrivateCrtKeyParameters _privateKeyParams;

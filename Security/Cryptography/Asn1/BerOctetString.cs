@@ -9,14 +9,14 @@ namespace DNA.Security.Cryptography.Asn1
 	{
 		private static byte[] ToBytes(IEnumerable octs)
 		{
-			MemoryStream memoryStream = new MemoryStream();
+			MemoryStream bOut = new MemoryStream();
 			foreach (object obj in octs)
 			{
-				DerOctetString derOctetString = (DerOctetString)obj;
-				byte[] octets = derOctetString.GetOctets();
-				memoryStream.Write(octets, 0, octets.Length);
+				DerOctetString o = (DerOctetString)obj;
+				byte[] octets = o.GetOctets();
+				bOut.Write(octets, 0, octets.Length);
 			}
-			return memoryStream.ToArray();
+			return bOut.ToArray();
 		}
 
 		public BerOctetString(byte[] str)
@@ -62,15 +62,15 @@ namespace DNA.Security.Cryptography.Asn1
 
 		private List<DerOctetString> GenerateOcts()
 		{
-			List<DerOctetString> list = new List<DerOctetString>();
+			List<DerOctetString> vec = new List<DerOctetString>();
 			for (int i = 0; i < this.str.Length; i += 1000)
 			{
-				int num = Math.Min(this.str.Length, i + 1000);
-				byte[] array = new byte[num - i];
-				Array.Copy(this.str, i, array, 0, array.Length);
-				list.Add(new DerOctetString(array));
+				int end = Math.Min(this.str.Length, i + 1000);
+				byte[] nStr = new byte[end - i];
+				Array.Copy(this.str, i, nStr, 0, nStr.Length);
+				vec.Add(new DerOctetString(nStr));
 			}
-			return list;
+			return vec;
 		}
 
 		internal override void Encode(DerOutputStream derOut)
@@ -81,8 +81,8 @@ namespace DNA.Security.Cryptography.Asn1
 				derOut.WriteByte(128);
 				foreach (object obj in this)
 				{
-					DerOctetString derOctetString = (DerOctetString)obj;
-					derOut.WriteObject(derOctetString);
+					DerOctetString oct = (DerOctetString)obj;
+					derOut.WriteObject(oct);
 				}
 				derOut.WriteByte(0);
 				derOut.WriteByte(0);

@@ -17,23 +17,23 @@ namespace DNA.Audio.SignalProcessing.Processors
 		public override bool ProcessBlock(SpectralData data)
 		{
 			this._anaylizer.ProcessBlock(data);
-			Frequency value = this._anaylizer.PrimaryFrequency.Value;
-			value.Hertz = Math.Abs(value.Hertz);
-			Tone tone = Tone.FromFrequency(value);
-			int num = tone.KeyValue;
-			if (tone.Detune > 0.5f)
+			Frequency primaryFreq = this._anaylizer.PrimaryFrequency.Value;
+			primaryFreq.Hertz = Math.Abs(primaryFreq.Hertz);
+			Tone note = Tone.FromFrequency(primaryFreq);
+			int key = note.KeyValue;
+			if (note.Detune > 0.5f)
 			{
-				num++;
+				key++;
 			}
-			if (tone.Detune < -0.5f)
+			if (note.Detune < -0.5f)
 			{
-				num--;
+				key--;
 			}
-			Tone tone2 = Tone.FromKeyIndex(num);
-			if (value.Hertz > 0f)
+			Tone baseTone = Tone.FromKeyIndex(key);
+			if (primaryFreq.Hertz > 0f)
 			{
-				float num2 = tone2.Frequency.Hertz / value.Hertz;
-				this._pitchShifter.Pitch = num2;
+				float detune = baseTone.Frequency.Hertz / primaryFreq.Hertz;
+				this._pitchShifter.Pitch = detune;
 			}
 			else
 			{

@@ -52,9 +52,9 @@ namespace DNA.Net.GamerServices
 
 		public IAsyncResult BeginGetProfile(AsyncCallback callback, object asyncState)
 		{
-			IAsyncResult asyncResult = new Gamer.BaseAsyncResult(callback, asyncState);
-			callback(asyncResult);
-			return asyncResult;
+			IAsyncResult result = new Gamer.BaseAsyncResult(callback, asyncState);
+			callback(result);
+			return result;
 		}
 
 		public static Gamer EndGetFromGamertag(IAsyncResult result)

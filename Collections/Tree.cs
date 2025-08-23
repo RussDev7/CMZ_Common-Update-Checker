@@ -33,9 +33,9 @@ namespace DNA.Collections
 
 		public bool IsDecendantOf(T node)
 		{
-			for (Tree<T> tree = this; tree != null; tree = tree.Parent)
+			for (Tree<T> currentNode = this; currentNode != null; currentNode = currentNode.Parent)
 			{
-				if (tree == node)
+				if (currentNode == node)
 				{
 					return true;
 				}
@@ -103,11 +103,11 @@ namespace DNA.Collections
 				}
 				set
 				{
-					T t = this.List[index];
+					T old = this.List[index];
 					this.List[index] = value;
-					if (t != value)
+					if (old != value)
 					{
-						this.OnSetComplete(index, t, value);
+						this.OnSetComplete(index, old, value);
 					}
 				}
 			}
@@ -147,36 +147,36 @@ namespace DNA.Collections
 			{
 				for (int i = 0; i < this.List.Count; i++)
 				{
-					T t = this.List[i];
-					t._parent = default(T);
-					t.OnParentChanged((T)((object)this._owner), default(T));
+					T node = this.List[i];
+					node._parent = default(T);
+					node.OnParentChanged((T)((object)this._owner), default(T));
 				}
 			}
 
 			private void OnInsertComplete(int index, T value)
 			{
-				T t = value;
-				t._parent = (T)((object)this._owner);
-				t.OnParentChanged(default(T), (T)((object)this._owner));
+				T node = value;
+				node._parent = (T)((object)this._owner);
+				node.OnParentChanged(default(T), (T)((object)this._owner));
 				this._owner.OnChildrenChanged();
 			}
 
 			private void OnRemoveComplete(int index, T value)
 			{
-				T t = value;
-				t._parent = default(T);
-				t.OnParentChanged((T)((object)this._owner), default(T));
+				T node = value;
+				node._parent = default(T);
+				node.OnParentChanged((T)((object)this._owner), default(T));
 				this._owner.OnChildrenChanged();
 			}
 
 			private void OnSetComplete(int index, T oldValue, T newValue)
 			{
-				T t = oldValue;
-				T t2 = newValue;
-				t._parent = default(T);
-				t2._parent = (T)((object)this._owner);
-				t.OnParentChanged((T)((object)this._owner), default(T));
-				t2.OnParentChanged(default(T), (T)((object)this._owner));
+				T oldNode = oldValue;
+				T newNode = newValue;
+				oldNode._parent = default(T);
+				newNode._parent = (T)((object)this._owner);
+				oldNode.OnParentChanged((T)((object)this._owner), default(T));
+				newNode.OnParentChanged(default(T), (T)((object)this._owner));
 				this._owner.OnChildrenChanged();
 			}
 
@@ -194,9 +194,9 @@ namespace DNA.Collections
 
 			public void RemoveAt(int index)
 			{
-				T t = this.List[index];
+				T item = this.List[index];
 				this.List.RemoveAt(index);
-				this.OnRemoveComplete(index, t);
+				this.OnRemoveComplete(index, item);
 			}
 
 			public void Clear()
@@ -228,12 +228,12 @@ namespace DNA.Collections
 
 			public bool Remove(T item)
 			{
-				int num = this.List.IndexOf(item);
-				if (num < 0)
+				int index = this.List.IndexOf(item);
+				if (index < 0)
 				{
 					return false;
 				}
-				this.RemoveAt(num);
+				this.RemoveAt(index);
 				return true;
 			}
 

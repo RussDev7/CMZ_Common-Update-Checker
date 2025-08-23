@@ -14,12 +14,12 @@ namespace DNA.Profiling
 
 		public void PushList(T newList)
 		{
-			IProfilerLinkedListNode profilerLinkedListNode = newList;
-			while (profilerLinkedListNode.NextNode != null)
+			IProfilerLinkedListNode i = newList;
+			while (i.NextNode != null)
 			{
-				profilerLinkedListNode = profilerLinkedListNode.NextNode;
+				i = i.NextNode;
 			}
-			profilerLinkedListNode.NextNode = this._root;
+			i.NextNode = this._root;
 			this._root = newList;
 		}
 
@@ -31,12 +31,12 @@ namespace DNA.Profiling
 
 		public T Pop()
 		{
-			T root = this._root;
+			T result = this._root;
 			if (this._root != null)
 			{
 				this._root = this._root.NextNode as T;
 			}
-			return root;
+			return result;
 		}
 
 		public void Clear()

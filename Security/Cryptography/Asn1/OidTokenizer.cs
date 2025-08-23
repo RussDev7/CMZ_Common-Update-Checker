@@ -23,16 +23,16 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				return null;
 			}
-			int num = this.oid.IndexOf('.', this.index);
-			if (num == -1)
+			int end = this.oid.IndexOf('.', this.index);
+			if (end == -1)
 			{
-				string text = this.oid.Substring(this.index);
+				string lastToken = this.oid.Substring(this.index);
 				this.index = -1;
-				return text;
+				return lastToken;
 			}
-			string text2 = this.oid.Substring(this.index, num - this.index);
-			this.index = num + 1;
-			return text2;
+			string nextToken = this.oid.Substring(this.index, end - this.index);
+			this.index = end + 1;
+			return nextToken;
 		}
 
 		private string oid;

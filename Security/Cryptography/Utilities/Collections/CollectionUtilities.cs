@@ -12,9 +12,9 @@ namespace DNA.Security.Cryptography.Utilities.Collections
 
 		public static bool CheckElementsAreOfType(IEnumerable e, Type t)
 		{
-			foreach (object obj in e)
+			foreach (object o in e)
 			{
-				if (!t.IsInstanceOfType(obj))
+				if (!t.IsInstanceOfType(o))
 				{
 					return false;
 				}
@@ -24,19 +24,19 @@ namespace DNA.Security.Cryptography.Utilities.Collections
 
 		public static string ToString(IEnumerable c)
 		{
-			StringBuilder stringBuilder = new StringBuilder("[");
-			IEnumerator enumerator = c.GetEnumerator();
-			if (enumerator.MoveNext())
+			StringBuilder sb = new StringBuilder("[");
+			IEnumerator e = c.GetEnumerator();
+			if (e.MoveNext())
 			{
-				stringBuilder.Append(enumerator.Current.ToString());
-				while (enumerator.MoveNext())
+				sb.Append(e.Current.ToString());
+				while (e.MoveNext())
 				{
-					stringBuilder.Append(", ");
-					stringBuilder.Append(enumerator.Current.ToString());
+					sb.Append(", ");
+					sb.Append(e.Current.ToString());
 				}
 			}
-			stringBuilder.Append(']');
-			return stringBuilder.ToString();
+			sb.Append(']');
+			return sb.ToString();
 		}
 	}
 }

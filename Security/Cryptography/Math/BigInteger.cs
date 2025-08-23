@@ -12,13 +12,13 @@ namespace DNA.Security.Cryptography.Math
 		{
 			for (int i = 0; i < BigInteger.primeLists.Length; i++)
 			{
-				int[] array = BigInteger.primeLists[i];
-				int num = 1;
-				for (int j = 0; j < array.Length; j++)
+				int[] primeList = BigInteger.primeLists[i];
+				int product = 1;
+				for (int j = 0; j < primeList.Length; j++)
 				{
-					num *= array[j];
+					product *= primeList[j];
 				}
-				BigInteger.primeProducts[i] = num;
+				BigInteger.primeProducts[i] = product;
 			}
 		}
 
@@ -39,24 +39,24 @@ namespace DNA.Security.Cryptography.Math
 				this.magnitude = mag;
 				return;
 			}
-			int num = 0;
-			while (num < mag.Length && mag[num] == 0)
+			int i = 0;
+			while (i < mag.Length && mag[i] == 0)
 			{
-				num++;
+				i++;
 			}
-			if (num == mag.Length)
+			if (i == mag.Length)
 			{
 				this.magnitude = BigInteger.ZeroMagnitude;
 				return;
 			}
 			this.sign = signum;
-			if (num == 0)
+			if (i == 0)
 			{
 				this.magnitude = mag;
 				return;
 			}
-			this.magnitude = new int[mag.Length - num];
-			Array.Copy(mag, num, this.magnitude, 0, this.magnitude.Length);
+			this.magnitude = new int[mag.Length - i];
+			Array.Copy(mag, i, this.magnitude, 0, this.magnitude.Length);
 		}
 
 		public BigInteger(string value)
@@ -70,10 +70,10 @@ namespace DNA.Security.Cryptography.Math
 			{
 				throw new FormatException("Zero length BigInteger");
 			}
-			NumberStyles numberStyles;
-			int num;
-			BigInteger bigInteger;
-			BigInteger bigInteger2;
+			NumberStyles style;
+			int chunk;
+			BigInteger r;
+			BigInteger rE;
 			if (radix != 2)
 			{
 				if (radix != 10)
@@ -82,27 +82,27 @@ namespace DNA.Security.Cryptography.Math
 					{
 						throw new FormatException("Only bases 2, 10, or 16 allowed");
 					}
-					numberStyles = NumberStyles.AllowHexSpecifier;
-					num = BigInteger.chunk16;
-					bigInteger = BigInteger.radix16;
-					bigInteger2 = BigInteger.radix16E;
+					style = NumberStyles.AllowHexSpecifier;
+					chunk = BigInteger.chunk16;
+					r = BigInteger.radix16;
+					rE = BigInteger.radix16E;
 				}
 				else
 				{
-					numberStyles = NumberStyles.Integer;
-					num = BigInteger.chunk10;
-					bigInteger = BigInteger.radix10;
-					bigInteger2 = BigInteger.radix10E;
+					style = NumberStyles.Integer;
+					chunk = BigInteger.chunk10;
+					r = BigInteger.radix10;
+					rE = BigInteger.radix10E;
 				}
 			}
 			else
 			{
-				numberStyles = NumberStyles.Integer;
-				num = BigInteger.chunk2;
-				bigInteger = BigInteger.radix2;
-				bigInteger2 = BigInteger.radix2E;
+				style = NumberStyles.Integer;
+				chunk = BigInteger.chunk2;
+				r = BigInteger.radix2;
+				rE = BigInteger.radix2E;
 			}
-			int num2 = 0;
+			int index = 0;
 			this.sign = 1;
 			if (str[0] == '-')
 			{
@@ -111,84 +111,84 @@ namespace DNA.Security.Cryptography.Math
 					throw new FormatException("Zero length BigInteger");
 				}
 				this.sign = -1;
-				num2 = 1;
+				index = 1;
 			}
-			while (num2 < str.Length && int.Parse(str[num2].ToString(), numberStyles) == 0)
+			while (index < str.Length && int.Parse(str[index].ToString(), style) == 0)
 			{
-				num2++;
+				index++;
 			}
-			if (num2 >= str.Length)
+			if (index >= str.Length)
 			{
 				this.sign = 0;
 				this.magnitude = BigInteger.ZeroMagnitude;
 				return;
 			}
-			BigInteger bigInteger3 = BigInteger.Zero;
-			int num3 = num2 + num;
-			if (num3 <= str.Length)
+			BigInteger b = BigInteger.Zero;
+			int next = index + chunk;
+			if (next <= str.Length)
 			{
-				string text;
+				string s;
 				for (;;)
 				{
-					text = str.Substring(num2, num);
-					ulong num4 = ulong.Parse(text, numberStyles);
-					BigInteger bigInteger4 = BigInteger.createUValueOf(num4);
+					s = str.Substring(index, chunk);
+					ulong i = ulong.Parse(s, style);
+					BigInteger bi = BigInteger.createUValueOf(i);
 					if (radix != 2)
 					{
 						if (radix != 16)
 						{
-							bigInteger3 = bigInteger3.Multiply(bigInteger2);
+							b = b.Multiply(rE);
 						}
 						else
 						{
-							bigInteger3 = bigInteger3.ShiftLeft(64);
+							b = b.ShiftLeft(64);
 						}
 					}
 					else
 					{
-						if (num4 > 1UL)
+						if (i > 1UL)
 						{
 							break;
 						}
-						bigInteger3 = bigInteger3.ShiftLeft(1);
+						b = b.ShiftLeft(1);
 					}
-					bigInteger3 = bigInteger3.Add(bigInteger4);
-					num2 = num3;
-					num3 += num;
-					if (num3 > str.Length)
+					b = b.Add(bi);
+					index = next;
+					next += chunk;
+					if (next > str.Length)
 					{
 						goto IL_01B6;
 					}
 				}
-				throw new FormatException("Bad character in radix 2 string: " + text);
+				throw new FormatException("Bad character in radix 2 string: " + s);
 			}
 			IL_01B6:
-			if (num2 < str.Length)
+			if (index < str.Length)
 			{
-				string text2 = str.Substring(num2);
-				ulong num5 = ulong.Parse(text2, numberStyles);
-				BigInteger bigInteger5 = BigInteger.createUValueOf(num5);
-				if (bigInteger3.sign > 0)
+				string s2 = str.Substring(index);
+				ulong j = ulong.Parse(s2, style);
+				BigInteger bi2 = BigInteger.createUValueOf(j);
+				if (b.sign > 0)
 				{
 					if (radix != 2)
 					{
 						if (radix == 16)
 						{
-							bigInteger3 = bigInteger3.ShiftLeft(text2.Length << 2);
+							b = b.ShiftLeft(s2.Length << 2);
 						}
 						else
 						{
-							bigInteger3 = bigInteger3.Multiply(bigInteger.Pow(text2.Length));
+							b = b.Multiply(r.Pow(s2.Length));
 						}
 					}
-					bigInteger3 = bigInteger3.Add(bigInteger5);
+					b = b.Add(bi2);
 				}
 				else
 				{
-					bigInteger3 = bigInteger5;
+					b = bi2;
 				}
 			}
-			this.magnitude = bigInteger3.magnitude;
+			this.magnitude = b.magnitude;
 		}
 
 		public BigInteger(byte[] bytes)
@@ -209,77 +209,77 @@ namespace DNA.Security.Cryptography.Math
 				return;
 			}
 			this.sign = -1;
-			int num = offset + length;
-			int num2 = offset;
-			while (num2 < num && (sbyte)bytes[num2] == -1)
+			int end = offset + length;
+			int iBval = offset;
+			while (iBval < end && (sbyte)bytes[iBval] == -1)
 			{
-				num2++;
+				iBval++;
 			}
-			if (num2 >= num)
+			if (iBval >= end)
 			{
 				this.magnitude = BigInteger.One.magnitude;
 				return;
 			}
-			int num3 = num - num2;
-			byte[] array = new byte[num3];
-			int i = 0;
-			while (i < num3)
+			int numBytes = end - iBval;
+			byte[] inverse = new byte[numBytes];
+			int index = 0;
+			while (index < numBytes)
 			{
-				array[i++] = ~bytes[num2++];
+				inverse[index++] = ~bytes[iBval++];
 			}
-			while (array[--i] == 255)
+			while (inverse[--index] == 255)
 			{
-				array[i] = 0;
+				inverse[index] = 0;
 			}
-			byte[] array2 = array;
-			int num4 = i;
-			array2[num4] += 1;
-			this.magnitude = BigInteger.MakeMagnitude(array, 0, array.Length);
+			byte[] array = inverse;
+			int num = index;
+			array[num] += 1;
+			this.magnitude = BigInteger.MakeMagnitude(inverse, 0, inverse.Length);
 		}
 
 		private static int[] MakeMagnitude(byte[] bytes, int offset, int length)
 		{
-			int num = offset + length;
-			int num2 = offset;
-			while (num2 < num && bytes[num2] == 0)
+			int end = offset + length;
+			int firstSignificant = offset;
+			while (firstSignificant < end && bytes[firstSignificant] == 0)
 			{
-				num2++;
+				firstSignificant++;
 			}
-			if (num2 >= num)
+			if (firstSignificant >= end)
 			{
 				return BigInteger.ZeroMagnitude;
 			}
-			int num3 = (num - num2 + 3) / 4;
-			int num4 = (num - num2) % 4;
-			if (num4 == 0)
+			int nInts = (end - firstSignificant + 3) / 4;
+			int bCount = (end - firstSignificant) % 4;
+			if (bCount == 0)
 			{
-				num4 = 4;
+				bCount = 4;
 			}
-			if (num3 < 1)
+			if (nInts < 1)
 			{
 				return BigInteger.ZeroMagnitude;
 			}
-			int[] array = new int[num3];
-			int num5 = 0;
-			int num6 = 0;
-			for (int i = num2; i < num; i++)
+			int[] mag = new int[nInts];
+			int v = 0;
+			int magnitudeIndex = 0;
+			for (int i = firstSignificant; i < end; i++)
 			{
-				num5 <<= 8;
-				num5 |= (int)(bytes[i] & byte.MaxValue);
-				num4--;
-				if (num4 <= 0)
+				v <<= 8;
+				v |= (int)(bytes[i] & byte.MaxValue);
+				bCount--;
+				if (bCount <= 0)
 				{
-					array[num6] = num5;
-					num6++;
-					num4 = 4;
-					num5 = 0;
+					mag[magnitudeIndex] = v;
+					magnitudeIndex++;
+					bCount = 4;
+					v = 0;
 				}
 			}
-			if (num6 < array.Length)
+			if (magnitudeIndex < mag.Length)
 			{
-				array[num6] = num5;
+				mag[magnitudeIndex] = v;
 			}
-			return array;
+			return mag;
 		}
 
 		public BigInteger(int sign, byte[] bytes)
@@ -315,13 +315,13 @@ namespace DNA.Security.Cryptography.Math
 				this.magnitude = BigInteger.ZeroMagnitude;
 				return;
 			}
-			int byteLength = BigInteger.GetByteLength(sizeInBits);
-			byte[] array = new byte[byteLength];
-			random.NextBytes(array);
-			byte[] array2 = array;
+			int nBytes = BigInteger.GetByteLength(sizeInBits);
+			byte[] b = new byte[nBytes];
+			random.NextBytes(b);
+			byte[] array = b;
 			int num = 0;
-			array2[num] &= BigInteger.rndMask[8 * byteLength - sizeInBits];
-			this.magnitude = BigInteger.MakeMagnitude(array, 0, array.Length);
+			array[num] &= BigInteger.rndMask[8 * nBytes - sizeInBits];
+			this.magnitude = BigInteger.MakeMagnitude(b, 0, b.Length);
 			this.sign = ((this.magnitude.Length < 1) ? 0 : 1);
 		}
 
@@ -338,23 +338,23 @@ namespace DNA.Security.Cryptography.Math
 				this.magnitude = ((random.Next(2) == 0) ? BigInteger.Two.magnitude : BigInteger.Three.magnitude);
 				return;
 			}
-			int byteLength = BigInteger.GetByteLength(bitLength);
-			byte[] array = new byte[byteLength];
-			int num = 8 * byteLength - bitLength;
-			byte b = BigInteger.rndMask[num];
+			int nBytes = BigInteger.GetByteLength(bitLength);
+			byte[] b = new byte[nBytes];
+			int xBits = 8 * nBytes - bitLength;
+			byte mask = BigInteger.rndMask[xBits];
 			for (;;)
 			{
-				random.NextBytes(array);
-				byte[] array2 = array;
+				random.NextBytes(b);
+				byte[] array = b;
+				int num = 0;
+				array[num] &= mask;
+				byte[] array2 = b;
 				int num2 = 0;
-				array2[num2] &= b;
-				byte[] array3 = array;
-				int num3 = 0;
-				array3[num3] |= (byte)(1 << 7 - num);
-				byte[] array4 = array;
-				int num4 = byteLength - 1;
-				array4[num4] |= 1;
-				this.magnitude = BigInteger.MakeMagnitude(array, 0, array.Length);
+				array2[num2] |= (byte)(1 << 7 - xBits);
+				byte[] array3 = b;
+				int num3 = nBytes - 1;
+				array3[num3] |= 1;
+				this.magnitude = BigInteger.MakeMagnitude(b, 0, b.Length);
 				this.nBits = -1;
 				this.mQuote = -1L;
 				if (certainty < 1)
@@ -367,10 +367,10 @@ namespace DNA.Security.Cryptography.Math
 				}
 				if (bitLength > 32)
 				{
-					for (int i = 0; i < 10000; i++)
+					for (int rep = 0; rep < 10000; rep++)
 					{
-						int num5 = 33 + random.Next(bitLength - 2);
-						this.magnitude[this.magnitude.Length - (num5 >> 5)] ^= 1 << num5;
+						int i = 33 + random.Next(bitLength - 2);
+						this.magnitude[this.magnitude.Length - (i >> 5)] ^= 1 << i;
 						this.magnitude[this.magnitude.Length - 1] ^= random.Next() + 1 << 1;
 						this.mQuote = -1L;
 						if (this.CheckProbablePrime(certainty, random))
@@ -393,18 +393,18 @@ namespace DNA.Security.Cryptography.Math
 
 		private static int[] AddMagnitudes(int[] a, int[] b)
 		{
-			int num = a.Length - 1;
-			int i = b.Length - 1;
-			long num2 = 0L;
-			while (i >= 0)
+			int tI = a.Length - 1;
+			int vI = b.Length - 1;
+			long i = 0L;
+			while (vI >= 0)
 			{
-				num2 += (long)((ulong)a[num] + (ulong)b[i--]);
-				a[num--] = (int)num2;
-				num2 = (long)((ulong)num2 >> 32);
+				i += (long)((ulong)a[tI] + (ulong)b[vI--]);
+				a[tI--] = (int)i;
+				i = (long)((ulong)i >> 32);
 			}
-			if (num2 != 0L)
+			if (i != 0L)
 			{
-				while (num >= 0 && ++a[num--] == 0)
+				while (tI >= 0 && ++a[tI--] == 0)
 				{
 				}
 			}
@@ -434,36 +434,36 @@ namespace DNA.Security.Cryptography.Math
 
 		private BigInteger AddToMagnitude(int[] magToAdd)
 		{
-			int[] array;
-			int[] array2;
+			int[] big;
+			int[] small;
 			if (this.magnitude.Length < magToAdd.Length)
 			{
-				array = magToAdd;
-				array2 = this.magnitude;
+				big = magToAdd;
+				small = this.magnitude;
 			}
 			else
 			{
-				array = this.magnitude;
-				array2 = magToAdd;
+				big = this.magnitude;
+				small = magToAdd;
 			}
-			uint num = uint.MaxValue;
-			if (array.Length == array2.Length)
+			uint limit = uint.MaxValue;
+			if (big.Length == small.Length)
 			{
-				num -= (uint)array2[0];
+				limit -= (uint)small[0];
 			}
-			bool flag = array[0] >= (int)num;
-			int[] array3;
-			if (flag)
+			bool possibleOverflow = big[0] >= (int)limit;
+			int[] bigCopy;
+			if (possibleOverflow)
 			{
-				array3 = new int[array.Length + 1];
-				array.CopyTo(array3, 1);
+				bigCopy = new int[big.Length + 1];
+				big.CopyTo(bigCopy, 1);
 			}
 			else
 			{
-				array3 = (int[])array.Clone();
+				bigCopy = (int[])big.Clone();
 			}
-			array3 = BigInteger.AddMagnitudes(array3, array2);
-			return new BigInteger(this.sign, array3, flag);
+			bigCopy = BigInteger.AddMagnitudes(bigCopy, small);
+			return new BigInteger(this.sign, bigCopy, possibleOverflow);
 		}
 
 		public BigInteger And(BigInteger value)
@@ -472,37 +472,37 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return BigInteger.Zero;
 			}
-			int[] array = ((this.sign > 0) ? this.magnitude : this.Add(BigInteger.One).magnitude);
-			int[] array2 = ((value.sign > 0) ? value.magnitude : value.Add(BigInteger.One).magnitude);
-			bool flag = this.sign < 0 && value.sign < 0;
-			int num = Math.Max(array.Length, array2.Length);
-			int[] array3 = new int[num];
-			int num2 = array3.Length - array.Length;
-			int num3 = array3.Length - array2.Length;
-			for (int i = 0; i < array3.Length; i++)
+			int[] aMag = ((this.sign > 0) ? this.magnitude : this.Add(BigInteger.One).magnitude);
+			int[] bMag = ((value.sign > 0) ? value.magnitude : value.Add(BigInteger.One).magnitude);
+			bool resultNeg = this.sign < 0 && value.sign < 0;
+			int resultLength = Math.Max(aMag.Length, bMag.Length);
+			int[] resultMag = new int[resultLength];
+			int aStart = resultMag.Length - aMag.Length;
+			int bStart = resultMag.Length - bMag.Length;
+			for (int i = 0; i < resultMag.Length; i++)
 			{
-				int num4 = ((i >= num2) ? array[i - num2] : 0);
-				int num5 = ((i >= num3) ? array2[i - num3] : 0);
+				int aWord = ((i >= aStart) ? aMag[i - aStart] : 0);
+				int bWord = ((i >= bStart) ? bMag[i - bStart] : 0);
 				if (this.sign < 0)
 				{
-					num4 = ~num4;
+					aWord = ~aWord;
 				}
 				if (value.sign < 0)
 				{
-					num5 = ~num5;
+					bWord = ~bWord;
 				}
-				array3[i] = num4 & num5;
-				if (flag)
+				resultMag[i] = aWord & bWord;
+				if (resultNeg)
 				{
-					array3[i] = ~array3[i];
+					resultMag[i] = ~resultMag[i];
 				}
 			}
-			BigInteger bigInteger = new BigInteger(1, array3, true);
-			if (flag)
+			BigInteger result = new BigInteger(1, resultMag, true);
+			if (resultNeg)
 			{
-				bigInteger = bigInteger.Not();
+				result = result.Not();
 			}
-			return bigInteger;
+			return result;
 		}
 
 		public BigInteger AndNot(BigInteger val)
@@ -522,15 +522,15 @@ namespace DNA.Security.Cryptography.Math
 					}
 					else
 					{
-						int num = 0;
+						int sum = 0;
 						for (int i = 0; i < this.magnitude.Length; i++)
 						{
-							num += (int)BigInteger.bitCounts[(int)((byte)this.magnitude[i])];
-							num += (int)BigInteger.bitCounts[(int)((byte)(this.magnitude[i] >> 8))];
-							num += (int)BigInteger.bitCounts[(int)((byte)(this.magnitude[i] >> 16))];
-							num += (int)BigInteger.bitCounts[(int)((byte)(this.magnitude[i] >> 24))];
+							sum += (int)BigInteger.bitCounts[(int)((byte)this.magnitude[i])];
+							sum += (int)BigInteger.bitCounts[(int)((byte)(this.magnitude[i] >> 8))];
+							sum += (int)BigInteger.bitCounts[(int)((byte)(this.magnitude[i] >> 16))];
+							sum += (int)BigInteger.bitCounts[(int)((byte)(this.magnitude[i] >> 24))];
 						}
-						this.nBits = num;
+						this.nBits = sum;
 					}
 				}
 				return this.nBits;
@@ -543,21 +543,21 @@ namespace DNA.Security.Cryptography.Math
 			{
 				if (mag[indx] != 0)
 				{
-					int num = 32 * (mag.Length - indx - 1);
-					int num2 = mag[indx];
-					num += BigInteger.BitLen(num2);
-					if (this.sign < 0 && (num2 & -num2) == num2)
+					int bitLength = 32 * (mag.Length - indx - 1);
+					int firstMag = mag[indx];
+					bitLength += BigInteger.BitLen(firstMag);
+					if (this.sign < 0 && (firstMag & -firstMag) == firstMag)
 					{
 						while (++indx < mag.Length)
 						{
 							if (mag[indx] != 0)
 							{
-								return num;
+								return bitLength;
 							}
 						}
-						num--;
+						bitLength--;
 					}
-					return num;
+					return bitLength;
 				}
 				indx++;
 			}
@@ -762,16 +762,16 @@ namespace DNA.Security.Cryptography.Math
 
 		private static int CompareNoLeadingZeroes(int xIndx, int[] x, int yIndx, int[] y)
 		{
-			int num = x.Length - y.Length - (xIndx - yIndx);
-			if (num == 0)
+			int diff = x.Length - y.Length - (xIndx - yIndx);
+			if (diff == 0)
 			{
 				while (xIndx < x.Length)
 				{
-					uint num2 = (uint)x[xIndx++];
-					uint num3 = (uint)y[yIndx++];
-					if (num2 != num3)
+					uint v = (uint)x[xIndx++];
+					uint v2 = (uint)y[yIndx++];
+					if (v != v2)
 					{
-						if (num2 >= num3)
+						if (v >= v2)
 						{
 							return 1;
 						}
@@ -780,7 +780,7 @@ namespace DNA.Security.Cryptography.Math
 				}
 				return 0;
 			}
-			if (num >= 0)
+			if (diff >= 0)
 			{
 				return 1;
 			}
@@ -806,111 +806,111 @@ namespace DNA.Security.Cryptography.Math
 
 		private int[] Divide(int[] x, int[] y)
 		{
-			int num = 0;
-			while (num < x.Length && x[num] == 0)
+			int xStart = 0;
+			while (xStart < x.Length && x[xStart] == 0)
 			{
-				num++;
+				xStart++;
 			}
-			int num2 = 0;
-			while (num2 < y.Length && y[num2] == 0)
+			int yStart = 0;
+			while (yStart < y.Length && y[yStart] == 0)
 			{
-				num2++;
+				yStart++;
 			}
-			int num3 = BigInteger.CompareNoLeadingZeroes(num, x, num2, y);
-			int[] array3;
-			if (num3 > 0)
+			int xyCmp = BigInteger.CompareNoLeadingZeroes(xStart, x, yStart, y);
+			int[] count;
+			if (xyCmp > 0)
 			{
-				int num4 = this.calcBitLength(num2, y);
-				int num5 = this.calcBitLength(num, x);
-				int num6 = num5 - num4;
-				int num7 = 0;
-				int num8 = 0;
-				int num9 = num4;
-				int[] array;
-				int[] array2;
-				if (num6 > 0)
+				int yBitLength = this.calcBitLength(yStart, y);
+				int xBitLength = this.calcBitLength(xStart, x);
+				int shift = xBitLength - yBitLength;
+				int iCountStart = 0;
+				int cStart = 0;
+				int cBitLength = yBitLength;
+				int[] iCount;
+				int[] c;
+				if (shift > 0)
 				{
-					array = new int[(num6 >> 5) + 1];
-					array[0] = 1 << num6 % 32;
-					array2 = BigInteger.ShiftLeft(y, num6);
-					num9 += num6;
+					iCount = new int[(shift >> 5) + 1];
+					iCount[0] = 1 << shift % 32;
+					c = BigInteger.ShiftLeft(y, shift);
+					cBitLength += shift;
 				}
 				else
 				{
-					array = new int[] { 1 };
-					int num10 = y.Length - num2;
-					array2 = new int[num10];
-					Array.Copy(y, num2, array2, 0, num10);
+					iCount = new int[] { 1 };
+					int len = y.Length - yStart;
+					c = new int[len];
+					Array.Copy(y, yStart, c, 0, len);
 				}
-				array3 = new int[array.Length];
+				count = new int[iCount.Length];
 				for (;;)
 				{
-					if (num9 < num5 || BigInteger.CompareNoLeadingZeroes(num, x, num8, array2) >= 0)
+					if (cBitLength < xBitLength || BigInteger.CompareNoLeadingZeroes(xStart, x, cStart, c) >= 0)
 					{
-						BigInteger.Subtract(num, x, num8, array2);
-						BigInteger.AddMagnitudes(array3, array);
-						while (x[num] == 0)
+						BigInteger.Subtract(xStart, x, cStart, c);
+						BigInteger.AddMagnitudes(count, iCount);
+						while (x[xStart] == 0)
 						{
-							if (++num == x.Length)
+							if (++xStart == x.Length)
 							{
-								return array3;
+								return count;
 							}
 						}
-						num5 = 32 * (x.Length - num - 1) + BigInteger.BitLen(x[num]);
-						if (num5 <= num4)
+						xBitLength = 32 * (x.Length - xStart - 1) + BigInteger.BitLen(x[xStart]);
+						if (xBitLength <= yBitLength)
 						{
-							if (num5 < num4)
+							if (xBitLength < yBitLength)
 							{
-								return array3;
+								return count;
 							}
-							num3 = BigInteger.CompareNoLeadingZeroes(num, x, num2, y);
-							if (num3 <= 0)
+							xyCmp = BigInteger.CompareNoLeadingZeroes(xStart, x, yStart, y);
+							if (xyCmp <= 0)
 							{
 								goto IL_01CA;
 							}
 						}
 					}
-					num6 = num9 - num5;
-					if (num6 == 1)
+					shift = cBitLength - xBitLength;
+					if (shift == 1)
 					{
-						uint num11 = (uint)array2[num8] >> 1;
-						uint num12 = (uint)x[num];
-						if (num11 > num12)
+						uint firstC = (uint)c[cStart] >> 1;
+						uint firstX = (uint)x[xStart];
+						if (firstC > firstX)
 						{
-							num6++;
+							shift++;
 						}
 					}
-					if (num6 < 2)
+					if (shift < 2)
 					{
-						array2 = BigInteger.ShiftRightOneInPlace(num8, array2);
-						num9--;
-						array = BigInteger.ShiftRightOneInPlace(num7, array);
+						c = BigInteger.ShiftRightOneInPlace(cStart, c);
+						cBitLength--;
+						iCount = BigInteger.ShiftRightOneInPlace(iCountStart, iCount);
 					}
 					else
 					{
-						array2 = BigInteger.ShiftRightInPlace(num8, array2, num6);
-						num9 -= num6;
-						array = BigInteger.ShiftRightInPlace(num7, array, num6);
+						c = BigInteger.ShiftRightInPlace(cStart, c, shift);
+						cBitLength -= shift;
+						iCount = BigInteger.ShiftRightInPlace(iCountStart, iCount, shift);
 					}
-					while (array2[num8] == 0)
+					while (c[cStart] == 0)
 					{
-						num8++;
+						cStart++;
 					}
-					while (array[num7] == 0)
+					while (iCount[iCountStart] == 0)
 					{
-						num7++;
+						iCountStart++;
 					}
 				}
-				return array3;
+				return count;
 			}
-			array3 = new int[1];
+			count = new int[1];
 			IL_01CA:
-			if (num3 == 0)
+			if (xyCmp == 0)
 			{
-				BigInteger.AddMagnitudes(array3, BigInteger.One.magnitude);
-				Array.Clear(x, num, x.Length - num);
+				BigInteger.AddMagnitudes(count, BigInteger.One.magnitude);
+				Array.Clear(x, xStart, x.Length - xStart);
 			}
-			return array3;
+			return count;
 		}
 
 		public BigInteger Divide(BigInteger val)
@@ -925,15 +925,15 @@ namespace DNA.Security.Cryptography.Math
 			}
 			if (!val.QuickPow2Check())
 			{
-				int[] array = (int[])this.magnitude.Clone();
-				return new BigInteger(this.sign * val.sign, this.Divide(array, val.magnitude), true);
+				int[] mag = (int[])this.magnitude.Clone();
+				return new BigInteger(this.sign * val.sign, this.Divide(mag, val.magnitude), true);
 			}
-			BigInteger bigInteger = this.Abs().ShiftRight(val.Abs().BitLength - 1);
+			BigInteger result = this.Abs().ShiftRight(val.Abs().BitLength - 1);
 			if (val.sign != this.sign)
 			{
-				return bigInteger.Negate();
+				return result.Negate();
 			}
-			return bigInteger;
+			return result;
 		}
 
 		public BigInteger[] DivideAndRemainder(BigInteger val)
@@ -942,28 +942,28 @@ namespace DNA.Security.Cryptography.Math
 			{
 				throw new ArithmeticException("Division by zero error");
 			}
-			BigInteger[] array = new BigInteger[2];
+			BigInteger[] biggies = new BigInteger[2];
 			if (this.sign == 0)
 			{
-				array[0] = BigInteger.Zero;
-				array[1] = BigInteger.Zero;
+				biggies[0] = BigInteger.Zero;
+				biggies[1] = BigInteger.Zero;
 			}
 			else if (val.QuickPow2Check())
 			{
-				int num = val.Abs().BitLength - 1;
-				BigInteger bigInteger = this.Abs().ShiftRight(num);
-				int[] array2 = this.LastNBits(num);
-				array[0] = ((val.sign == this.sign) ? bigInteger : bigInteger.Negate());
-				array[1] = new BigInteger(this.sign, array2, true);
+				int e = val.Abs().BitLength - 1;
+				BigInteger quotient = this.Abs().ShiftRight(e);
+				int[] remainder = this.LastNBits(e);
+				biggies[0] = ((val.sign == this.sign) ? quotient : quotient.Negate());
+				biggies[1] = new BigInteger(this.sign, remainder, true);
 			}
 			else
 			{
-				int[] array3 = (int[])this.magnitude.Clone();
-				int[] array4 = this.Divide(array3, val.magnitude);
-				array[0] = new BigInteger(this.sign * val.sign, array4, true);
-				array[1] = new BigInteger(this.sign, array3, true);
+				int[] remainder2 = (int[])this.magnitude.Clone();
+				int[] quotient2 = this.Divide(remainder2, val.magnitude);
+				biggies[0] = new BigInteger(this.sign * val.sign, quotient2, true);
+				biggies[1] = new BigInteger(this.sign, remainder2, true);
 			}
-			return array;
+			return biggies;
 		}
 
 		public override bool Equals(object obj)
@@ -972,18 +972,18 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return true;
 			}
-			BigInteger bigInteger = obj as BigInteger;
-			if (bigInteger == null)
+			BigInteger biggie = obj as BigInteger;
+			if (biggie == null)
 			{
 				return false;
 			}
-			if (bigInteger.sign != this.sign || bigInteger.magnitude.Length != this.magnitude.Length)
+			if (biggie.sign != this.sign || biggie.magnitude.Length != this.magnitude.Length)
 			{
 				return false;
 			}
 			for (int i = 0; i < this.magnitude.Length; i++)
 			{
-				if (bigInteger.magnitude[i] != this.magnitude[i])
+				if (biggie.magnitude[i] != this.magnitude[i])
 				{
 					return false;
 				}
@@ -1001,33 +1001,33 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return value.Abs();
 			}
-			BigInteger bigInteger = this;
-			BigInteger bigInteger2 = value;
-			while (bigInteger2.sign != 0)
+			BigInteger u = this;
+			BigInteger v = value;
+			while (v.sign != 0)
 			{
-				BigInteger bigInteger3 = bigInteger.Mod(bigInteger2);
-				bigInteger = bigInteger2;
-				bigInteger2 = bigInteger3;
+				BigInteger r = u.Mod(v);
+				u = v;
+				v = r;
 			}
-			return bigInteger;
+			return u;
 		}
 
 		public override int GetHashCode()
 		{
-			int num = this.magnitude.Length;
+			int hc = this.magnitude.Length;
 			if (this.magnitude.Length > 0)
 			{
-				num ^= this.magnitude[0];
+				hc ^= this.magnitude[0];
 				if (this.magnitude.Length > 1)
 				{
-					num ^= this.magnitude[this.magnitude.Length - 1];
+					hc ^= this.magnitude[this.magnitude.Length - 1];
 				}
 			}
 			if (this.sign >= 0)
 			{
-				return num;
+				return hc;
 			}
-			return ~num;
+			return ~hc;
 		}
 
 		private BigInteger Inc()
@@ -1065,25 +1065,25 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return true;
 			}
-			BigInteger bigInteger = this.Abs();
-			if (!bigInteger.TestBit(0))
+			BigInteger i = this.Abs();
+			if (!i.TestBit(0))
 			{
-				return bigInteger.Equals(BigInteger.Two);
+				return i.Equals(BigInteger.Two);
 			}
-			return !bigInteger.Equals(BigInteger.One) && bigInteger.CheckProbablePrime(certainty, BigInteger.RandomSource);
+			return !i.Equals(BigInteger.One) && i.CheckProbablePrime(certainty, BigInteger.RandomSource);
 		}
 
 		private bool CheckProbablePrime(int certainty, Random random)
 		{
-			int num = Math.Min(this.BitLength - 1, BigInteger.primeLists.Length);
-			for (int i = 0; i < num; i++)
+			int numLists = Math.Min(this.BitLength - 1, BigInteger.primeLists.Length);
+			for (int i = 0; i < numLists; i++)
 			{
-				int num2 = this.Remainder(BigInteger.primeProducts[i]);
-				foreach (int num3 in BigInteger.primeLists[i])
+				int test = this.Remainder(BigInteger.primeProducts[i]);
+				foreach (int prime in BigInteger.primeLists[i])
 				{
-					if (num2 % num3 == 0)
+					if (test % prime == 0)
 					{
-						return this.BitLength < 16 && this.IntValue == num3;
+						return this.BitLength < 16 && this.IntValue == prime;
 					}
 				}
 			}
@@ -1092,26 +1092,26 @@ namespace DNA.Security.Cryptography.Math
 
 		internal bool RabinMillerTest(int certainty, Random random)
 		{
-			BigInteger bigInteger = this.Subtract(BigInteger.One);
-			int lowestSetBit = bigInteger.GetLowestSetBit();
-			BigInteger bigInteger2 = bigInteger.ShiftRight(lowestSetBit);
+			BigInteger nMinusOne = this.Subtract(BigInteger.One);
+			int s = nMinusOne.GetLowestSetBit();
+			BigInteger r = nMinusOne.ShiftRight(s);
 			for (;;)
 			{
-				BigInteger bigInteger3 = new BigInteger(this.BitLength, random);
-				if (bigInteger3.CompareTo(BigInteger.One) > 0 && bigInteger3.CompareTo(bigInteger) < 0)
+				BigInteger a = new BigInteger(this.BitLength, random);
+				if (a.CompareTo(BigInteger.One) > 0 && a.CompareTo(nMinusOne) < 0)
 				{
-					BigInteger bigInteger4 = bigInteger3.ModPow(bigInteger2, this);
-					if (!bigInteger4.Equals(BigInteger.One))
+					BigInteger y = a.ModPow(r, this);
+					if (!y.Equals(BigInteger.One))
 					{
-						int num = 0;
-						while (!bigInteger4.Equals(bigInteger))
+						int i = 0;
+						while (!y.Equals(nMinusOne))
 						{
-							if (++num == lowestSetBit)
+							if (++i == s)
 							{
 								return false;
 							}
-							bigInteger4 = bigInteger4.ModPow(BigInteger.Two, this);
-							if (bigInteger4.Equals(BigInteger.One))
+							y = y.ModPow(BigInteger.Two, this);
+							if (y.Equals(BigInteger.One))
 							{
 								return false;
 							}
@@ -1135,20 +1135,20 @@ namespace DNA.Security.Cryptography.Math
 				{
 					return 0L;
 				}
-				long num;
+				long v;
 				if (this.magnitude.Length > 1)
 				{
-					num = ((long)this.magnitude[this.magnitude.Length - 2] << 32) | ((long)this.magnitude[this.magnitude.Length - 1] & (long)((ulong)(-1)));
+					v = ((long)this.magnitude[this.magnitude.Length - 2] << 32) | ((long)this.magnitude[this.magnitude.Length - 1] & (long)((ulong)(-1)));
 				}
 				else
 				{
-					num = (long)this.magnitude[this.magnitude.Length - 1] & (long)((ulong)(-1));
+					v = (long)this.magnitude[this.magnitude.Length - 1] & (long)((ulong)(-1));
 				}
 				if (this.sign >= 0)
 				{
-					return num;
+					return v;
 				}
-				return -num;
+				return -v;
 			}
 		}
 
@@ -1176,12 +1176,12 @@ namespace DNA.Security.Cryptography.Math
 			{
 				throw new ArithmeticException("Modulus must be positive");
 			}
-			BigInteger bigInteger = this.Remainder(m);
-			if (bigInteger.sign < 0)
+			BigInteger biggie = this.Remainder(m);
+			if (biggie.sign < 0)
 			{
-				return bigInteger.Add(m);
+				return biggie.Add(m);
 			}
-			return bigInteger;
+			return biggie;
 		}
 
 		public BigInteger ModInverse(BigInteger m)
@@ -1190,50 +1190,50 @@ namespace DNA.Security.Cryptography.Math
 			{
 				throw new ArithmeticException("Modulus must be positive");
 			}
-			BigInteger bigInteger = new BigInteger();
-			BigInteger bigInteger2 = BigInteger.ExtEuclid(this.Mod(m), m, bigInteger, null);
-			if (!bigInteger2.Equals(BigInteger.One))
+			BigInteger x = new BigInteger();
+			BigInteger gcd = BigInteger.ExtEuclid(this.Mod(m), m, x, null);
+			if (!gcd.Equals(BigInteger.One))
 			{
 				throw new ArithmeticException("Numbers not relatively prime.");
 			}
-			if (bigInteger.sign < 0)
+			if (x.sign < 0)
 			{
-				bigInteger.sign = 1;
-				bigInteger.magnitude = BigInteger.doSubBigLil(m.magnitude, bigInteger.magnitude);
+				x.sign = 1;
+				x.magnitude = BigInteger.doSubBigLil(m.magnitude, x.magnitude);
 			}
-			return bigInteger;
+			return x;
 		}
 
 		private static BigInteger ExtEuclid(BigInteger a, BigInteger b, BigInteger u1Out, BigInteger u2Out)
 		{
-			BigInteger bigInteger = BigInteger.One;
-			BigInteger bigInteger2 = a;
-			BigInteger bigInteger3 = BigInteger.Zero;
-			BigInteger bigInteger4 = b;
-			while (bigInteger4.sign > 0)
+			BigInteger u = BigInteger.One;
+			BigInteger u2 = a;
+			BigInteger v = BigInteger.Zero;
+			BigInteger v2 = b;
+			while (v2.sign > 0)
 			{
-				BigInteger[] array = bigInteger2.DivideAndRemainder(bigInteger4);
-				BigInteger bigInteger5 = bigInteger3.Multiply(array[0]);
-				BigInteger bigInteger6 = bigInteger.Subtract(bigInteger5);
-				bigInteger = bigInteger3;
-				bigInteger3 = bigInteger6;
-				bigInteger2 = bigInteger4;
-				bigInteger4 = array[1];
+				BigInteger[] q = u2.DivideAndRemainder(v2);
+				BigInteger tmp = v.Multiply(q[0]);
+				BigInteger tn = u.Subtract(tmp);
+				u = v;
+				v = tn;
+				u2 = v2;
+				v2 = q[1];
 			}
 			if (u1Out != null)
 			{
-				u1Out.sign = bigInteger.sign;
-				u1Out.magnitude = bigInteger.magnitude;
+				u1Out.sign = u.sign;
+				u1Out.magnitude = u.magnitude;
 			}
 			if (u2Out != null)
 			{
-				BigInteger bigInteger7 = bigInteger.Multiply(a);
-				bigInteger7 = bigInteger2.Subtract(bigInteger7);
-				BigInteger bigInteger8 = bigInteger7.Divide(b);
-				u2Out.sign = bigInteger8.sign;
-				u2Out.magnitude = bigInteger8.magnitude;
+				BigInteger tmp2 = u.Multiply(a);
+				tmp2 = u2.Subtract(tmp2);
+				BigInteger res = tmp2.Divide(b);
+				u2Out.sign = res.sign;
+				u2Out.magnitude = res.magnitude;
 			}
-			return bigInteger2;
+			return u2;
 		}
 
 		private static void ZeroOut(int[] x)
@@ -1259,214 +1259,214 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return BigInteger.Zero;
 			}
-			int[] array = null;
-			int[] array2 = null;
-			bool flag = (m.magnitude[m.magnitude.Length - 1] & 1) == 1;
-			long num = 0L;
-			if (flag)
+			int[] zVal = null;
+			int[] yAccum = null;
+			bool useMonty = (m.magnitude[m.magnitude.Length - 1] & 1) == 1;
+			long mQ = 0L;
+			if (useMonty)
 			{
-				num = m.GetMQuote();
-				BigInteger bigInteger = this.ShiftLeft(32 * m.magnitude.Length).Mod(m);
-				array = bigInteger.magnitude;
-				flag = array.Length <= m.magnitude.Length;
-				if (flag)
+				mQ = m.GetMQuote();
+				BigInteger tmp = this.ShiftLeft(32 * m.magnitude.Length).Mod(m);
+				zVal = tmp.magnitude;
+				useMonty = zVal.Length <= m.magnitude.Length;
+				if (useMonty)
 				{
-					array2 = new int[m.magnitude.Length + 1];
-					if (array.Length < m.magnitude.Length)
+					yAccum = new int[m.magnitude.Length + 1];
+					if (zVal.Length < m.magnitude.Length)
 					{
-						int[] array3 = new int[m.magnitude.Length];
-						array.CopyTo(array3, array3.Length - array.Length);
-						array = array3;
+						int[] longZ = new int[m.magnitude.Length];
+						zVal.CopyTo(longZ, longZ.Length - zVal.Length);
+						zVal = longZ;
 					}
 				}
 			}
-			if (!flag)
+			if (!useMonty)
 			{
 				if (this.magnitude.Length <= m.magnitude.Length)
 				{
-					array = new int[m.magnitude.Length];
-					this.magnitude.CopyTo(array, array.Length - this.magnitude.Length);
+					zVal = new int[m.magnitude.Length];
+					this.magnitude.CopyTo(zVal, zVal.Length - this.magnitude.Length);
 				}
 				else
 				{
-					BigInteger bigInteger2 = this.Remainder(m);
-					array = new int[m.magnitude.Length];
-					bigInteger2.magnitude.CopyTo(array, array.Length - bigInteger2.magnitude.Length);
+					BigInteger tmp2 = this.Remainder(m);
+					zVal = new int[m.magnitude.Length];
+					tmp2.magnitude.CopyTo(zVal, zVal.Length - tmp2.magnitude.Length);
 				}
-				array2 = new int[m.magnitude.Length * 2];
+				yAccum = new int[m.magnitude.Length * 2];
 			}
-			int[] array4 = new int[m.magnitude.Length];
+			int[] yVal = new int[m.magnitude.Length];
 			for (int i = 0; i < exponent.magnitude.Length; i++)
 			{
-				int j = exponent.magnitude[i];
-				int k = 0;
+				int v = exponent.magnitude[i];
+				int bits = 0;
 				if (i == 0)
 				{
-					while (j > 0)
+					while (v > 0)
 					{
-						j <<= 1;
-						k++;
+						v <<= 1;
+						bits++;
 					}
-					array.CopyTo(array4, 0);
-					j <<= 1;
-					k++;
+					zVal.CopyTo(yVal, 0);
+					v <<= 1;
+					bits++;
 				}
-				while (j != 0)
+				while (v != 0)
 				{
-					if (flag)
+					if (useMonty)
 					{
-						BigInteger.MultiplyMonty(array2, array4, array4, m.magnitude, num);
+						BigInteger.MultiplyMonty(yAccum, yVal, yVal, m.magnitude, mQ);
 					}
 					else
 					{
-						BigInteger.Square(array2, array4);
-						this.Remainder(array2, m.magnitude);
-						Array.Copy(array2, array2.Length - array4.Length, array4, 0, array4.Length);
-						BigInteger.ZeroOut(array2);
+						BigInteger.Square(yAccum, yVal);
+						this.Remainder(yAccum, m.magnitude);
+						Array.Copy(yAccum, yAccum.Length - yVal.Length, yVal, 0, yVal.Length);
+						BigInteger.ZeroOut(yAccum);
 					}
-					k++;
-					if (j < 0)
+					bits++;
+					if (v < 0)
 					{
-						if (flag)
+						if (useMonty)
 						{
-							BigInteger.MultiplyMonty(array2, array4, array, m.magnitude, num);
+							BigInteger.MultiplyMonty(yAccum, yVal, zVal, m.magnitude, mQ);
 						}
 						else
 						{
-							BigInteger.Multiply(array2, array4, array);
-							this.Remainder(array2, m.magnitude);
-							Array.Copy(array2, array2.Length - array4.Length, array4, 0, array4.Length);
-							BigInteger.ZeroOut(array2);
+							BigInteger.Multiply(yAccum, yVal, zVal);
+							this.Remainder(yAccum, m.magnitude);
+							Array.Copy(yAccum, yAccum.Length - yVal.Length, yVal, 0, yVal.Length);
+							BigInteger.ZeroOut(yAccum);
 						}
 					}
-					j <<= 1;
+					v <<= 1;
 				}
-				while (k < 32)
+				while (bits < 32)
 				{
-					if (flag)
+					if (useMonty)
 					{
-						BigInteger.MultiplyMonty(array2, array4, array4, m.magnitude, num);
+						BigInteger.MultiplyMonty(yAccum, yVal, yVal, m.magnitude, mQ);
 					}
 					else
 					{
-						BigInteger.Square(array2, array4);
-						this.Remainder(array2, m.magnitude);
-						Array.Copy(array2, array2.Length - array4.Length, array4, 0, array4.Length);
-						BigInteger.ZeroOut(array2);
+						BigInteger.Square(yAccum, yVal);
+						this.Remainder(yAccum, m.magnitude);
+						Array.Copy(yAccum, yAccum.Length - yVal.Length, yVal, 0, yVal.Length);
+						BigInteger.ZeroOut(yAccum);
 					}
-					k++;
+					bits++;
 				}
 			}
-			if (flag)
+			if (useMonty)
 			{
-				BigInteger.ZeroOut(array);
-				array[array.Length - 1] = 1;
-				BigInteger.MultiplyMonty(array2, array4, array, m.magnitude, num);
+				BigInteger.ZeroOut(zVal);
+				zVal[zVal.Length - 1] = 1;
+				BigInteger.MultiplyMonty(yAccum, yVal, zVal, m.magnitude, mQ);
 			}
-			BigInteger bigInteger3 = new BigInteger(1, array4, true);
+			BigInteger result = new BigInteger(1, yVal, true);
 			if (exponent.sign <= 0)
 			{
-				return bigInteger3.ModInverse(m);
+				return result.ModInverse(m);
 			}
-			return bigInteger3;
+			return result;
 		}
 
 		private static int[] Square(int[] w, int[] x)
 		{
-			int num = w.Length - 1;
-			ulong num4;
-			ulong num5;
-			for (int num2 = x.Length - 1; num2 != 0; num2--)
+			int wBase = w.Length - 1;
+			ulong u;
+			ulong u2;
+			for (int i = x.Length - 1; i != 0; i--)
 			{
-				ulong num3 = (ulong)x[num2];
-				num4 = num3 * num3;
-				num5 = num4 >> 32;
-				num4 = (ulong)((uint)num4);
-				num4 += (ulong)w[num];
-				w[num] = (int)((uint)num4);
-				ulong num6 = num5 + (num4 >> 32);
-				for (int i = num2 - 1; i >= 0; i--)
+				ulong v = (ulong)x[i];
+				u = v * v;
+				u2 = u >> 32;
+				u = (ulong)((uint)u);
+				u += (ulong)w[wBase];
+				w[wBase] = (int)((uint)u);
+				ulong c = u2 + (u >> 32);
+				for (int j = i - 1; j >= 0; j--)
 				{
-					num--;
-					num4 = num3 * (ulong)x[i];
-					num5 = num4 >> 31;
-					num4 = (ulong)((uint)((uint)num4 << 1));
-					num4 += num6 + (ulong)w[num];
-					w[num] = (int)((uint)num4);
-					num6 = num5 + (num4 >> 32);
+					wBase--;
+					u = v * (ulong)x[j];
+					u2 = u >> 31;
+					u = (ulong)((uint)((uint)u << 1));
+					u += c + (ulong)w[wBase];
+					w[wBase] = (int)((uint)u);
+					c = u2 + (u >> 32);
 				}
-				num6 += (ulong)w[--num];
-				w[num] = (int)((uint)num6);
-				if (--num >= 0)
+				c += (ulong)w[--wBase];
+				w[wBase] = (int)((uint)c);
+				if (--wBase >= 0)
 				{
-					w[num] = (int)((uint)(num6 >> 32));
+					w[wBase] = (int)((uint)(c >> 32));
 				}
-				num += num2;
+				wBase += i;
 			}
-			num4 = (ulong)x[0];
-			num4 *= num4;
-			num5 = num4 >> 32;
-			num4 &= (ulong)(-1);
-			num4 += (ulong)w[num];
-			w[num] = (int)((uint)num4);
-			if (--num >= 0)
+			u = (ulong)x[0];
+			u *= u;
+			u2 = u >> 32;
+			u &= (ulong)(-1);
+			u += (ulong)w[wBase];
+			w[wBase] = (int)((uint)u);
+			if (--wBase >= 0)
 			{
-				w[num] = (int)((uint)(num5 + (num4 >> 32) + (ulong)w[num]));
+				w[wBase] = (int)((uint)(u2 + (u >> 32) + (ulong)w[wBase]));
 			}
 			return w;
 		}
 
 		private static int[] Multiply(int[] x, int[] y, int[] z)
 		{
-			int num = z.Length;
-			if (num < 1)
+			int i = z.Length;
+			if (i < 1)
 			{
 				return x;
 			}
-			int num2 = x.Length - y.Length;
-			long num4;
+			int xBase = x.Length - y.Length;
+			long val;
 			for (;;)
 			{
-				long num3 = (long)z[--num] & (long)((ulong)(-1));
-				num4 = 0L;
-				for (int i = y.Length - 1; i >= 0; i--)
+				long a = (long)z[--i] & (long)((ulong)(-1));
+				val = 0L;
+				for (int j = y.Length - 1; j >= 0; j--)
 				{
-					num4 += num3 * ((long)y[i] & (long)((ulong)(-1))) + ((long)x[num2 + i] & (long)((ulong)(-1)));
-					x[num2 + i] = (int)num4;
-					num4 = (long)((ulong)num4 >> 32);
+					val += a * ((long)y[j] & (long)((ulong)(-1))) + ((long)x[xBase + j] & (long)((ulong)(-1)));
+					x[xBase + j] = (int)val;
+					val = (long)((ulong)val >> 32);
 				}
-				num2--;
-				if (num < 1)
+				xBase--;
+				if (i < 1)
 				{
 					break;
 				}
-				x[num2] = (int)num4;
+				x[xBase] = (int)val;
 			}
-			if (num2 >= 0)
+			if (xBase >= 0)
 			{
-				x[num2] = (int)num4;
+				x[xBase] = (int)val;
 			}
 			return x;
 		}
 
 		private static long FastExtEuclid(long a, long b, long[] uOut)
 		{
-			long num = 1L;
-			long num2 = a;
-			long num3 = 0L;
-			long num6;
-			for (long num4 = b; num4 > 0L; num4 = num6)
+			long u = 1L;
+			long u2 = a;
+			long v = 0L;
+			long tn;
+			for (long v2 = b; v2 > 0L; v2 = tn)
 			{
-				long num5 = num2 / num4;
-				num6 = num - num3 * num5;
-				num = num3;
-				num3 = num6;
-				num6 = num2 - num4 * num5;
-				num2 = num4;
+				long q = u2 / v2;
+				tn = u - v * q;
+				u = v;
+				v = tn;
+				tn = u2 - v2 * q;
+				u2 = v2;
 			}
-			uOut[0] = num;
-			uOut[1] = (num2 - num * a) / b;
-			return num2;
+			uOut[0] = u;
+			uOut[1] = (u2 - u * a) / b;
+			return u2;
 		}
 
 		private static long FastModInverse(long v, long m)
@@ -1475,17 +1475,17 @@ namespace DNA.Security.Cryptography.Math
 			{
 				throw new ArithmeticException("Modulus must be positive");
 			}
-			long[] array = new long[2];
-			long num = BigInteger.FastExtEuclid(v, m, array);
-			if (num != 1L)
+			long[] x = new long[2];
+			long gcd = BigInteger.FastExtEuclid(v, m, x);
+			if (gcd != 1L)
 			{
 				throw new ArithmeticException("Numbers not relatively prime.");
 			}
-			if (array[0] < 0L)
+			if (x[0] < 0L)
 			{
-				array[0] += m;
+				x[0] += m;
 			}
-			return array[0];
+			return x[0];
 		}
 
 		private long GetMQuote()
@@ -1498,8 +1498,8 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return -1L;
 			}
-			long num = (long)(~this.magnitude[this.magnitude.Length - 1] | 1) & (long)((ulong)(-1));
-			this.mQuote = BigInteger.FastModInverse(num, 4294967296L);
+			long v = (long)(~this.magnitude[this.magnitude.Length - 1] | 1) & (long)((ulong)(-1));
+			this.mQuote = BigInteger.FastModInverse(v, 4294967296L);
 			return this.mQuote;
 		}
 
@@ -1510,50 +1510,50 @@ namespace DNA.Security.Cryptography.Math
 				x[0] = (int)BigInteger.MultiplyMontyNIsOne((uint)x[0], (uint)y[0], (uint)m[0], (ulong)mQuote);
 				return;
 			}
-			int num = m.Length;
-			int num2 = num - 1;
-			long num3 = (long)y[num2] & (long)((ulong)(-1));
-			Array.Clear(a, 0, num + 1);
-			for (int i = num; i > 0; i--)
+			int i = m.Length;
+			int nMinus = i - 1;
+			long y_0 = (long)y[nMinus] & (long)((ulong)(-1));
+			Array.Clear(a, 0, i + 1);
+			for (int j = i; j > 0; j--)
 			{
-				long num4 = (long)x[i - 1] & (long)((ulong)(-1));
-				long num5 = (((((long)a[num] & (long)((ulong)(-1))) + ((num4 * num3) & (long)((ulong)(-1)))) & (long)((ulong)(-1))) * mQuote) & (long)((ulong)(-1));
-				long num6 = num4 * num3;
-				long num7 = num5 * ((long)m[num2] & (long)((ulong)(-1)));
-				long num8 = ((long)a[num] & (long)((ulong)(-1))) + (num6 & (long)((ulong)(-1))) + (num7 & (long)((ulong)(-1)));
-				long num9 = (long)(((ulong)num6 >> 32) + ((ulong)num7 >> 32) + ((ulong)num8 >> 32));
-				for (int j = num2; j > 0; j--)
+				long x_i = (long)x[j - 1] & (long)((ulong)(-1));
+				long u = (((((long)a[i] & (long)((ulong)(-1))) + ((x_i * y_0) & (long)((ulong)(-1)))) & (long)((ulong)(-1))) * mQuote) & (long)((ulong)(-1));
+				long prod = x_i * y_0;
+				long prod2 = u * ((long)m[nMinus] & (long)((ulong)(-1)));
+				long tmp = ((long)a[i] & (long)((ulong)(-1))) + (prod & (long)((ulong)(-1))) + (prod2 & (long)((ulong)(-1)));
+				long carry = (long)(((ulong)prod >> 32) + ((ulong)prod2 >> 32) + ((ulong)tmp >> 32));
+				for (int k = nMinus; k > 0; k--)
 				{
-					num6 = num4 * ((long)y[j - 1] & (long)((ulong)(-1)));
-					num7 = num5 * ((long)m[j - 1] & (long)((ulong)(-1)));
-					num8 = ((long)a[j] & (long)((ulong)(-1))) + (num6 & (long)((ulong)(-1))) + (num7 & (long)((ulong)(-1))) + (num9 & (long)((ulong)(-1)));
-					num9 = (long)(((ulong)num9 >> 32) + ((ulong)num6 >> 32) + ((ulong)num7 >> 32) + ((ulong)num8 >> 32));
-					a[j + 1] = (int)num8;
+					prod = x_i * ((long)y[k - 1] & (long)((ulong)(-1)));
+					prod2 = u * ((long)m[k - 1] & (long)((ulong)(-1)));
+					tmp = ((long)a[k] & (long)((ulong)(-1))) + (prod & (long)((ulong)(-1))) + (prod2 & (long)((ulong)(-1))) + (carry & (long)((ulong)(-1)));
+					carry = (long)(((ulong)carry >> 32) + ((ulong)prod >> 32) + ((ulong)prod2 >> 32) + ((ulong)tmp >> 32));
+					a[k + 1] = (int)tmp;
 				}
-				num9 += (long)a[0] & (long)((ulong)(-1));
-				a[1] = (int)num9;
-				a[0] = (int)((ulong)num9 >> 32);
+				carry += (long)a[0] & (long)((ulong)(-1));
+				a[1] = (int)carry;
+				a[0] = (int)((ulong)carry >> 32);
 			}
 			if (BigInteger.CompareTo(0, a, 0, m) >= 0)
 			{
 				BigInteger.Subtract(0, a, 0, m);
 			}
-			Array.Copy(a, 1, x, 0, num);
+			Array.Copy(a, 1, x, 0, i);
 		}
 
 		private static uint MultiplyMontyNIsOne(uint x, uint y, uint m, ulong mQuote)
 		{
-			ulong num = (ulong)m;
-			ulong num2 = (ulong)x * (ulong)y;
-			ulong num3 = (num2 * mQuote) & BigInteger.UIMASK;
-			ulong num4 = num3 * num;
-			ulong num5 = (num2 & BigInteger.UIMASK) + (num4 & BigInteger.UIMASK);
-			ulong num6 = (num2 >> 32) + (num4 >> 32) + (num5 >> 32);
-			if (num6 > num)
+			ulong um = (ulong)m;
+			ulong prod = (ulong)x * (ulong)y;
+			ulong u = (prod * mQuote) & BigInteger.UIMASK;
+			ulong prod2 = u * um;
+			ulong tmp = (prod & BigInteger.UIMASK) + (prod2 & BigInteger.UIMASK);
+			ulong carry = (prod >> 32) + (prod2 >> 32) + (tmp >> 32);
+			if (carry > um)
 			{
-				num6 -= num;
+				carry -= um;
 			}
-			return (uint)(num6 & BigInteger.UIMASK);
+			return (uint)(carry & BigInteger.UIMASK);
 		}
 
 		public BigInteger Multiply(BigInteger val)
@@ -1564,35 +1564,35 @@ namespace DNA.Security.Cryptography.Math
 			}
 			if (val.QuickPow2Check())
 			{
-				BigInteger bigInteger = this.ShiftLeft(val.Abs().BitLength - 1);
+				BigInteger result = this.ShiftLeft(val.Abs().BitLength - 1);
 				if (val.sign <= 0)
 				{
-					return bigInteger.Negate();
+					return result.Negate();
 				}
-				return bigInteger;
+				return result;
 			}
 			else
 			{
 				if (!this.QuickPow2Check())
 				{
-					int num = (this.BitLength + val.BitLength) / 32 + 1;
-					int[] array = new int[num];
+					int resLength = (this.BitLength + val.BitLength) / 32 + 1;
+					int[] res = new int[resLength];
 					if (val == this)
 					{
-						BigInteger.Square(array, this.magnitude);
+						BigInteger.Square(res, this.magnitude);
 					}
 					else
 					{
-						BigInteger.Multiply(array, this.magnitude, val.magnitude);
+						BigInteger.Multiply(res, this.magnitude, val.magnitude);
 					}
-					return new BigInteger(this.sign * val.sign, array, true);
+					return new BigInteger(this.sign * val.sign, res, true);
 				}
-				BigInteger bigInteger2 = val.ShiftLeft(this.Abs().BitLength - 1);
+				BigInteger result2 = val.ShiftLeft(this.Abs().BitLength - 1);
 				if (this.sign <= 0)
 				{
-					return bigInteger2.Negate();
+					return result2.Negate();
 				}
-				return bigInteger2;
+				return result2;
 			}
 		}
 
@@ -1615,12 +1615,12 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return BigInteger.Two;
 			}
-			BigInteger bigInteger = this.Inc().SetBit(0);
-			while (!bigInteger.CheckProbablePrime(100, BigInteger.RandomSource))
+			BigInteger i = this.Inc().SetBit(0);
+			while (!i.CheckProbablePrime(100, BigInteger.RandomSource))
 			{
-				bigInteger = bigInteger.Add(BigInteger.Two);
+				i = i.Add(BigInteger.Two);
 			}
-			return bigInteger;
+			return i;
 		}
 
 		public BigInteger Not()
@@ -1642,22 +1642,22 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return this;
 			}
-			BigInteger bigInteger = BigInteger.One;
-			BigInteger bigInteger2 = this;
+			BigInteger y = BigInteger.One;
+			BigInteger z = this;
 			for (;;)
 			{
 				if ((exp & 1) == 1)
 				{
-					bigInteger = bigInteger.Multiply(bigInteger2);
+					y = y.Multiply(z);
 				}
 				exp >>= 1;
 				if (exp == 0)
 				{
 					break;
 				}
-				bigInteger2 = bigInteger2.Multiply(bigInteger2);
+				z = z.Multiply(z);
 			}
-			return bigInteger;
+			return y;
 		}
 
 		public static BigInteger ProbablePrime(int bitLength, Random random)
@@ -1667,104 +1667,104 @@ namespace DNA.Security.Cryptography.Math
 
 		private int Remainder(int m)
 		{
-			long num = 0L;
-			for (int i = 0; i < this.magnitude.Length; i++)
+			long acc = 0L;
+			for (int pos = 0; pos < this.magnitude.Length; pos++)
 			{
-				long num2 = (long)((ulong)this.magnitude[i]);
-				num = ((num << 32) | num2) % (long)m;
+				long posVal = (long)((ulong)this.magnitude[pos]);
+				acc = ((acc << 32) | posVal) % (long)m;
 			}
-			return (int)num;
+			return (int)acc;
 		}
 
 		private int[] Remainder(int[] x, int[] y)
 		{
-			int num = 0;
-			while (num < x.Length && x[num] == 0)
+			int xStart = 0;
+			while (xStart < x.Length && x[xStart] == 0)
 			{
-				num++;
+				xStart++;
 			}
-			int num2 = 0;
-			while (num2 < y.Length && y[num2] == 0)
+			int yStart = 0;
+			while (yStart < y.Length && y[yStart] == 0)
 			{
-				num2++;
+				yStart++;
 			}
-			int num3 = BigInteger.CompareNoLeadingZeroes(num, x, num2, y);
-			if (num3 > 0)
+			int xyCmp = BigInteger.CompareNoLeadingZeroes(xStart, x, yStart, y);
+			if (xyCmp > 0)
 			{
-				int num4 = this.calcBitLength(num2, y);
-				int num5 = this.calcBitLength(num, x);
-				int num6 = num5 - num4;
-				int num7 = 0;
-				int num8 = num4;
-				int[] array;
-				if (num6 > 0)
+				int yBitLength = this.calcBitLength(yStart, y);
+				int xBitLength = this.calcBitLength(xStart, x);
+				int shift = xBitLength - yBitLength;
+				int cStart = 0;
+				int cBitLength = yBitLength;
+				int[] c;
+				if (shift > 0)
 				{
-					array = BigInteger.ShiftLeft(y, num6);
-					num8 += num6;
+					c = BigInteger.ShiftLeft(y, shift);
+					cBitLength += shift;
 				}
 				else
 				{
-					int num9 = y.Length - num2;
-					array = new int[num9];
-					Array.Copy(y, num2, array, 0, num9);
+					int len = y.Length - yStart;
+					c = new int[len];
+					Array.Copy(y, yStart, c, 0, len);
 				}
 				for (;;)
 				{
-					if (num8 < num5 || BigInteger.CompareNoLeadingZeroes(num, x, num7, array) >= 0)
+					if (cBitLength < xBitLength || BigInteger.CompareNoLeadingZeroes(xStart, x, cStart, c) >= 0)
 					{
-						BigInteger.Subtract(num, x, num7, array);
-						while (x[num] == 0)
+						BigInteger.Subtract(xStart, x, cStart, c);
+						while (x[xStart] == 0)
 						{
-							if (++num == x.Length)
+							if (++xStart == x.Length)
 							{
 								return x;
 							}
 						}
-						num5 = 32 * (x.Length - num - 1) + BigInteger.BitLen(x[num]);
-						if (num5 <= num4)
+						xBitLength = 32 * (x.Length - xStart - 1) + BigInteger.BitLen(x[xStart]);
+						if (xBitLength <= yBitLength)
 						{
-							if (num5 < num4)
+							if (xBitLength < yBitLength)
 							{
 								return x;
 							}
-							num3 = BigInteger.CompareNoLeadingZeroes(num, x, num2, y);
-							if (num3 <= 0)
+							xyCmp = BigInteger.CompareNoLeadingZeroes(xStart, x, yStart, y);
+							if (xyCmp <= 0)
 							{
 								goto IL_0152;
 							}
 						}
 					}
-					num6 = num8 - num5;
-					if (num6 == 1)
+					shift = cBitLength - xBitLength;
+					if (shift == 1)
 					{
-						uint num10 = (uint)array[num7] >> 1;
-						uint num11 = (uint)x[num];
-						if (num10 > num11)
+						uint firstC = (uint)c[cStart] >> 1;
+						uint firstX = (uint)x[xStart];
+						if (firstC > firstX)
 						{
-							num6++;
+							shift++;
 						}
 					}
-					if (num6 < 2)
+					if (shift < 2)
 					{
-						array = BigInteger.ShiftRightOneInPlace(num7, array);
-						num8--;
+						c = BigInteger.ShiftRightOneInPlace(cStart, c);
+						cBitLength--;
 					}
 					else
 					{
-						array = BigInteger.ShiftRightInPlace(num7, array, num6);
-						num8 -= num6;
+						c = BigInteger.ShiftRightInPlace(cStart, c, shift);
+						cBitLength -= shift;
 					}
-					while (array[num7] == 0)
+					while (c[cStart] == 0)
 					{
-						num7++;
+						cStart++;
 					}
 				}
 				return x;
 			}
 			IL_0152:
-			if (num3 == 0)
+			if (xyCmp == 0)
 			{
-				Array.Clear(x, num, x.Length - num);
+				Array.Clear(x, xStart, x.Length - xStart);
 			}
 			return x;
 		}
@@ -1781,17 +1781,17 @@ namespace DNA.Security.Cryptography.Math
 			}
 			if (n.magnitude.Length == 1)
 			{
-				int num = n.magnitude[0];
-				if (num > 0)
+				int val = n.magnitude[0];
+				if (val > 0)
 				{
-					if (num == 1)
+					if (val == 1)
 					{
 						return BigInteger.Zero;
 					}
-					int num2 = this.Remainder(num);
-					if (num2 != 0)
+					int rem = this.Remainder(val);
+					if (rem != 0)
 					{
-						return new BigInteger(this.sign, new int[] { num2 }, false);
+						return new BigInteger(this.sign, new int[] { rem }, false);
 					}
 					return BigInteger.Zero;
 				}
@@ -1800,17 +1800,17 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return this;
 			}
-			int[] array;
+			int[] result;
 			if (n.QuickPow2Check())
 			{
-				array = this.LastNBits(n.Abs().BitLength - 1);
+				result = this.LastNBits(n.Abs().BitLength - 1);
 			}
 			else
 			{
-				array = (int[])this.magnitude.Clone();
-				array = this.Remainder(array, n.magnitude);
+				result = (int[])this.magnitude.Clone();
+				result = this.Remainder(result, n.magnitude);
 			}
-			return new BigInteger(this.sign, array, true);
+			return new BigInteger(this.sign, result, true);
 		}
 
 		private int[] LastNBits(int n)
@@ -1819,53 +1819,53 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return BigInteger.ZeroMagnitude;
 			}
-			int num = (n + 32 - 1) / 32;
-			num = Math.Min(num, this.magnitude.Length);
-			int[] array = new int[num];
-			Array.Copy(this.magnitude, this.magnitude.Length - num, array, 0, num);
-			int num2 = n % 32;
-			if (num2 != 0)
+			int numWords = (n + 32 - 1) / 32;
+			numWords = Math.Min(numWords, this.magnitude.Length);
+			int[] result = new int[numWords];
+			Array.Copy(this.magnitude, this.magnitude.Length - numWords, result, 0, numWords);
+			int hiBits = n % 32;
+			if (hiBits != 0)
 			{
-				array[0] &= ~(-1 << num2);
+				result[0] &= ~(-1 << hiBits);
 			}
-			return array;
+			return result;
 		}
 
 		private static int[] ShiftLeft(int[] mag, int n)
 		{
-			int num = (int)((uint)n >> 5);
-			int num2 = n & 31;
-			int num3 = mag.Length;
-			int[] array;
-			if (num2 == 0)
+			int nInts = (int)((uint)n >> 5);
+			int nBits = n & 31;
+			int magLen = mag.Length;
+			int[] newMag;
+			if (nBits == 0)
 			{
-				array = new int[num3 + num];
-				mag.CopyTo(array, 0);
+				newMag = new int[magLen + nInts];
+				mag.CopyTo(newMag, 0);
 			}
 			else
 			{
-				int num4 = 0;
-				int num5 = 32 - num2;
-				int num6 = (int)((uint)mag[0] >> num5);
-				if (num6 != 0)
+				int i = 0;
+				int nBits2 = 32 - nBits;
+				int highBits = (int)((uint)mag[0] >> nBits2);
+				if (highBits != 0)
 				{
-					array = new int[num3 + num + 1];
-					array[num4++] = num6;
+					newMag = new int[magLen + nInts + 1];
+					newMag[i++] = highBits;
 				}
 				else
 				{
-					array = new int[num3 + num];
+					newMag = new int[magLen + nInts];
 				}
-				int num7 = mag[0];
-				for (int i = 0; i < num3 - 1; i++)
+				int j = mag[0];
+				for (int k = 0; k < magLen - 1; k++)
 				{
-					int num8 = mag[i + 1];
-					array[num4++] = (num7 << num2) | (int)((uint)num8 >> num5);
-					num7 = num8;
+					int next = mag[k + 1];
+					newMag[i++] = (j << nBits) | (int)((uint)next >> nBits2);
+					j = next;
 				}
-				array[num4] = mag[num3 - 1] << num2;
+				newMag[i] = mag[magLen - 1] << nBits;
 			}
-			return array;
+			return newMag;
 		}
 
 		public BigInteger ShiftLeft(int n)
@@ -1882,59 +1882,59 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return this.ShiftRight(-n);
 			}
-			BigInteger bigInteger = new BigInteger(this.sign, BigInteger.ShiftLeft(this.magnitude, n), true);
+			BigInteger result = new BigInteger(this.sign, BigInteger.ShiftLeft(this.magnitude, n), true);
 			if (this.nBits != -1)
 			{
-				bigInteger.nBits = ((this.sign > 0) ? this.nBits : (this.nBits + n));
+				result.nBits = ((this.sign > 0) ? this.nBits : (this.nBits + n));
 			}
 			if (this.nBitLength != -1)
 			{
-				bigInteger.nBitLength = this.nBitLength + n;
+				result.nBitLength = this.nBitLength + n;
 			}
-			return bigInteger;
+			return result;
 		}
 
 		private static int[] ShiftRightInPlace(int start, int[] mag, int n)
 		{
-			int num = (int)(((uint)n >> 5) + (uint)start);
-			int num2 = n & 31;
-			int num3 = mag.Length - 1;
-			if (num != start)
+			int nInts = (int)(((uint)n >> 5) + (uint)start);
+			int nBits = n & 31;
+			int magEnd = mag.Length - 1;
+			if (nInts != start)
 			{
-				int num4 = num - start;
-				for (int i = num3; i >= num; i--)
+				int delta = nInts - start;
+				for (int i = magEnd; i >= nInts; i--)
 				{
-					mag[i] = mag[i - num4];
+					mag[i] = mag[i - delta];
 				}
-				for (int j = num - 1; j >= start; j--)
+				for (int j = nInts - 1; j >= start; j--)
 				{
 					mag[j] = 0;
 				}
 			}
-			if (num2 != 0)
+			if (nBits != 0)
 			{
-				int num5 = 32 - num2;
-				int num6 = mag[num3];
-				for (int k = num3; k > num; k--)
+				int nBits2 = 32 - nBits;
+				int k = mag[magEnd];
+				for (int l = magEnd; l > nInts; l--)
 				{
-					int num7 = mag[k - 1];
-					mag[k] = (int)(((uint)num6 >> num2) | (uint)((uint)num7 << num5));
-					num6 = num7;
+					int next = mag[l - 1];
+					mag[l] = (int)(((uint)k >> nBits) | (uint)((uint)next << nBits2));
+					k = next;
 				}
-				mag[num] = (int)((uint)mag[num] >> num2);
+				mag[nInts] = (int)((uint)mag[nInts] >> nBits);
 			}
 			return mag;
 		}
 
 		private static int[] ShiftRightOneInPlace(int start, int[] mag)
 		{
-			int num = mag.Length;
-			int num2 = mag[num - 1];
-			while (--num > start)
+			int i = mag.Length;
+			int j = mag[i - 1];
+			while (--i > start)
 			{
-				int num3 = mag[num - 1];
-				mag[num] = (int)(((uint)num2 >> 1) | (uint)((uint)num3 << 31));
-				num2 = num3;
+				int next = mag[i - 1];
+				mag[i] = (int)(((uint)j >> 1) | (uint)((uint)next << 31));
+				j = next;
 			}
 			mag[start] = (int)((uint)mag[start] >> 1);
 			return mag;
@@ -1952,28 +1952,28 @@ namespace DNA.Security.Cryptography.Math
 			}
 			if (n < this.BitLength)
 			{
-				int num = this.BitLength - n + 31 >> 5;
-				int[] array = new int[num];
-				int num2 = n >> 5;
-				int num3 = n & 31;
-				if (num3 == 0)
+				int resultLength = this.BitLength - n + 31 >> 5;
+				int[] res = new int[resultLength];
+				int numInts = n >> 5;
+				int numBits = n & 31;
+				if (numBits == 0)
 				{
-					Array.Copy(this.magnitude, 0, array, 0, array.Length);
+					Array.Copy(this.magnitude, 0, res, 0, res.Length);
 				}
 				else
 				{
-					int num4 = 32 - num3;
-					int num5 = this.magnitude.Length - 1 - num2;
-					for (int i = num - 1; i >= 0; i--)
+					int numBits2 = 32 - numBits;
+					int magPos = this.magnitude.Length - 1 - numInts;
+					for (int i = resultLength - 1; i >= 0; i--)
 					{
-						array[i] = (int)((uint)this.magnitude[num5--] >> (num3 & 31));
-						if (num5 >= 0)
+						res[i] = (int)((uint)this.magnitude[magPos--] >> (numBits & 31));
+						if (magPos >= 0)
 						{
-							array[i] |= this.magnitude[num5] << num4;
+							res[i] |= this.magnitude[magPos] << numBits2;
 						}
 					}
 				}
-				return new BigInteger(this.sign, array, false);
+				return new BigInteger(this.sign, res, false);
 			}
 			if (this.sign >= 0)
 			{
@@ -1992,19 +1992,19 @@ namespace DNA.Security.Cryptography.Math
 
 		private static int[] Subtract(int xStart, int[] x, int yStart, int[] y)
 		{
-			int num = x.Length;
-			int num2 = y.Length;
-			int num3 = 0;
+			int iT = x.Length;
+			int iV = y.Length;
+			int borrow = 0;
 			do
 			{
-				long num4 = ((long)x[--num] & (long)((ulong)(-1))) - ((long)y[--num2] & (long)((ulong)(-1))) + (long)num3;
-				x[num] = (int)num4;
-				num3 = (int)(num4 >> 63);
+				long i = ((long)x[--iT] & (long)((ulong)(-1))) - ((long)y[--iV] & (long)((ulong)(-1))) + (long)borrow;
+				x[iT] = (int)i;
+				borrow = (int)(i >> 63);
 			}
-			while (num2 > yStart);
-			if (num3 != 0)
+			while (iV > yStart);
+			if (borrow != 0)
 			{
-				while (--x[--num] == -1)
+				while (--x[--iT] == -1)
 				{
 				}
 			}
@@ -2025,30 +2025,30 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return this.Add(n.Negate());
 			}
-			int num = BigInteger.CompareNoLeadingZeroes(0, this.magnitude, 0, n.magnitude);
-			if (num == 0)
+			int compare = BigInteger.CompareNoLeadingZeroes(0, this.magnitude, 0, n.magnitude);
+			if (compare == 0)
 			{
 				return BigInteger.Zero;
 			}
-			BigInteger bigInteger;
-			BigInteger bigInteger2;
-			if (num < 0)
+			BigInteger bigun;
+			BigInteger lilun;
+			if (compare < 0)
 			{
-				bigInteger = n;
-				bigInteger2 = this;
+				bigun = n;
+				lilun = this;
 			}
 			else
 			{
-				bigInteger = this;
-				bigInteger2 = n;
+				bigun = this;
+				lilun = n;
 			}
-			return new BigInteger(this.sign * num, BigInteger.doSubBigLil(bigInteger.magnitude, bigInteger2.magnitude), true);
+			return new BigInteger(this.sign * compare, BigInteger.doSubBigLil(bigun.magnitude, lilun.magnitude), true);
 		}
 
 		private static int[] doSubBigLil(int[] bigMag, int[] lilMag)
 		{
-			int[] array = (int[])bigMag.Clone();
-			return BigInteger.Subtract(0, array, 0, lilMag);
+			int[] res = (int[])bigMag.Clone();
+			return BigInteger.Subtract(0, res, 0, lilMag);
 		}
 
 		public byte[] ToByteArray()
@@ -2065,60 +2065,60 @@ namespace DNA.Security.Cryptography.Math
 		{
 			if (this.sign != 0)
 			{
-				int num = ((unsigned && this.sign > 0) ? this.BitLength : (this.BitLength + 1));
-				int byteLength = BigInteger.GetByteLength(num);
-				byte[] array = new byte[byteLength];
-				int i = this.magnitude.Length;
-				int num2 = array.Length;
+				int nBits = ((unsigned && this.sign > 0) ? this.BitLength : (this.BitLength + 1));
+				int nBytes = BigInteger.GetByteLength(nBits);
+				byte[] bytes = new byte[nBytes];
+				int magIndex = this.magnitude.Length;
+				int bytesIndex = bytes.Length;
 				if (this.sign > 0)
 				{
-					while (i > 1)
+					while (magIndex > 1)
 					{
-						uint num3 = (uint)this.magnitude[--i];
-						array[--num2] = (byte)num3;
-						array[--num2] = (byte)(num3 >> 8);
-						array[--num2] = (byte)(num3 >> 16);
-						array[--num2] = (byte)(num3 >> 24);
+						uint mag = (uint)this.magnitude[--magIndex];
+						bytes[--bytesIndex] = (byte)mag;
+						bytes[--bytesIndex] = (byte)(mag >> 8);
+						bytes[--bytesIndex] = (byte)(mag >> 16);
+						bytes[--bytesIndex] = (byte)(mag >> 24);
 					}
-					uint num4;
-					for (num4 = (uint)this.magnitude[0]; num4 > 255U; num4 >>= 8)
+					uint lastMag;
+					for (lastMag = (uint)this.magnitude[0]; lastMag > 255U; lastMag >>= 8)
 					{
-						array[--num2] = (byte)num4;
+						bytes[--bytesIndex] = (byte)lastMag;
 					}
-					array[num2 - 1] = (byte)num4;
+					bytes[bytesIndex - 1] = (byte)lastMag;
 				}
 				else
 				{
-					bool flag = true;
-					while (i > 1)
+					bool carry = true;
+					while (magIndex > 1)
 					{
-						uint num5 = (uint)(~(uint)this.magnitude[--i]);
-						if (flag)
+						uint mag2 = (uint)(~(uint)this.magnitude[--magIndex]);
+						if (carry)
 						{
-							flag = (num5 += 1U) == 0U;
+							carry = (mag2 += 1U) == 0U;
 						}
-						array[--num2] = (byte)num5;
-						array[--num2] = (byte)(num5 >> 8);
-						array[--num2] = (byte)(num5 >> 16);
-						array[--num2] = (byte)(num5 >> 24);
+						bytes[--bytesIndex] = (byte)mag2;
+						bytes[--bytesIndex] = (byte)(mag2 >> 8);
+						bytes[--bytesIndex] = (byte)(mag2 >> 16);
+						bytes[--bytesIndex] = (byte)(mag2 >> 24);
 					}
-					uint num6 = (uint)this.magnitude[0];
-					if (flag)
+					uint lastMag2 = (uint)this.magnitude[0];
+					if (carry)
 					{
-						num6 -= 1U;
+						lastMag2 -= 1U;
 					}
-					while (num6 > 255U)
+					while (lastMag2 > 255U)
 					{
-						array[--num2] = (byte)(~(byte)num6);
-						num6 >>= 8;
+						bytes[--bytesIndex] = (byte)(~(byte)lastMag2);
+						lastMag2 >>= 8;
 					}
-					array[--num2] = (byte)(~(byte)num6);
-					if (num2 > 0)
+					bytes[--bytesIndex] = (byte)(~(byte)lastMag2);
+					if (bytesIndex > 0)
 					{
-						array[num2 - 1] = byte.MaxValue;
+						bytes[bytesIndex - 1] = byte.MaxValue;
 					}
 				}
-				return array;
+				return bytes;
 			}
 			if (!unsigned)
 			{
@@ -2146,78 +2146,78 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return "0";
 			}
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder sb = new StringBuilder();
 			if (radix == 16)
 			{
-				stringBuilder.Append(this.magnitude[0].ToString("x"));
+				sb.Append(this.magnitude[0].ToString("x"));
 				for (int i = 1; i < this.magnitude.Length; i++)
 				{
-					stringBuilder.Append(this.magnitude[i].ToString("x8"));
+					sb.Append(this.magnitude[i].ToString("x8"));
 				}
 			}
 			else if (radix == 2)
 			{
-				stringBuilder.Append('1');
+				sb.Append('1');
 				for (int j = this.BitLength - 2; j >= 0; j--)
 				{
-					stringBuilder.Append(this.TestBit(j) ? '1' : '0');
+					sb.Append(this.TestBit(j) ? '1' : '0');
 				}
 			}
 			else
 			{
-				Stack<string> stack = new Stack<string>();
-				BigInteger bigInteger = BigInteger.ValueOf((long)radix);
-				BigInteger bigInteger2 = this.Abs();
-				while (bigInteger2.sign != 0)
+				Stack<string> S = new Stack<string>();
+				BigInteger bs = BigInteger.ValueOf((long)radix);
+				BigInteger u = this.Abs();
+				while (u.sign != 0)
 				{
-					BigInteger bigInteger3 = bigInteger2.Mod(bigInteger);
-					if (bigInteger3.sign == 0)
+					BigInteger b = u.Mod(bs);
+					if (b.sign == 0)
 					{
-						stack.Push("0");
+						S.Push("0");
 					}
 					else
 					{
-						stack.Push(bigInteger3.magnitude[0].ToString("d"));
+						S.Push(b.magnitude[0].ToString("d"));
 					}
-					bigInteger2 = bigInteger2.Divide(bigInteger);
+					u = u.Divide(bs);
 				}
-				while (stack.Count != 0)
+				while (S.Count != 0)
 				{
-					stringBuilder.Append(stack.Pop());
+					sb.Append(S.Pop());
 				}
 			}
-			string text = stringBuilder.ToString();
-			if (text[0] == '0')
+			string s = sb.ToString();
+			if (s[0] == '0')
 			{
-				int num = 0;
-				while (text[++num] == '0')
+				int nonZeroPos = 0;
+				while (s[++nonZeroPos] == '0')
 				{
 				}
-				text = text.Substring(num);
+				s = s.Substring(nonZeroPos);
 			}
 			if (this.sign == -1)
 			{
-				text = "-" + text;
+				s = "-" + s;
 			}
-			return text;
+			return s;
 		}
 
 		private static BigInteger createUValueOf(ulong value)
 		{
-			int num = (int)(value >> 32);
-			int num2 = (int)value;
-			if (num != 0)
+			int msw = (int)(value >> 32);
+			int lsw = (int)value;
+			if (msw != 0)
 			{
-				return new BigInteger(1, new int[] { num, num2 }, false);
+				return new BigInteger(1, new int[] { msw, lsw }, false);
 			}
-			if (num2 != 0)
+			if (lsw != 0)
 			{
-				BigInteger bigInteger = new BigInteger(1, new int[] { num2 }, false);
-				if ((num2 & -num2) == num2)
+				BigInteger i = new BigInteger(1, new int[] { lsw }, false);
+				if ((lsw & -lsw) == lsw)
 				{
-					bigInteger.nBits = 1;
+					i.nBits = 1;
 				}
-				return bigInteger;
+				return i;
 			}
 			return BigInteger.Zero;
 		}
@@ -2269,17 +2269,17 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return -1;
 			}
-			int num = this.magnitude.Length;
-			while (--num > 0 && this.magnitude[num] == 0)
+			int w = this.magnitude.Length;
+			while (--w > 0 && this.magnitude[w] == 0)
 			{
 			}
-			int num2 = this.magnitude[num];
-			int num3 = (((num2 & 65535) == 0) ? (((num2 & 16711680) == 0) ? 7 : 15) : (((num2 & 255) == 0) ? 23 : 31));
-			while (num3 > 0 && num2 << num3 != -2147483648)
+			int word = this.magnitude[w];
+			int b = (((word & 65535) == 0) ? (((word & 16711680) == 0) ? 7 : 15) : (((word & 255) == 0) ? 23 : 31));
+			while (b > 0 && word << b != -2147483648)
 			{
-				num3--;
+				b--;
 			}
-			return (this.magnitude.Length - num) * 32 - (num3 + 1);
+			return (this.magnitude.Length - w) * 32 - (b + 1);
 		}
 
 		public bool TestBit(int n)
@@ -2292,13 +2292,13 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return !this.Not().TestBit(n);
 			}
-			int num = n / 32;
-			if (num >= this.magnitude.Length)
+			int wordNum = n / 32;
+			if (wordNum >= this.magnitude.Length)
 			{
 				return false;
 			}
-			int num2 = this.magnitude[this.magnitude.Length - 1 - num];
-			return ((num2 >> n % 32) & 1) > 0;
+			int word = this.magnitude[this.magnitude.Length - 1 - wordNum];
+			return ((word >> n % 32) & 1) > 0;
 		}
 
 		public BigInteger Or(BigInteger value)
@@ -2311,37 +2311,37 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return this;
 			}
-			int[] array = ((this.sign > 0) ? this.magnitude : this.Add(BigInteger.One).magnitude);
-			int[] array2 = ((value.sign > 0) ? value.magnitude : value.Add(BigInteger.One).magnitude);
-			bool flag = this.sign < 0 || value.sign < 0;
-			int num = Math.Max(array.Length, array2.Length);
-			int[] array3 = new int[num];
-			int num2 = array3.Length - array.Length;
-			int num3 = array3.Length - array2.Length;
-			for (int i = 0; i < array3.Length; i++)
+			int[] aMag = ((this.sign > 0) ? this.magnitude : this.Add(BigInteger.One).magnitude);
+			int[] bMag = ((value.sign > 0) ? value.magnitude : value.Add(BigInteger.One).magnitude);
+			bool resultNeg = this.sign < 0 || value.sign < 0;
+			int resultLength = Math.Max(aMag.Length, bMag.Length);
+			int[] resultMag = new int[resultLength];
+			int aStart = resultMag.Length - aMag.Length;
+			int bStart = resultMag.Length - bMag.Length;
+			for (int i = 0; i < resultMag.Length; i++)
 			{
-				int num4 = ((i >= num2) ? array[i - num2] : 0);
-				int num5 = ((i >= num3) ? array2[i - num3] : 0);
+				int aWord = ((i >= aStart) ? aMag[i - aStart] : 0);
+				int bWord = ((i >= bStart) ? bMag[i - bStart] : 0);
 				if (this.sign < 0)
 				{
-					num4 = ~num4;
+					aWord = ~aWord;
 				}
 				if (value.sign < 0)
 				{
-					num5 = ~num5;
+					bWord = ~bWord;
 				}
-				array3[i] = num4 | num5;
-				if (flag)
+				resultMag[i] = aWord | bWord;
+				if (resultNeg)
 				{
-					array3[i] = ~array3[i];
+					resultMag[i] = ~resultMag[i];
 				}
 			}
-			BigInteger bigInteger = new BigInteger(1, array3, true);
-			if (flag)
+			BigInteger result = new BigInteger(1, resultMag, true);
+			if (resultNeg)
 			{
-				bigInteger = bigInteger.Not();
+				result = result.Not();
 			}
-			return bigInteger;
+			return result;
 		}
 
 		public BigInteger Xor(BigInteger value)
@@ -2354,37 +2354,37 @@ namespace DNA.Security.Cryptography.Math
 			{
 				return this;
 			}
-			int[] array = ((this.sign > 0) ? this.magnitude : this.Add(BigInteger.One).magnitude);
-			int[] array2 = ((value.sign > 0) ? value.magnitude : value.Add(BigInteger.One).magnitude);
-			bool flag = (this.sign < 0 && value.sign >= 0) || (this.sign >= 0 && value.sign < 0);
-			int num = Math.Max(array.Length, array2.Length);
-			int[] array3 = new int[num];
-			int num2 = array3.Length - array.Length;
-			int num3 = array3.Length - array2.Length;
-			for (int i = 0; i < array3.Length; i++)
+			int[] aMag = ((this.sign > 0) ? this.magnitude : this.Add(BigInteger.One).magnitude);
+			int[] bMag = ((value.sign > 0) ? value.magnitude : value.Add(BigInteger.One).magnitude);
+			bool resultNeg = (this.sign < 0 && value.sign >= 0) || (this.sign >= 0 && value.sign < 0);
+			int resultLength = Math.Max(aMag.Length, bMag.Length);
+			int[] resultMag = new int[resultLength];
+			int aStart = resultMag.Length - aMag.Length;
+			int bStart = resultMag.Length - bMag.Length;
+			for (int i = 0; i < resultMag.Length; i++)
 			{
-				int num4 = ((i >= num2) ? array[i - num2] : 0);
-				int num5 = ((i >= num3) ? array2[i - num3] : 0);
+				int aWord = ((i >= aStart) ? aMag[i - aStart] : 0);
+				int bWord = ((i >= bStart) ? bMag[i - bStart] : 0);
 				if (this.sign < 0)
 				{
-					num4 = ~num4;
+					aWord = ~aWord;
 				}
 				if (value.sign < 0)
 				{
-					num5 = ~num5;
+					bWord = ~bWord;
 				}
-				array3[i] = num4 ^ num5;
-				if (flag)
+				resultMag[i] = aWord ^ bWord;
+				if (resultNeg)
 				{
-					array3[i] = ~array3[i];
+					resultMag[i] = ~resultMag[i];
 				}
 			}
-			BigInteger bigInteger = new BigInteger(1, array3, true);
-			if (flag)
+			BigInteger result = new BigInteger(1, resultMag, true);
+			if (resultNeg)
 			{
-				bigInteger = bigInteger.Not();
+				result = result.Not();
 			}
-			return bigInteger;
+			return result;
 		}
 
 		public BigInteger SetBit(int n)
@@ -2436,9 +2436,9 @@ namespace DNA.Security.Cryptography.Math
 
 		private BigInteger FlipExistingBit(int n)
 		{
-			int[] array = (int[])this.magnitude.Clone();
-			array[array.Length - 1 - (n >> 5)] ^= 1 << n;
-			return new BigInteger(this.sign, array, false);
+			int[] mag = (int[])this.magnitude.Clone();
+			mag[mag.Length - 1 - (n >> 5)] ^= 1 << n;
+			return new BigInteger(this.sign, mag, false);
 		}
 
 		private const long IMASK = 4294967295L;

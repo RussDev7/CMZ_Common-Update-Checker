@@ -25,9 +25,9 @@ namespace DNA
 
 		public AuthorData()
 		{
-			Assembly executingAssembly = Assembly.GetExecutingAssembly();
-			Stream manifestResourceStream = executingAssembly.GetManifestResourceStream("DNA.ADT.key");
-			this._key = RSAKey.Read(new BinaryReader(manifestResourceStream));
+			Assembly assm = Assembly.GetExecutingAssembly();
+			Stream stream = assm.GetManifestResourceStream("DNA.ADT.key");
+			this._key = RSAKey.Read(new BinaryReader(stream));
 		}
 
 		public AuthorData(RSAKey publicKey)
@@ -40,53 +40,53 @@ namespace DNA
 			this._dataVersion = dataVersion;
 			this._key = privateKey.PublicKey;
 			this._rawData = data;
-			MemoryStream memoryStream = new MemoryStream();
-			BinaryWriter binaryWriter = new BinaryWriter(memoryStream);
-			binaryWriter.Write(dataVersion);
-			binaryWriter.Write(data.Length);
-			binaryWriter.Write(data);
-			binaryWriter.Flush();
-			byte[] array = memoryStream.ToArray();
-			RSASignatureProvider rsasignatureProvider = new RSASignatureProvider(new SHA256HashProvider(), privateKey);
-			this._signature = rsasignatureProvider.Sign(array);
+			MemoryStream stream = new MemoryStream();
+			BinaryWriter dwriter = new BinaryWriter(stream);
+			dwriter.Write(dataVersion);
+			dwriter.Write(data.Length);
+			dwriter.Write(data);
+			dwriter.Flush();
+			byte[] dataBlock = stream.ToArray();
+			RSASignatureProvider signer = new RSASignatureProvider(new SHA256HashProvider(), privateKey);
+			this._signature = signer.Sign(dataBlock);
 		}
 
 		public void Read(BinaryReader reader)
 		{
-			RSASignatureProvider rsasignatureProvider = new RSASignatureProvider(new SHA256HashProvider(), this._key);
+			RSASignatureProvider signer = new RSASignatureProvider(new SHA256HashProvider(), this._key);
 			if (reader.ReadInt32() != 1935893365 || reader.ReadInt32() != 1)
 			{
 				throw new Exception("Bad Data Format");
 			}
-			int num = reader.ReadInt32();
-			byte[] array = reader.ReadBytes(num);
-			int num2 = reader.ReadInt32();
-			byte[] array2 = reader.ReadBytes(num2);
-			this._signature = rsasignatureProvider.FromByteArray(array2);
-			if (!this._signature.Verify(rsasignatureProvider, array))
+			int dBlockLen = reader.ReadInt32();
+			byte[] dataBlock = reader.ReadBytes(dBlockLen);
+			int sigLen = reader.ReadInt32();
+			byte[] sigData = reader.ReadBytes(sigLen);
+			this._signature = signer.FromByteArray(sigData);
+			if (!this._signature.Verify(signer, dataBlock))
 			{
 				throw new Exception("Data Corrupt");
 			}
-			MemoryStream memoryStream = new MemoryStream(array);
-			BinaryReader binaryReader = new BinaryReader(memoryStream);
-			this._dataVersion = binaryReader.ReadInt32();
-			int num3 = binaryReader.ReadInt32();
-			this._rawData = binaryReader.ReadBytes(num3);
+			MemoryStream stream = new MemoryStream(dataBlock);
+			BinaryReader dblockReader = new BinaryReader(stream);
+			this._dataVersion = dblockReader.ReadInt32();
+			int dlen = dblockReader.ReadInt32();
+			this._rawData = dblockReader.ReadBytes(dlen);
 		}
 
 		public void Write(BinaryWriter writer)
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			BinaryWriter binaryWriter = new BinaryWriter(memoryStream);
-			binaryWriter.Write(this._dataVersion);
-			binaryWriter.Write(this._rawData.Length);
-			binaryWriter.Write(this._rawData);
-			binaryWriter.Flush();
-			byte[] array = memoryStream.ToArray();
+			MemoryStream stream = new MemoryStream();
+			BinaryWriter dwriter = new BinaryWriter(stream);
+			dwriter.Write(this._dataVersion);
+			dwriter.Write(this._rawData.Length);
+			dwriter.Write(this._rawData);
+			dwriter.Flush();
+			byte[] dataBlock = stream.ToArray();
 			writer.Write(1935893365);
 			writer.Write(1);
-			writer.Write(array.Length);
-			writer.Write(array);
+			writer.Write(dataBlock.Length);
+			writer.Write(dataBlock);
 			writer.Write(this._signature.Data.Length);
 			writer.Write(this._signature.Data);
 		}

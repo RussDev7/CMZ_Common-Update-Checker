@@ -11,15 +11,15 @@ namespace DNA.Audio.SignalProcessing.Processors
 
 		public override bool ProcessBlock(RealPCMData data)
 		{
-			float num = this.Frequency.Hertz;
-			float num2 = 1f / (float)data.SampleRate;
-			for (int i = 0; i < data.Channels; i++)
+			float freq = this.Frequency.Hertz;
+			float dt = 1f / (float)data.SampleRate;
+			for (int channel = 0; channel < data.Channels; channel++)
 			{
-				float[] data2 = data.GetData(i);
-				for (int j = 0; j < data2.Length; j++)
+				float[] buffer = data.GetData(channel);
+				for (int i = 0; i < buffer.Length; i++)
 				{
-					this.t += num2;
-					data2[j] = (float)Math.Sin((double)(this.t * num) * 3.141592653589793 * 2.0);
+					this.t += dt;
+					buffer[i] = (float)Math.Sin((double)(this.t * freq) * 3.141592653589793 * 2.0);
 				}
 			}
 			return true;

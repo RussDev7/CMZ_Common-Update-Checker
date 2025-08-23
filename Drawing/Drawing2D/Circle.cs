@@ -97,16 +97,16 @@ namespace DNA.Drawing.Drawing2D
 
 		public int Contains(IList<Vector2> points)
 		{
-			int num = 0;
+			int count = 0;
 			for (int i = 0; i < points.Count; i++)
 			{
 				Vector2 vector = points[i];
 				if (!this.Contains(points[i]))
 				{
-					num++;
+					count++;
 				}
 			}
-			return num;
+			return count;
 		}
 
 		public IShape2D Intersection(IShape2D s)

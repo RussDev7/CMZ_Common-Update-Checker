@@ -18,17 +18,17 @@ namespace DNA.Security.Cryptography.Crypto
 
 		public virtual int ProcessByte(byte input, byte[] output, int outOff)
 		{
-			byte[] array = this.ProcessByte(input);
-			if (array == null)
+			byte[] outBytes = this.ProcessByte(input);
+			if (outBytes == null)
 			{
 				return 0;
 			}
-			if (outOff + array.Length > output.Length)
+			if (outOff + outBytes.Length > output.Length)
 			{
 				throw new DataLengthException("output buffer too short");
 			}
-			array.CopyTo(output, outOff);
-			return array.Length;
+			outBytes.CopyTo(output, outOff);
+			return outBytes.Length;
 		}
 
 		public virtual byte[] ProcessBytes(byte[] input)
@@ -45,17 +45,17 @@ namespace DNA.Security.Cryptography.Crypto
 
 		public virtual int ProcessBytes(byte[] input, int inOff, int length, byte[] output, int outOff)
 		{
-			byte[] array = this.ProcessBytes(input, inOff, length);
-			if (array == null)
+			byte[] outBytes = this.ProcessBytes(input, inOff, length);
+			if (outBytes == null)
 			{
 				return 0;
 			}
-			if (outOff + array.Length > output.Length)
+			if (outOff + outBytes.Length > output.Length)
 			{
 				throw new DataLengthException("output buffer too short");
 			}
-			array.CopyTo(output, outOff);
-			return array.Length;
+			outBytes.CopyTo(output, outOff);
+			return outBytes.Length;
 		}
 
 		public abstract byte[] DoFinal();
@@ -69,13 +69,13 @@ namespace DNA.Security.Cryptography.Crypto
 
 		public virtual int DoFinal(byte[] output, int outOff)
 		{
-			byte[] array = this.DoFinal();
-			if (outOff + array.Length > output.Length)
+			byte[] outBytes = this.DoFinal();
+			if (outOff + outBytes.Length > output.Length)
 			{
 				throw new DataLengthException("output buffer too short");
 			}
-			array.CopyTo(output, outOff);
-			return array.Length;
+			outBytes.CopyTo(output, outOff);
+			return outBytes.Length;
 		}
 
 		public virtual int DoFinal(byte[] input, byte[] output, int outOff)
@@ -85,8 +85,8 @@ namespace DNA.Security.Cryptography.Crypto
 
 		public virtual int DoFinal(byte[] input, int inOff, int length, byte[] output, int outOff)
 		{
-			int num = this.ProcessBytes(input, inOff, length, output, outOff);
-			return num + this.DoFinal(output, outOff + num);
+			int len = this.ProcessBytes(input, inOff, length, output, outOff);
+			return len + this.DoFinal(output, outOff + len);
 		}
 
 		public abstract void Reset();

@@ -12,10 +12,10 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 	{
 		public static NetworkSession CreateNetworkSession(NetworkSessionStaticProvider staticprovider)
 		{
-			LidgrenNetworkSessionProvider lidgrenNetworkSessionProvider = new LidgrenNetworkSessionProvider(staticprovider);
-			NetworkSession networkSession = new NetworkSession(lidgrenNetworkSessionProvider);
-			lidgrenNetworkSessionProvider._networkSession = networkSession;
-			return networkSession;
+			LidgrenNetworkSessionProvider provider = new LidgrenNetworkSessionProvider(staticprovider);
+			NetworkSession result = new NetworkSession(provider);
+			provider._networkSession = result;
+			return result;
 		}
 
 		protected LidgrenNetworkSessionProvider(NetworkSessionStaticProvider staticProvider)
@@ -58,8 +58,8 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 
 		public override void UpdateHostSessionJoinPolicy(JoinGamePolicy joinGamePolicy)
 		{
-			bool flag = joinGamePolicy == JoinGamePolicy.Anyone;
-			this.UpdateHostSession(null, null, new bool?(flag), null);
+			bool ispublic = joinGamePolicy == JoinGamePolicy.Anyone;
+			this.UpdateHostSession(null, null, new bool?(ispublic), null);
 		}
 
 		public override void UpdateHostSession(string serverName, bool? passwordProtected, bool? isPublic, NetworkSessionProperties sessionProps)
@@ -102,10 +102,10 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 
 		protected NetworkGamer AddRemoteGamer(Gamer gmr, NetConnection connection, bool isHost, byte playerGID)
 		{
-			NetworkGamer networkGamer = base.AddRemoteGamer(gmr, connection.m_remoteEndPoint.Address, isHost, playerGID);
-			connection.Tag = networkGamer;
-			networkGamer.NetConnectionObject = connection;
-			return networkGamer;
+			NetworkGamer result = base.AddRemoteGamer(gmr, connection.m_remoteEndPoint.Address, isHost, playerGID);
+			connection.Tag = result;
+			result.NetConnectionObject = connection;
+			return result;
 		}
 
 		public override void StartHost(NetworkSessionStaticProvider.BeginCreateSessionState sqs)
@@ -124,24 +124,24 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 			}
 			if (this._sessionType != NetworkSessionType.Local)
 			{
-				NetPeerConfiguration netPeerConfiguration = new NetPeerConfiguration(this._gameName);
-				netPeerConfiguration.Port = this._staticProvider.DefaultPort;
-				netPeerConfiguration.AcceptIncomingConnections = true;
-				netPeerConfiguration.MaximumConnections = sqs.MaxPlayers;
-				netPeerConfiguration.NetworkThreadName = "Lidgren Network Host Thread";
-				netPeerConfiguration.UseMessageRecycling = true;
-				netPeerConfiguration.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
-				netPeerConfiguration.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
-				netPeerConfiguration.EnableMessageType(NetIncomingMessageType.StatusChanged);
-				netPeerConfiguration.EnableUPnP = true;
+				NetPeerConfiguration npc = new NetPeerConfiguration(this._gameName);
+				npc.Port = this._staticProvider.DefaultPort;
+				npc.AcceptIncomingConnections = true;
+				npc.MaximumConnections = sqs.MaxPlayers;
+				npc.NetworkThreadName = "Lidgren Network Host Thread";
+				npc.UseMessageRecycling = true;
+				npc.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
+				npc.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
+				npc.EnableMessageType(NetIncomingMessageType.StatusChanged);
+				npc.EnableUPnP = true;
 				try
 				{
-					this._netSession = new NetPeer(netPeerConfiguration);
+					this._netSession = new NetPeer(npc);
 					this._netSession.Start();
 				}
-				catch (Exception ex)
+				catch (Exception e)
 				{
-					sqs.ExceptionEncountered = ex;
+					sqs.ExceptionEncountered = e;
 					this._hostConnectionResult = NetworkSession.ResultCode.ExceptionThrown;
 					this._netSession = null;
 					return;
@@ -149,22 +149,22 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 				this._netSession.UPnP.ForwardPort(this._netSession.Port, this._gameName);
 				try
 				{
-					IPAddress ipaddress = null;
+					IPAddress ipa = null;
 					if (this._netSession.UPnP != null && this._netSession.UPnP.Status != UPnPStatus.NotAvailable)
 					{
-						ipaddress = this._netSession.UPnP.GetExternalIP();
+						ipa = this._netSession.UPnP.GetExternalIP();
 					}
-					if (ipaddress == null)
+					if (ipa == null)
 					{
 						this._externalIPString = LidgrenExtensions.GetPublicIP();
-						if (IPAddress.TryParse(this._externalIPString, out ipaddress))
+						if (IPAddress.TryParse(this._externalIPString, out ipa))
 						{
 							this._externalIPString = this._externalIPString + ":" + this._netSession.Port.ToString();
 						}
 					}
 					else
 					{
-						this._externalIPString = ipaddress.ToString() + ":" + this._netSession.Port.ToString();
+						this._externalIPString = ipa.ToString() + ":" + this._netSession.Port.ToString();
 					}
 				}
 				catch
@@ -173,9 +173,9 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 				}
 				try
 				{
-					IPAddress ipaddress = null;
+					IPAddress ipa = null;
 					this._internalIPString = LidgrenExtensions.GetLanIPAddress();
-					if (IPAddress.TryParse(this._internalIPString, out ipaddress))
+					if (IPAddress.TryParse(this._internalIPString, out ipa))
 					{
 						this._internalIPString = this._internalIPString + ":" + this._netSession.Port.ToString();
 					}
@@ -184,22 +184,22 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 				{
 					this._internalIPString = CommonResources.Address_not_available;
 				}
-				CreateSessionInfo createSessionInfo = new CreateSessionInfo();
-				createSessionInfo.MaxPlayers = this._maxPlayers;
-				createSessionInfo.Name = sqs.ServerMessage;
-				createSessionInfo.NetworkPort = this._netSession.Port;
-				createSessionInfo.PasswordProtected = !string.IsNullOrWhiteSpace(this._password);
-				createSessionInfo.SessionProperties = this.SessionProperties;
-				createSessionInfo.JoinGamePolicy = JoinGamePolicy.Anyone;
-				createSessionInfo.IsPublic = true;
+				CreateSessionInfo sessionInfo = new CreateSessionInfo();
+				sessionInfo.MaxPlayers = this._maxPlayers;
+				sessionInfo.Name = sqs.ServerMessage;
+				sessionInfo.NetworkPort = this._netSession.Port;
+				sessionInfo.PasswordProtected = !string.IsNullOrWhiteSpace(this._password);
+				sessionInfo.SessionProperties = this.SessionProperties;
+				sessionInfo.JoinGamePolicy = JoinGamePolicy.Anyone;
+				sessionInfo.IsPublic = true;
 				try
 				{
-					this.HostSessionInfo = this._staticProvider.NetworkSessionServices.CreateNetworkSession(createSessionInfo);
+					this.HostSessionInfo = this._staticProvider.NetworkSessionServices.CreateNetworkSession(sessionInfo);
 					goto IL_02DD;
 				}
-				catch (Exception ex2)
+				catch (Exception e2)
 				{
-					sqs.ExceptionEncountered = ex2;
+					sqs.ExceptionEncountered = e2;
 					this._hostConnectionResult = NetworkSession.ResultCode.ExceptionThrown;
 					this._netSession = null;
 					return;
@@ -224,25 +224,25 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 			this._hostConnectionResult = NetworkSession.ResultCode.Pending;
 			if (this._sessionType != NetworkSessionType.Local)
 			{
-				NetPeerConfiguration netPeerConfiguration = new NetPeerConfiguration(this._gameName);
-				netPeerConfiguration.AcceptIncomingConnections = false;
-				netPeerConfiguration.MaximumConnections = 1;
-				netPeerConfiguration.NetworkThreadName = "Lidgren Network Client Thread";
-				netPeerConfiguration.UseMessageRecycling = true;
-				netPeerConfiguration.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
-				netPeerConfiguration.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
-				netPeerConfiguration.EnableMessageType(NetIncomingMessageType.StatusChanged);
-				this._netSession = new NetPeer(netPeerConfiguration);
+				NetPeerConfiguration npc = new NetPeerConfiguration(this._gameName);
+				npc.AcceptIncomingConnections = false;
+				npc.MaximumConnections = 1;
+				npc.NetworkThreadName = "Lidgren Network Client Thread";
+				npc.UseMessageRecycling = true;
+				npc.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
+				npc.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
+				npc.EnableMessageType(NetIncomingMessageType.StatusChanged);
+				this._netSession = new NetPeer(npc);
 				this._netSession.Start();
 				Thread.Sleep(100);
-				RequestConnectToHostMessage requestConnectToHostMessage = new RequestConnectToHostMessage();
-				requestConnectToHostMessage.SessionID = this._sessionID;
-				requestConnectToHostMessage.SessionProperties = this._properties;
-				requestConnectToHostMessage.Password = sqs.Password;
-				requestConnectToHostMessage.Gamer = this._signedInGamers[0];
-				NetOutgoingMessage netOutgoingMessage = this._netSession.CreateMessage();
-				netOutgoingMessage.Write(requestConnectToHostMessage, this._gameName, this._version);
-				this._netSession.Connect(sqs.AvailableSession.HostEndPoint, netOutgoingMessage);
+				RequestConnectToHostMessage crm = new RequestConnectToHostMessage();
+				crm.SessionID = this._sessionID;
+				crm.SessionProperties = this._properties;
+				crm.Password = sqs.Password;
+				crm.Gamer = this._signedInGamers[0];
+				NetOutgoingMessage nom = this._netSession.CreateMessage();
+				nom.Write(crm, this._gameName, this._version);
+				this._netSession.Connect(sqs.AvailableSession.HostEndPoint, nom);
 				return;
 			}
 			this._netSession = null;
@@ -250,32 +250,32 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 
 		private void SendRemoteData(NetOutgoingMessage msg, NetDeliveryMethod flags, NetworkGamer recipient)
 		{
-			NetConnection netConnection = (NetConnection)recipient.NetConnectionObject;
-			if (netConnection != null)
+			NetConnection c = (NetConnection)recipient.NetConnectionObject;
+			if (c != null)
 			{
-				netConnection.SendMessage(msg, flags, 0);
+				c.SendMessage(msg, flags, 0);
 			}
 		}
 
 		private NetDeliveryMethod GetDeliveryMethodFromOptions(SendDataOptions options)
 		{
-			NetDeliveryMethod netDeliveryMethod = NetDeliveryMethod.Unknown;
+			NetDeliveryMethod flags = NetDeliveryMethod.Unknown;
 			switch (options)
 			{
 			case SendDataOptions.None:
-				netDeliveryMethod = NetDeliveryMethod.Unreliable;
+				flags = NetDeliveryMethod.Unreliable;
 				break;
 			case SendDataOptions.Reliable:
-				netDeliveryMethod = NetDeliveryMethod.ReliableUnordered;
+				flags = NetDeliveryMethod.ReliableUnordered;
 				break;
 			case SendDataOptions.InOrder:
-				netDeliveryMethod = NetDeliveryMethod.UnreliableSequenced;
+				flags = NetDeliveryMethod.UnreliableSequenced;
 				break;
 			case SendDataOptions.ReliableInOrder:
-				netDeliveryMethod = NetDeliveryMethod.ReliableOrdered;
+				flags = NetDeliveryMethod.ReliableOrdered;
 				break;
 			}
-			return netDeliveryMethod;
+			return flags;
 		}
 
 		private void PrepareMessageForSending(SendDataOptions options, NetworkGamer recipient, out NetOutgoingMessage msg, out int channel, out NetConnection netConnection, out NetDeliveryMethod flags)
@@ -298,15 +298,15 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 			}
 			else
 			{
-				NetConnection netConnection2 = (NetConnection)recipient.NetConnectionObject;
-				if (netConnection2 != null)
+				NetConnection c = (NetConnection)recipient.NetConnectionObject;
+				if (c != null)
 				{
 					msg = this._netSession.CreateMessage();
 					flags = this.GetDeliveryMethodFromOptions(options);
 					msg.Write(recipient.Id);
 					msg.Write(this._localPlayerGID);
 					channel = 0;
-					netConnection = netConnection2;
+					netConnection = c;
 					return;
 				}
 				msg = null;
@@ -320,15 +320,15 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 		{
 			if (this._netSession != null)
 			{
-				NetOutgoingMessage netOutgoingMessage;
-				int num;
+				NetOutgoingMessage msg;
+				int channel;
 				NetConnection netConnection;
-				NetDeliveryMethod netDeliveryMethod;
-				this.PrepareMessageForSending(options, recipient, out netOutgoingMessage, out num, out netConnection, out netDeliveryMethod);
+				NetDeliveryMethod flags;
+				this.PrepareMessageForSending(options, recipient, out msg, out channel, out netConnection, out flags);
 				if (netConnection != null)
 				{
-					netOutgoingMessage.WriteArray(data);
-					netConnection.SendMessage(netOutgoingMessage, netDeliveryMethod, num);
+					msg.WriteArray(data);
+					netConnection.SendMessage(msg, flags, channel);
 				}
 			}
 		}
@@ -337,15 +337,15 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 		{
 			if (this._netSession != null)
 			{
-				NetOutgoingMessage netOutgoingMessage;
-				int num;
+				NetOutgoingMessage msg;
+				int channel;
 				NetConnection netConnection;
-				NetDeliveryMethod netDeliveryMethod;
-				this.PrepareMessageForSending(options, recipient, out netOutgoingMessage, out num, out netConnection, out netDeliveryMethod);
+				NetDeliveryMethod flags;
+				this.PrepareMessageForSending(options, recipient, out msg, out channel, out netConnection, out flags);
 				if (netConnection != null)
 				{
-					netOutgoingMessage.WriteArray(data, offset, length);
-					netConnection.SendMessage(netOutgoingMessage, netDeliveryMethod, num);
+					msg.WriteArray(data, offset, length);
+					netConnection.SendMessage(msg, flags, channel);
 				}
 			}
 		}
@@ -370,11 +370,11 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 				NetConnection netConnection = this._host.NetConnectionObject as NetConnection;
 				if (netConnection != null)
 				{
-					NetOutgoingMessage netOutgoingMessage;
-					NetDeliveryMethod netDeliveryMethod;
-					this.PrepareBroadcastMessageForSending(options, out netOutgoingMessage, out netDeliveryMethod);
-					netOutgoingMessage.WriteArray(data);
-					netConnection.SendMessage(netOutgoingMessage, netDeliveryMethod, 1);
+					NetOutgoingMessage msg;
+					NetDeliveryMethod flags;
+					this.PrepareBroadcastMessageForSending(options, out msg, out flags);
+					msg.WriteArray(data);
+					netConnection.SendMessage(msg, flags, 1);
 				}
 			}
 		}
@@ -386,46 +386,46 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 				NetConnection netConnection = this._host.NetConnectionObject as NetConnection;
 				if (netConnection != null)
 				{
-					NetOutgoingMessage netOutgoingMessage;
-					NetDeliveryMethod netDeliveryMethod;
-					this.PrepareBroadcastMessageForSending(options, out netOutgoingMessage, out netDeliveryMethod);
-					netOutgoingMessage.WriteArray(data, offset, length);
-					netConnection.SendMessage(netOutgoingMessage, netDeliveryMethod, 1);
+					NetOutgoingMessage msg;
+					NetDeliveryMethod flags;
+					this.PrepareBroadcastMessageForSending(options, out msg, out flags);
+					msg.WriteArray(data, offset, length);
+					netConnection.SendMessage(msg, flags, 1);
 				}
 			}
 		}
 
 		private bool HandleHostStatusChangedMessage(NetIncomingMessage msg)
 		{
-			bool flag = true;
+			bool messageHandled = true;
 			switch (msg.ReadByte())
 			{
 			case 5:
 			{
-				ConnectedMessage connectedMessage = new ConnectedMessage();
-				connectedMessage.PlayerGID = this._nextPlayerGID;
-				connectedMessage.SetPeerList(this._allGamers);
-				NetOutgoingMessage netOutgoingMessage = this._netSession.CreateMessage();
-				netOutgoingMessage.Write(1);
-				netOutgoingMessage.Write(connectedMessage);
-				msg.SenderConnection.SendMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 1);
-				NetworkGamer networkGamer = this.AddRemoteGamer((Gamer)msg.SenderConnection.Tag, msg.SenderConnection, false, this._nextPlayerGID);
+				ConnectedMessage cm = new ConnectedMessage();
+				cm.PlayerGID = this._nextPlayerGID;
+				cm.SetPeerList(this._allGamers);
+				NetOutgoingMessage omsg = this._netSession.CreateMessage();
+				omsg.Write(1);
+				omsg.Write(cm);
+				msg.SenderConnection.SendMessage(omsg, NetDeliveryMethod.ReliableOrdered, 1);
+				NetworkGamer newGamer = this.AddRemoteGamer((Gamer)msg.SenderConnection.Tag, msg.SenderConnection, false, this._nextPlayerGID);
 				this._nextPlayerGID += 1;
 				using (List<NetConnection>.Enumerator enumerator = this._netSession.Connections.GetEnumerator())
 				{
 					while (enumerator.MoveNext())
 					{
-						NetConnection netConnection = enumerator.Current;
-						if (netConnection != msg.SenderConnection)
+						NetConnection nc = enumerator.Current;
+						if (nc != msg.SenderConnection)
 						{
-							netOutgoingMessage = this._netSession.CreateMessage();
-							netOutgoingMessage.Write(0);
-							netOutgoingMessage.Write(networkGamer.Id);
-							netOutgoingMessage.Write(networkGamer);
-							netConnection.SendMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 1);
+							omsg = this._netSession.CreateMessage();
+							omsg.Write(0);
+							omsg.Write(newGamer.Id);
+							omsg.Write(newGamer);
+							nc.SendMessage(omsg, NetDeliveryMethod.ReliableOrdered, 1);
 						}
 					}
-					return flag;
+					return messageHandled;
 				}
 				break;
 			}
@@ -438,98 +438,98 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 			}
 			if (msg.SenderConnection.Tag == null)
 			{
-				return flag;
+				return messageHandled;
 			}
-			NetworkGamer networkGamer2 = msg.SenderConnection.Tag as NetworkGamer;
-			if (networkGamer2 != null)
+			NetworkGamer g = msg.SenderConnection.Tag as NetworkGamer;
+			if (g != null)
 			{
-				DropPeerMessage dropPeerMessage = new DropPeerMessage();
-				dropPeerMessage.PlayerGID = networkGamer2.Id;
-				foreach (NetConnection netConnection2 in this._netSession.Connections)
+				DropPeerMessage dropPeer = new DropPeerMessage();
+				dropPeer.PlayerGID = g.Id;
+				foreach (NetConnection nc2 in this._netSession.Connections)
 				{
-					if (netConnection2 != msg.SenderConnection)
+					if (nc2 != msg.SenderConnection)
 					{
-						NetOutgoingMessage netOutgoingMessage2 = this._netSession.CreateMessage();
-						netOutgoingMessage2.Write(2);
-						netOutgoingMessage2.Write(dropPeerMessage);
-						netConnection2.SendMessage(netOutgoingMessage2, NetDeliveryMethod.ReliableOrdered, 1);
+						NetOutgoingMessage om = this._netSession.CreateMessage();
+						om.Write(2);
+						om.Write(dropPeer);
+						nc2.SendMessage(om, NetDeliveryMethod.ReliableOrdered, 1);
 					}
 				}
-				base.RemoveGamer(networkGamer2);
-				return flag;
+				base.RemoveGamer(g);
+				return messageHandled;
 			}
-			return flag;
+			return messageHandled;
 			IL_01CC:
-			flag = false;
-			return flag;
+			messageHandled = false;
+			return messageHandled;
 		}
 
 		private bool HandleHostSystemMessages(NetIncomingMessage msg)
 		{
-			bool flag = true;
+			bool result = true;
 			switch (msg.ReadByte())
 			{
 			case 3:
 			{
-				byte b = msg.ReadByte();
-				NetDeliveryMethod netDeliveryMethod = (NetDeliveryMethod)msg.ReadByte();
-				NetworkGamer networkGamer = this.FindGamerById(b);
-				if (networkGamer != null)
+				byte recipientId = msg.ReadByte();
+				NetDeliveryMethod flags = (NetDeliveryMethod)msg.ReadByte();
+				NetworkGamer recipient = this.FindGamerById(recipientId);
+				if (recipient != null)
 				{
-					byte b2 = msg.ReadByte();
-					NetOutgoingMessage netOutgoingMessage = this._netSession.CreateMessage();
-					netOutgoingMessage.Write(b);
-					netOutgoingMessage.Write(b2);
-					netOutgoingMessage.CopyByteArrayFrom(msg);
-					NetConnection netConnection = (NetConnection)networkGamer.NetConnectionObject;
-					netConnection.SendMessage(netOutgoingMessage, netDeliveryMethod, 0);
+					byte senderId = msg.ReadByte();
+					NetOutgoingMessage omsg = this._netSession.CreateMessage();
+					omsg.Write(recipientId);
+					omsg.Write(senderId);
+					omsg.CopyByteArrayFrom(msg);
+					NetConnection c = (NetConnection)recipient.NetConnectionObject;
+					c.SendMessage(omsg, flags, 0);
 				}
 				break;
 			}
 			case 4:
 			{
-				NetDeliveryMethod netDeliveryMethod = (NetDeliveryMethod)msg.ReadByte();
-				byte b2 = msg.ReadByte();
-				byte[] array = null;
-				int num = msg.ReadInt32();
-				int num2 = 0;
-				bool flag2 = false;
-				if (num > 0)
+				NetDeliveryMethod flags = (NetDeliveryMethod)msg.ReadByte();
+				byte senderId = msg.ReadByte();
+				byte[] data = null;
+				int dataSize = msg.ReadInt32();
+				int offset = 0;
+				bool dataIsAligned = false;
+				if (dataSize > 0)
 				{
-					flag2 = msg.GetAlignedData(out array, out num2);
-					if (!flag2)
+					dataIsAligned = msg.GetAlignedData(out data, out offset);
+					if (!dataIsAligned)
 					{
-						array = msg.ReadBytes(num);
+						data = msg.ReadBytes(dataSize);
 					}
 				}
-				LocalNetworkGamer localNetworkGamer = this.FindGamerById(0) as LocalNetworkGamer;
-				if (localNetworkGamer != null)
+				LocalNetworkGamer host = this.FindGamerById(0) as LocalNetworkGamer;
+				if (host != null)
 				{
-					NetworkGamer networkGamer2 = this.FindGamerById(b2);
-					if (flag2)
+					NetworkGamer sender = this.FindGamerById(senderId);
+					if (dataIsAligned)
 					{
-						localNetworkGamer.AppendNewDataPacket(array, num2, num, networkGamer2);
+						host.AppendNewDataPacket(data, offset, dataSize, sender);
 					}
 					else
 					{
-						localNetworkGamer.AppendNewDataPacket(array, networkGamer2);
+						host.AppendNewDataPacket(data, sender);
 					}
 					for (int i = 0; i < this._remoteGamers.Count; i++)
 					{
-						if (this._remoteGamers[i].Id != b2)
+						if (this._remoteGamers[i].Id != senderId)
 						{
-							NetConnection netConnection2 = this._remoteGamers[i].NetConnectionObject as NetConnection;
-							if (netConnection2 != null)
+							NetConnection c2 = this._remoteGamers[i].NetConnectionObject as NetConnection;
+							if (c2 != null)
 							{
-								NetOutgoingMessage netOutgoingMessage2 = this._netSession.CreateMessage();
-								netOutgoingMessage2.Write(this._remoteGamers[i].Id);
-								netOutgoingMessage2.Write(b2);
-								netOutgoingMessage2.Write(num);
-								if (num > 0)
+								NetOutgoingMessage omsg2 = this._netSession.CreateMessage();
+								omsg2.Write(this._remoteGamers[i].Id);
+								omsg2.Write(senderId);
+								omsg2.Write(dataSize);
+								if (dataSize > 0)
 								{
-									netOutgoingMessage2.Write(array, num2, num);
+									omsg2.Write(data, offset, dataSize);
 								}
-								netConnection2.SendMessage(netOutgoingMessage2, netDeliveryMethod, 0);
+								c2.SendMessage(omsg2, flags, 0);
 							}
 						}
 					}
@@ -537,113 +537,113 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 				break;
 			}
 			}
-			return flag;
+			return result;
 		}
 
 		private void HandleHostDiscoveryRequest(NetIncomingMessage msg)
 		{
-			HostDiscoveryRequestMessage hostDiscoveryRequestMessage = msg.ReadDiscoveryRequestMessage(this._gameName, this._version);
-			HostDiscoveryResponseMessage hostDiscoveryResponseMessage = new HostDiscoveryResponseMessage();
-			switch (hostDiscoveryRequestMessage.ReadResult)
+			HostDiscoveryRequestMessage hdrm = msg.ReadDiscoveryRequestMessage(this._gameName, this._version);
+			HostDiscoveryResponseMessage response = new HostDiscoveryResponseMessage();
+			switch (hdrm.ReadResult)
 			{
 			case VersionCheckedMessage.ReadResultCode.Success:
-				if (this.AllowConnectionCallback == null || this.AllowConnectionCallback(hostDiscoveryRequestMessage.PlayerID, msg.SenderEndPoint.Address))
+				if (this.AllowConnectionCallback == null || this.AllowConnectionCallback(hdrm.PlayerID, msg.SenderEndPoint.Address))
 				{
-					hostDiscoveryResponseMessage.Result = NetworkSession.ResultCode.Succeeded;
+					response.Result = NetworkSession.ResultCode.Succeeded;
 				}
 				else
 				{
-					hostDiscoveryResponseMessage.Result = NetworkSession.ResultCode.ConnectionDenied;
+					response.Result = NetworkSession.ResultCode.ConnectionDenied;
 				}
 				break;
 			case VersionCheckedMessage.ReadResultCode.GameNameInvalid:
-				hostDiscoveryResponseMessage.Result = NetworkSession.ResultCode.GameNamesDontMatch;
+				response.Result = NetworkSession.ResultCode.GameNamesDontMatch;
 				break;
 			case VersionCheckedMessage.ReadResultCode.LocalVersionIsHIgher:
-				hostDiscoveryResponseMessage.Result = NetworkSession.ResultCode.ServerHasNewerVersion;
+				response.Result = NetworkSession.ResultCode.ServerHasNewerVersion;
 				break;
 			case VersionCheckedMessage.ReadResultCode.LocalVersionIsLower:
-				hostDiscoveryResponseMessage.Result = NetworkSession.ResultCode.ServerHasOlderVersion;
+				response.Result = NetworkSession.ResultCode.ServerHasOlderVersion;
 				break;
 			}
-			if (hostDiscoveryResponseMessage.Result == NetworkSession.ResultCode.Succeeded)
+			if (response.Result == NetworkSession.ResultCode.Succeeded)
 			{
-				hostDiscoveryResponseMessage.RequestID = hostDiscoveryRequestMessage.RequestID;
-				hostDiscoveryResponseMessage.SessionID = this._sessionID;
-				hostDiscoveryResponseMessage.SessionProperties = this._properties;
-				hostDiscoveryResponseMessage.CurrentPlayers = this._allGamers.Count;
-				hostDiscoveryResponseMessage.MaxPlayers = this._maxPlayers;
-				hostDiscoveryResponseMessage.Message = this._serverMessage;
-				hostDiscoveryResponseMessage.HostUsername = this._host.Gamertag;
-				hostDiscoveryResponseMessage.PasswordProtected = !string.IsNullOrWhiteSpace(this._password);
+				response.RequestID = hdrm.RequestID;
+				response.SessionID = this._sessionID;
+				response.SessionProperties = this._properties;
+				response.CurrentPlayers = this._allGamers.Count;
+				response.MaxPlayers = this._maxPlayers;
+				response.Message = this._serverMessage;
+				response.HostUsername = this._host.Gamertag;
+				response.PasswordProtected = !string.IsNullOrWhiteSpace(this._password);
 			}
-			NetOutgoingMessage netOutgoingMessage = this._netSession.CreateMessage();
-			netOutgoingMessage.Write(hostDiscoveryResponseMessage, this._gameName, this._version);
-			this._netSession.SendDiscoveryResponse(netOutgoingMessage, msg.SenderEndPoint);
+			NetOutgoingMessage om = this._netSession.CreateMessage();
+			om.Write(response, this._gameName, this._version);
+			this._netSession.SendDiscoveryResponse(om, msg.SenderEndPoint);
 		}
 
 		private void HandleHostConnectionApproval(NetIncomingMessage msg)
 		{
-			RequestConnectToHostMessage requestConnectToHostMessage = msg.ReadRequestConnectToHostMessage(this._gameName, this._version);
-			if (requestConnectToHostMessage.ReadResult == VersionCheckedMessage.ReadResultCode.GameNameInvalid)
+			RequestConnectToHostMessage crm = msg.ReadRequestConnectToHostMessage(this._gameName, this._version);
+			if (crm.ReadResult == VersionCheckedMessage.ReadResultCode.GameNameInvalid)
 			{
 				this.FailConnection(msg.SenderConnection, NetworkSession.ResultCode.GameNamesDontMatch);
 				return;
 			}
-			if (requestConnectToHostMessage.ReadResult == VersionCheckedMessage.ReadResultCode.VersionInvalid)
+			if (crm.ReadResult == VersionCheckedMessage.ReadResultCode.VersionInvalid)
 			{
 				this.FailConnection(msg.SenderConnection, NetworkSession.ResultCode.ServerHasOlderVersion);
 				return;
 			}
-			if (requestConnectToHostMessage.ReadResult == VersionCheckedMessage.ReadResultCode.LocalVersionIsLower)
+			if (crm.ReadResult == VersionCheckedMessage.ReadResultCode.LocalVersionIsLower)
 			{
 				this.FailConnection(msg.SenderConnection, NetworkSession.ResultCode.ServerHasOlderVersion);
 				return;
 			}
-			if (requestConnectToHostMessage.ReadResult == VersionCheckedMessage.ReadResultCode.LocalVersionIsHIgher)
+			if (crm.ReadResult == VersionCheckedMessage.ReadResultCode.LocalVersionIsHIgher)
 			{
 				this.FailConnection(msg.SenderConnection, NetworkSession.ResultCode.ServerHasNewerVersion);
 				return;
 			}
-			if (!string.IsNullOrWhiteSpace(this._password) && (string.IsNullOrWhiteSpace(requestConnectToHostMessage.Password) || !requestConnectToHostMessage.Password.Equals(this._password)))
+			if (!string.IsNullOrWhiteSpace(this._password) && (string.IsNullOrWhiteSpace(crm.Password) || !crm.Password.Equals(this._password)))
 			{
 				this.FailConnection(msg.SenderConnection, NetworkSession.ResultCode.IncorrectPassword);
 				return;
 			}
-			if (this.AllowConnectionCallback != null && !this.AllowConnectionCallback(requestConnectToHostMessage.Gamer.PlayerID, msg.SenderEndPoint.Address))
+			if (this.AllowConnectionCallback != null && !this.AllowConnectionCallback(crm.Gamer.PlayerID, msg.SenderEndPoint.Address))
 			{
 				this.FailConnection(msg.SenderConnection, NetworkSession.ResultCode.ConnectionDenied);
 				return;
 			}
-			if (requestConnectToHostMessage.SessionProperties.Count != this._properties.Count)
+			if (crm.SessionProperties.Count != this._properties.Count)
 			{
 				this.FailConnection(msg.SenderConnection, NetworkSession.ResultCode.SessionPropertiesDontMatch);
 				return;
 			}
-			for (int i = 0; i < requestConnectToHostMessage.SessionProperties.Count; i++)
+			for (int i = 0; i < crm.SessionProperties.Count; i++)
 			{
-				if (requestConnectToHostMessage.SessionProperties[i] != this._properties[i])
+				if (crm.SessionProperties[i] != this._properties[i])
 				{
 					this.FailConnection(msg.SenderConnection, NetworkSession.ResultCode.SessionPropertiesDontMatch);
 					return;
 				}
 			}
-			GamerCollection<NetworkGamer> allGamers = base.AllGamers;
-			for (int j = 0; j < allGamers.Count; j++)
+			GamerCollection<NetworkGamer> gamers = base.AllGamers;
+			for (int j = 0; j < gamers.Count; j++)
 			{
-				if (allGamers[j] != null && allGamers[j].Gamertag == requestConnectToHostMessage.Gamer.Gamertag)
+				if (gamers[j] != null && gamers[j].Gamertag == crm.Gamer.Gamertag)
 				{
 					this.FailConnection(msg.SenderConnection, NetworkSession.ResultCode.GamerAlreadyConnected);
 					return;
 				}
 			}
-			msg.SenderConnection.Tag = requestConnectToHostMessage.Gamer;
+			msg.SenderConnection.Tag = crm.Gamer;
 			msg.SenderConnection.Approve();
 		}
 
 		private bool HandleHostMessages(NetIncomingMessage msg)
 		{
-			bool flag = true;
+			bool messageHandled = true;
 			NetIncomingMessageType messageType = msg.MessageType;
 			if (messageType <= NetIncomingMessageType.ConnectionApproval)
 			{
@@ -654,7 +654,7 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 				if (messageType == NetIncomingMessageType.ConnectionApproval)
 				{
 					this.HandleHostConnectionApproval(msg);
-					return flag;
+					return messageHandled;
 				}
 			}
 			else if (messageType != NetIncomingMessageType.Data)
@@ -662,7 +662,7 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 				if (messageType == NetIncomingMessageType.DiscoveryRequest)
 				{
 					this.HandleHostDiscoveryRequest(msg);
-					return flag;
+					return messageHandled;
 				}
 			}
 			else
@@ -673,58 +673,58 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 				}
 				return false;
 			}
-			flag = false;
-			return flag;
+			messageHandled = false;
+			return messageHandled;
 		}
 
 		private void AddNewPeer(NetIncomingMessage msg)
 		{
-			byte b = msg.ReadByte();
-			Gamer gamer = msg.ReadGamer();
-			base.AddProxyGamer(gamer, false, b);
+			byte id = msg.ReadByte();
+			Gamer newGamer = msg.ReadGamer();
+			base.AddProxyGamer(newGamer, false, id);
 		}
 
 		private bool HandleClientSystemMessages(NetIncomingMessage msg)
 		{
-			bool flag = true;
-			InternalMessageTypes internalMessageTypes = (InternalMessageTypes)msg.ReadByte();
-			NetworkGamer networkGamer = null;
-			switch (internalMessageTypes)
+			bool result = true;
+			InternalMessageTypes msgType = (InternalMessageTypes)msg.ReadByte();
+			NetworkGamer g = null;
+			switch (msgType)
 			{
 			case InternalMessageTypes.NewPeer:
 				this.AddNewPeer(msg);
 				break;
 			case InternalMessageTypes.ResponseToConnection:
 			{
-				ConnectedMessage connectedMessage = msg.ReadConnectedMessage();
-				base.AddLocalGamer(this._signedInGamers[0], false, connectedMessage.PlayerGID);
-				for (int i = 0; i < connectedMessage.Peers.Length; i++)
+				ConnectedMessage cm = msg.ReadConnectedMessage();
+				base.AddLocalGamer(this._signedInGamers[0], false, cm.PlayerGID);
+				for (int i = 0; i < cm.Peers.Length; i++)
 				{
-					if (connectedMessage.ids[i] == 0)
+					if (cm.ids[i] == 0)
 					{
-						this.AddRemoteGamer(connectedMessage.Peers[i], msg.SenderConnection, true, 0);
+						this.AddRemoteGamer(cm.Peers[i], msg.SenderConnection, true, 0);
 					}
 					else
 					{
-						base.AddProxyGamer(connectedMessage.Peers[i], false, connectedMessage.ids[i]);
+						base.AddProxyGamer(cm.Peers[i], false, cm.ids[i]);
 					}
 				}
 				break;
 			}
 			case InternalMessageTypes.DropPeer:
 			{
-				DropPeerMessage dropPeerMessage = msg.ReadDropPeerMessage();
-				if (this._idToGamer.TryGetValue(dropPeerMessage.PlayerGID, out networkGamer))
+				DropPeerMessage dropPeer = msg.ReadDropPeerMessage();
+				if (this._idToGamer.TryGetValue(dropPeer.PlayerGID, out g))
 				{
-					base.RemoveGamer(networkGamer);
+					base.RemoveGamer(g);
 				}
 				break;
 			}
 			default:
-				flag = false;
+				result = false;
 				break;
 			}
-			return flag;
+			return result;
 		}
 
 		private void HandleClientStatusChangedMessage(NetIncomingMessage msg)
@@ -747,13 +747,13 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 
 		private bool HandleClientMessages(NetIncomingMessage msg)
 		{
-			bool flag = true;
+			bool messageHandled = true;
 			NetIncomingMessageType messageType = msg.MessageType;
 			if (messageType != NetIncomingMessageType.StatusChanged)
 			{
 				if (messageType != NetIncomingMessageType.Data)
 				{
-					flag = false;
+					messageHandled = false;
 				}
 				else
 				{
@@ -761,14 +761,14 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 					{
 						return this.HandleClientSystemMessages(msg);
 					}
-					flag = false;
+					messageHandled = false;
 				}
 			}
 			else
 			{
 				this.HandleClientStatusChangedMessage(msg);
 			}
-			return flag;
+			return messageHandled;
 		}
 
 		private void FailConnection(NetConnection c, NetworkSession.ResultCode reason)
@@ -778,7 +778,7 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 
 		private bool HandleCommonMessages(NetIncomingMessage msg)
 		{
-			bool flag = true;
+			bool messageHandled = true;
 			NetIncomingMessageType messageType = msg.MessageType;
 			if (messageType <= NetIncomingMessageType.VerboseDebugMessage)
 			{
@@ -786,57 +786,57 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 				{
 					if (messageType == NetIncomingMessageType.VerboseDebugMessage)
 					{
-						return flag;
+						return messageHandled;
 					}
 				}
 				else
 				{
-					byte b = msg.ReadByte();
-					NetworkGamer networkGamer = this.FindGamerById(b);
-					if (networkGamer == null)
+					byte pid = msg.ReadByte();
+					NetworkGamer gamer = this.FindGamerById(pid);
+					if (gamer == null)
 					{
-						return flag;
+						return messageHandled;
 					}
-					LocalNetworkGamer localNetworkGamer = networkGamer as LocalNetworkGamer;
-					if (localNetworkGamer == null)
+					LocalNetworkGamer localGamer = gamer as LocalNetworkGamer;
+					if (localGamer == null)
 					{
-						return flag;
+						return messageHandled;
 					}
-					byte b2 = msg.ReadByte();
-					NetworkGamer networkGamer2 = this.FindGamerById(b2);
-					if (networkGamer2 != null)
+					byte senderid = msg.ReadByte();
+					NetworkGamer ng = this.FindGamerById(senderid);
+					if (ng != null)
 					{
-						byte[] array = msg.ReadByteArray();
-						localNetworkGamer.AppendNewDataPacket(array, networkGamer2);
-						return flag;
+						byte[] data = msg.ReadByteArray();
+						localGamer.AppendNewDataPacket(data, ng);
+						return messageHandled;
 					}
-					return flag;
+					return messageHandled;
 				}
 			}
 			else if (messageType == NetIncomingMessageType.DebugMessage || messageType == NetIncomingMessageType.WarningMessage || messageType == NetIncomingMessageType.ErrorMessage)
 			{
-				return flag;
+				return messageHandled;
 			}
-			flag = false;
-			return flag;
+			messageHandled = false;
+			return messageHandled;
 		}
 
 		public override void Update()
 		{
 			if (this._netSession != null)
 			{
-				NetIncomingMessage netIncomingMessage;
-				while ((netIncomingMessage = this._netSession.ReadMessage()) != null)
+				NetIncomingMessage msg;
+				while ((msg = this._netSession.ReadMessage()) != null)
 				{
-					if (!(this._isHost ? this.HandleHostMessages(netIncomingMessage) : this.HandleClientMessages(netIncomingMessage)))
+					if (!(this._isHost ? this.HandleHostMessages(msg) : this.HandleClientMessages(msg)))
 					{
-						bool flag = this.HandleCommonMessages(netIncomingMessage);
+						bool messageHandled = this.HandleCommonMessages(msg);
 					}
 					if (this._netSession == null)
 					{
 						return;
 					}
-					this._netSession.Recycle(netIncomingMessage);
+					this._netSession.Recycle(msg);
 				}
 			}
 		}

@@ -23,83 +23,83 @@ namespace DNA.Text
 
 		public static StringBuilder ConcatFormat<A, B, C, D>(this StringBuilder string_builder, string format_string, A arg1, B arg2, C arg3, D arg4) where A : IConvertible where B : IConvertible where C : IConvertible where D : IConvertible
 		{
-			int num = 0;
-			for (int i = 0; i < format_string.Length; i++)
+			int verbatim_range_start = 0;
+			for (int index = 0; index < format_string.Length; index++)
 			{
-				if (format_string[i] == '{')
+				if (format_string[index] == '{')
 				{
-					if (num < i)
+					if (verbatim_range_start < index)
 					{
-						string_builder.Append(format_string, num, i - num);
+						string_builder.Append(format_string, verbatim_range_start, index - verbatim_range_start);
 					}
-					uint num2 = 10U;
-					uint num3 = 0U;
-					uint num4 = 5U;
-					i++;
-					char c = format_string[i];
-					if (c == '{')
+					uint base_value = 10U;
+					uint padding = 0U;
+					uint decimal_places = 5U;
+					index++;
+					char format_char = format_string[index];
+					if (format_char == '{')
 					{
 						string_builder.Append('{');
-						i++;
+						index++;
 					}
 					else
 					{
-						i++;
-						if (format_string[i] == ':')
+						index++;
+						if (format_string[index] == ':')
 						{
-							i++;
-							while (format_string[i] == '0')
+							index++;
+							while (format_string[index] == '0')
 							{
-								i++;
-								num3 += 1U;
+								index++;
+								padding += 1U;
 							}
-							if (format_string[i] == 'X')
+							if (format_string[index] == 'X')
 							{
-								i++;
-								num2 = 16U;
-								if (format_string[i] >= '0' && format_string[i] <= '9')
+								index++;
+								base_value = 16U;
+								if (format_string[index] >= '0' && format_string[index] <= '9')
 								{
-									num3 = (uint)(format_string[i] - '0');
-									i++;
+									padding = (uint)(format_string[index] - '0');
+									index++;
 								}
 							}
-							else if (format_string[i] == '.')
+							else if (format_string[index] == '.')
 							{
-								i++;
-								num4 = 0U;
-								while (format_string[i] == '0')
+								index++;
+								decimal_places = 0U;
+								while (format_string[index] == '0')
 								{
-									i++;
-									num4 += 1U;
+									index++;
+									decimal_places += 1U;
 								}
 							}
 						}
-						while (format_string[i] != '}')
+						while (format_string[index] != '}')
 						{
-							i++;
+							index++;
 						}
-						switch (c)
+						switch (format_char)
 						{
 						case '0':
-							string_builder.ConcatFormatValue(arg1, num3, num2, num4);
+							string_builder.ConcatFormatValue(arg1, padding, base_value, decimal_places);
 							break;
 						case '1':
-							string_builder.ConcatFormatValue(arg2, num3, num2, num4);
+							string_builder.ConcatFormatValue(arg2, padding, base_value, decimal_places);
 							break;
 						case '2':
-							string_builder.ConcatFormatValue(arg3, num3, num2, num4);
+							string_builder.ConcatFormatValue(arg3, padding, base_value, decimal_places);
 							break;
 						case '3':
-							string_builder.ConcatFormatValue(arg4, num3, num2, num4);
+							string_builder.ConcatFormatValue(arg4, padding, base_value, decimal_places);
 							break;
 						}
 					}
-					num = i + 1;
+					verbatim_range_start = index + 1;
 				}
 			}
-			if (num < format_string.Length)
+			if (verbatim_range_start < format_string.Length)
 			{
-				string_builder.Append(format_string, num, format_string.Length - num);
+				string_builder.Append(format_string, verbatim_range_start, format_string.Length - verbatim_range_start);
 			}
 			return string_builder;
 		}
@@ -133,22 +133,22 @@ namespace DNA.Text
 
 		public static StringBuilder Concat(this StringBuilder string_builder, uint uint_val, uint pad_amount, char pad_char, uint base_val)
 		{
-			uint num = 0U;
-			uint num2 = uint_val;
+			uint length = 0U;
+			uint length_calc = uint_val;
 			do
 			{
-				num2 /= base_val;
-				num += 1U;
+				length_calc /= base_val;
+				length += 1U;
 			}
-			while (num2 > 0U);
-			string_builder.Append(pad_char, (int)Math.Max(pad_amount, num));
-			int num3 = string_builder.Length;
-			while (num > 0U)
+			while (length_calc > 0U);
+			string_builder.Append(pad_char, (int)Math.Max(pad_amount, length));
+			int strpos = string_builder.Length;
+			while (length > 0U)
 			{
-				num3--;
-				string_builder[num3] = StringBuilderExtensions.ms_digits[(int)((UIntPtr)(uint_val % base_val))];
+				strpos--;
+				string_builder[strpos] = StringBuilderExtensions.ms_digits[(int)((UIntPtr)(uint_val % base_val))];
 				uint_val /= base_val;
-				num -= 1U;
+				length -= 1U;
 			}
 			return string_builder;
 		}
@@ -176,8 +176,8 @@ namespace DNA.Text
 			if (int_val < 0)
 			{
 				string_builder.Append('-');
-				uint num = (uint)(-1 - int_val + 1);
-				string_builder.Concat(num, pad_amount, pad_char, base_val);
+				uint uint_val = (uint)(-1 - int_val + 1);
+				string_builder.Concat(uint_val, pad_amount, pad_char, base_val);
 			}
 			else
 			{
@@ -208,31 +208,31 @@ namespace DNA.Text
 		{
 			if (decimal_places == 0U)
 			{
-				int num;
+				int int_val;
 				if (float_val >= 0f)
 				{
-					num = (int)(float_val + 0.5f);
+					int_val = (int)(float_val + 0.5f);
 				}
 				else
 				{
-					num = (int)(float_val - 0.5f);
+					int_val = (int)(float_val - 0.5f);
 				}
-				string_builder.Concat(num, pad_amount, pad_char, 10U);
+				string_builder.Concat(int_val, pad_amount, pad_char, 10U);
 			}
 			else
 			{
-				int num2 = (int)float_val;
-				string_builder.Concat(num2, pad_amount, pad_char, 10U);
+				int int_part = (int)float_val;
+				string_builder.Concat(int_part, pad_amount, pad_char, 10U);
 				string_builder.Append('.');
-				float num3 = Math.Abs(float_val - (float)num2);
+				float remainder = Math.Abs(float_val - (float)int_part);
 				do
 				{
-					num3 *= 10f;
+					remainder *= 10f;
 					decimal_places -= 1U;
 				}
 				while (decimal_places > 0U);
-				num3 += 0.5f;
-				string_builder.Concat((uint)num3, 0U, '0', 10U);
+				remainder += 0.5f;
+				string_builder.Concat((uint)remainder, 0U, '0', 10U);
 			}
 			return string_builder;
 		}

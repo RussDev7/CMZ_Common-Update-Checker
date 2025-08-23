@@ -46,35 +46,35 @@ namespace DNA.Net.Lidgren
 
 		private void ExpandMTU(double now, bool succeeded)
 		{
-			int num;
+			int tryMTU;
 			if (this.m_smallestFailedMTU == -1)
 			{
-				num = (int)((float)this.m_currentMTU * 1.25f);
+				tryMTU = (int)((float)this.m_currentMTU * 1.25f);
 			}
 			else
 			{
-				num = (int)(((float)this.m_smallestFailedMTU + (float)this.m_largestSuccessfulMTU) / 2f);
+				tryMTU = (int)(((float)this.m_smallestFailedMTU + (float)this.m_largestSuccessfulMTU) / 2f);
 			}
-			if (num > 8190)
+			if (tryMTU > 8190)
 			{
-				num = 8190;
+				tryMTU = 8190;
 			}
-			if (num == this.m_largestSuccessfulMTU)
+			if (tryMTU == this.m_largestSuccessfulMTU)
 			{
 				this.FinalizeMTU(this.m_largestSuccessfulMTU);
 				return;
 			}
-			this.SendExpandMTU(now, num);
+			this.SendExpandMTU(now, tryMTU);
 		}
 
 		private void SendExpandMTU(double now, int size)
 		{
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(size);
-			byte[] array = new byte[size];
-			netOutgoingMessage.Write(array);
-			netOutgoingMessage.m_messageType = NetMessageType.ExpandMTURequest;
-			int num = netOutgoingMessage.Encode(this.m_peer.m_sendBuffer, 0, 0);
-			if (!this.m_peer.SendMTUPacket(num, this.m_remoteEndPoint))
+			NetOutgoingMessage om = this.m_peer.CreateMessage(size);
+			byte[] tmp = new byte[size];
+			om.Write(tmp);
+			om.m_messageType = NetMessageType.ExpandMTURequest;
+			int len = om.Encode(this.m_peer.m_sendBuffer, 0, 0);
+			if (!this.m_peer.SendMTUPacket(len, this.m_remoteEndPoint))
 			{
 				if (this.m_smallestFailedMTU == -1 || size < this.m_smallestFailedMTU)
 				{
@@ -107,12 +107,12 @@ namespace DNA.Net.Lidgren
 
 		private void SendMTUSuccess(int size)
 		{
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(4);
-			netOutgoingMessage.Write(size);
-			netOutgoingMessage.m_messageType = NetMessageType.ExpandMTUSuccess;
-			int num = netOutgoingMessage.Encode(this.m_peer.m_sendBuffer, 0, 0);
-			bool flag;
-			this.m_peer.SendPacket(num, this.m_remoteEndPoint, 1, out flag);
+			NetOutgoingMessage om = this.m_peer.CreateMessage(4);
+			om.Write(size);
+			om.m_messageType = NetMessageType.ExpandMTUSuccess;
+			int len = om.Encode(this.m_peer.m_sendBuffer, 0, 0);
+			bool connectionReset;
+			this.m_peer.SendPacket(len, this.m_remoteEndPoint, 1, out connectionReset);
 		}
 
 		private void HandleExpandMTUSuccess(double now, int size)
@@ -162,11 +162,11 @@ namespace DNA.Net.Lidgren
 
 		internal void InitializePing()
 		{
-			float num = (float)NetTime.Now;
-			this.m_sentPingTime = num;
+			float now = (float)NetTime.Now;
+			this.m_sentPingTime = now;
 			this.m_sentPingTime -= this.m_peerConfiguration.PingInterval * 0.25f;
 			this.m_sentPingTime -= NetRandom.Instance.NextSingle() * (this.m_peerConfiguration.PingInterval * 0.75f);
-			this.m_timeoutDeadline = num + this.m_peerConfiguration.m_connectionTimeout * 2f;
+			this.m_timeoutDeadline = now + this.m_peerConfiguration.m_connectionTimeout * 2f;
 			this.SendPing();
 		}
 
@@ -174,23 +174,23 @@ namespace DNA.Net.Lidgren
 		{
 			this.m_sentPingNumber++;
 			this.m_sentPingTime = (float)NetTime.Now;
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(1);
-			netOutgoingMessage.Write((byte)this.m_sentPingNumber);
-			netOutgoingMessage.m_messageType = NetMessageType.Ping;
-			int num = netOutgoingMessage.Encode(this.m_peer.m_sendBuffer, 0, 0);
-			bool flag;
-			this.m_peer.SendPacket(num, this.m_remoteEndPoint, 1, out flag);
+			NetOutgoingMessage om = this.m_peer.CreateMessage(1);
+			om.Write((byte)this.m_sentPingNumber);
+			om.m_messageType = NetMessageType.Ping;
+			int len = om.Encode(this.m_peer.m_sendBuffer, 0, 0);
+			bool connectionReset;
+			this.m_peer.SendPacket(len, this.m_remoteEndPoint, 1, out connectionReset);
 		}
 
 		internal void SendPong(int pingNumber)
 		{
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(5);
-			netOutgoingMessage.Write((byte)pingNumber);
-			netOutgoingMessage.Write((float)NetTime.Now);
-			netOutgoingMessage.m_messageType = NetMessageType.Pong;
-			int num = netOutgoingMessage.Encode(this.m_peer.m_sendBuffer, 0, 0);
-			bool flag;
-			this.m_peer.SendPacket(num, this.m_remoteEndPoint, 1, out flag);
+			NetOutgoingMessage om = this.m_peer.CreateMessage(5);
+			om.Write((byte)pingNumber);
+			om.Write((float)NetTime.Now);
+			om.m_messageType = NetMessageType.Pong;
+			int len = om.Encode(this.m_peer.m_sendBuffer, 0, 0);
+			bool connectionReset;
+			this.m_peer.SendPacket(len, this.m_remoteEndPoint, 1, out connectionReset);
 		}
 
 		internal void ReceivedPong(float now, int pongNumber, float remoteSendTime)
@@ -200,34 +200,34 @@ namespace DNA.Net.Lidgren
 				return;
 			}
 			this.m_timeoutDeadline = now + this.m_peerConfiguration.m_connectionTimeout;
-			float num = now - this.m_sentPingTime;
-			double num2 = (double)remoteSendTime + (double)num / 2.0 - (double)now;
+			float rtt = now - this.m_sentPingTime;
+			double diff = (double)remoteSendTime + (double)rtt / 2.0 - (double)now;
 			if (this.m_averageRoundtripTime < 0f)
 			{
-				this.m_remoteTimeOffset = num2;
-				this.m_averageRoundtripTime = num;
+				this.m_remoteTimeOffset = diff;
+				this.m_averageRoundtripTime = rtt;
 			}
 			else
 			{
-				this.m_averageRoundtripTime = this.m_averageRoundtripTime * 0.7f + num * 0.3f;
-				this.m_remoteTimeOffset = (this.m_remoteTimeOffset * (double)(this.m_sentPingNumber - 1) + num2) / (double)this.m_sentPingNumber;
+				this.m_averageRoundtripTime = this.m_averageRoundtripTime * 0.7f + rtt * 0.3f;
+				this.m_remoteTimeOffset = (this.m_remoteTimeOffset * (double)(this.m_sentPingNumber - 1) + diff) / (double)this.m_sentPingNumber;
 			}
 			float resendDelay = this.GetResendDelay();
-			foreach (NetSenderChannelBase netSenderChannelBase in this.m_sendChannels)
+			foreach (NetSenderChannelBase chan in this.m_sendChannels)
 			{
-				NetReliableSenderChannel netReliableSenderChannel = netSenderChannelBase as NetReliableSenderChannel;
-				if (netReliableSenderChannel != null)
+				NetReliableSenderChannel rchan = chan as NetReliableSenderChannel;
+				if (rchan != null)
 				{
-					netReliableSenderChannel.m_resendDelay = resendDelay;
+					rchan.m_resendDelay = resendDelay;
 				}
 			}
 			if (this.m_peer.m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionLatencyUpdated))
 			{
-				NetIncomingMessage netIncomingMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionLatencyUpdated, 4);
-				netIncomingMessage.m_senderConnection = this;
-				netIncomingMessage.m_senderEndPoint = this.m_remoteEndPoint;
-				netIncomingMessage.Write(num);
-				this.m_peer.ReleaseMessage(netIncomingMessage);
+				NetIncomingMessage update = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionLatencyUpdated, 4);
+				update.m_senderConnection = this;
+				update.m_senderEndPoint = this.m_remoteEndPoint;
+				update.Write(rtt);
+				this.m_peer.ReleaseMessage(update);
 			}
 		}
 
@@ -293,12 +293,12 @@ namespace DNA.Net.Lidgren
 
 		internal float GetResendDelay()
 		{
-			float num = this.m_averageRoundtripTime;
-			if (num <= 0f)
+			float avgRtt = this.m_averageRoundtripTime;
+			if (avgRtt <= 0f)
 			{
-				num = 0.1f;
+				avgRtt = 0.1f;
 			}
-			return 0.02f + num * 2f;
+			return 0.02f + avgRtt * 2f;
 		}
 
 		internal NetConnection(NetPeer peer, IPEndPoint remoteEndPoint)
@@ -339,12 +339,12 @@ namespace DNA.Net.Lidgren
 			}
 			if (this.m_peerConfiguration.IsMessageTypeEnabled(NetIncomingMessageType.StatusChanged))
 			{
-				NetIncomingMessage netIncomingMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.StatusChanged, 4 + reason.Length + ((reason.Length > 126) ? 2 : 1));
-				netIncomingMessage.m_senderConnection = this;
-				netIncomingMessage.m_senderEndPoint = this.m_remoteEndPoint;
-				netIncomingMessage.Write((byte)this.m_status);
-				netIncomingMessage.Write(reason);
-				this.m_peer.ReleaseMessage(netIncomingMessage);
+				NetIncomingMessage info = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.StatusChanged, 4 + reason.Length + ((reason.Length > 126) ? 2 : 1));
+				info.m_senderConnection = this;
+				info.m_senderEndPoint = this.m_remoteEndPoint;
+				info.Write((byte)this.m_status);
+				info.Write(reason);
+				this.m_peer.ReleaseMessage(info);
 				return;
 			}
 			this.m_visibleStatus = this.m_status;
@@ -373,65 +373,65 @@ namespace DNA.Net.Lidgren
 				}
 			}
 			byte[] sendBuffer = this.m_peer.m_sendBuffer;
-			int currentMTU = this.m_currentMTU;
+			int mtu = this.m_currentMTU;
 			if (frameCounter % 3U == 0U)
 			{
 				while (this.m_queuedOutgoingAcks.Count > 0)
 				{
-					int num = (currentMTU - (this.m_sendBufferWritePtr + 5)) / 3;
-					if (num > this.m_queuedOutgoingAcks.Count)
+					int acks = (mtu - (this.m_sendBufferWritePtr + 5)) / 3;
+					if (acks > this.m_queuedOutgoingAcks.Count)
 					{
-						num = this.m_queuedOutgoingAcks.Count;
+						acks = this.m_queuedOutgoingAcks.Count;
 					}
 					this.m_sendBufferNumMessages++;
 					sendBuffer[this.m_sendBufferWritePtr++] = 134;
 					sendBuffer[this.m_sendBufferWritePtr++] = 0;
 					sendBuffer[this.m_sendBufferWritePtr++] = 0;
-					int num2 = num * 3 * 8;
-					sendBuffer[this.m_sendBufferWritePtr++] = (byte)num2;
-					sendBuffer[this.m_sendBufferWritePtr++] = (byte)(num2 >> 8);
-					for (int i = 0; i < num; i++)
+					int len = acks * 3 * 8;
+					sendBuffer[this.m_sendBufferWritePtr++] = (byte)len;
+					sendBuffer[this.m_sendBufferWritePtr++] = (byte)(len >> 8);
+					for (int i = 0; i < acks; i++)
 					{
-						NetTuple<NetMessageType, int> netTuple;
-						this.m_queuedOutgoingAcks.TryDequeue(out netTuple);
-						sendBuffer[this.m_sendBufferWritePtr++] = (byte)netTuple.Item1;
-						sendBuffer[this.m_sendBufferWritePtr++] = (byte)netTuple.Item2;
-						sendBuffer[this.m_sendBufferWritePtr++] = (byte)(netTuple.Item2 >> 8);
+						NetTuple<NetMessageType, int> tuple;
+						this.m_queuedOutgoingAcks.TryDequeue(out tuple);
+						sendBuffer[this.m_sendBufferWritePtr++] = (byte)tuple.Item1;
+						sendBuffer[this.m_sendBufferWritePtr++] = (byte)tuple.Item2;
+						sendBuffer[this.m_sendBufferWritePtr++] = (byte)(tuple.Item2 >> 8);
 					}
 					if (this.m_queuedOutgoingAcks.Count > 0)
 					{
-						bool flag;
-						this.m_peer.SendPacket(this.m_sendBufferWritePtr, this.m_remoteEndPoint, this.m_sendBufferNumMessages, out flag);
+						bool connectionReset;
+						this.m_peer.SendPacket(this.m_sendBufferWritePtr, this.m_remoteEndPoint, this.m_sendBufferNumMessages, out connectionReset);
 						this.m_sendBufferWritePtr = 0;
 						this.m_sendBufferNumMessages = 0;
 					}
 				}
-				NetTuple<NetMessageType, int> netTuple2;
-				while (this.m_queuedIncomingAcks.TryDequeue(out netTuple2))
+				NetTuple<NetMessageType, int> incAck;
+				while (this.m_queuedIncomingAcks.TryDequeue(out incAck))
 				{
-					NetSenderChannelBase netSenderChannelBase = this.m_sendChannels[(int)(netTuple2.Item1 - NetMessageType.UserUnreliable)];
-					if (netSenderChannelBase == null)
+					NetSenderChannelBase chan = this.m_sendChannels[(int)(incAck.Item1 - NetMessageType.UserUnreliable)];
+					if (chan == null)
 					{
-						netSenderChannelBase = this.CreateSenderChannel(netTuple2.Item1);
+						chan = this.CreateSenderChannel(incAck.Item1);
 					}
-					netSenderChannelBase.ReceiveAcknowledge(now, netTuple2.Item2);
+					chan.ReceiveAcknowledge(now, incAck.Item2);
 				}
 			}
 			if (this.m_peer.m_executeFlushSendQueue)
 			{
 				for (int j = this.m_sendChannels.Length - 1; j >= 0; j--)
 				{
-					NetSenderChannelBase netSenderChannelBase2 = this.m_sendChannels[j];
-					if (netSenderChannelBase2 != null)
+					NetSenderChannelBase channel = this.m_sendChannels[j];
+					if (channel != null)
 					{
-						netSenderChannelBase2.SendQueuedMessages(now);
+						channel.SendQueuedMessages(now);
 					}
 				}
 			}
 			if (this.m_sendBufferWritePtr > 0)
 			{
-				bool flag;
-				this.m_peer.SendPacket(this.m_sendBufferWritePtr, this.m_remoteEndPoint, this.m_sendBufferNumMessages, out flag);
+				bool connectionReset;
+				this.m_peer.SendPacket(this.m_sendBufferWritePtr, this.m_remoteEndPoint, this.m_sendBufferNumMessages, out connectionReset);
 				this.m_sendBufferWritePtr = 0;
 				this.m_sendBufferNumMessages = 0;
 			}
@@ -439,15 +439,15 @@ namespace DNA.Net.Lidgren
 
 		internal void QueueSendMessage(NetOutgoingMessage om, int seqNr)
 		{
-			int encodedSize = om.GetEncodedSize();
-			if (encodedSize > this.m_currentMTU)
+			int sz = om.GetEncodedSize();
+			if (sz > this.m_currentMTU)
 			{
 				this.m_peer.LogWarning("Message larger than MTU! Fragmentation must have failed!");
 			}
-			if (this.m_sendBufferWritePtr + encodedSize > this.m_currentMTU)
+			if (this.m_sendBufferWritePtr + sz > this.m_currentMTU)
 			{
-				bool flag;
-				this.m_peer.SendPacket(this.m_sendBufferWritePtr, this.m_remoteEndPoint, this.m_sendBufferNumMessages, out flag);
+				bool connReset;
+				this.m_peer.SendPacket(this.m_sendBufferWritePtr, this.m_remoteEndPoint, this.m_sendBufferNumMessages, out connReset);
 				this.m_sendBufferWritePtr = 0;
 				this.m_sendBufferNumMessages = 0;
 			}
@@ -466,46 +466,46 @@ namespace DNA.Net.Lidgren
 			{
 				return NetSendResult.FailedNotConnected;
 			}
-			NetMessageType netMessageType = (NetMessageType)(method + (byte)sequenceChannel);
-			msg.m_messageType = netMessageType;
-			int num = (int)(method - NetDeliveryMethod.Unreliable) + sequenceChannel;
-			NetSenderChannelBase netSenderChannelBase = this.m_sendChannels[num];
-			if (netSenderChannelBase == null)
+			NetMessageType tp = (NetMessageType)(method + (byte)sequenceChannel);
+			msg.m_messageType = tp;
+			int channelSlot = (int)(method - NetDeliveryMethod.Unreliable) + sequenceChannel;
+			NetSenderChannelBase chan = this.m_sendChannels[channelSlot];
+			if (chan == null)
 			{
-				netSenderChannelBase = this.CreateSenderChannel(netMessageType);
+				chan = this.CreateSenderChannel(tp);
 			}
 			if (msg.GetEncodedSize() > this.m_currentMTU)
 			{
 				throw new NetException("Message too large! Fragmentation failure?");
 			}
-			NetSendResult netSendResult = netSenderChannelBase.Enqueue(msg);
-			if (netSendResult == NetSendResult.Sent && !this.m_peerConfiguration.m_autoFlushSendQueue)
+			NetSendResult retval = chan.Enqueue(msg);
+			if (retval == NetSendResult.Sent && !this.m_peerConfiguration.m_autoFlushSendQueue)
 			{
-				netSendResult = NetSendResult.Queued;
+				retval = NetSendResult.Queued;
 			}
-			return netSendResult;
+			return retval;
 		}
 
 		private NetSenderChannelBase CreateSenderChannel(NetMessageType tp)
 		{
-			NetSenderChannelBase netSenderChannelBase;
+			NetSenderChannelBase chan;
 			lock (this.m_sendChannels)
 			{
-				NetDeliveryMethod deliveryMethod = NetUtility.GetDeliveryMethod(tp);
-				int num = (int)(tp - (NetMessageType)deliveryMethod);
-				int num2 = (int)(deliveryMethod - NetDeliveryMethod.Unreliable) + num;
-				if (this.m_sendChannels[num2] != null)
+				NetDeliveryMethod method = NetUtility.GetDeliveryMethod(tp);
+				int sequenceChannel = (int)(tp - (NetMessageType)method);
+				int channelSlot = (int)(method - NetDeliveryMethod.Unreliable) + sequenceChannel;
+				if (this.m_sendChannels[channelSlot] != null)
 				{
-					netSenderChannelBase = this.m_sendChannels[num2];
+					chan = this.m_sendChannels[channelSlot];
 				}
 				else
 				{
-					NetDeliveryMethod netDeliveryMethod = deliveryMethod;
+					NetDeliveryMethod netDeliveryMethod = method;
 					switch (netDeliveryMethod)
 					{
 					case NetDeliveryMethod.Unreliable:
 					case NetDeliveryMethod.UnreliableSequenced:
-						netSenderChannelBase = new NetUnreliableSenderChannel(this, NetUtility.GetWindowSize(deliveryMethod));
+						chan = new NetUnreliableSenderChannel(this, NetUtility.GetWindowSize(method));
 						break;
 					default:
 						switch (netDeliveryMethod)
@@ -516,55 +516,55 @@ namespace DNA.Net.Lidgren
 						default:
 							if (netDeliveryMethod == NetDeliveryMethod.ReliableOrdered)
 							{
-								netSenderChannelBase = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(deliveryMethod));
+								chan = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(method));
 								goto IL_0092;
 							}
 							break;
 						}
-						netSenderChannelBase = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(deliveryMethod));
+						chan = new NetReliableSenderChannel(this, NetUtility.GetWindowSize(method));
 						break;
 					}
 					IL_0092:
-					this.m_sendChannels[num2] = netSenderChannelBase;
+					this.m_sendChannels[channelSlot] = chan;
 				}
 			}
-			return netSenderChannelBase;
+			return chan;
 		}
 
 		internal void ReceivedLibraryMessage(NetMessageType tp, int ptr, int payloadLength)
 		{
-			float num = (float)NetTime.Now;
+			float now = (float)NetTime.Now;
 			switch (tp)
 			{
 			case NetMessageType.Ping:
 			{
-				int num2 = (int)this.m_peer.m_receiveBuffer[ptr++];
-				this.SendPong(num2);
+				int pingNr = (int)this.m_peer.m_receiveBuffer[ptr++];
+				this.SendPong(pingNr);
 				return;
 			}
 			case NetMessageType.Pong:
 			{
-				NetIncomingMessage netIncomingMessage = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
-				int num3 = (int)netIncomingMessage.ReadByte();
-				float num4 = netIncomingMessage.ReadSingle();
-				this.ReceivedPong(num, num3, num4);
+				NetIncomingMessage pmsg = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
+				int pongNr = (int)pmsg.ReadByte();
+				float remoteSendTime = pmsg.ReadSingle();
+				this.ReceivedPong(now, pongNr, remoteSendTime);
 				return;
 			}
 			case NetMessageType.Acknowledge:
 			{
 				for (int i = 0; i < payloadLength; i += 3)
 				{
-					NetMessageType netMessageType = (NetMessageType)this.m_peer.m_receiveBuffer[ptr++];
-					int num5 = (int)this.m_peer.m_receiveBuffer[ptr++];
-					num5 |= (int)this.m_peer.m_receiveBuffer[ptr++] << 8;
-					this.m_queuedIncomingAcks.Enqueue(new NetTuple<NetMessageType, int>(netMessageType, num5));
+					NetMessageType acktp = (NetMessageType)this.m_peer.m_receiveBuffer[ptr++];
+					int seqNr = (int)this.m_peer.m_receiveBuffer[ptr++];
+					seqNr |= (int)this.m_peer.m_receiveBuffer[ptr++] << 8;
+					this.m_queuedIncomingAcks.Enqueue(new NetTuple<NetMessageType, int>(acktp, seqNr));
 				}
 				return;
 			}
 			case NetMessageType.Disconnect:
 			{
-				NetIncomingMessage netIncomingMessage2 = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
-				this.ExecuteDisconnect(netIncomingMessage2.ReadString(), false);
+				NetIncomingMessage msg = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
+				this.ExecuteDisconnect(msg.ReadString(), false);
 				return;
 			}
 			case NetMessageType.NatIntroduction:
@@ -575,9 +575,9 @@ namespace DNA.Net.Lidgren
 				return;
 			case NetMessageType.ExpandMTUSuccess:
 			{
-				NetIncomingMessage netIncomingMessage3 = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
-				int num6 = netIncomingMessage3.ReadInt32();
-				this.HandleExpandMTUSuccess((double)num, num6);
+				NetIncomingMessage emsg = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
+				int size = emsg.ReadInt32();
+				this.HandleExpandMTUSuccess((double)now, size);
 				return;
 			}
 			}
@@ -586,51 +586,51 @@ namespace DNA.Net.Lidgren
 
 		internal void ReceivedMessage(NetIncomingMessage msg)
 		{
-			NetMessageType receivedMessageType = msg.m_receivedMessageType;
-			int num = (int)(receivedMessageType - NetMessageType.UserUnreliable);
-			NetReceiverChannelBase netReceiverChannelBase = this.m_receiveChannels[num];
-			if (netReceiverChannelBase == null)
+			NetMessageType tp = msg.m_receivedMessageType;
+			int channelSlot = (int)(tp - NetMessageType.UserUnreliable);
+			NetReceiverChannelBase chan = this.m_receiveChannels[channelSlot];
+			if (chan == null)
 			{
-				netReceiverChannelBase = this.CreateReceiverChannel(receivedMessageType);
+				chan = this.CreateReceiverChannel(tp);
 			}
-			netReceiverChannelBase.ReceiveMessage(msg);
+			chan.ReceiveMessage(msg);
 		}
 
 		private NetReceiverChannelBase CreateReceiverChannel(NetMessageType tp)
 		{
-			NetDeliveryMethod deliveryMethod = NetUtility.GetDeliveryMethod(tp);
-			NetDeliveryMethod netDeliveryMethod = deliveryMethod;
-			NetReceiverChannelBase netReceiverChannelBase;
+			NetDeliveryMethod method = NetUtility.GetDeliveryMethod(tp);
+			NetDeliveryMethod netDeliveryMethod = method;
+			NetReceiverChannelBase chan;
 			switch (netDeliveryMethod)
 			{
 			case NetDeliveryMethod.Unreliable:
-				netReceiverChannelBase = new NetUnreliableUnorderedReceiver(this);
+				chan = new NetUnreliableUnorderedReceiver(this);
 				break;
 			case NetDeliveryMethod.UnreliableSequenced:
-				netReceiverChannelBase = new NetUnreliableSequencedReceiver(this);
+				chan = new NetUnreliableSequencedReceiver(this);
 				break;
 			default:
 				switch (netDeliveryMethod)
 				{
 				case NetDeliveryMethod.ReliableUnordered:
-					netReceiverChannelBase = new NetReliableUnorderedReceiver(this, 64);
+					chan = new NetReliableUnorderedReceiver(this, 64);
 					break;
 				case NetDeliveryMethod.ReliableSequenced:
-					netReceiverChannelBase = new NetReliableSequencedReceiver(this, 64);
+					chan = new NetReliableSequencedReceiver(this, 64);
 					break;
 				default:
 					if (netDeliveryMethod != NetDeliveryMethod.ReliableOrdered)
 					{
 						throw new NetException("Unhandled NetDeliveryMethod!");
 					}
-					netReceiverChannelBase = new NetReliableOrderedReceiver(this, 64);
+					chan = new NetReliableOrderedReceiver(this, 64);
 					break;
 				}
 				break;
 			}
-			int num = (int)(tp - NetMessageType.UserUnreliable);
-			this.m_receiveChannels[num] = netReceiverChannelBase;
-			return netReceiverChannelBase;
+			int channelSlot = (int)(tp - NetMessageType.UserUnreliable);
+			this.m_receiveChannels[channelSlot] = chan;
+			return chan;
 		}
 
 		internal void QueueAck(NetMessageType tp, int sequenceNumber)
@@ -640,16 +640,16 @@ namespace DNA.Net.Lidgren
 
 		public void GetSendQueueInfo(NetDeliveryMethod method, int sequenceChannel, out int windowSize, out int freeWindowSlots)
 		{
-			int num = (int)(method - NetDeliveryMethod.Unreliable) + sequenceChannel;
-			NetSenderChannelBase netSenderChannelBase = this.m_sendChannels[num];
-			if (netSenderChannelBase == null)
+			int channelSlot = (int)(method - NetDeliveryMethod.Unreliable) + sequenceChannel;
+			NetSenderChannelBase chan = this.m_sendChannels[channelSlot];
+			if (chan == null)
 			{
 				windowSize = NetUtility.GetWindowSize(method);
 				freeWindowSlots = windowSize;
 				return;
 			}
-			windowSize = netSenderChannelBase.WindowSize;
-			freeWindowSlots = netSenderChannelBase.GetAllowedSends() - netSenderChannelBase.m_queuedSends.Count;
+			windowSize = chan.WindowSize;
+			freeWindowSlots = chan.GetAllowedSends() - chan.m_queuedSends.Count;
 		}
 
 		internal void Shutdown(string reason)
@@ -728,10 +728,10 @@ namespace DNA.Net.Lidgren
 		{
 			for (int i = 0; i < this.m_sendChannels.Length; i++)
 			{
-				NetSenderChannelBase netSenderChannelBase = this.m_sendChannels[i];
-				if (netSenderChannelBase != null)
+				NetSenderChannelBase channel = this.m_sendChannels[i];
+				if (channel != null)
 				{
-					netSenderChannelBase.Reset();
+					channel.Reset();
 				}
 			}
 			if (sendByeMessage)
@@ -750,15 +750,15 @@ namespace DNA.Net.Lidgren
 
 		internal void SendConnect(float now)
 		{
-			int num = 13 + this.m_peerConfiguration.AppIdentifier.Length;
-			num += ((this.m_localHailMessage == null) ? 0 : this.m_localHailMessage.LengthBytes);
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(num);
-			netOutgoingMessage.m_messageType = NetMessageType.Connect;
-			netOutgoingMessage.Write(this.m_peerConfiguration.AppIdentifier);
-			netOutgoingMessage.Write(this.m_peer.m_uniqueIdentifier);
-			netOutgoingMessage.Write(now);
-			this.WriteLocalHail(netOutgoingMessage);
-			this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
+			int preAllocate = 13 + this.m_peerConfiguration.AppIdentifier.Length;
+			preAllocate += ((this.m_localHailMessage == null) ? 0 : this.m_localHailMessage.LengthBytes);
+			NetOutgoingMessage om = this.m_peer.CreateMessage(preAllocate);
+			om.m_messageType = NetMessageType.Connect;
+			om.Write(this.m_peerConfiguration.AppIdentifier);
+			om.Write(this.m_peer.m_uniqueIdentifier);
+			om.Write(now);
+			this.WriteLocalHail(om);
+			this.m_peer.SendLibrary(om, this.m_remoteEndPoint);
 			this.m_connectRequested = false;
 			this.m_lastHandshakeSendTime = now;
 			this.m_handshakeAttempts++;
@@ -768,19 +768,19 @@ namespace DNA.Net.Lidgren
 
 		internal void SendConnectResponse(float now, bool onLibraryThread)
 		{
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(this.m_peerConfiguration.AppIdentifier.Length + 13 + ((this.m_localHailMessage == null) ? 0 : this.m_localHailMessage.LengthBytes));
-			netOutgoingMessage.m_messageType = NetMessageType.ConnectResponse;
-			netOutgoingMessage.Write(this.m_peerConfiguration.AppIdentifier);
-			netOutgoingMessage.Write(this.m_peer.m_uniqueIdentifier);
-			netOutgoingMessage.Write(now);
-			this.WriteLocalHail(netOutgoingMessage);
+			NetOutgoingMessage om = this.m_peer.CreateMessage(this.m_peerConfiguration.AppIdentifier.Length + 13 + ((this.m_localHailMessage == null) ? 0 : this.m_localHailMessage.LengthBytes));
+			om.m_messageType = NetMessageType.ConnectResponse;
+			om.Write(this.m_peerConfiguration.AppIdentifier);
+			om.Write(this.m_peer.m_uniqueIdentifier);
+			om.Write(now);
+			this.WriteLocalHail(om);
 			if (onLibraryThread)
 			{
-				this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
+				this.m_peer.SendLibrary(om, this.m_remoteEndPoint);
 			}
 			else
 			{
-				this.m_peer.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(this.m_remoteEndPoint, netOutgoingMessage));
+				this.m_peer.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(this.m_remoteEndPoint, om));
 			}
 			this.m_lastHandshakeSendTime = now;
 			this.m_handshakeAttempts++;
@@ -790,22 +790,22 @@ namespace DNA.Net.Lidgren
 
 		internal void SendDisconnect(string reason, bool onLibraryThread)
 		{
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(reason);
-			netOutgoingMessage.m_messageType = NetMessageType.Disconnect;
+			NetOutgoingMessage om = this.m_peer.CreateMessage(reason);
+			om.m_messageType = NetMessageType.Disconnect;
 			if (onLibraryThread)
 			{
-				this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
+				this.m_peer.SendLibrary(om, this.m_remoteEndPoint);
 				return;
 			}
-			this.m_peer.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(this.m_remoteEndPoint, netOutgoingMessage));
+			this.m_peer.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(this.m_remoteEndPoint, om));
 		}
 
 		private void WriteLocalHail(NetOutgoingMessage om)
 		{
 			if (this.m_localHailMessage != null)
 			{
-				byte[] data = this.m_localHailMessage.Data;
-				if (data != null && data.Length >= this.m_localHailMessage.LengthBytes)
+				byte[] hi = this.m_localHailMessage.Data;
+				if (hi != null && hi.Length >= this.m_localHailMessage.LengthBytes)
 				{
 					if (om.LengthBytes + this.m_localHailMessage.LengthBytes > this.m_peerConfiguration.m_maximumTransmissionUnit - 10)
 					{
@@ -818,10 +818,10 @@ namespace DNA.Net.Lidgren
 
 		internal void SendConnectionEstablished()
 		{
-			NetOutgoingMessage netOutgoingMessage = this.m_peer.CreateMessage(4);
-			netOutgoingMessage.m_messageType = NetMessageType.ConnectionEstablished;
-			netOutgoingMessage.Write((float)NetTime.Now);
-			this.m_peer.SendLibrary(netOutgoingMessage, this.m_remoteEndPoint);
+			NetOutgoingMessage om = this.m_peer.CreateMessage(4);
+			om.m_messageType = NetMessageType.ConnectionEstablished;
+			om.Write((float)NetTime.Now);
+			this.m_peer.SendLibrary(om, this.m_remoteEndPoint);
 			this.m_handshakeAttempts = 0;
 			this.InitializePing();
 			if (this.m_status != NetConnectionStatus.Connected)
@@ -876,14 +876,14 @@ namespace DNA.Net.Lidgren
 			case NetMessageType.Connect:
 				if (this.m_status == NetConnectionStatus.ReceivedInitiation)
 				{
-					byte[] array;
-					bool flag = this.ValidateHandshakeData(ptr, payloadLength, out array);
-					if (flag)
+					byte[] hail;
+					bool ok = this.ValidateHandshakeData(ptr, payloadLength, out hail);
+					if (ok)
 					{
-						if (array != null)
+						if (hail != null)
 						{
-							this.m_remoteHailMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.Data, array);
-							this.m_remoteHailMessage.LengthBits = array.Length * 8;
+							this.m_remoteHailMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.Data, hail);
+							this.m_remoteHailMessage.LengthBits = hail.Length * 8;
 						}
 						else
 						{
@@ -891,16 +891,16 @@ namespace DNA.Net.Lidgren
 						}
 						if (this.m_peerConfiguration.IsMessageTypeEnabled(NetIncomingMessageType.ConnectionApproval))
 						{
-							NetIncomingMessage netIncomingMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionApproval, (this.m_remoteHailMessage == null) ? 0 : this.m_remoteHailMessage.LengthBytes);
-							netIncomingMessage.m_receiveTime = now;
-							netIncomingMessage.m_senderConnection = this;
-							netIncomingMessage.m_senderEndPoint = this.m_remoteEndPoint;
+							NetIncomingMessage appMsg = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.ConnectionApproval, (this.m_remoteHailMessage == null) ? 0 : this.m_remoteHailMessage.LengthBytes);
+							appMsg.m_receiveTime = now;
+							appMsg.m_senderConnection = this;
+							appMsg.m_senderEndPoint = this.m_remoteEndPoint;
 							if (this.m_remoteHailMessage != null)
 							{
-								netIncomingMessage.Write(this.m_remoteHailMessage.m_data, 0, this.m_remoteHailMessage.LengthBytes);
+								appMsg.Write(this.m_remoteHailMessage.m_data, 0, this.m_remoteHailMessage.LengthBytes);
 							}
 							this.SetStatus(NetConnectionStatus.RespondedAwaitingApproval, "Awaiting approval");
-							this.m_peer.ReleaseMessage(netIncomingMessage);
+							this.m_peer.ReleaseMessage(appMsg);
 							return;
 						}
 						this.SendConnectResponse((float)now, true);
@@ -930,14 +930,14 @@ namespace DNA.Net.Lidgren
 					break;
 				case NetConnectionStatus.InitiatedConnect:
 				{
-					byte[] array;
-					bool flag2 = this.ValidateHandshakeData(ptr, payloadLength, out array);
-					if (flag2)
+					byte[] hail;
+					bool ok2 = this.ValidateHandshakeData(ptr, payloadLength, out hail);
+					if (ok2)
 					{
-						if (array != null)
+						if (hail != null)
 						{
-							this.m_remoteHailMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.Data, array);
-							this.m_remoteHailMessage.LengthBits = array.Length * 8;
+							this.m_remoteHailMessage = this.m_peer.CreateIncomingMessage(NetIncomingMessageType.Data, hail);
+							this.m_remoteHailMessage.LengthBits = hail.Length * 8;
 						}
 						else
 						{
@@ -969,8 +969,8 @@ namespace DNA.Net.Lidgren
 					break;
 				case NetConnectionStatus.RespondedConnect:
 				{
-					NetIncomingMessage netIncomingMessage2 = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
-					this.InitializeRemoteTimeOffset(netIncomingMessage2.ReadSingle());
+					NetIncomingMessage msg = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
+					this.InitializeRemoteTimeOffset(msg.ReadSingle());
 					this.m_peer.AcceptConnection(this);
 					this.InitializePing();
 					this.SetStatus(NetConnectionStatus.Connected, "Connected to " + NetUtility.ToHexString(this.m_remoteUniqueIdentifier));
@@ -982,16 +982,16 @@ namespace DNA.Net.Lidgren
 				break;
 			case NetMessageType.Disconnect:
 			{
-				string text = "Ouch";
+				string reason = "Ouch";
 				try
 				{
-					NetIncomingMessage netIncomingMessage3 = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
-					text = netIncomingMessage3.ReadString();
+					NetIncomingMessage inc = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
+					reason = inc.ReadString();
 				}
 				catch
 				{
 				}
-				this.ExecuteDisconnect(text, false);
+				this.ExecuteDisconnect(reason, false);
 				return;
 			}
 			case NetMessageType.Discovery:
@@ -1008,23 +1008,23 @@ namespace DNA.Net.Lidgren
 		private bool ValidateHandshakeData(int ptr, int payloadLength, out byte[] hail)
 		{
 			hail = null;
-			NetIncomingMessage netIncomingMessage = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
+			NetIncomingMessage msg = this.m_peer.SetupReadHelperMessage(ptr, payloadLength);
 			try
 			{
-				string text = netIncomingMessage.ReadString();
-				long num = netIncomingMessage.ReadInt64();
-				this.InitializeRemoteTimeOffset(netIncomingMessage.ReadSingle());
-				int num2 = payloadLength - (netIncomingMessage.PositionInBytes - ptr);
-				if (num2 > 0)
+				string remoteAppIdentifier = msg.ReadString();
+				long remoteUniqueIdentifier = msg.ReadInt64();
+				this.InitializeRemoteTimeOffset(msg.ReadSingle());
+				int remainingBytes = payloadLength - (msg.PositionInBytes - ptr);
+				if (remainingBytes > 0)
 				{
-					hail = netIncomingMessage.ReadBytes(num2);
+					hail = msg.ReadBytes(remainingBytes);
 				}
-				if (text != this.m_peer.m_configuration.AppIdentifier)
+				if (remoteAppIdentifier != this.m_peer.m_configuration.AppIdentifier)
 				{
 					this.ExecuteDisconnect("Wrong application identifier!", true);
 					return false;
 				}
-				this.m_remoteUniqueIdentifier = num;
+				this.m_remoteUniqueIdentifier = remoteUniqueIdentifier;
 			}
 			catch (Exception ex)
 			{

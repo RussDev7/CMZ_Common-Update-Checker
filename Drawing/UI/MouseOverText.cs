@@ -17,8 +17,8 @@ namespace DNA.Drawing.UI
 			set
 			{
 				this._location = value;
-				Vector2 vector = this._font.MeasureString(this._text);
-				this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(vector.X + this._iconWidthHeight.X), (int)vector.Y);
+				Vector2 size = this._font.MeasureString(this._text);
+				this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(size.X + this._iconWidthHeight.X), (int)size.Y);
 			}
 		}
 
@@ -36,10 +36,10 @@ namespace DNA.Drawing.UI
 			this._location = location;
 			this._font = font;
 			this._icon = icon;
-			Vector2 vector = this._font.MeasureString(this._text);
-			float num = vector.Y / (float)this._icon.Height;
-			this._iconWidthHeight = new Vector2((float)this._icon.Width * num, vector.Y);
-			this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(vector.X + this._iconWidthHeight.X), (int)vector.Y);
+			Vector2 size = this._font.MeasureString(this._text);
+			float imagefactor = size.Y / (float)this._icon.Height;
+			this._iconWidthHeight = new Vector2((float)this._icon.Width * imagefactor, size.Y);
+			this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(size.X + this._iconWidthHeight.X), (int)size.Y);
 		}
 
 		public MouseOverText(string text, Vector2 location, SpriteFont font, Sprite icon)
@@ -48,10 +48,10 @@ namespace DNA.Drawing.UI
 			this._location = location;
 			this._font = font;
 			this._sprite = icon;
-			Vector2 vector = this._font.MeasureString(this._text);
-			float num = vector.Y / (float)this._sprite.Height;
-			this._iconWidthHeight = new Vector2((float)this._sprite.Width * num, vector.Y);
-			this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(vector.X + this._iconWidthHeight.X), (int)vector.Y);
+			Vector2 size = this._font.MeasureString(this._text);
+			float imagefactor = size.Y / (float)this._sprite.Height;
+			this._iconWidthHeight = new Vector2((float)this._sprite.Width * imagefactor, size.Y);
+			this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(size.X + this._iconWidthHeight.X), (int)size.Y);
 		}
 
 		public MouseOverText(string text, Vector2 location, SpriteFont font, Sprite icon, Color color, Color selectedColor, float scaleImage)
@@ -62,10 +62,10 @@ namespace DNA.Drawing.UI
 			this._sprite = icon;
 			this._color = color;
 			this._selectedColor = selectedColor;
-			Vector2 vector = this._font.MeasureString(this._text);
-			float num = vector.Y / (float)this._sprite.Height;
-			this._iconWidthHeight = new Vector2((float)this._sprite.Width * num, vector.Y) * scaleImage;
-			this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(vector.X + this._iconWidthHeight.X), (int)vector.Y);
+			Vector2 size = this._font.MeasureString(this._text);
+			float imagefactor = size.Y / (float)this._sprite.Height;
+			this._iconWidthHeight = new Vector2((float)this._sprite.Width * imagefactor, size.Y) * scaleImage;
+			this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(size.X + this._iconWidthHeight.X), (int)size.Y);
 		}
 
 		public MouseOverText(string text, Vector2 location, SpriteFont font, Texture2D icon, Color color, Color selectedColor)
@@ -76,10 +76,10 @@ namespace DNA.Drawing.UI
 			this._icon = icon;
 			this._color = color;
 			this._selectedColor = selectedColor;
-			Vector2 vector = this._font.MeasureString(this._text);
-			float num = vector.Y / (float)this._icon.Height;
-			this._iconWidthHeight = new Vector2((float)this._icon.Width * num, vector.Y);
-			this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(vector.X + this._iconWidthHeight.X), (int)vector.Y);
+			Vector2 size = this._font.MeasureString(this._text);
+			float imagefactor = size.Y / (float)this._icon.Height;
+			this._iconWidthHeight = new Vector2((float)this._icon.Width * imagefactor, size.Y);
+			this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(size.X + this._iconWidthHeight.X), (int)size.Y);
 		}
 
 		public MouseOverText(string text, Vector2 location, SpriteFont font, Sprite icon, Color color, Color selectedColor)
@@ -90,10 +90,10 @@ namespace DNA.Drawing.UI
 			this._sprite = icon;
 			this._color = color;
 			this._selectedColor = selectedColor;
-			Vector2 vector = this._font.MeasureString(this._text);
-			float num = vector.Y / (float)this._sprite.Height;
-			this._iconWidthHeight = new Vector2((float)this._sprite.Width * num, vector.Y);
-			this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(vector.X + this._iconWidthHeight.X), (int)vector.Y);
+			Vector2 size = this._font.MeasureString(this._text);
+			float imagefactor = size.Y / (float)this._sprite.Height;
+			this._iconWidthHeight = new Vector2((float)this._sprite.Width * imagefactor, size.Y);
+			this._locationRectangle = new Rectangle((int)this._location.X, (int)this._location.Y, (int)(size.X + this._iconWidthHeight.X), (int)size.Y);
 		}
 
 		public MouseOverText(string text, Vector2 location, SpriteFont font, Color color, Color selectedColor)
@@ -131,8 +131,8 @@ namespace DNA.Drawing.UI
 				this._flashTimer.Reset();
 				this._flashDir = !this._flashDir;
 			}
-			float num = (this._flashDir ? this._flashTimer.PercentComplete : (1f - this._flashTimer.PercentComplete));
-			Color color = Color.Lerp(this._color, this._selectedColor, num);
+			float blender = (this._flashDir ? this._flashTimer.PercentComplete : (1f - this._flashTimer.PercentComplete));
+			Color color = Color.Lerp(this._color, this._selectedColor, blender);
 			if (this._icon != null)
 			{
 				spriteBatch.Draw(this._icon, new Rectangle((int)this._location.X, (int)(this._location.Y + (float)(this._font.LineSpacing / 2) - this._iconWidthHeight.Y / 2f), (int)this._iconWidthHeight.X, (int)this._iconWidthHeight.Y), Color.White);

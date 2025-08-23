@@ -13,8 +13,8 @@ namespace DNA.Drawing.Drawing2D
 		{
 			get
 			{
-				RectangleF boundingBox = this.BoundingBox;
-				return new Vector2(boundingBox.X + boundingBox.Width / 2f, boundingBox.Y + boundingBox.Height / 2f);
+				RectangleF box = this.BoundingBox;
+				return new Vector2(box.X + box.Width / 2f, box.Y + box.Height / 2f);
 			}
 		}
 
@@ -26,9 +26,9 @@ namespace DNA.Drawing.Drawing2D
 
 		public static IShape2D Transform(IShape2D poly, Matrix mat)
 		{
-			IShape2D shape2D = (IShape2D)poly.Clone();
-			shape2D.Transform(mat);
-			return shape2D;
+			IShape2D ret = (IShape2D)poly.Clone();
+			ret.Transform(mat);
+			return ret;
 		}
 
 		public abstract bool Touches(IShape2D s);
@@ -56,22 +56,22 @@ namespace DNA.Drawing.Drawing2D
 
 		public int Contains(IList<Vector2> points)
 		{
-			int num = 0;
+			int count = 0;
 			for (int i = 0; i < points.Count; i++)
 			{
 				if (this.Contains(points[i]))
 				{
-					num++;
+					count++;
 				}
 			}
-			return num;
+			return count;
 		}
 
 		public bool BoundsIntersect(IShape2D shape)
 		{
-			RectangleF boundingBox = this.BoundingBox;
-			RectangleF boundingBox2 = shape.BoundingBox;
-			return boundingBox.IntersectsWith(boundingBox2);
+			RectangleF r = this.BoundingBox;
+			RectangleF r2 = shape.BoundingBox;
+			return r.IntersectsWith(r2);
 		}
 
 		public abstract float Contains(IShape2D shape);

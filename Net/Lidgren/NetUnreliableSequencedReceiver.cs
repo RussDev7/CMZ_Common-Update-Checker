@@ -11,14 +11,14 @@ namespace DNA.Net.Lidgren
 
 		internal override void ReceiveMessage(NetIncomingMessage msg)
 		{
-			int sequenceNumber = msg.m_sequenceNumber;
-			this.m_connection.QueueAck(msg.m_receivedMessageType, sequenceNumber);
-			int num = NetUtility.RelativeSequenceNumber(sequenceNumber, this.m_lastReceivedSequenceNumber);
-			if (num < 0)
+			int nr = msg.m_sequenceNumber;
+			this.m_connection.QueueAck(msg.m_receivedMessageType, nr);
+			int relate = NetUtility.RelativeSequenceNumber(nr, this.m_lastReceivedSequenceNumber);
+			if (relate < 0)
 			{
 				return;
 			}
-			this.m_lastReceivedSequenceNumber = sequenceNumber;
+			this.m_lastReceivedSequenceNumber = nr;
 			this.m_peer.ReleaseMessage(msg);
 		}
 

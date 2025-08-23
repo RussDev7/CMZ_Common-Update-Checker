@@ -46,20 +46,20 @@ namespace DNA.Security.Cryptography.Crypto.Signers
 		public void Init(bool forSigning, ICipherParameters parameters)
 		{
 			this.forSigning = forSigning;
-			AsymmetricKeyParameter asymmetricKeyParameter;
+			AsymmetricKeyParameter i;
 			if (parameters is ParametersWithRandom)
 			{
-				asymmetricKeyParameter = (AsymmetricKeyParameter)((ParametersWithRandom)parameters).Parameters;
+				i = (AsymmetricKeyParameter)((ParametersWithRandom)parameters).Parameters;
 			}
 			else
 			{
-				asymmetricKeyParameter = (AsymmetricKeyParameter)parameters;
+				i = (AsymmetricKeyParameter)parameters;
 			}
-			if (forSigning && !asymmetricKeyParameter.IsPrivate)
+			if (forSigning && !i.IsPrivate)
 			{
 				throw new InvalidKeyException("Signing requires private key.");
 			}
-			if (!forSigning && asymmetricKeyParameter.IsPrivate)
+			if (!forSigning && i.IsPrivate)
 			{
 				throw new InvalidKeyException("Verification requires public key.");
 			}
@@ -83,10 +83,10 @@ namespace DNA.Security.Cryptography.Crypto.Signers
 			{
 				throw new InvalidOperationException("RsaDigestSigner not initialised for signature generation.");
 			}
-			byte[] array = new byte[this.digest.GetDigestSize()];
-			this.digest.DoFinal(array, 0);
-			byte[] array2 = this.DerEncode(array);
-			return this.rsaEngine.ProcessBlock(array2, 0, array2.Length);
+			byte[] hash = new byte[this.digest.GetDigestSize()];
+			this.digest.DoFinal(hash, 0);
+			byte[] data = this.DerEncode(hash);
+			return this.rsaEngine.ProcessBlock(data, 0, data.Length);
 		}
 
 		public bool VerifySignature(byte[] signature)
@@ -95,24 +95,24 @@ namespace DNA.Security.Cryptography.Crypto.Signers
 			{
 				throw new InvalidOperationException("RsaDigestSigner not initialised for verification");
 			}
-			byte[] array = new byte[this.digest.GetDigestSize()];
-			this.digest.DoFinal(array, 0);
-			byte[] array2;
-			byte[] array3;
+			byte[] hash = new byte[this.digest.GetDigestSize()];
+			this.digest.DoFinal(hash, 0);
+			byte[] sig;
+			byte[] expected;
 			try
 			{
-				array2 = this.rsaEngine.ProcessBlock(signature, 0, signature.Length);
-				array3 = this.DerEncode(array);
+				sig = this.rsaEngine.ProcessBlock(signature, 0, signature.Length);
+				expected = this.DerEncode(hash);
 			}
 			catch (Exception)
 			{
 				return false;
 			}
-			if (array2.Length == array3.Length)
+			if (sig.Length == expected.Length)
 			{
-				for (int i = 0; i < array2.Length; i++)
+				for (int i = 0; i < sig.Length; i++)
 				{
-					if (array2[i] != array3[i])
+					if (sig[i] != expected[i])
 					{
 						return false;
 					}
@@ -120,28 +120,28 @@ namespace DNA.Security.Cryptography.Crypto.Signers
 			}
 			else
 			{
-				if (array2.Length != array3.Length - 2)
+				if (sig.Length != expected.Length - 2)
 				{
 					return false;
 				}
-				int num = array2.Length - array.Length - 2;
-				int num2 = array3.Length - array.Length - 2;
-				byte[] array4 = array3;
-				int num3 = 1;
-				array4[num3] -= 2;
-				byte[] array5 = array3;
-				int num4 = 3;
-				array5[num4] -= 2;
-				for (int j = 0; j < array.Length; j++)
+				int sigOffset = sig.Length - hash.Length - 2;
+				int expectedOffset = expected.Length - hash.Length - 2;
+				byte[] array = expected;
+				int num = 1;
+				array[num] -= 2;
+				byte[] array2 = expected;
+				int num2 = 3;
+				array2[num2] -= 2;
+				for (int j = 0; j < hash.Length; j++)
 				{
-					if (array2[num + j] != array3[num2 + j])
+					if (sig[sigOffset + j] != expected[expectedOffset + j])
 					{
 						return false;
 					}
 				}
-				for (int k = 0; k < num; k++)
+				for (int k = 0; k < sigOffset; k++)
 				{
-					if (array2[k] != array3[k])
+					if (sig[k] != expected[k])
 					{
 						return false;
 					}
@@ -157,8 +157,8 @@ namespace DNA.Security.Cryptography.Crypto.Signers
 
 		private byte[] DerEncode(byte[] hash)
 		{
-			DigestInfo digestInfo = new DigestInfo(this.algId, hash);
-			return digestInfo.GetDerEncoded();
+			DigestInfo dInfo = new DigestInfo(this.algId, hash);
+			return dInfo.GetDerEncoded();
 		}
 
 		private readonly IAsymmetricBlockCipher rsaEngine = new Pkcs1Encoding(new RsaBlindedEngine());

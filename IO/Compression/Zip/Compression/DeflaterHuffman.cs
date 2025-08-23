@@ -66,24 +66,24 @@ namespace DNA.IO.Compression.Zip.Compression
 			{
 				return 285;
 			}
-			int num = 257;
+			int code = 257;
 			while (len >= 8)
 			{
-				num += 4;
+				code += 4;
 				len >>= 1;
 			}
-			return num + len;
+			return code + len;
 		}
 
 		private int Dcode(int distance)
 		{
-			int num = 0;
+			int code = 0;
 			while (distance >= 4)
 			{
-				num += 2;
+				code += 2;
 				distance >>= 1;
 			}
-			return num + distance;
+			return code + distance;
 		}
 
 		public void SendAllTrees(int blTreeCodes)
@@ -94,9 +94,9 @@ namespace DNA.IO.Compression.Zip.Compression
 			this.pending.WriteBits(this.literalTree.numCodes - 257, 5);
 			this.pending.WriteBits(this.distTree.numCodes - 1, 5);
 			this.pending.WriteBits(blTreeCodes - 4, 4);
-			for (int i = 0; i < blTreeCodes; i++)
+			for (int rank = 0; rank < blTreeCodes; rank++)
 			{
-				this.pending.WriteBits((int)this.blTree.length[DeflaterHuffman.BL_ORDER[i]], 3);
+				this.pending.WriteBits((int)this.blTree.length[DeflaterHuffman.BL_ORDER[rank]], 3);
 			}
 			this.literalTree.WriteTree(this.blTree);
 			this.distTree.WriteTree(this.blTree);
@@ -106,28 +106,28 @@ namespace DNA.IO.Compression.Zip.Compression
 		{
 			for (int i = 0; i < this.last_lit; i++)
 			{
-				int num = (int)(this.l_buf[i] & byte.MaxValue);
-				int num2 = (int)this.d_buf[i];
-				if (num2-- != 0)
+				int litlen = (int)(this.l_buf[i] & byte.MaxValue);
+				int dist = (int)this.d_buf[i];
+				if (dist-- != 0)
 				{
-					int num3 = this.Lcode(num);
-					this.literalTree.WriteSymbol(num3);
-					int num4 = (num3 - 261) / 4;
-					if (num4 > 0 && num4 <= 5)
+					int lc = this.Lcode(litlen);
+					this.literalTree.WriteSymbol(lc);
+					int bits = (lc - 261) / 4;
+					if (bits > 0 && bits <= 5)
 					{
-						this.pending.WriteBits(num & ((1 << num4) - 1), num4);
+						this.pending.WriteBits(litlen & ((1 << bits) - 1), bits);
 					}
-					int num5 = this.Dcode(num2);
-					this.distTree.WriteSymbol(num5);
-					num4 = num5 / 2 - 1;
-					if (num4 > 0)
+					int dc = this.Dcode(dist);
+					this.distTree.WriteSymbol(dc);
+					bits = dc / 2 - 1;
+					if (bits > 0)
 					{
-						this.pending.WriteBits(num2 & ((1 << num4) - 1), num4);
+						this.pending.WriteBits(dist & ((1 << bits) - 1), bits);
 					}
 				}
 				else
 				{
-					this.literalTree.WriteSymbol(num);
+					this.literalTree.WriteSymbol(litlen);
 				}
 			}
 			this.literalTree.WriteSymbol(DeflaterHuffman.EOF_SYMBOL);
@@ -153,34 +153,34 @@ namespace DNA.IO.Compression.Zip.Compression
 			this.literalTree.CalcBLFreq(this.blTree);
 			this.distTree.CalcBLFreq(this.blTree);
 			this.blTree.BuildTree();
-			int num = 4;
-			for (int i = 18; i > num; i--)
+			int blTreeCodes = 4;
+			for (int i = 18; i > blTreeCodes; i--)
 			{
 				if (this.blTree.length[DeflaterHuffman.BL_ORDER[i]] > 0)
 				{
-					num = i + 1;
+					blTreeCodes = i + 1;
 				}
 			}
-			int num2 = 14 + num * 3 + this.blTree.GetEncodedLength() + this.literalTree.GetEncodedLength() + this.distTree.GetEncodedLength() + this.extra_bits;
-			int num3 = this.extra_bits;
+			int opt_len = 14 + blTreeCodes * 3 + this.blTree.GetEncodedLength() + this.literalTree.GetEncodedLength() + this.distTree.GetEncodedLength() + this.extra_bits;
+			int static_len = this.extra_bits;
 			for (int j = 0; j < DeflaterHuffman.LITERAL_NUM; j++)
 			{
-				num3 += (int)(this.literalTree.freqs[j] * (short)DeflaterHuffman.staticLLength[j]);
+				static_len += (int)(this.literalTree.freqs[j] * (short)DeflaterHuffman.staticLLength[j]);
 			}
 			for (int k = 0; k < DeflaterHuffman.DIST_NUM; k++)
 			{
-				num3 += (int)(this.distTree.freqs[k] * (short)DeflaterHuffman.staticDLength[k]);
+				static_len += (int)(this.distTree.freqs[k] * (short)DeflaterHuffman.staticDLength[k]);
 			}
-			if (num2 >= num3)
+			if (opt_len >= static_len)
 			{
-				num2 = num3;
+				opt_len = static_len;
 			}
-			if (storedOffset >= 0 && storedLength + 4 < num2 >> 3)
+			if (storedOffset >= 0 && storedLength + 4 < opt_len >> 3)
 			{
 				this.FlushStoredBlock(stored, storedOffset, storedLength, lastBlock);
 				return;
 			}
-			if (num2 == num3)
+			if (opt_len == static_len)
 			{
 				this.pending.WriteBits(2 + (lastBlock ? 1 : 0), 3);
 				this.literalTree.SetStaticCodes(DeflaterHuffman.staticLCodes, DeflaterHuffman.staticLLength);
@@ -190,7 +190,7 @@ namespace DNA.IO.Compression.Zip.Compression
 				return;
 			}
 			this.pending.WriteBits(4 + (lastBlock ? 1 : 0), 3);
-			this.SendAllTrees(num);
+			this.SendAllTrees(blTreeCodes);
 			this.CompressBlock();
 			this.Reset();
 		}
@@ -213,21 +213,21 @@ namespace DNA.IO.Compression.Zip.Compression
 		{
 			this.d_buf[this.last_lit] = (short)dist;
 			this.l_buf[this.last_lit++] = (byte)(len - 3);
-			int num = this.Lcode(len - 3);
+			int lc = this.Lcode(len - 3);
 			short[] freqs = this.literalTree.freqs;
-			int num2 = num;
-			freqs[num2] += 1;
-			if (num >= 265 && num < 285)
+			int num = lc;
+			freqs[num] += 1;
+			if (lc >= 265 && lc < 285)
 			{
-				this.extra_bits += (num - 261) / 4;
+				this.extra_bits += (lc - 261) / 4;
 			}
-			int num3 = this.Dcode(dist - 1);
+			int dc = this.Dcode(dist - 1);
 			short[] freqs2 = this.distTree.freqs;
-			int num4 = num3;
-			freqs2[num4] += 1;
-			if (num3 >= 4)
+			int num2 = dc;
+			freqs2[num2] += 1;
+			if (dc >= 4)
 			{
-				this.extra_bits += num3 / 2 - 1;
+				this.extra_bits += dc / 2 - 1;
 			}
 			return this.IsFull();
 		}
@@ -312,15 +312,15 @@ namespace DNA.IO.Compression.Zip.Compression
 
 			public void CheckEmpty()
 			{
-				bool flag = true;
+				bool empty = true;
 				for (int i = 0; i < this.freqs.Length; i++)
 				{
 					if (this.freqs[i] != 0)
 					{
-						flag = false;
+						empty = false;
 					}
 				}
-				if (!flag)
+				if (!empty)
 				{
 					throw new CompressionException("!Empty");
 				}
@@ -334,21 +334,21 @@ namespace DNA.IO.Compression.Zip.Compression
 
 			public void BuildCodes()
 			{
-				int[] array = new int[this.maxLength];
-				int num = 0;
+				int[] nextCode = new int[this.maxLength];
+				int code = 0;
 				this.codes = new short[this.freqs.Length];
-				for (int i = 0; i < this.maxLength; i++)
+				for (int bits = 0; bits < this.maxLength; bits++)
 				{
-					array[i] = num;
-					num += this.bl_counts[i] << 15 - i;
+					nextCode[bits] = code;
+					code += this.bl_counts[bits] << 15 - bits;
 				}
-				for (int j = 0; j < this.numCodes; j++)
+				for (int i = 0; i < this.numCodes; i++)
 				{
-					int num2 = (int)this.length[j];
-					if (num2 > 0)
+					int bits2 = (int)this.length[i];
+					if (bits2 > 0)
 					{
-						this.codes[j] = DeflaterHuffman.BitReverse(array[num2 - 1]);
-						array[num2 - 1] += 1 << 16 - num2;
+						this.codes[i] = DeflaterHuffman.BitReverse(nextCode[bits2 - 1]);
+						nextCode[bits2 - 1] += 1 << 16 - bits2;
 					}
 				}
 			}
@@ -356,68 +356,68 @@ namespace DNA.IO.Compression.Zip.Compression
 			private void BuildLength(int[] childs)
 			{
 				this.length = new byte[this.freqs.Length];
-				int num = childs.Length / 2;
-				int num2 = (num + 1) / 2;
-				int num3 = 0;
+				int numNodes = childs.Length / 2;
+				int numLeafs = (numNodes + 1) / 2;
+				int overflow = 0;
 				for (int i = 0; i < this.maxLength; i++)
 				{
 					this.bl_counts[i] = 0;
 				}
-				int[] array = new int[num];
-				array[num - 1] = 0;
-				for (int j = num - 1; j >= 0; j--)
+				int[] lengths = new int[numNodes];
+				lengths[numNodes - 1] = 0;
+				for (int j = numNodes - 1; j >= 0; j--)
 				{
 					if (childs[2 * j + 1] != -1)
 					{
-						int num4 = array[j] + 1;
-						if (num4 > this.maxLength)
+						int bitLength = lengths[j] + 1;
+						if (bitLength > this.maxLength)
 						{
-							num4 = this.maxLength;
-							num3++;
+							bitLength = this.maxLength;
+							overflow++;
 						}
-						array[childs[2 * j]] = (array[childs[2 * j + 1]] = num4);
+						lengths[childs[2 * j]] = (lengths[childs[2 * j + 1]] = bitLength);
 					}
 					else
 					{
-						int num5 = array[j];
-						this.bl_counts[num5 - 1]++;
-						this.length[childs[2 * j]] = (byte)array[j];
+						int bitLength2 = lengths[j];
+						this.bl_counts[bitLength2 - 1]++;
+						this.length[childs[2 * j]] = (byte)lengths[j];
 					}
 				}
-				if (num3 == 0)
+				if (overflow == 0)
 				{
 					return;
 				}
-				int num6 = this.maxLength - 1;
+				int incrBitLen = this.maxLength - 1;
 				for (;;)
 				{
-					if (this.bl_counts[--num6] != 0)
+					if (this.bl_counts[--incrBitLen] != 0)
 					{
 						do
 						{
-							this.bl_counts[num6]--;
-							this.bl_counts[++num6]++;
-							num3 -= 1 << this.maxLength - 1 - num6;
+							this.bl_counts[incrBitLen]--;
+							this.bl_counts[++incrBitLen]++;
+							overflow -= 1 << this.maxLength - 1 - incrBitLen;
 						}
-						while (num3 > 0 && num6 < this.maxLength - 1);
-						if (num3 <= 0)
+						while (overflow > 0 && incrBitLen < this.maxLength - 1);
+						if (overflow <= 0)
 						{
 							break;
 						}
 					}
 				}
-				this.bl_counts[this.maxLength - 1] += num3;
-				this.bl_counts[this.maxLength - 2] -= num3;
-				int num7 = 2 * num2;
-				for (int num8 = this.maxLength; num8 != 0; num8--)
+				this.bl_counts[this.maxLength - 1] += overflow;
+				this.bl_counts[this.maxLength - 2] -= overflow;
+				int nodePtr = 2 * numLeafs;
+				for (int bits = this.maxLength; bits != 0; bits--)
 				{
-					int k = this.bl_counts[num8 - 1];
+					int k = this.bl_counts[bits - 1];
 					while (k > 0)
 					{
-						int num9 = 2 * childs[num7++];
-						if (childs[num9 + 1] == -1)
+						int childPtr = 2 * childs[nodePtr++];
+						if (childs[childPtr + 1] == -1)
 						{
-							this.length[childs[num9]] = (byte)num8;
+							this.length[childs[childPtr]] = (byte)bits;
 							k--;
 						}
 					}
@@ -426,155 +426,155 @@ namespace DNA.IO.Compression.Zip.Compression
 
 			public void BuildTree()
 			{
-				int num = this.freqs.Length;
-				int[] array = new int[num];
-				int i = 0;
-				int num2 = 0;
-				for (int j = 0; j < num; j++)
+				int numSymbols = this.freqs.Length;
+				int[] heap = new int[numSymbols];
+				int heapLen = 0;
+				int maxCode = 0;
+				for (int i = 0; i < numSymbols; i++)
 				{
-					int num3 = (int)this.freqs[j];
-					if (num3 != 0)
+					int freq = (int)this.freqs[i];
+					if (freq != 0)
 					{
-						int num4 = i++;
-						int num5;
-						while (num4 > 0 && (int)this.freqs[array[num5 = (num4 - 1) / 2]] > num3)
+						int pos = heapLen++;
+						int ppos;
+						while (pos > 0 && (int)this.freqs[heap[ppos = (pos - 1) / 2]] > freq)
 						{
-							array[num4] = array[num5];
-							num4 = num5;
+							heap[pos] = heap[ppos];
+							pos = ppos;
 						}
-						array[num4] = j;
-						num2 = j;
+						heap[pos] = i;
+						maxCode = i;
 					}
 				}
-				while (i < 2)
+				while (heapLen < 2)
 				{
-					int num6 = ((num2 < 2) ? (++num2) : 0);
-					array[i++] = num6;
+					int node = ((maxCode < 2) ? (++maxCode) : 0);
+					heap[heapLen++] = node;
 				}
-				this.numCodes = Math.Max(num2 + 1, this.minNumCodes);
-				int num7 = i;
-				int[] array2 = new int[4 * i - 2];
-				int[] array3 = new int[2 * i - 1];
-				int num8 = num7;
-				for (int k = 0; k < i; k++)
+				this.numCodes = Math.Max(maxCode + 1, this.minNumCodes);
+				int numLeafs = heapLen;
+				int[] childs = new int[4 * heapLen - 2];
+				int[] values = new int[2 * heapLen - 1];
+				int numNodes = numLeafs;
+				for (int j = 0; j < heapLen; j++)
 				{
-					int num9 = array[k];
-					array2[2 * k] = num9;
-					array2[2 * k + 1] = -1;
-					array3[k] = (int)this.freqs[num9] << 8;
-					array[k] = k;
+					int node2 = heap[j];
+					childs[2 * j] = node2;
+					childs[2 * j + 1] = -1;
+					values[j] = (int)this.freqs[node2] << 8;
+					heap[j] = j;
 				}
 				do
 				{
-					int num10 = array[0];
-					int num11 = array[--i];
-					int num12 = 0;
-					int l;
-					for (l = 1; l < i; l = l * 2 + 1)
+					int first = heap[0];
+					int last = heap[--heapLen];
+					int ppos2 = 0;
+					int path;
+					for (path = 1; path < heapLen; path = path * 2 + 1)
 					{
-						if (l + 1 < i && array3[array[l]] > array3[array[l + 1]])
+						if (path + 1 < heapLen && values[heap[path]] > values[heap[path + 1]])
 						{
-							l++;
+							path++;
 						}
-						array[num12] = array[l];
-						num12 = l;
+						heap[ppos2] = heap[path];
+						ppos2 = path;
 					}
-					int num13 = array3[num11];
-					while ((l = num12) > 0 && array3[array[num12 = (l - 1) / 2]] > num13)
+					int lastVal = values[last];
+					while ((path = ppos2) > 0 && values[heap[ppos2 = (path - 1) / 2]] > lastVal)
 					{
-						array[l] = array[num12];
+						heap[path] = heap[ppos2];
 					}
-					array[l] = num11;
-					int num14 = array[0];
-					num11 = num8++;
-					array2[2 * num11] = num10;
-					array2[2 * num11 + 1] = num14;
-					int num15 = Math.Min(array3[num10] & 255, array3[num14] & 255);
-					num13 = (array3[num11] = array3[num10] + array3[num14] - num15 + 1);
-					num12 = 0;
-					for (l = 1; l < i; l = num12 * 2 + 1)
+					heap[path] = last;
+					int second = heap[0];
+					last = numNodes++;
+					childs[2 * last] = first;
+					childs[2 * last + 1] = second;
+					int mindepth = Math.Min(values[first] & 255, values[second] & 255);
+					lastVal = (values[last] = values[first] + values[second] - mindepth + 1);
+					ppos2 = 0;
+					for (path = 1; path < heapLen; path = ppos2 * 2 + 1)
 					{
-						if (l + 1 < i && array3[array[l]] > array3[array[l + 1]])
+						if (path + 1 < heapLen && values[heap[path]] > values[heap[path + 1]])
 						{
-							l++;
+							path++;
 						}
-						array[num12] = array[l];
-						num12 = l;
+						heap[ppos2] = heap[path];
+						ppos2 = path;
 					}
-					while ((l = num12) > 0 && array3[array[num12 = (l - 1) / 2]] > num13)
+					while ((path = ppos2) > 0 && values[heap[ppos2 = (path - 1) / 2]] > lastVal)
 					{
-						array[l] = array[num12];
+						heap[path] = heap[ppos2];
 					}
-					array[l] = num11;
+					heap[path] = last;
 				}
-				while (i > 1);
-				if (array[0] != array2.Length / 2 - 1)
+				while (heapLen > 1);
+				if (heap[0] != childs.Length / 2 - 1)
 				{
 					throw new CompressionException("Heap invariant violated");
 				}
-				this.BuildLength(array2);
+				this.BuildLength(childs);
 			}
 
 			public int GetEncodedLength()
 			{
-				int num = 0;
+				int len = 0;
 				for (int i = 0; i < this.freqs.Length; i++)
 				{
-					num += (int)(this.freqs[i] * (short)this.length[i]);
+					len += (int)(this.freqs[i] * (short)this.length[i]);
 				}
-				return num;
+				return len;
 			}
 
 			public void CalcBLFreq(DeflaterHuffman.Tree blTree)
 			{
-				int num = -1;
+				int curlen = -1;
 				int i = 0;
 				while (i < this.numCodes)
 				{
-					int num2 = 1;
-					int num3 = (int)this.length[i];
-					int num4;
-					int num5;
-					if (num3 == 0)
+					int count = 1;
+					int nextlen = (int)this.length[i];
+					int max_count;
+					int min_count;
+					if (nextlen == 0)
 					{
-						num4 = 138;
-						num5 = 3;
+						max_count = 138;
+						min_count = 3;
 					}
 					else
 					{
-						num4 = 6;
-						num5 = 3;
-						if (num != num3)
+						max_count = 6;
+						min_count = 3;
+						if (curlen != nextlen)
 						{
 							short[] array = blTree.freqs;
-							int num6 = num3;
-							array[num6] += 1;
-							num2 = 0;
+							int num = nextlen;
+							array[num] += 1;
+							count = 0;
 						}
 					}
-					num = num3;
+					curlen = nextlen;
 					i++;
-					while (i < this.numCodes && num == (int)this.length[i])
+					while (i < this.numCodes && curlen == (int)this.length[i])
 					{
 						i++;
-						if (++num2 >= num4)
+						if (++count >= max_count)
 						{
 							break;
 						}
 					}
-					if (num2 < num5)
+					if (count < min_count)
 					{
 						short[] array2 = blTree.freqs;
-						int num7 = num;
-						array2[num7] += (short)num2;
+						int num2 = curlen;
+						array2[num2] += (short)count;
 					}
-					else if (num != 0)
+					else if (curlen != 0)
 					{
 						short[] array3 = blTree.freqs;
 						int rep_3_ = DeflaterHuffman.REP_3_6;
 						array3[rep_3_] += 1;
 					}
-					else if (num2 <= 10)
+					else if (count <= 10)
 					{
 						short[] array4 = blTree.freqs;
 						int rep_3_2 = DeflaterHuffman.REP_3_10;
@@ -591,60 +591,60 @@ namespace DNA.IO.Compression.Zip.Compression
 
 			public void WriteTree(DeflaterHuffman.Tree blTree)
 			{
-				int num = -1;
+				int curlen = -1;
 				int i = 0;
 				while (i < this.numCodes)
 				{
-					int num2 = 1;
-					int num3 = (int)this.length[i];
-					int num4;
-					int num5;
-					if (num3 == 0)
+					int count = 1;
+					int nextlen = (int)this.length[i];
+					int max_count;
+					int min_count;
+					if (nextlen == 0)
 					{
-						num4 = 138;
-						num5 = 3;
+						max_count = 138;
+						min_count = 3;
 					}
 					else
 					{
-						num4 = 6;
-						num5 = 3;
-						if (num != num3)
+						max_count = 6;
+						min_count = 3;
+						if (curlen != nextlen)
 						{
-							blTree.WriteSymbol(num3);
-							num2 = 0;
+							blTree.WriteSymbol(nextlen);
+							count = 0;
 						}
 					}
-					num = num3;
+					curlen = nextlen;
 					i++;
-					while (i < this.numCodes && num == (int)this.length[i])
+					while (i < this.numCodes && curlen == (int)this.length[i])
 					{
 						i++;
-						if (++num2 >= num4)
+						if (++count >= max_count)
 						{
 							break;
 						}
 					}
-					if (num2 < num5)
+					if (count < min_count)
 					{
-						while (num2-- > 0)
+						while (count-- > 0)
 						{
-							blTree.WriteSymbol(num);
+							blTree.WriteSymbol(curlen);
 						}
 					}
-					else if (num != 0)
+					else if (curlen != 0)
 					{
 						blTree.WriteSymbol(DeflaterHuffman.REP_3_6);
-						this.dh.pending.WriteBits(num2 - 3, 2);
+						this.dh.pending.WriteBits(count - 3, 2);
 					}
-					else if (num2 <= 10)
+					else if (count <= 10)
 					{
 						blTree.WriteSymbol(DeflaterHuffman.REP_3_10);
-						this.dh.pending.WriteBits(num2 - 3, 3);
+						this.dh.pending.WriteBits(count - 3, 3);
 					}
 					else
 					{
 						blTree.WriteSymbol(DeflaterHuffman.REP_11_138);
-						this.dh.pending.WriteBits(num2 - 11, 7);
+						this.dh.pending.WriteBits(count - 11, 7);
 					}
 				}
 			}

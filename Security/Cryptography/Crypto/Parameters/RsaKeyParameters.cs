@@ -30,8 +30,8 @@ namespace DNA.Security.Cryptography.Crypto.Parameters
 
 		public override bool Equals(object obj)
 		{
-			RsaKeyParameters rsaKeyParameters = obj as RsaKeyParameters;
-			return rsaKeyParameters != null && (rsaKeyParameters.IsPrivate == base.IsPrivate && rsaKeyParameters.Modulus.Equals(this.modulus)) && rsaKeyParameters.Exponent.Equals(this.exponent);
+			RsaKeyParameters kp = obj as RsaKeyParameters;
+			return kp != null && (kp.IsPrivate == base.IsPrivate && kp.Modulus.Equals(this.modulus)) && kp.Exponent.Equals(this.exponent);
 		}
 
 		public override int GetHashCode()

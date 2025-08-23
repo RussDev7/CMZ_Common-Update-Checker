@@ -8,15 +8,15 @@ namespace DNA.Collections
 	{
 		unsafe static Byte4ArrayTool()
 		{
-			fixed (IntPtr* ptr = new byte[1])
+			fixed (IntPtr* pBytes = new byte[1])
 			{
-				fixed (IntPtr* ptr2 = new Byte4[1])
+				fixed (IntPtr* pByte4s = new Byte4[1])
 				{
-					fixed (IntPtr* ptr3 = new uint[1])
+					fixed (IntPtr* pUnts = new uint[1])
 					{
-						Byte4ArrayTool.BYTE_ARRAY_TYPE = Byte4ArrayTool.getHeader((void*)ptr)->type;
-						Byte4ArrayTool.BYTE4_ARRAY_TYPE = Byte4ArrayTool.getHeader((void*)ptr2)->type;
-						Byte4ArrayTool.UINT_ARRAY_TYPE = Byte4ArrayTool.getHeader((void*)ptr3)->type;
+						Byte4ArrayTool.BYTE_ARRAY_TYPE = Byte4ArrayTool.getHeader((void*)pBytes)->type;
+						Byte4ArrayTool.BYTE4_ARRAY_TYPE = Byte4ArrayTool.getHeader((void*)pByte4s)->type;
+						Byte4ArrayTool.UINT_ARRAY_TYPE = Byte4ArrayTool.getHeader((void*)pUnts)->type;
 					}
 				}
 			}
@@ -128,39 +128,39 @@ namespace DNA.Collections
 
 		private unsafe static void toByte4Array(this byte[] bytes)
 		{
-			fixed (IntPtr* ptr = bytes)
+			fixed (IntPtr* pArray = bytes)
 			{
-				Byte4ArrayTool.ArrayHeader* header = Byte4ArrayTool.getHeader((void*)ptr);
-				header->type = Byte4ArrayTool.BYTE4_ARRAY_TYPE;
-				header->length = (UIntPtr)((ulong)((long)(bytes.Length / sizeof(Byte4))));
+				Byte4ArrayTool.ArrayHeader* pHeader = Byte4ArrayTool.getHeader((void*)pArray);
+				pHeader->type = Byte4ArrayTool.BYTE4_ARRAY_TYPE;
+				pHeader->length = (UIntPtr)((ulong)((long)(bytes.Length / sizeof(Byte4))));
 			}
 		}
 
 		private unsafe static void toByte4Array(this uint[] uints)
 		{
-			fixed (IntPtr* ptr = uints)
+			fixed (IntPtr* pArray = uints)
 			{
-				Byte4ArrayTool.ArrayHeader* header = Byte4ArrayTool.getHeader((void*)ptr);
-				header->type = Byte4ArrayTool.BYTE4_ARRAY_TYPE;
+				Byte4ArrayTool.ArrayHeader* pHeader = Byte4ArrayTool.getHeader((void*)pArray);
+				pHeader->type = Byte4ArrayTool.BYTE4_ARRAY_TYPE;
 			}
 		}
 
 		private unsafe static void toByteArray(this Byte4[] floats)
 		{
-			fixed (IntPtr* ptr = floats)
+			fixed (IntPtr* pArray = floats)
 			{
-				Byte4ArrayTool.ArrayHeader* header = Byte4ArrayTool.getHeader((void*)ptr);
-				header->type = Byte4ArrayTool.BYTE_ARRAY_TYPE;
-				header->length = (UIntPtr)((ulong)((long)(floats.Length * sizeof(Byte4))));
+				Byte4ArrayTool.ArrayHeader* pHeader = Byte4ArrayTool.getHeader((void*)pArray);
+				pHeader->type = Byte4ArrayTool.BYTE_ARRAY_TYPE;
+				pHeader->length = (UIntPtr)((ulong)((long)(floats.Length * sizeof(Byte4))));
 			}
 		}
 
 		private unsafe static void toUintArray(this Byte4[] byte4s)
 		{
-			fixed (IntPtr* ptr = byte4s)
+			fixed (IntPtr* pArray = byte4s)
 			{
-				Byte4ArrayTool.ArrayHeader* header = Byte4ArrayTool.getHeader((void*)ptr);
-				header->type = Byte4ArrayTool.UINT_ARRAY_TYPE;
+				Byte4ArrayTool.ArrayHeader* pHeader = Byte4ArrayTool.getHeader((void*)pArray);
+				pHeader->type = Byte4ArrayTool.UINT_ARRAY_TYPE;
 			}
 		}
 

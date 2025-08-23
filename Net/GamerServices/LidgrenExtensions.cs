@@ -13,37 +13,37 @@ namespace DNA.Net.GamerServices
 		public static void Write(this NetBuffer msg, NetworkSessionProperties props)
 		{
 			msg.Write(props.Count);
-			for (int i = 0; i < props.Count; i++)
+			for (int c = 0; c < props.Count; c++)
 			{
-				int? num = props[i];
-				if (num == null)
+				int? i = props[c];
+				if (i == null)
 				{
 					msg.Write(false);
 				}
 				else
 				{
 					msg.Write(true);
-					msg.Write(num.Value);
+					msg.Write(i.Value);
 				}
 			}
 		}
 
 		public static NetworkSessionProperties ReadSessionProps(this NetBuffer msg)
 		{
-			NetworkSessionProperties networkSessionProperties = new NetworkSessionProperties();
-			int num = msg.ReadInt32();
-			for (int i = 0; i < num; i++)
+			NetworkSessionProperties result = new NetworkSessionProperties();
+			int count = msg.ReadInt32();
+			for (int i = 0; i < count; i++)
 			{
 				if (msg.ReadBoolean())
 				{
-					networkSessionProperties[i] = new int?(msg.ReadInt32());
+					result[i] = new int?(msg.ReadInt32());
 				}
 				else
 				{
-					networkSessionProperties[i] = null;
+					result[i] = null;
 				}
 			}
-			return networkSessionProperties;
+			return result;
 		}
 
 		public static void Write(this NetBuffer msg, HostDiscoveryRequestMessage value, string validGameName, int validNetworkVersion)
@@ -55,13 +55,13 @@ namespace DNA.Net.GamerServices
 
 		public static HostDiscoveryRequestMessage ReadDiscoveryRequestMessage(this NetBuffer msg, string validGameName, int validNetworkVersion)
 		{
-			HostDiscoveryRequestMessage hostDiscoveryRequestMessage = new HostDiscoveryRequestMessage();
-			if (hostDiscoveryRequestMessage.ReadAndValidate(msg, validGameName, validNetworkVersion))
+			HostDiscoveryRequestMessage result = new HostDiscoveryRequestMessage();
+			if (result.ReadAndValidate(msg, validGameName, validNetworkVersion))
 			{
-				hostDiscoveryRequestMessage.RequestID = msg.ReadInt32();
-				hostDiscoveryRequestMessage.PlayerID = msg.ReadPlayerID();
+				result.RequestID = msg.ReadInt32();
+				result.PlayerID = msg.ReadPlayerID();
 			}
-			return hostDiscoveryRequestMessage;
+			return result;
 		}
 
 		public static void Write(this NetBuffer msg, HostDiscoveryResponseMessage hdrm, string validGameName, int validNetworkVersion)
@@ -90,38 +90,38 @@ namespace DNA.Net.GamerServices
 
 		public static HostDiscoveryResponseMessage ReadDiscoveryResponseMessage(this NetBuffer msg, string validGameName, int validNetworkVersion)
 		{
-			HostDiscoveryResponseMessage hostDiscoveryResponseMessage = new HostDiscoveryResponseMessage();
-			if (hostDiscoveryResponseMessage.ReadAndValidate(msg, validGameName, validNetworkVersion))
+			HostDiscoveryResponseMessage result = new HostDiscoveryResponseMessage();
+			if (result.ReadAndValidate(msg, validGameName, validNetworkVersion))
 			{
 				try
 				{
-					hostDiscoveryResponseMessage.Result = (NetworkSession.ResultCode)msg.ReadInt32();
-					if (hostDiscoveryResponseMessage.Result == NetworkSession.ResultCode.Succeeded)
+					result.Result = (NetworkSession.ResultCode)msg.ReadInt32();
+					if (result.Result == NetworkSession.ResultCode.Succeeded)
 					{
-						hostDiscoveryResponseMessage.CurrentPlayers = (int)msg.ReadByte();
-						hostDiscoveryResponseMessage.MaxPlayers = (int)msg.ReadByte();
-						hostDiscoveryResponseMessage.Message = msg.ReadString();
-						hostDiscoveryResponseMessage.HostUsername = msg.ReadString();
-						hostDiscoveryResponseMessage.RequestID = msg.ReadInt32();
-						hostDiscoveryResponseMessage.SessionID = msg.ReadInt32();
-						int num = msg.ReadInt32();
-						if (num == 1)
+						result.CurrentPlayers = (int)msg.ReadByte();
+						result.MaxPlayers = (int)msg.ReadByte();
+						result.Message = msg.ReadString();
+						result.HostUsername = msg.ReadString();
+						result.RequestID = msg.ReadInt32();
+						result.SessionID = msg.ReadInt32();
+						int pp = msg.ReadInt32();
+						if (pp == 1)
 						{
-							hostDiscoveryResponseMessage.PasswordProtected = true;
+							result.PasswordProtected = true;
 						}
 						else
 						{
-							hostDiscoveryResponseMessage.PasswordProtected = false;
+							result.PasswordProtected = false;
 						}
-						hostDiscoveryResponseMessage.SessionProperties = msg.ReadSessionProps();
+						result.SessionProperties = msg.ReadSessionProps();
 					}
 				}
 				catch
 				{
-					hostDiscoveryResponseMessage.Result = NetworkSession.ResultCode.VersionIsInvalid;
+					result.Result = NetworkSession.ResultCode.VersionIsInvalid;
 				}
 			}
-			return hostDiscoveryResponseMessage;
+			return result;
 		}
 
 		public static void Write(this NetBuffer msg, RequestConnectToHostMessage cam, string validGameName, int validNetworkVersion)
@@ -143,23 +143,23 @@ namespace DNA.Net.GamerServices
 
 		public static RequestConnectToHostMessage ReadRequestConnectToHostMessage(this NetBuffer msg, string validGameName, int validVersion)
 		{
-			RequestConnectToHostMessage requestConnectToHostMessage = new RequestConnectToHostMessage();
-			if (requestConnectToHostMessage.ReadAndValidate(msg, validGameName, validVersion))
+			RequestConnectToHostMessage result = new RequestConnectToHostMessage();
+			if (result.ReadAndValidate(msg, validGameName, validVersion))
 			{
-				requestConnectToHostMessage.SessionID = msg.ReadInt32();
-				int num = msg.ReadInt32();
-				if (num == 1)
+				result.SessionID = msg.ReadInt32();
+				int pp = msg.ReadInt32();
+				if (pp == 1)
 				{
-					requestConnectToHostMessage.Password = msg.ReadString();
+					result.Password = msg.ReadString();
 				}
 				else
 				{
-					requestConnectToHostMessage.Password = null;
+					result.Password = null;
 				}
-				requestConnectToHostMessage.Gamer = msg.ReadGamer();
-				requestConnectToHostMessage.SessionProperties = msg.ReadSessionProps();
+				result.Gamer = msg.ReadGamer();
+				result.SessionProperties = msg.ReadSessionProps();
 			}
-			return requestConnectToHostMessage;
+			return result;
 		}
 
 		public static void Write(this NetBuffer msg, DropPeerMessage data)
@@ -200,9 +200,9 @@ namespace DNA.Net.GamerServices
 
 		public static Gamer ReadGamer(this NetBuffer msg)
 		{
-			PlayerID playerID = msg.ReadPlayerID();
-			string text = msg.ReadString();
-			return new SimpleGamer(playerID, text);
+			PlayerID pid = msg.ReadPlayerID();
+			string gamertag = msg.ReadString();
+			return new SimpleGamer(pid, gamertag);
 		}
 
 		public static void WriteArray(this NetBuffer msg, Gamer[] data)
@@ -221,17 +221,17 @@ namespace DNA.Net.GamerServices
 
 		public static Gamer[] ReadGamerArray(this NetBuffer msg)
 		{
-			Gamer[] array = null;
-			int num = msg.ReadInt32();
-			if (num > -1)
+			Gamer[] result = null;
+			int numGamers = msg.ReadInt32();
+			if (numGamers > -1)
 			{
-				array = new SimpleGamer[num];
-				for (int i = 0; i < num; i++)
+				result = new SimpleGamer[numGamers];
+				for (int i = 0; i < numGamers; i++)
 				{
-					array[i] = msg.ReadGamer();
+					result[i] = msg.ReadGamer();
 				}
 			}
-			return array;
+			return result;
 		}
 
 		public static void Write(this NetBuffer msg, PlayerID id)
@@ -244,8 +244,8 @@ namespace DNA.Net.GamerServices
 			PlayerID playerID;
 			try
 			{
-				byte[] array = msg.ReadByteArray();
-				playerID = new PlayerID(array);
+				byte[] data = msg.ReadByteArray();
+				playerID = new PlayerID(data);
 			}
 			catch
 			{
@@ -275,21 +275,21 @@ namespace DNA.Net.GamerServices
 			{
 				return null;
 			}
-			IPEndPoint[] array = new IPEndPoint[num];
+			IPEndPoint[] result = new IPEndPoint[num];
 			for (int i = 0; i < num; i++)
 			{
-				array[i] = msg.ReadIPEndPoint();
+				result[i] = msg.ReadIPEndPoint();
 			}
-			return array;
+			return result;
 		}
 
 		public static void CopyByteArrayFrom(this NetBuffer msg, NetBuffer src)
 		{
-			int num = src.ReadInt32();
-			msg.Write(num);
-			if (num > 0)
+			int size = src.ReadInt32();
+			msg.Write(size);
+			if (size > 0)
 			{
-				msg.CopyBytesFrom(src, num);
+				msg.CopyBytesFrom(src, size);
 			}
 		}
 
@@ -323,15 +323,15 @@ namespace DNA.Net.GamerServices
 
 		public static byte[] ReadByteArray(this NetBuffer msg)
 		{
-			int num = msg.ReadInt32();
-			switch (num)
+			int i = msg.ReadInt32();
+			switch (i)
 			{
 			case -1:
 				return null;
 			case 0:
 				return new byte[0];
 			default:
-				return msg.ReadBytes(num);
+				return msg.ReadBytes(i);
 			}
 		}
 
@@ -341,38 +341,38 @@ namespace DNA.Net.GamerServices
 			{
 				return CommonResources.Not_connected_to_internet;
 			}
-			string text = "";
-			WebRequest webRequest = WebRequest.Create("http://checkip.dyndns.org");
-			webRequest.Timeout = 4000;
+			string direction = "";
+			WebRequest request = WebRequest.Create("http://checkip.dyndns.org");
+			request.Timeout = 4000;
 			for (int i = 0; i < 5; i++)
 			{
 				try
 				{
-					using (WebResponse response = webRequest.GetResponse())
+					using (WebResponse response = request.GetResponse())
 					{
-						using (StreamReader streamReader = new StreamReader(response.GetResponseStream()))
+						using (StreamReader stream = new StreamReader(response.GetResponseStream()))
 						{
-							text = streamReader.ReadToEnd();
+							direction = stream.ReadToEnd();
 						}
 					}
-					int num = text.IndexOf("Address: ") + 9;
-					int num2 = text.LastIndexOf("</body>");
-					text = text.Substring(num, num2 - num);
+					int first = direction.IndexOf("Address: ") + 9;
+					int last = direction.LastIndexOf("</body>");
+					direction = direction.Substring(first, last - first);
 					i = 5;
 				}
-				catch (WebException ex)
+				catch (WebException we)
 				{
-					text = string.Concat(new object[]
+					direction = string.Concat(new object[]
 					{
 						CommonResources.Error_getting_address_dyndns_returned,
 						": ",
-						ex.Status.ToString(),
+						we.Status.ToString(),
 						" ",
-						ex.Response
+						we.Response
 					});
 				}
 			}
-			return text;
+			return direction;
 		}
 
 		public static string GetLanIPAddress()
@@ -381,11 +381,11 @@ namespace DNA.Net.GamerServices
 			{
 				return CommonResources.No_network_is_available;
 			}
-			IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
-			IPAddress ipaddress = hostEntry.AddressList.FirstOrDefault((IPAddress ip) => ip.AddressFamily == AddressFamily.InterNetwork);
-			if (ipaddress != null)
+			IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+			IPAddress result = host.AddressList.FirstOrDefault((IPAddress ip) => ip.AddressFamily == AddressFamily.InterNetwork);
+			if (result != null)
 			{
-				return ipaddress.ToString();
+				return result.ToString();
 			}
 			return CommonResources.Couldn_t_get_local_address;
 		}

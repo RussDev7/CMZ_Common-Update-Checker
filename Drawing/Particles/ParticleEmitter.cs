@@ -109,9 +109,9 @@ namespace DNA.Drawing.Particles
 			{
 				return new ParticleEmitter(game, particleEffect, screenMap);
 			}
-			ParticleEmitter particleEmitter = ParticleEmitter._graveYard.Dequeue();
-			particleEmitter.Setup(game, particleEffect, screenMap);
-			return particleEmitter;
+			ParticleEmitter emitter = ParticleEmitter._graveYard.Dequeue();
+			emitter.Setup(game, particleEffect, screenMap);
+			return emitter;
 		}
 
 		private void Setup(DNAGame game, ParticleEffect particleEffect, Texture2D screenMap)
@@ -195,13 +195,13 @@ namespace DNA.Drawing.Particles
 
 		public void AdvanceEffect(TimeSpan time)
 		{
-			int num = (int)(time.TotalSeconds * 60.0);
-			TimeSpan timeSpan = TimeSpan.Zero;
-			TimeSpan timeSpan2 = TimeSpan.FromSeconds(0.016666666666666666);
-			for (int i = 0; i < num; i++)
+			int frames = (int)(time.TotalSeconds * 60.0);
+			TimeSpan t = TimeSpan.Zero;
+			TimeSpan frameTime = TimeSpan.FromSeconds(0.016666666666666666);
+			for (int i = 0; i < frames; i++)
 			{
-				timeSpan += timeSpan2;
-				this.Update(this._game, new GameTime(timeSpan, timeSpan2));
+				t += frameTime;
+				this.Update(this._game, new GameTime(t, frameTime));
 			}
 		}
 
@@ -390,18 +390,18 @@ namespace DNA.Drawing.Particles
 				this.LoadParticleEffect(this.Game.GraphicsDevice);
 				this.Reset();
 				this.vertexBuffer = new DynamicVertexBuffer(this.Game.GraphicsDevice, ParticleVertex.VertexDeclaration, this.MaxParticles * 4, BufferUsage.WriteOnly);
-				short[] array = new short[this.MaxParticles * 6];
+				short[] indices = new short[this.MaxParticles * 6];
 				for (int j = 0; j < this.MaxParticles; j++)
 				{
-					array[j * 6] = (short)(j * 4);
-					array[j * 6 + 1] = (short)(j * 4 + 1);
-					array[j * 6 + 2] = (short)(j * 4 + 2);
-					array[j * 6 + 3] = (short)(j * 4);
-					array[j * 6 + 4] = (short)(j * 4 + 2);
-					array[j * 6 + 5] = (short)(j * 4 + 3);
+					indices[j * 6] = (short)(j * 4);
+					indices[j * 6 + 1] = (short)(j * 4 + 1);
+					indices[j * 6 + 2] = (short)(j * 4 + 2);
+					indices[j * 6 + 3] = (short)(j * 4);
+					indices[j * 6 + 4] = (short)(j * 4 + 2);
+					indices[j * 6 + 5] = (short)(j * 4 + 3);
 				}
-				this.indexBuffer = new IndexBuffer(this.Game.GraphicsDevice, typeof(short), array.Length, BufferUsage.WriteOnly);
-				this.indexBuffer.SetData<short>(array);
+				this.indexBuffer = new IndexBuffer(this.Game.GraphicsDevice, typeof(short), indices.Length, BufferUsage.WriteOnly);
+				this.indexBuffer.SetData<short>(indices);
 			}
 
 			public void SetInitalPosition(Vector3 position)
@@ -420,14 +420,14 @@ namespace DNA.Drawing.Particles
 				{
 					this.Initialize();
 				}
-				Vector3 worldPosition = this.ParticleEmitter.WorldPosition;
-				float num = 1f / this._particleEffect.ParticlesPerSecond;
+				Vector3 newPosition = this.ParticleEmitter.WorldPosition;
+				float timeBetweenParticles = 1f / this._particleEffect.ParticlesPerSecond;
 				if (this._firstUpdate)
 				{
-					this._timeLeftOver = num;
-					this.SetInitalPosition(worldPosition);
+					this._timeLeftOver = timeBetweenParticles;
+					this.SetInitalPosition(newPosition);
 				}
-				bool flag = this._particleEffect.EmmissionTime > TimeSpan.Zero;
+				bool isTimedEmit = this._particleEffect.EmmissionTime > TimeSpan.Zero;
 				this.currentTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
 				this.RetireActiveParticles();
 				this.FreeRetiredParticles();
@@ -439,46 +439,46 @@ namespace DNA.Drawing.Particles
 				{
 					this.drawCounter = 0;
 				}
-				float num2 = (float)gameTime.ElapsedGameTime.TotalSeconds;
-				if (flag)
+				float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+				if (isTimedEmit)
 				{
 					this._timeToEmit -= gameTime.ElapsedGameTime;
 					if (this._timeToEmit <= TimeSpan.Zero)
 					{
-						num2 += (float)this._timeToEmit.TotalSeconds;
+						elapsedTime += (float)this._timeToEmit.TotalSeconds;
 						this._timeToEmit = TimeSpan.Zero;
 						this._emitting = false;
 					}
 				}
-				if (num2 > 0f && this.Emitting)
+				if (elapsedTime > 0f && this.Emitting)
 				{
-					Vector3 vector = (worldPosition - this._previousPosition) / num2;
-					float num3 = this._timeLeftOver + num2;
-					float num4 = -this._timeLeftOver;
+					Vector3 velocity = (newPosition - this._previousPosition) / elapsedTime;
+					float timeToSpend = this._timeLeftOver + elapsedTime;
+					float l_currentTime = -this._timeLeftOver;
 					if (emitterSize.LengthSquared() == 0f)
 					{
-						while (num3 > num)
+						while (timeToSpend > timeBetweenParticles)
 						{
-							num4 += num;
-							num3 -= num;
-							float num5 = num4 / num2;
-							Vector3 vector2 = Vector3.Lerp(this._previousPosition, worldPosition, num5);
-							this.AddParticle(vector2, vector);
+							l_currentTime += timeBetweenParticles;
+							timeToSpend -= timeBetweenParticles;
+							float mu = l_currentTime / elapsedTime;
+							Vector3 position = Vector3.Lerp(this._previousPosition, newPosition, mu);
+							this.AddParticle(position, velocity);
 						}
 					}
 					else
 					{
-						while (num3 > num)
+						while (timeToSpend > timeBetweenParticles)
 						{
-							num4 += num;
-							num3 -= num;
-							Vector3 vector3 = new Vector3((float)((double)worldPosition.X + (this._rand.NextDouble() * 2.0 - 1.0) * (double)emitterSize.X), (float)((double)worldPosition.Y + (this._rand.NextDouble() * 2.0 - 1.0) * (double)emitterSize.Y), (float)((double)worldPosition.Z + (this._rand.NextDouble() * 2.0 - 1.0) * (double)emitterSize.Z));
-							this.AddParticle(vector3, vector);
+							l_currentTime += timeBetweenParticles;
+							timeToSpend -= timeBetweenParticles;
+							Vector3 position2 = new Vector3((float)((double)newPosition.X + (this._rand.NextDouble() * 2.0 - 1.0) * (double)emitterSize.X), (float)((double)newPosition.Y + (this._rand.NextDouble() * 2.0 - 1.0) * (double)emitterSize.Y), (float)((double)newPosition.Z + (this._rand.NextDouble() * 2.0 - 1.0) * (double)emitterSize.Z));
+							this.AddParticle(position2, velocity);
 						}
 					}
-					this._timeLeftOver = num3;
+					this._timeLeftOver = timeToSpend;
 				}
-				this._previousPosition = worldPosition;
+				this._previousPosition = newPosition;
 			}
 
 			public void OnAfterFrame()
@@ -488,11 +488,11 @@ namespace DNA.Drawing.Particles
 
 			private void RetireActiveParticles()
 			{
-				float num = (float)this._particleEffect.ParticleLifeTime.TotalSeconds;
+				float particleDuration = (float)this._particleEffect.ParticleLifeTime.TotalSeconds;
 				while (this.firstActiveParticle != this.firstNewParticle)
 				{
-					float num2 = this.currentTime - this.particles[this.firstActiveParticle * 4].Time;
-					if (num2 < num)
+					float particleAge = this.currentTime - this.particles[this.firstActiveParticle * 4].Time;
+					if (particleAge < particleDuration)
 					{
 						return;
 					}
@@ -509,8 +509,8 @@ namespace DNA.Drawing.Particles
 			{
 				while (this.firstRetiredParticle != this.firstActiveParticle)
 				{
-					int num = this.drawCounter - (int)this.particles[this.firstRetiredParticle * 4].Time;
-					if (num < 3)
+					int age = this.drawCounter - (int)this.particles[this.firstRetiredParticle * 4].Time;
+					if (age < 3)
 					{
 						return;
 					}
@@ -541,10 +541,10 @@ namespace DNA.Drawing.Particles
 				EffectParameterCollection parameters = this.particleEffect.Parameters;
 				if (this.ParticleEmitter.EntityColor != null)
 				{
-					Color color = DrawingTools.ModulateColors(this.ParticleEmitter.EntityColor.Value, this._particleEffect.ColorMin);
-					Color color2 = DrawingTools.ModulateColors(this.ParticleEmitter.EntityColor.Value, this._particleEffect.ColorMax);
-					this.effectMinColorParameter.SetValue(color.ToVector4());
-					this.effectMaxColorParameter.SetValue(color2.ToVector4());
+					Color minColor = DrawingTools.ModulateColors(this.ParticleEmitter.EntityColor.Value, this._particleEffect.ColorMin);
+					Color maxColor = DrawingTools.ModulateColors(this.ParticleEmitter.EntityColor.Value, this._particleEffect.ColorMax);
+					this.effectMinColorParameter.SetValue(minColor.ToVector4());
+					this.effectMaxColorParameter.SetValue(maxColor.ToVector4());
 				}
 				if (this.ParticleEmitter.IsDistortionEffect && this.ParticleEmitter.ScreenBackground != null)
 				{
@@ -577,10 +577,10 @@ namespace DNA.Drawing.Particles
 					this.effectTimeParameter.SetValue(this.currentTime);
 					if (this.ParticleEmitter.Instances != null)
 					{
-						EffectTechnique effectTechnique = this.particleEffect.Techniques["ParticlesInstanced"];
-						this.particleEffect.CurrentTechnique = effectTechnique;
-						int num = this.ParticleEmitter.Instances.Length;
-						if (num > 0)
+						EffectTechnique technique = this.particleEffect.Techniques["ParticlesInstanced"];
+						this.particleEffect.CurrentTechnique = technique;
+						int instanceCount = this.ParticleEmitter.Instances.Length;
+						if (instanceCount > 0)
 						{
 							if (this.ParticleEmitter._instanceListDirty)
 							{
@@ -590,7 +590,7 @@ namespace DNA.Drawing.Particles
 									{
 										this._instanceVertexBuffer.Dispose();
 									}
-									this._instanceVertexBuffer = new VertexBuffer(device, ParticleEmitter.ParticleEmitterCore.instanceVertexDeclaration, num, BufferUsage.WriteOnly);
+									this._instanceVertexBuffer = new VertexBuffer(device, ParticleEmitter.ParticleEmitterCore.instanceVertexDeclaration, instanceCount, BufferUsage.WriteOnly);
 								}
 								this._instanceVertexBuffer.SetData<Matrix>(this.ParticleEmitter.Instances, 0, this.ParticleEmitter.Instances.Length);
 								this.ParticleEmitter._instanceListDirty = false;
@@ -603,15 +603,15 @@ namespace DNA.Drawing.Particles
 							device.Indices = this.indexBuffer;
 							for (int i = 0; i < this.particleEffect.CurrentTechnique.Passes.Count; i++)
 							{
-								EffectPass effectPass = this.particleEffect.CurrentTechnique.Passes[i];
-								effectPass.Apply();
+								EffectPass pass = this.particleEffect.CurrentTechnique.Passes[i];
+								pass.Apply();
 								if (this.firstActiveParticle < this.firstFreeParticle)
 								{
-									device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, this.firstActiveParticle * 4, (this.firstFreeParticle - this.firstActiveParticle) * 4, this.firstActiveParticle * 6, (this.firstFreeParticle - this.firstActiveParticle) * 2, num);
+									device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, this.firstActiveParticle * 4, (this.firstFreeParticle - this.firstActiveParticle) * 4, this.firstActiveParticle * 6, (this.firstFreeParticle - this.firstActiveParticle) * 2, instanceCount);
 								}
 								else
 								{
-									device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, this.MaxParticles * 4, 0, this.MaxParticles * 2, num);
+									device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, this.MaxParticles * 4, 0, this.MaxParticles * 2, instanceCount);
 								}
 							}
 							return;
@@ -623,8 +623,8 @@ namespace DNA.Drawing.Particles
 						device.Indices = this.indexBuffer;
 						for (int j = 0; j < this.particleEffect.CurrentTechnique.Passes.Count; j++)
 						{
-							EffectPass effectPass2 = this.particleEffect.CurrentTechnique.Passes[j];
-							effectPass2.Apply();
+							EffectPass pass2 = this.particleEffect.CurrentTechnique.Passes[j];
+							pass2.Apply();
 							if (this.firstActiveParticle < this.firstFreeParticle)
 							{
 								device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, this.firstActiveParticle * 4, (this.firstFreeParticle - this.firstActiveParticle) * 4, this.firstActiveParticle * 6, (this.firstFreeParticle - this.firstActiveParticle) * 2);
@@ -644,17 +644,17 @@ namespace DNA.Drawing.Particles
 
 			private void AddNewParticlesToVertexBuffer()
 			{
-				int num = 36;
+				int stride = 36;
 				if (this.firstNewParticle < this.firstFreeParticle)
 				{
-					this.vertexBuffer.SetData<ParticleVertex>(this.firstNewParticle * num * 4, this.particles, this.firstNewParticle * 4, (this.firstFreeParticle - this.firstNewParticle) * 4, num, SetDataOptions.NoOverwrite);
+					this.vertexBuffer.SetData<ParticleVertex>(this.firstNewParticle * stride * 4, this.particles, this.firstNewParticle * 4, (this.firstFreeParticle - this.firstNewParticle) * 4, stride, SetDataOptions.NoOverwrite);
 				}
 				else
 				{
-					this.vertexBuffer.SetData<ParticleVertex>(this.firstNewParticle * num * 4, this.particles, this.firstNewParticle * 4, (this.MaxParticles - this.firstNewParticle) * 4, num, SetDataOptions.NoOverwrite);
+					this.vertexBuffer.SetData<ParticleVertex>(this.firstNewParticle * stride * 4, this.particles, this.firstNewParticle * 4, (this.MaxParticles - this.firstNewParticle) * 4, stride, SetDataOptions.NoOverwrite);
 					if (this.firstFreeParticle > 0)
 					{
-						this.vertexBuffer.SetData<ParticleVertex>(0, this.particles, 0, this.firstFreeParticle * 4, num, SetDataOptions.NoOverwrite);
+						this.vertexBuffer.SetData<ParticleVertex>(0, this.particles, 0, this.firstFreeParticle * 4, stride, SetDataOptions.NoOverwrite);
 					}
 				}
 				this.firstNewParticle = this.firstFreeParticle;
@@ -666,35 +666,35 @@ namespace DNA.Drawing.Particles
 				{
 					position = Vector3.Zero;
 				}
-				int num = this.firstFreeParticle + 1;
-				if (num >= this.MaxParticles)
+				int nextFreeParticle = this.firstFreeParticle + 1;
+				if (nextFreeParticle >= this.MaxParticles)
 				{
-					num = 0;
+					nextFreeParticle = 0;
 				}
-				if (num == this.firstRetiredParticle)
+				if (nextFreeParticle == this.firstRetiredParticle)
 				{
 					return;
 				}
 				velocity *= this._particleEffect.EmitterVelocitySensitivity;
-				float num2 = MathHelper.Lerp(this._particleEffect.HorizontalVelocityMin, this._particleEffect.HorizontalVelocityMax, (float)ParticleEmitter.ParticleEmitterCore.random.NextDouble());
-				double num3 = ParticleEmitter.ParticleEmitterCore.random.NextDouble() * 6.2831854820251465;
-				velocity.X += num2 * (float)Math.Cos(num3);
-				velocity.Y += num2 * (float)Math.Sin(num3);
+				float horizontalVelocity = MathHelper.Lerp(this._particleEffect.HorizontalVelocityMin, this._particleEffect.HorizontalVelocityMax, (float)ParticleEmitter.ParticleEmitterCore.random.NextDouble());
+				double horizontalAngle = ParticleEmitter.ParticleEmitterCore.random.NextDouble() * 6.2831854820251465;
+				velocity.X += horizontalVelocity * (float)Math.Cos(horizontalAngle);
+				velocity.Y += horizontalVelocity * (float)Math.Sin(horizontalAngle);
 				velocity.Z += MathHelper.Lerp(this._particleEffect.VerticalVelocityMin, this._particleEffect.VerticalVelocityMax, (float)ParticleEmitter.ParticleEmitterCore.random.NextDouble());
 				velocity = Vector3.TransformNormal(velocity, this.ParticleEmitter.LocalToWorld);
-				Color color = new Color((int)((byte)ParticleEmitter.ParticleEmitterCore.random.Next(255)), (int)((byte)ParticleEmitter.ParticleEmitterCore.random.Next(255)), (int)((byte)ParticleEmitter.ParticleEmitterCore.random.Next(255)), (int)((byte)ParticleEmitter.ParticleEmitterCore.random.Next(255)));
-				int num4 = MathTools.RandomInt(this._particleEffect.FirstTileToInclude, this._particleEffect.LastTileToInclude + 1);
-				int num5 = num4 % this._particleEffect.NumTilesWide;
-				int num6 = num4 / this._particleEffect.NumTilesWide;
+				Color randomValues = new Color((int)((byte)ParticleEmitter.ParticleEmitterCore.random.Next(255)), (int)((byte)ParticleEmitter.ParticleEmitterCore.random.Next(255)), (int)((byte)ParticleEmitter.ParticleEmitterCore.random.Next(255)), (int)((byte)ParticleEmitter.ParticleEmitterCore.random.Next(255)));
+				int tile = MathTools.RandomInt(this._particleEffect.FirstTileToInclude, this._particleEffect.LastTileToInclude + 1);
+				int tilex = tile % this._particleEffect.NumTilesWide;
+				int tiley = tile / this._particleEffect.NumTilesWide;
 				for (int i = 0; i < 4; i++)
 				{
 					this.particles[this.firstFreeParticle * 4 + i].Position = position;
-					this.particles[this.firstFreeParticle * 4 + i].SetTileXY(num5, num6);
+					this.particles[this.firstFreeParticle * 4 + i].SetTileXY(tilex, tiley);
 					this.particles[this.firstFreeParticle * 4 + i].Velocity = velocity;
-					this.particles[this.firstFreeParticle * 4 + i].Random = color;
+					this.particles[this.firstFreeParticle * 4 + i].Random = randomValues;
 					this.particles[this.firstFreeParticle * 4 + i].Time = this.currentTime;
 				}
-				this.firstFreeParticle = num;
+				this.firstFreeParticle = nextFreeParticle;
 			}
 
 			private bool _emitting = true;

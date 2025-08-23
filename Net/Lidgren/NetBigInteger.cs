@@ -24,24 +24,24 @@ namespace DNA.Net.Lidgren
 				this.m_magnitude = mag;
 				return;
 			}
-			int num = 0;
-			while (num < mag.Length && mag[num] == 0)
+			int i = 0;
+			while (i < mag.Length && mag[i] == 0)
 			{
-				num++;
+				i++;
 			}
-			if (num == mag.Length)
+			if (i == mag.Length)
 			{
 				this.m_magnitude = NetBigInteger.ZeroMagnitude;
 				return;
 			}
 			this.m_sign = signum;
-			if (num == 0)
+			if (i == 0)
 			{
 				this.m_magnitude = mag;
 				return;
 			}
-			this.m_magnitude = new int[mag.Length - num];
-			Array.Copy(mag, num, this.m_magnitude, 0, this.m_magnitude.Length);
+			this.m_magnitude = new int[mag.Length - i];
+			Array.Copy(mag, i, this.m_magnitude, 0, this.m_magnitude.Length);
 		}
 
 		public NetBigInteger(string value)
@@ -55,10 +55,10 @@ namespace DNA.Net.Lidgren
 			{
 				throw new FormatException("Zero length BigInteger");
 			}
-			NumberStyles numberStyles;
-			int num;
-			NetBigInteger netBigInteger;
-			NetBigInteger netBigInteger2;
+			NumberStyles style;
+			int chunk;
+			NetBigInteger r;
+			NetBigInteger rE;
 			if (radix != 2)
 			{
 				if (radix != 10)
@@ -67,27 +67,27 @@ namespace DNA.Net.Lidgren
 					{
 						throw new FormatException("Only bases 2, 10, or 16 allowed");
 					}
-					numberStyles = NumberStyles.AllowHexSpecifier;
-					num = NetBigInteger.chunk16;
-					netBigInteger = NetBigInteger.radix16;
-					netBigInteger2 = NetBigInteger.radix16E;
+					style = NumberStyles.AllowHexSpecifier;
+					chunk = NetBigInteger.chunk16;
+					r = NetBigInteger.radix16;
+					rE = NetBigInteger.radix16E;
 				}
 				else
 				{
-					numberStyles = NumberStyles.Integer;
-					num = NetBigInteger.chunk10;
-					netBigInteger = NetBigInteger.radix10;
-					netBigInteger2 = NetBigInteger.radix10E;
+					style = NumberStyles.Integer;
+					chunk = NetBigInteger.chunk10;
+					r = NetBigInteger.radix10;
+					rE = NetBigInteger.radix10E;
 				}
 			}
 			else
 			{
-				numberStyles = NumberStyles.Integer;
-				num = NetBigInteger.chunk2;
-				netBigInteger = NetBigInteger.radix2;
-				netBigInteger2 = NetBigInteger.radix2E;
+				style = NumberStyles.Integer;
+				chunk = NetBigInteger.chunk2;
+				r = NetBigInteger.radix2;
+				rE = NetBigInteger.radix2E;
 			}
-			int num2 = 0;
+			int index = 0;
 			this.m_sign = 1;
 			if (str[0] == '-')
 			{
@@ -96,84 +96,84 @@ namespace DNA.Net.Lidgren
 					throw new FormatException("Zero length BigInteger");
 				}
 				this.m_sign = -1;
-				num2 = 1;
+				index = 1;
 			}
-			while (num2 < str.Length && int.Parse(str[num2].ToString(), numberStyles) == 0)
+			while (index < str.Length && int.Parse(str[index].ToString(), style) == 0)
 			{
-				num2++;
+				index++;
 			}
-			if (num2 >= str.Length)
+			if (index >= str.Length)
 			{
 				this.m_sign = 0;
 				this.m_magnitude = NetBigInteger.ZeroMagnitude;
 				return;
 			}
-			NetBigInteger netBigInteger3 = NetBigInteger.Zero;
-			int num3 = num2 + num;
-			if (num3 <= str.Length)
+			NetBigInteger b = NetBigInteger.Zero;
+			int next = index + chunk;
+			if (next <= str.Length)
 			{
-				string text;
+				string s;
 				for (;;)
 				{
-					text = str.Substring(num2, num);
-					ulong num4 = ulong.Parse(text, numberStyles);
-					NetBigInteger netBigInteger4 = NetBigInteger.createUValueOf(num4);
+					s = str.Substring(index, chunk);
+					ulong i = ulong.Parse(s, style);
+					NetBigInteger bi = NetBigInteger.createUValueOf(i);
 					if (radix != 2)
 					{
 						if (radix != 16)
 						{
-							netBigInteger3 = netBigInteger3.Multiply(netBigInteger2);
+							b = b.Multiply(rE);
 						}
 						else
 						{
-							netBigInteger3 = netBigInteger3.ShiftLeft(64);
+							b = b.ShiftLeft(64);
 						}
 					}
 					else
 					{
-						if (num4 > 1UL)
+						if (i > 1UL)
 						{
 							break;
 						}
-						netBigInteger3 = netBigInteger3.ShiftLeft(1);
+						b = b.ShiftLeft(1);
 					}
-					netBigInteger3 = netBigInteger3.Add(netBigInteger4);
-					num2 = num3;
-					num3 += num;
-					if (num3 > str.Length)
+					b = b.Add(bi);
+					index = next;
+					next += chunk;
+					if (next > str.Length)
 					{
 						goto IL_01B6;
 					}
 				}
-				throw new FormatException("Bad character in radix 2 string: " + text);
+				throw new FormatException("Bad character in radix 2 string: " + s);
 			}
 			IL_01B6:
-			if (num2 < str.Length)
+			if (index < str.Length)
 			{
-				string text2 = str.Substring(num2);
-				ulong num5 = ulong.Parse(text2, numberStyles);
-				NetBigInteger netBigInteger5 = NetBigInteger.createUValueOf(num5);
-				if (netBigInteger3.m_sign > 0)
+				string s2 = str.Substring(index);
+				ulong j = ulong.Parse(s2, style);
+				NetBigInteger bi2 = NetBigInteger.createUValueOf(j);
+				if (b.m_sign > 0)
 				{
 					if (radix != 2)
 					{
 						if (radix == 16)
 						{
-							netBigInteger3 = netBigInteger3.ShiftLeft(text2.Length << 2);
+							b = b.ShiftLeft(s2.Length << 2);
 						}
 						else
 						{
-							netBigInteger3 = netBigInteger3.Multiply(netBigInteger.Pow(text2.Length));
+							b = b.Multiply(r.Pow(s2.Length));
 						}
 					}
-					netBigInteger3 = netBigInteger3.Add(netBigInteger5);
+					b = b.Add(bi2);
 				}
 				else
 				{
-					netBigInteger3 = netBigInteger5;
+					b = bi2;
 				}
 			}
-			this.m_magnitude = netBigInteger3.m_magnitude;
+			this.m_magnitude = b.m_magnitude;
 		}
 
 		public NetBigInteger(byte[] bytes)
@@ -194,77 +194,77 @@ namespace DNA.Net.Lidgren
 				return;
 			}
 			this.m_sign = -1;
-			int num = offset + length;
-			int num2 = offset;
-			while (num2 < num && (sbyte)bytes[num2] == -1)
+			int end = offset + length;
+			int iBval = offset;
+			while (iBval < end && (sbyte)bytes[iBval] == -1)
 			{
-				num2++;
+				iBval++;
 			}
-			if (num2 >= num)
+			if (iBval >= end)
 			{
 				this.m_magnitude = NetBigInteger.One.m_magnitude;
 				return;
 			}
-			int num3 = num - num2;
-			byte[] array = new byte[num3];
-			int i = 0;
-			while (i < num3)
+			int numBytes = end - iBval;
+			byte[] inverse = new byte[numBytes];
+			int index = 0;
+			while (index < numBytes)
 			{
-				array[i++] = ~bytes[num2++];
+				inverse[index++] = ~bytes[iBval++];
 			}
-			while (array[--i] == 255)
+			while (inverse[--index] == 255)
 			{
-				array[i] = 0;
+				inverse[index] = 0;
 			}
-			byte[] array2 = array;
-			int num4 = i;
-			array2[num4] += 1;
-			this.m_magnitude = NetBigInteger.MakeMagnitude(array, 0, array.Length);
+			byte[] array = inverse;
+			int num = index;
+			array[num] += 1;
+			this.m_magnitude = NetBigInteger.MakeMagnitude(inverse, 0, inverse.Length);
 		}
 
 		private static int[] MakeMagnitude(byte[] bytes, int offset, int length)
 		{
-			int num = offset + length;
-			int num2 = offset;
-			while (num2 < num && bytes[num2] == 0)
+			int end = offset + length;
+			int firstSignificant = offset;
+			while (firstSignificant < end && bytes[firstSignificant] == 0)
 			{
-				num2++;
+				firstSignificant++;
 			}
-			if (num2 >= num)
+			if (firstSignificant >= end)
 			{
 				return NetBigInteger.ZeroMagnitude;
 			}
-			int num3 = (num - num2 + 3) / 4;
-			int num4 = (num - num2) % 4;
-			if (num4 == 0)
+			int nInts = (end - firstSignificant + 3) / 4;
+			int bCount = (end - firstSignificant) % 4;
+			if (bCount == 0)
 			{
-				num4 = 4;
+				bCount = 4;
 			}
-			if (num3 < 1)
+			if (nInts < 1)
 			{
 				return NetBigInteger.ZeroMagnitude;
 			}
-			int[] array = new int[num3];
-			int num5 = 0;
-			int num6 = 0;
-			for (int i = num2; i < num; i++)
+			int[] mag = new int[nInts];
+			int v = 0;
+			int magnitudeIndex = 0;
+			for (int i = firstSignificant; i < end; i++)
 			{
-				num5 <<= 8;
-				num5 |= (int)(bytes[i] & byte.MaxValue);
-				num4--;
-				if (num4 <= 0)
+				v <<= 8;
+				v |= (int)(bytes[i] & byte.MaxValue);
+				bCount--;
+				if (bCount <= 0)
 				{
-					array[num6] = num5;
-					num6++;
-					num4 = 4;
-					num5 = 0;
+					mag[magnitudeIndex] = v;
+					magnitudeIndex++;
+					bCount = 4;
+					v = 0;
 				}
 			}
-			if (num6 < array.Length)
+			if (magnitudeIndex < mag.Length)
 			{
-				array[num6] = num5;
+				mag[magnitudeIndex] = v;
 			}
-			return array;
+			return mag;
 		}
 
 		public NetBigInteger(int sign, byte[] bytes)
@@ -298,18 +298,18 @@ namespace DNA.Net.Lidgren
 
 		private static int[] AddMagnitudes(int[] a, int[] b)
 		{
-			int num = a.Length - 1;
-			int i = b.Length - 1;
-			long num2 = 0L;
-			while (i >= 0)
+			int tI = a.Length - 1;
+			int vI = b.Length - 1;
+			long i = 0L;
+			while (vI >= 0)
 			{
-				num2 += (long)((ulong)a[num] + (ulong)b[i--]);
-				a[num--] = (int)num2;
-				num2 = (long)((ulong)num2 >> 32);
+				i += (long)((ulong)a[tI] + (ulong)b[vI--]);
+				a[tI--] = (int)i;
+				i = (long)((ulong)i >> 32);
 			}
-			if (num2 != 0L)
+			if (i != 0L)
 			{
-				while (num >= 0 && ++a[num--] == 0)
+				while (tI >= 0 && ++a[tI--] == 0)
 				{
 				}
 			}
@@ -339,36 +339,36 @@ namespace DNA.Net.Lidgren
 
 		private NetBigInteger AddToMagnitude(int[] magToAdd)
 		{
-			int[] array;
-			int[] array2;
+			int[] big;
+			int[] small;
 			if (this.m_magnitude.Length < magToAdd.Length)
 			{
-				array = magToAdd;
-				array2 = this.m_magnitude;
+				big = magToAdd;
+				small = this.m_magnitude;
 			}
 			else
 			{
-				array = this.m_magnitude;
-				array2 = magToAdd;
+				big = this.m_magnitude;
+				small = magToAdd;
 			}
-			uint num = uint.MaxValue;
-			if (array.Length == array2.Length)
+			uint limit = uint.MaxValue;
+			if (big.Length == small.Length)
 			{
-				num -= (uint)array2[0];
+				limit -= (uint)small[0];
 			}
-			bool flag = array[0] >= (int)num;
-			int[] array3;
-			if (flag)
+			bool possibleOverflow = big[0] >= (int)limit;
+			int[] bigCopy;
+			if (possibleOverflow)
 			{
-				array3 = new int[array.Length + 1];
-				array.CopyTo(array3, 1);
+				bigCopy = new int[big.Length + 1];
+				big.CopyTo(bigCopy, 1);
 			}
 			else
 			{
-				array3 = (int[])array.Clone();
+				bigCopy = (int[])big.Clone();
 			}
-			array3 = NetBigInteger.AddMagnitudes(array3, array2);
-			return new NetBigInteger(this.m_sign, array3, flag);
+			bigCopy = NetBigInteger.AddMagnitudes(bigCopy, small);
+			return new NetBigInteger(this.m_sign, bigCopy, possibleOverflow);
 		}
 
 		public NetBigInteger And(NetBigInteger value)
@@ -377,37 +377,37 @@ namespace DNA.Net.Lidgren
 			{
 				return NetBigInteger.Zero;
 			}
-			int[] array = ((this.m_sign > 0) ? this.m_magnitude : this.Add(NetBigInteger.One).m_magnitude);
-			int[] array2 = ((value.m_sign > 0) ? value.m_magnitude : value.Add(NetBigInteger.One).m_magnitude);
-			bool flag = this.m_sign < 0 && value.m_sign < 0;
-			int num = Math.Max(array.Length, array2.Length);
-			int[] array3 = new int[num];
-			int num2 = array3.Length - array.Length;
-			int num3 = array3.Length - array2.Length;
-			for (int i = 0; i < array3.Length; i++)
+			int[] aMag = ((this.m_sign > 0) ? this.m_magnitude : this.Add(NetBigInteger.One).m_magnitude);
+			int[] bMag = ((value.m_sign > 0) ? value.m_magnitude : value.Add(NetBigInteger.One).m_magnitude);
+			bool resultNeg = this.m_sign < 0 && value.m_sign < 0;
+			int resultLength = Math.Max(aMag.Length, bMag.Length);
+			int[] resultMag = new int[resultLength];
+			int aStart = resultMag.Length - aMag.Length;
+			int bStart = resultMag.Length - bMag.Length;
+			for (int i = 0; i < resultMag.Length; i++)
 			{
-				int num4 = ((i >= num2) ? array[i - num2] : 0);
-				int num5 = ((i >= num3) ? array2[i - num3] : 0);
+				int aWord = ((i >= aStart) ? aMag[i - aStart] : 0);
+				int bWord = ((i >= bStart) ? bMag[i - bStart] : 0);
 				if (this.m_sign < 0)
 				{
-					num4 = ~num4;
+					aWord = ~aWord;
 				}
 				if (value.m_sign < 0)
 				{
-					num5 = ~num5;
+					bWord = ~bWord;
 				}
-				array3[i] = num4 & num5;
-				if (flag)
+				resultMag[i] = aWord & bWord;
+				if (resultNeg)
 				{
-					array3[i] = ~array3[i];
+					resultMag[i] = ~resultMag[i];
 				}
 			}
-			NetBigInteger netBigInteger = new NetBigInteger(1, array3, true);
-			if (flag)
+			NetBigInteger result = new NetBigInteger(1, resultMag, true);
+			if (resultNeg)
 			{
-				netBigInteger = netBigInteger.Not();
+				result = result.Not();
 			}
-			return netBigInteger;
+			return result;
 		}
 
 		private int calcBitLength(int indx, int[] mag)
@@ -416,21 +416,21 @@ namespace DNA.Net.Lidgren
 			{
 				if (mag[indx] != 0)
 				{
-					int num = 32 * (mag.Length - indx - 1);
-					int num2 = mag[indx];
-					num += NetBigInteger.BitLen(num2);
-					if (this.m_sign < 0 && (num2 & -num2) == num2)
+					int bitLength = 32 * (mag.Length - indx - 1);
+					int firstMag = mag[indx];
+					bitLength += NetBigInteger.BitLen(firstMag);
+					if (this.m_sign < 0 && (firstMag & -firstMag) == firstMag)
 					{
 						while (++indx < mag.Length)
 						{
 							if (mag[indx] != 0)
 							{
-								return num;
+								return bitLength;
 							}
 						}
-						num--;
+						bitLength--;
 					}
-					return num;
+					return bitLength;
 				}
 				indx++;
 			}
@@ -635,16 +635,16 @@ namespace DNA.Net.Lidgren
 
 		private static int CompareNoLeadingZeroes(int xIndx, int[] x, int yIndx, int[] y)
 		{
-			int num = x.Length - y.Length - (xIndx - yIndx);
-			if (num == 0)
+			int diff = x.Length - y.Length - (xIndx - yIndx);
+			if (diff == 0)
 			{
 				while (xIndx < x.Length)
 				{
-					uint num2 = (uint)x[xIndx++];
-					uint num3 = (uint)y[yIndx++];
-					if (num2 != num3)
+					uint v = (uint)x[xIndx++];
+					uint v2 = (uint)y[yIndx++];
+					if (v != v2)
 					{
-						if (num2 >= num3)
+						if (v >= v2)
 						{
 							return 1;
 						}
@@ -653,7 +653,7 @@ namespace DNA.Net.Lidgren
 				}
 				return 0;
 			}
-			if (num >= 0)
+			if (diff >= 0)
 			{
 				return 1;
 			}
@@ -679,111 +679,111 @@ namespace DNA.Net.Lidgren
 
 		private int[] Divide(int[] x, int[] y)
 		{
-			int num = 0;
-			while (num < x.Length && x[num] == 0)
+			int xStart = 0;
+			while (xStart < x.Length && x[xStart] == 0)
 			{
-				num++;
+				xStart++;
 			}
-			int num2 = 0;
-			while (num2 < y.Length && y[num2] == 0)
+			int yStart = 0;
+			while (yStart < y.Length && y[yStart] == 0)
 			{
-				num2++;
+				yStart++;
 			}
-			int num3 = NetBigInteger.CompareNoLeadingZeroes(num, x, num2, y);
-			int[] array3;
-			if (num3 > 0)
+			int xyCmp = NetBigInteger.CompareNoLeadingZeroes(xStart, x, yStart, y);
+			int[] count;
+			if (xyCmp > 0)
 			{
-				int num4 = this.calcBitLength(num2, y);
-				int num5 = this.calcBitLength(num, x);
-				int num6 = num5 - num4;
-				int num7 = 0;
-				int num8 = 0;
-				int num9 = num4;
-				int[] array;
-				int[] array2;
-				if (num6 > 0)
+				int yBitLength = this.calcBitLength(yStart, y);
+				int xBitLength = this.calcBitLength(xStart, x);
+				int shift = xBitLength - yBitLength;
+				int iCountStart = 0;
+				int cStart = 0;
+				int cBitLength = yBitLength;
+				int[] iCount;
+				int[] c;
+				if (shift > 0)
 				{
-					array = new int[(num6 >> 5) + 1];
-					array[0] = 1 << num6 % 32;
-					array2 = NetBigInteger.ShiftLeft(y, num6);
-					num9 += num6;
+					iCount = new int[(shift >> 5) + 1];
+					iCount[0] = 1 << shift % 32;
+					c = NetBigInteger.ShiftLeft(y, shift);
+					cBitLength += shift;
 				}
 				else
 				{
-					array = new int[] { 1 };
-					int num10 = y.Length - num2;
-					array2 = new int[num10];
-					Array.Copy(y, num2, array2, 0, num10);
+					iCount = new int[] { 1 };
+					int len = y.Length - yStart;
+					c = new int[len];
+					Array.Copy(y, yStart, c, 0, len);
 				}
-				array3 = new int[array.Length];
+				count = new int[iCount.Length];
 				for (;;)
 				{
-					if (num9 < num5 || NetBigInteger.CompareNoLeadingZeroes(num, x, num8, array2) >= 0)
+					if (cBitLength < xBitLength || NetBigInteger.CompareNoLeadingZeroes(xStart, x, cStart, c) >= 0)
 					{
-						NetBigInteger.Subtract(num, x, num8, array2);
-						NetBigInteger.AddMagnitudes(array3, array);
-						while (x[num] == 0)
+						NetBigInteger.Subtract(xStart, x, cStart, c);
+						NetBigInteger.AddMagnitudes(count, iCount);
+						while (x[xStart] == 0)
 						{
-							if (++num == x.Length)
+							if (++xStart == x.Length)
 							{
-								return array3;
+								return count;
 							}
 						}
-						num5 = 32 * (x.Length - num - 1) + NetBigInteger.BitLen(x[num]);
-						if (num5 <= num4)
+						xBitLength = 32 * (x.Length - xStart - 1) + NetBigInteger.BitLen(x[xStart]);
+						if (xBitLength <= yBitLength)
 						{
-							if (num5 < num4)
+							if (xBitLength < yBitLength)
 							{
-								return array3;
+								return count;
 							}
-							num3 = NetBigInteger.CompareNoLeadingZeroes(num, x, num2, y);
-							if (num3 <= 0)
+							xyCmp = NetBigInteger.CompareNoLeadingZeroes(xStart, x, yStart, y);
+							if (xyCmp <= 0)
 							{
 								goto IL_01CA;
 							}
 						}
 					}
-					num6 = num9 - num5;
-					if (num6 == 1)
+					shift = cBitLength - xBitLength;
+					if (shift == 1)
 					{
-						uint num11 = (uint)array2[num8] >> 1;
-						uint num12 = (uint)x[num];
-						if (num11 > num12)
+						uint firstC = (uint)c[cStart] >> 1;
+						uint firstX = (uint)x[xStart];
+						if (firstC > firstX)
 						{
-							num6++;
+							shift++;
 						}
 					}
-					if (num6 < 2)
+					if (shift < 2)
 					{
-						array2 = NetBigInteger.ShiftRightOneInPlace(num8, array2);
-						num9--;
-						array = NetBigInteger.ShiftRightOneInPlace(num7, array);
+						c = NetBigInteger.ShiftRightOneInPlace(cStart, c);
+						cBitLength--;
+						iCount = NetBigInteger.ShiftRightOneInPlace(iCountStart, iCount);
 					}
 					else
 					{
-						array2 = NetBigInteger.ShiftRightInPlace(num8, array2, num6);
-						num9 -= num6;
-						array = NetBigInteger.ShiftRightInPlace(num7, array, num6);
+						c = NetBigInteger.ShiftRightInPlace(cStart, c, shift);
+						cBitLength -= shift;
+						iCount = NetBigInteger.ShiftRightInPlace(iCountStart, iCount, shift);
 					}
-					while (array2[num8] == 0)
+					while (c[cStart] == 0)
 					{
-						num8++;
+						cStart++;
 					}
-					while (array[num7] == 0)
+					while (iCount[iCountStart] == 0)
 					{
-						num7++;
+						iCountStart++;
 					}
 				}
-				return array3;
+				return count;
 			}
-			array3 = new int[1];
+			count = new int[1];
 			IL_01CA:
-			if (num3 == 0)
+			if (xyCmp == 0)
 			{
-				NetBigInteger.AddMagnitudes(array3, NetBigInteger.One.m_magnitude);
-				Array.Clear(x, num, x.Length - num);
+				NetBigInteger.AddMagnitudes(count, NetBigInteger.One.m_magnitude);
+				Array.Clear(x, xStart, x.Length - xStart);
 			}
-			return array3;
+			return count;
 		}
 
 		public NetBigInteger Divide(NetBigInteger val)
@@ -798,15 +798,15 @@ namespace DNA.Net.Lidgren
 			}
 			if (!val.QuickPow2Check())
 			{
-				int[] array = (int[])this.m_magnitude.Clone();
-				return new NetBigInteger(this.m_sign * val.m_sign, this.Divide(array, val.m_magnitude), true);
+				int[] mag = (int[])this.m_magnitude.Clone();
+				return new NetBigInteger(this.m_sign * val.m_sign, this.Divide(mag, val.m_magnitude), true);
 			}
-			NetBigInteger netBigInteger = this.Abs().ShiftRight(val.Abs().BitLength - 1);
+			NetBigInteger result = this.Abs().ShiftRight(val.Abs().BitLength - 1);
 			if (val.m_sign != this.m_sign)
 			{
-				return netBigInteger.Negate();
+				return result.Negate();
 			}
-			return netBigInteger;
+			return result;
 		}
 
 		public NetBigInteger[] DivideAndRemainder(NetBigInteger val)
@@ -815,28 +815,28 @@ namespace DNA.Net.Lidgren
 			{
 				throw new ArithmeticException("Division by zero error");
 			}
-			NetBigInteger[] array = new NetBigInteger[2];
+			NetBigInteger[] biggies = new NetBigInteger[2];
 			if (this.m_sign == 0)
 			{
-				array[0] = NetBigInteger.Zero;
-				array[1] = NetBigInteger.Zero;
+				biggies[0] = NetBigInteger.Zero;
+				biggies[1] = NetBigInteger.Zero;
 			}
 			else if (val.QuickPow2Check())
 			{
-				int num = val.Abs().BitLength - 1;
-				NetBigInteger netBigInteger = this.Abs().ShiftRight(num);
-				int[] array2 = this.LastNBits(num);
-				array[0] = ((val.m_sign == this.m_sign) ? netBigInteger : netBigInteger.Negate());
-				array[1] = new NetBigInteger(this.m_sign, array2, true);
+				int e = val.Abs().BitLength - 1;
+				NetBigInteger quotient = this.Abs().ShiftRight(e);
+				int[] remainder = this.LastNBits(e);
+				biggies[0] = ((val.m_sign == this.m_sign) ? quotient : quotient.Negate());
+				biggies[1] = new NetBigInteger(this.m_sign, remainder, true);
 			}
 			else
 			{
-				int[] array3 = (int[])this.m_magnitude.Clone();
-				int[] array4 = this.Divide(array3, val.m_magnitude);
-				array[0] = new NetBigInteger(this.m_sign * val.m_sign, array4, true);
-				array[1] = new NetBigInteger(this.m_sign, array3, true);
+				int[] remainder2 = (int[])this.m_magnitude.Clone();
+				int[] quotient2 = this.Divide(remainder2, val.m_magnitude);
+				biggies[0] = new NetBigInteger(this.m_sign * val.m_sign, quotient2, true);
+				biggies[1] = new NetBigInteger(this.m_sign, remainder2, true);
 			}
-			return array;
+			return biggies;
 		}
 
 		public override bool Equals(object obj)
@@ -845,18 +845,18 @@ namespace DNA.Net.Lidgren
 			{
 				return true;
 			}
-			NetBigInteger netBigInteger = obj as NetBigInteger;
-			if (netBigInteger == null)
+			NetBigInteger biggie = obj as NetBigInteger;
+			if (biggie == null)
 			{
 				return false;
 			}
-			if (netBigInteger.m_sign != this.m_sign || netBigInteger.m_magnitude.Length != this.m_magnitude.Length)
+			if (biggie.m_sign != this.m_sign || biggie.m_magnitude.Length != this.m_magnitude.Length)
 			{
 				return false;
 			}
 			for (int i = 0; i < this.m_magnitude.Length; i++)
 			{
-				if (netBigInteger.m_magnitude[i] != this.m_magnitude[i])
+				if (biggie.m_magnitude[i] != this.m_magnitude[i])
 				{
 					return false;
 				}
@@ -874,33 +874,33 @@ namespace DNA.Net.Lidgren
 			{
 				return value.Abs();
 			}
-			NetBigInteger netBigInteger = this;
-			NetBigInteger netBigInteger2 = value;
-			while (netBigInteger2.m_sign != 0)
+			NetBigInteger u = this;
+			NetBigInteger v = value;
+			while (v.m_sign != 0)
 			{
-				NetBigInteger netBigInteger3 = netBigInteger.Mod(netBigInteger2);
-				netBigInteger = netBigInteger2;
-				netBigInteger2 = netBigInteger3;
+				NetBigInteger r = u.Mod(v);
+				u = v;
+				v = r;
 			}
-			return netBigInteger;
+			return u;
 		}
 
 		public override int GetHashCode()
 		{
-			int num = this.m_magnitude.Length;
+			int hc = this.m_magnitude.Length;
 			if (this.m_magnitude.Length > 0)
 			{
-				num ^= this.m_magnitude[0];
+				hc ^= this.m_magnitude[0];
 				if (this.m_magnitude.Length > 1)
 				{
-					num ^= this.m_magnitude[this.m_magnitude.Length - 1];
+					hc ^= this.m_magnitude[this.m_magnitude.Length - 1];
 				}
 			}
 			if (this.m_sign >= 0)
 			{
-				return num;
+				return hc;
 			}
-			return ~num;
+			return ~hc;
 		}
 
 		private NetBigInteger Inc()
@@ -956,12 +956,12 @@ namespace DNA.Net.Lidgren
 			{
 				throw new ArithmeticException("Modulus must be positive");
 			}
-			NetBigInteger netBigInteger = this.Remainder(m);
-			if (netBigInteger.m_sign < 0)
+			NetBigInteger biggie = this.Remainder(m);
+			if (biggie.m_sign < 0)
 			{
-				return netBigInteger.Add(m);
+				return biggie.Add(m);
 			}
-			return netBigInteger;
+			return biggie;
 		}
 
 		public NetBigInteger ModInverse(NetBigInteger m)
@@ -970,50 +970,50 @@ namespace DNA.Net.Lidgren
 			{
 				throw new ArithmeticException("Modulus must be positive");
 			}
-			NetBigInteger netBigInteger = new NetBigInteger();
-			NetBigInteger netBigInteger2 = NetBigInteger.ExtEuclid(this, m, netBigInteger, null);
-			if (!netBigInteger2.Equals(NetBigInteger.One))
+			NetBigInteger x = new NetBigInteger();
+			NetBigInteger gcd = NetBigInteger.ExtEuclid(this, m, x, null);
+			if (!gcd.Equals(NetBigInteger.One))
 			{
 				throw new ArithmeticException("Numbers not relatively prime.");
 			}
-			if (netBigInteger.m_sign < 0)
+			if (x.m_sign < 0)
 			{
-				netBigInteger.m_sign = 1;
-				netBigInteger.m_magnitude = NetBigInteger.doSubBigLil(m.m_magnitude, netBigInteger.m_magnitude);
+				x.m_sign = 1;
+				x.m_magnitude = NetBigInteger.doSubBigLil(m.m_magnitude, x.m_magnitude);
 			}
-			return netBigInteger;
+			return x;
 		}
 
 		private static NetBigInteger ExtEuclid(NetBigInteger a, NetBigInteger b, NetBigInteger u1Out, NetBigInteger u2Out)
 		{
-			NetBigInteger netBigInteger = NetBigInteger.One;
-			NetBigInteger netBigInteger2 = a;
-			NetBigInteger netBigInteger3 = NetBigInteger.Zero;
-			NetBigInteger netBigInteger4 = b;
-			while (netBigInteger4.m_sign > 0)
+			NetBigInteger u = NetBigInteger.One;
+			NetBigInteger u2 = a;
+			NetBigInteger v = NetBigInteger.Zero;
+			NetBigInteger v2 = b;
+			while (v2.m_sign > 0)
 			{
-				NetBigInteger[] array = netBigInteger2.DivideAndRemainder(netBigInteger4);
-				NetBigInteger netBigInteger5 = netBigInteger3.Multiply(array[0]);
-				NetBigInteger netBigInteger6 = netBigInteger.Subtract(netBigInteger5);
-				netBigInteger = netBigInteger3;
-				netBigInteger3 = netBigInteger6;
-				netBigInteger2 = netBigInteger4;
-				netBigInteger4 = array[1];
+				NetBigInteger[] q = u2.DivideAndRemainder(v2);
+				NetBigInteger tmp = v.Multiply(q[0]);
+				NetBigInteger tn = u.Subtract(tmp);
+				u = v;
+				v = tn;
+				u2 = v2;
+				v2 = q[1];
 			}
 			if (u1Out != null)
 			{
-				u1Out.m_sign = netBigInteger.m_sign;
-				u1Out.m_magnitude = netBigInteger.m_magnitude;
+				u1Out.m_sign = u.m_sign;
+				u1Out.m_magnitude = u.m_magnitude;
 			}
 			if (u2Out != null)
 			{
-				NetBigInteger netBigInteger7 = netBigInteger.Multiply(a);
-				netBigInteger7 = netBigInteger2.Subtract(netBigInteger7);
-				NetBigInteger netBigInteger8 = netBigInteger7.Divide(b);
-				u2Out.m_sign = netBigInteger8.m_sign;
-				u2Out.m_magnitude = netBigInteger8.m_magnitude;
+				NetBigInteger tmp2 = u.Multiply(a);
+				tmp2 = u2.Subtract(tmp2);
+				NetBigInteger res = tmp2.Divide(b);
+				u2Out.m_sign = res.m_sign;
+				u2Out.m_magnitude = res.m_magnitude;
 			}
-			return netBigInteger2;
+			return u2;
 		}
 
 		private static void ZeroOut(int[] x)
@@ -1039,214 +1039,214 @@ namespace DNA.Net.Lidgren
 			{
 				return NetBigInteger.Zero;
 			}
-			int[] array = null;
-			int[] array2 = null;
-			bool flag = (m.m_magnitude[m.m_magnitude.Length - 1] & 1) == 1;
-			long num = 0L;
-			if (flag)
+			int[] zVal = null;
+			int[] yAccum = null;
+			bool useMonty = (m.m_magnitude[m.m_magnitude.Length - 1] & 1) == 1;
+			long mQ = 0L;
+			if (useMonty)
 			{
-				num = m.GetMQuote();
-				NetBigInteger netBigInteger = this.ShiftLeft(32 * m.m_magnitude.Length).Mod(m);
-				array = netBigInteger.m_magnitude;
-				flag = array.Length <= m.m_magnitude.Length;
-				if (flag)
+				mQ = m.GetMQuote();
+				NetBigInteger tmp = this.ShiftLeft(32 * m.m_magnitude.Length).Mod(m);
+				zVal = tmp.m_magnitude;
+				useMonty = zVal.Length <= m.m_magnitude.Length;
+				if (useMonty)
 				{
-					array2 = new int[m.m_magnitude.Length + 1];
-					if (array.Length < m.m_magnitude.Length)
+					yAccum = new int[m.m_magnitude.Length + 1];
+					if (zVal.Length < m.m_magnitude.Length)
 					{
-						int[] array3 = new int[m.m_magnitude.Length];
-						array.CopyTo(array3, array3.Length - array.Length);
-						array = array3;
+						int[] longZ = new int[m.m_magnitude.Length];
+						zVal.CopyTo(longZ, longZ.Length - zVal.Length);
+						zVal = longZ;
 					}
 				}
 			}
-			if (!flag)
+			if (!useMonty)
 			{
 				if (this.m_magnitude.Length <= m.m_magnitude.Length)
 				{
-					array = new int[m.m_magnitude.Length];
-					this.m_magnitude.CopyTo(array, array.Length - this.m_magnitude.Length);
+					zVal = new int[m.m_magnitude.Length];
+					this.m_magnitude.CopyTo(zVal, zVal.Length - this.m_magnitude.Length);
 				}
 				else
 				{
-					NetBigInteger netBigInteger2 = this.Remainder(m);
-					array = new int[m.m_magnitude.Length];
-					netBigInteger2.m_magnitude.CopyTo(array, array.Length - netBigInteger2.m_magnitude.Length);
+					NetBigInteger tmp2 = this.Remainder(m);
+					zVal = new int[m.m_magnitude.Length];
+					tmp2.m_magnitude.CopyTo(zVal, zVal.Length - tmp2.m_magnitude.Length);
 				}
-				array2 = new int[m.m_magnitude.Length * 2];
+				yAccum = new int[m.m_magnitude.Length * 2];
 			}
-			int[] array4 = new int[m.m_magnitude.Length];
+			int[] yVal = new int[m.m_magnitude.Length];
 			for (int i = 0; i < exponent.m_magnitude.Length; i++)
 			{
-				int j = exponent.m_magnitude[i];
-				int k = 0;
+				int v = exponent.m_magnitude[i];
+				int bits = 0;
 				if (i == 0)
 				{
-					while (j > 0)
+					while (v > 0)
 					{
-						j <<= 1;
-						k++;
+						v <<= 1;
+						bits++;
 					}
-					array.CopyTo(array4, 0);
-					j <<= 1;
-					k++;
+					zVal.CopyTo(yVal, 0);
+					v <<= 1;
+					bits++;
 				}
-				while (j != 0)
+				while (v != 0)
 				{
-					if (flag)
+					if (useMonty)
 					{
-						NetBigInteger.MultiplyMonty(array2, array4, array4, m.m_magnitude, num);
+						NetBigInteger.MultiplyMonty(yAccum, yVal, yVal, m.m_magnitude, mQ);
 					}
 					else
 					{
-						NetBigInteger.Square(array2, array4);
-						this.Remainder(array2, m.m_magnitude);
-						Array.Copy(array2, array2.Length - array4.Length, array4, 0, array4.Length);
-						NetBigInteger.ZeroOut(array2);
+						NetBigInteger.Square(yAccum, yVal);
+						this.Remainder(yAccum, m.m_magnitude);
+						Array.Copy(yAccum, yAccum.Length - yVal.Length, yVal, 0, yVal.Length);
+						NetBigInteger.ZeroOut(yAccum);
 					}
-					k++;
-					if (j < 0)
+					bits++;
+					if (v < 0)
 					{
-						if (flag)
+						if (useMonty)
 						{
-							NetBigInteger.MultiplyMonty(array2, array4, array, m.m_magnitude, num);
+							NetBigInteger.MultiplyMonty(yAccum, yVal, zVal, m.m_magnitude, mQ);
 						}
 						else
 						{
-							NetBigInteger.Multiply(array2, array4, array);
-							this.Remainder(array2, m.m_magnitude);
-							Array.Copy(array2, array2.Length - array4.Length, array4, 0, array4.Length);
-							NetBigInteger.ZeroOut(array2);
+							NetBigInteger.Multiply(yAccum, yVal, zVal);
+							this.Remainder(yAccum, m.m_magnitude);
+							Array.Copy(yAccum, yAccum.Length - yVal.Length, yVal, 0, yVal.Length);
+							NetBigInteger.ZeroOut(yAccum);
 						}
 					}
-					j <<= 1;
+					v <<= 1;
 				}
-				while (k < 32)
+				while (bits < 32)
 				{
-					if (flag)
+					if (useMonty)
 					{
-						NetBigInteger.MultiplyMonty(array2, array4, array4, m.m_magnitude, num);
+						NetBigInteger.MultiplyMonty(yAccum, yVal, yVal, m.m_magnitude, mQ);
 					}
 					else
 					{
-						NetBigInteger.Square(array2, array4);
-						this.Remainder(array2, m.m_magnitude);
-						Array.Copy(array2, array2.Length - array4.Length, array4, 0, array4.Length);
-						NetBigInteger.ZeroOut(array2);
+						NetBigInteger.Square(yAccum, yVal);
+						this.Remainder(yAccum, m.m_magnitude);
+						Array.Copy(yAccum, yAccum.Length - yVal.Length, yVal, 0, yVal.Length);
+						NetBigInteger.ZeroOut(yAccum);
 					}
-					k++;
+					bits++;
 				}
 			}
-			if (flag)
+			if (useMonty)
 			{
-				NetBigInteger.ZeroOut(array);
-				array[array.Length - 1] = 1;
-				NetBigInteger.MultiplyMonty(array2, array4, array, m.m_magnitude, num);
+				NetBigInteger.ZeroOut(zVal);
+				zVal[zVal.Length - 1] = 1;
+				NetBigInteger.MultiplyMonty(yAccum, yVal, zVal, m.m_magnitude, mQ);
 			}
-			NetBigInteger netBigInteger3 = new NetBigInteger(1, array4, true);
+			NetBigInteger result = new NetBigInteger(1, yVal, true);
 			if (exponent.m_sign <= 0)
 			{
-				return netBigInteger3.ModInverse(m);
+				return result.ModInverse(m);
 			}
-			return netBigInteger3;
+			return result;
 		}
 
 		private static int[] Square(int[] w, int[] x)
 		{
-			int num = w.Length - 1;
-			ulong num4;
-			ulong num5;
-			for (int num2 = x.Length - 1; num2 != 0; num2--)
+			int wBase = w.Length - 1;
+			ulong u;
+			ulong u2;
+			for (int i = x.Length - 1; i != 0; i--)
 			{
-				ulong num3 = (ulong)x[num2];
-				num4 = num3 * num3;
-				num5 = num4 >> 32;
-				num4 = (ulong)((uint)num4);
-				num4 += (ulong)w[num];
-				w[num] = (int)((uint)num4);
-				ulong num6 = num5 + (num4 >> 32);
-				for (int i = num2 - 1; i >= 0; i--)
+				ulong v = (ulong)x[i];
+				u = v * v;
+				u2 = u >> 32;
+				u = (ulong)((uint)u);
+				u += (ulong)w[wBase];
+				w[wBase] = (int)((uint)u);
+				ulong c = u2 + (u >> 32);
+				for (int j = i - 1; j >= 0; j--)
 				{
-					num--;
-					num4 = num3 * (ulong)x[i];
-					num5 = num4 >> 31;
-					num4 = (ulong)((uint)((uint)num4 << 1));
-					num4 += num6 + (ulong)w[num];
-					w[num] = (int)((uint)num4);
-					num6 = num5 + (num4 >> 32);
+					wBase--;
+					u = v * (ulong)x[j];
+					u2 = u >> 31;
+					u = (ulong)((uint)((uint)u << 1));
+					u += c + (ulong)w[wBase];
+					w[wBase] = (int)((uint)u);
+					c = u2 + (u >> 32);
 				}
-				num6 += (ulong)w[--num];
-				w[num] = (int)((uint)num6);
-				if (--num >= 0)
+				c += (ulong)w[--wBase];
+				w[wBase] = (int)((uint)c);
+				if (--wBase >= 0)
 				{
-					w[num] = (int)((uint)(num6 >> 32));
+					w[wBase] = (int)((uint)(c >> 32));
 				}
-				num += num2;
+				wBase += i;
 			}
-			num4 = (ulong)x[0];
-			num4 *= num4;
-			num5 = num4 >> 32;
-			num4 &= (ulong)(-1);
-			num4 += (ulong)w[num];
-			w[num] = (int)((uint)num4);
-			if (--num >= 0)
+			u = (ulong)x[0];
+			u *= u;
+			u2 = u >> 32;
+			u &= (ulong)(-1);
+			u += (ulong)w[wBase];
+			w[wBase] = (int)((uint)u);
+			if (--wBase >= 0)
 			{
-				w[num] = (int)((uint)(num5 + (num4 >> 32) + (ulong)w[num]));
+				w[wBase] = (int)((uint)(u2 + (u >> 32) + (ulong)w[wBase]));
 			}
 			return w;
 		}
 
 		private static int[] Multiply(int[] x, int[] y, int[] z)
 		{
-			int num = z.Length;
-			if (num < 1)
+			int i = z.Length;
+			if (i < 1)
 			{
 				return x;
 			}
-			int num2 = x.Length - y.Length;
-			long num4;
+			int xBase = x.Length - y.Length;
+			long val;
 			for (;;)
 			{
-				long num3 = (long)z[--num] & (long)((ulong)(-1));
-				num4 = 0L;
-				for (int i = y.Length - 1; i >= 0; i--)
+				long a = (long)z[--i] & (long)((ulong)(-1));
+				val = 0L;
+				for (int j = y.Length - 1; j >= 0; j--)
 				{
-					num4 += num3 * ((long)y[i] & (long)((ulong)(-1))) + ((long)x[num2 + i] & (long)((ulong)(-1)));
-					x[num2 + i] = (int)num4;
-					num4 = (long)((ulong)num4 >> 32);
+					val += a * ((long)y[j] & (long)((ulong)(-1))) + ((long)x[xBase + j] & (long)((ulong)(-1)));
+					x[xBase + j] = (int)val;
+					val = (long)((ulong)val >> 32);
 				}
-				num2--;
-				if (num < 1)
+				xBase--;
+				if (i < 1)
 				{
 					break;
 				}
-				x[num2] = (int)num4;
+				x[xBase] = (int)val;
 			}
-			if (num2 >= 0)
+			if (xBase >= 0)
 			{
-				x[num2] = (int)num4;
+				x[xBase] = (int)val;
 			}
 			return x;
 		}
 
 		private static long FastExtEuclid(long a, long b, long[] uOut)
 		{
-			long num = 1L;
-			long num2 = a;
-			long num3 = 0L;
-			long num6;
-			for (long num4 = b; num4 > 0L; num4 = num6)
+			long u = 1L;
+			long u2 = a;
+			long v = 0L;
+			long tn;
+			for (long v2 = b; v2 > 0L; v2 = tn)
 			{
-				long num5 = num2 / num4;
-				num6 = num - num3 * num5;
-				num = num3;
-				num3 = num6;
-				num6 = num2 - num4 * num5;
-				num2 = num4;
+				long q = u2 / v2;
+				tn = u - v * q;
+				u = v;
+				v = tn;
+				tn = u2 - v2 * q;
+				u2 = v2;
 			}
-			uOut[0] = num;
-			uOut[1] = (num2 - num * a) / b;
-			return num2;
+			uOut[0] = u;
+			uOut[1] = (u2 - u * a) / b;
+			return u2;
 		}
 
 		private static long FastModInverse(long v, long m)
@@ -1255,17 +1255,17 @@ namespace DNA.Net.Lidgren
 			{
 				throw new ArithmeticException("Modulus must be positive");
 			}
-			long[] array = new long[2];
-			long num = NetBigInteger.FastExtEuclid(v, m, array);
-			if (num != 1L)
+			long[] x = new long[2];
+			long gcd = NetBigInteger.FastExtEuclid(v, m, x);
+			if (gcd != 1L)
 			{
 				throw new ArithmeticException("Numbers not relatively prime.");
 			}
-			if (array[0] < 0L)
+			if (x[0] < 0L)
 			{
-				array[0] += m;
+				x[0] += m;
 			}
-			return array[0];
+			return x[0];
 		}
 
 		private long GetMQuote()
@@ -1278,8 +1278,8 @@ namespace DNA.Net.Lidgren
 			{
 				return -1L;
 			}
-			long num = (long)(~this.m_magnitude[this.m_magnitude.Length - 1] | 1) & (long)((ulong)(-1));
-			this.m_quote = NetBigInteger.FastModInverse(num, 4294967296L);
+			long v = (long)(~this.m_magnitude[this.m_magnitude.Length - 1] | 1) & (long)((ulong)(-1));
+			this.m_quote = NetBigInteger.FastModInverse(v, 4294967296L);
 			return this.m_quote;
 		}
 
@@ -1290,50 +1290,50 @@ namespace DNA.Net.Lidgren
 				x[0] = (int)NetBigInteger.MultiplyMontyNIsOne((uint)x[0], (uint)y[0], (uint)m[0], (ulong)mQuote);
 				return;
 			}
-			int num = m.Length;
-			int num2 = num - 1;
-			long num3 = (long)y[num2] & (long)((ulong)(-1));
-			Array.Clear(a, 0, num + 1);
-			for (int i = num; i > 0; i--)
+			int i = m.Length;
+			int nMinus = i - 1;
+			long y_0 = (long)y[nMinus] & (long)((ulong)(-1));
+			Array.Clear(a, 0, i + 1);
+			for (int j = i; j > 0; j--)
 			{
-				long num4 = (long)x[i - 1] & (long)((ulong)(-1));
-				long num5 = (((((long)a[num] & (long)((ulong)(-1))) + ((num4 * num3) & (long)((ulong)(-1)))) & (long)((ulong)(-1))) * mQuote) & (long)((ulong)(-1));
-				long num6 = num4 * num3;
-				long num7 = num5 * ((long)m[num2] & (long)((ulong)(-1)));
-				long num8 = ((long)a[num] & (long)((ulong)(-1))) + (num6 & (long)((ulong)(-1))) + (num7 & (long)((ulong)(-1)));
-				long num9 = (long)(((ulong)num6 >> 32) + ((ulong)num7 >> 32) + ((ulong)num8 >> 32));
-				for (int j = num2; j > 0; j--)
+				long x_i = (long)x[j - 1] & (long)((ulong)(-1));
+				long u = (((((long)a[i] & (long)((ulong)(-1))) + ((x_i * y_0) & (long)((ulong)(-1)))) & (long)((ulong)(-1))) * mQuote) & (long)((ulong)(-1));
+				long prod = x_i * y_0;
+				long prod2 = u * ((long)m[nMinus] & (long)((ulong)(-1)));
+				long tmp = ((long)a[i] & (long)((ulong)(-1))) + (prod & (long)((ulong)(-1))) + (prod2 & (long)((ulong)(-1)));
+				long carry = (long)(((ulong)prod >> 32) + ((ulong)prod2 >> 32) + ((ulong)tmp >> 32));
+				for (int k = nMinus; k > 0; k--)
 				{
-					num6 = num4 * ((long)y[j - 1] & (long)((ulong)(-1)));
-					num7 = num5 * ((long)m[j - 1] & (long)((ulong)(-1)));
-					num8 = ((long)a[j] & (long)((ulong)(-1))) + (num6 & (long)((ulong)(-1))) + (num7 & (long)((ulong)(-1))) + (num9 & (long)((ulong)(-1)));
-					num9 = (long)(((ulong)num9 >> 32) + ((ulong)num6 >> 32) + ((ulong)num7 >> 32) + ((ulong)num8 >> 32));
-					a[j + 1] = (int)num8;
+					prod = x_i * ((long)y[k - 1] & (long)((ulong)(-1)));
+					prod2 = u * ((long)m[k - 1] & (long)((ulong)(-1)));
+					tmp = ((long)a[k] & (long)((ulong)(-1))) + (prod & (long)((ulong)(-1))) + (prod2 & (long)((ulong)(-1))) + (carry & (long)((ulong)(-1)));
+					carry = (long)(((ulong)carry >> 32) + ((ulong)prod >> 32) + ((ulong)prod2 >> 32) + ((ulong)tmp >> 32));
+					a[k + 1] = (int)tmp;
 				}
-				num9 += (long)a[0] & (long)((ulong)(-1));
-				a[1] = (int)num9;
-				a[0] = (int)((ulong)num9 >> 32);
+				carry += (long)a[0] & (long)((ulong)(-1));
+				a[1] = (int)carry;
+				a[0] = (int)((ulong)carry >> 32);
 			}
 			if (NetBigInteger.CompareTo(0, a, 0, m) >= 0)
 			{
 				NetBigInteger.Subtract(0, a, 0, m);
 			}
-			Array.Copy(a, 1, x, 0, num);
+			Array.Copy(a, 1, x, 0, i);
 		}
 
 		private static uint MultiplyMontyNIsOne(uint x, uint y, uint m, ulong mQuote)
 		{
-			ulong num = (ulong)m;
-			ulong num2 = (ulong)x * (ulong)y;
-			ulong num3 = (num2 * mQuote) & NetBigInteger.UIMASK;
-			ulong num4 = num3 * num;
-			ulong num5 = (num2 & NetBigInteger.UIMASK) + (num4 & NetBigInteger.UIMASK);
-			ulong num6 = (num2 >> 32) + (num4 >> 32) + (num5 >> 32);
-			if (num6 > num)
+			ulong um = (ulong)m;
+			ulong prod = (ulong)x * (ulong)y;
+			ulong u = (prod * mQuote) & NetBigInteger.UIMASK;
+			ulong prod2 = u * um;
+			ulong tmp = (prod & NetBigInteger.UIMASK) + (prod2 & NetBigInteger.UIMASK);
+			ulong carry = (prod >> 32) + (prod2 >> 32) + (tmp >> 32);
+			if (carry > um)
 			{
-				num6 -= num;
+				carry -= um;
 			}
-			return (uint)(num6 & NetBigInteger.UIMASK);
+			return (uint)(carry & NetBigInteger.UIMASK);
 		}
 
 		public NetBigInteger Modulus(NetBigInteger val)
@@ -1349,36 +1349,36 @@ namespace DNA.Net.Lidgren
 			}
 			if (val.QuickPow2Check())
 			{
-				NetBigInteger netBigInteger = this.ShiftLeft(val.Abs().BitLength - 1);
+				NetBigInteger result = this.ShiftLeft(val.Abs().BitLength - 1);
 				if (val.m_sign <= 0)
 				{
-					return netBigInteger.Negate();
+					return result.Negate();
 				}
-				return netBigInteger;
+				return result;
 			}
 			else
 			{
 				if (!this.QuickPow2Check())
 				{
-					int num = this.BitLength + val.BitLength;
-					int num2 = (num + 32 - 1) / 32;
-					int[] array = new int[num2];
+					int maxBitLength = this.BitLength + val.BitLength;
+					int resLength = (maxBitLength + 32 - 1) / 32;
+					int[] res = new int[resLength];
 					if (val == this)
 					{
-						NetBigInteger.Square(array, this.m_magnitude);
+						NetBigInteger.Square(res, this.m_magnitude);
 					}
 					else
 					{
-						NetBigInteger.Multiply(array, this.m_magnitude, val.m_magnitude);
+						NetBigInteger.Multiply(res, this.m_magnitude, val.m_magnitude);
 					}
-					return new NetBigInteger(this.m_sign * val.m_sign, array, true);
+					return new NetBigInteger(this.m_sign * val.m_sign, res, true);
 				}
-				NetBigInteger netBigInteger2 = val.ShiftLeft(this.Abs().BitLength - 1);
+				NetBigInteger result2 = val.ShiftLeft(this.Abs().BitLength - 1);
 				if (this.m_sign <= 0)
 				{
-					return netBigInteger2.Negate();
+					return result2.Negate();
 				}
-				return netBigInteger2;
+				return result2;
 			}
 		}
 
@@ -1410,124 +1410,124 @@ namespace DNA.Net.Lidgren
 			{
 				return this;
 			}
-			NetBigInteger netBigInteger = NetBigInteger.One;
-			NetBigInteger netBigInteger2 = this;
+			NetBigInteger y = NetBigInteger.One;
+			NetBigInteger z = this;
 			for (;;)
 			{
 				if ((exp & 1) == 1)
 				{
-					netBigInteger = netBigInteger.Multiply(netBigInteger2);
+					y = y.Multiply(z);
 				}
 				exp >>= 1;
 				if (exp == 0)
 				{
 					break;
 				}
-				netBigInteger2 = netBigInteger2.Multiply(netBigInteger2);
+				z = z.Multiply(z);
 			}
-			return netBigInteger;
+			return y;
 		}
 
 		private int Remainder(int m)
 		{
-			long num = 0L;
-			for (int i = 0; i < this.m_magnitude.Length; i++)
+			long acc = 0L;
+			for (int pos = 0; pos < this.m_magnitude.Length; pos++)
 			{
-				long num2 = (long)((ulong)this.m_magnitude[i]);
-				num = ((num << 32) | num2) % (long)m;
+				long posVal = (long)((ulong)this.m_magnitude[pos]);
+				acc = ((acc << 32) | posVal) % (long)m;
 			}
-			return (int)num;
+			return (int)acc;
 		}
 
 		private int[] Remainder(int[] x, int[] y)
 		{
-			int num = 0;
-			while (num < x.Length && x[num] == 0)
+			int xStart = 0;
+			while (xStart < x.Length && x[xStart] == 0)
 			{
-				num++;
+				xStart++;
 			}
-			int num2 = 0;
-			while (num2 < y.Length && y[num2] == 0)
+			int yStart = 0;
+			while (yStart < y.Length && y[yStart] == 0)
 			{
-				num2++;
+				yStart++;
 			}
-			int num3 = NetBigInteger.CompareNoLeadingZeroes(num, x, num2, y);
-			if (num3 > 0)
+			int xyCmp = NetBigInteger.CompareNoLeadingZeroes(xStart, x, yStart, y);
+			if (xyCmp > 0)
 			{
-				int num4 = this.calcBitLength(num2, y);
-				int num5 = this.calcBitLength(num, x);
-				int num6 = num5 - num4;
-				int num7 = 0;
-				int num8 = num4;
-				int[] array;
-				if (num6 > 0)
+				int yBitLength = this.calcBitLength(yStart, y);
+				int xBitLength = this.calcBitLength(xStart, x);
+				int shift = xBitLength - yBitLength;
+				int cStart = 0;
+				int cBitLength = yBitLength;
+				int[] c;
+				if (shift > 0)
 				{
-					array = NetBigInteger.ShiftLeft(y, num6);
-					num8 += num6;
+					c = NetBigInteger.ShiftLeft(y, shift);
+					cBitLength += shift;
 				}
 				else
 				{
-					int num9 = y.Length - num2;
-					array = new int[num9];
-					Array.Copy(y, num2, array, 0, num9);
+					int len = y.Length - yStart;
+					c = new int[len];
+					Array.Copy(y, yStart, c, 0, len);
 				}
 				for (;;)
 				{
-					if (num8 < num5 || NetBigInteger.CompareNoLeadingZeroes(num, x, num7, array) >= 0)
+					if (cBitLength < xBitLength || NetBigInteger.CompareNoLeadingZeroes(xStart, x, cStart, c) >= 0)
 					{
-						NetBigInteger.Subtract(num, x, num7, array);
-						while (x[num] == 0)
+						NetBigInteger.Subtract(xStart, x, cStart, c);
+						while (x[xStart] == 0)
 						{
-							if (++num == x.Length)
+							if (++xStart == x.Length)
 							{
 								return x;
 							}
 						}
-						num5 = 32 * (x.Length - num - 1) + NetBigInteger.BitLen(x[num]);
-						if (num5 <= num4)
+						xBitLength = 32 * (x.Length - xStart - 1) + NetBigInteger.BitLen(x[xStart]);
+						if (xBitLength <= yBitLength)
 						{
-							if (num5 < num4)
+							if (xBitLength < yBitLength)
 							{
 								return x;
 							}
-							num3 = NetBigInteger.CompareNoLeadingZeroes(num, x, num2, y);
-							if (num3 <= 0)
+							xyCmp = NetBigInteger.CompareNoLeadingZeroes(xStart, x, yStart, y);
+							if (xyCmp <= 0)
 							{
 								goto IL_0152;
 							}
 						}
 					}
-					num6 = num8 - num5;
-					if (num6 == 1)
+					shift = cBitLength - xBitLength;
+					if (shift == 1)
 					{
-						uint num10 = (uint)array[num7] >> 1;
-						uint num11 = (uint)x[num];
-						if (num10 > num11)
+						uint firstC = (uint)c[cStart] >> 1;
+						uint firstX = (uint)x[xStart];
+						if (firstC > firstX)
 						{
-							num6++;
+							shift++;
 						}
 					}
-					if (num6 < 2)
+					if (shift < 2)
 					{
-						array = NetBigInteger.ShiftRightOneInPlace(num7, array);
-						num8--;
+						c = NetBigInteger.ShiftRightOneInPlace(cStart, c);
+						cBitLength--;
 					}
 					else
 					{
-						array = NetBigInteger.ShiftRightInPlace(num7, array, num6);
-						num8 -= num6;
+						c = NetBigInteger.ShiftRightInPlace(cStart, c, shift);
+						cBitLength -= shift;
 					}
-					while (array[num7] == 0)
+					while (c[cStart] == 0)
 					{
-						num7++;
+						cStart++;
 					}
 				}
 				return x;
 			}
 			IL_0152:
-			if (num3 == 0)
+			if (xyCmp == 0)
 			{
-				Array.Clear(x, num, x.Length - num);
+				Array.Clear(x, xStart, x.Length - xStart);
 			}
 			return x;
 		}
@@ -1544,17 +1544,17 @@ namespace DNA.Net.Lidgren
 			}
 			if (n.m_magnitude.Length == 1)
 			{
-				int num = n.m_magnitude[0];
-				if (num > 0)
+				int val = n.m_magnitude[0];
+				if (val > 0)
 				{
-					if (num == 1)
+					if (val == 1)
 					{
 						return NetBigInteger.Zero;
 					}
-					int num2 = this.Remainder(num);
-					if (num2 != 0)
+					int rem = this.Remainder(val);
+					if (rem != 0)
 					{
-						return new NetBigInteger(this.m_sign, new int[] { num2 }, false);
+						return new NetBigInteger(this.m_sign, new int[] { rem }, false);
 					}
 					return NetBigInteger.Zero;
 				}
@@ -1563,17 +1563,17 @@ namespace DNA.Net.Lidgren
 			{
 				return this;
 			}
-			int[] array;
+			int[] result;
 			if (n.QuickPow2Check())
 			{
-				array = this.LastNBits(n.Abs().BitLength - 1);
+				result = this.LastNBits(n.Abs().BitLength - 1);
 			}
 			else
 			{
-				array = (int[])this.m_magnitude.Clone();
-				array = this.Remainder(array, n.m_magnitude);
+				result = (int[])this.m_magnitude.Clone();
+				result = this.Remainder(result, n.m_magnitude);
 			}
-			return new NetBigInteger(this.m_sign, array, true);
+			return new NetBigInteger(this.m_sign, result, true);
 		}
 
 		private int[] LastNBits(int n)
@@ -1582,53 +1582,53 @@ namespace DNA.Net.Lidgren
 			{
 				return NetBigInteger.ZeroMagnitude;
 			}
-			int num = (n + 32 - 1) / 32;
-			num = Math.Min(num, this.m_magnitude.Length);
-			int[] array = new int[num];
-			Array.Copy(this.m_magnitude, this.m_magnitude.Length - num, array, 0, num);
-			int num2 = n % 32;
-			if (num2 != 0)
+			int numWords = (n + 32 - 1) / 32;
+			numWords = Math.Min(numWords, this.m_magnitude.Length);
+			int[] result = new int[numWords];
+			Array.Copy(this.m_magnitude, this.m_magnitude.Length - numWords, result, 0, numWords);
+			int hiBits = n % 32;
+			if (hiBits != 0)
 			{
-				array[0] &= ~(-1 << num2);
+				result[0] &= ~(-1 << hiBits);
 			}
-			return array;
+			return result;
 		}
 
 		private static int[] ShiftLeft(int[] mag, int n)
 		{
-			int num = (int)((uint)n >> 5);
-			int num2 = n & 31;
-			int num3 = mag.Length;
-			int[] array;
-			if (num2 == 0)
+			int nInts = (int)((uint)n >> 5);
+			int nBits = n & 31;
+			int magLen = mag.Length;
+			int[] newMag;
+			if (nBits == 0)
 			{
-				array = new int[num3 + num];
-				mag.CopyTo(array, 0);
+				newMag = new int[magLen + nInts];
+				mag.CopyTo(newMag, 0);
 			}
 			else
 			{
-				int num4 = 0;
-				int num5 = 32 - num2;
-				int num6 = (int)((uint)mag[0] >> num5);
-				if (num6 != 0)
+				int i = 0;
+				int nBits2 = 32 - nBits;
+				int highBits = (int)((uint)mag[0] >> nBits2);
+				if (highBits != 0)
 				{
-					array = new int[num3 + num + 1];
-					array[num4++] = num6;
+					newMag = new int[magLen + nInts + 1];
+					newMag[i++] = highBits;
 				}
 				else
 				{
-					array = new int[num3 + num];
+					newMag = new int[magLen + nInts];
 				}
-				int num7 = mag[0];
-				for (int i = 0; i < num3 - 1; i++)
+				int j = mag[0];
+				for (int k = 0; k < magLen - 1; k++)
 				{
-					int num8 = mag[i + 1];
-					array[num4++] = (num7 << num2) | (int)((uint)num8 >> num5);
-					num7 = num8;
+					int next = mag[k + 1];
+					newMag[i++] = (j << nBits) | (int)((uint)next >> nBits2);
+					j = next;
 				}
-				array[num4] = mag[num3 - 1] << num2;
+				newMag[i] = mag[magLen - 1] << nBits;
 			}
-			return array;
+			return newMag;
 		}
 
 		public NetBigInteger ShiftLeft(int n)
@@ -1645,59 +1645,59 @@ namespace DNA.Net.Lidgren
 			{
 				return this.ShiftRight(-n);
 			}
-			NetBigInteger netBigInteger = new NetBigInteger(this.m_sign, NetBigInteger.ShiftLeft(this.m_magnitude, n), true);
+			NetBigInteger result = new NetBigInteger(this.m_sign, NetBigInteger.ShiftLeft(this.m_magnitude, n), true);
 			if (this.m_numBits != -1)
 			{
-				netBigInteger.m_numBits = ((this.m_sign > 0) ? this.m_numBits : (this.m_numBits + n));
+				result.m_numBits = ((this.m_sign > 0) ? this.m_numBits : (this.m_numBits + n));
 			}
 			if (this.m_numBitLength != -1)
 			{
-				netBigInteger.m_numBitLength = this.m_numBitLength + n;
+				result.m_numBitLength = this.m_numBitLength + n;
 			}
-			return netBigInteger;
+			return result;
 		}
 
 		private static int[] ShiftRightInPlace(int start, int[] mag, int n)
 		{
-			int num = (int)(((uint)n >> 5) + (uint)start);
-			int num2 = n & 31;
-			int num3 = mag.Length - 1;
-			if (num != start)
+			int nInts = (int)(((uint)n >> 5) + (uint)start);
+			int nBits = n & 31;
+			int magEnd = mag.Length - 1;
+			if (nInts != start)
 			{
-				int num4 = num - start;
-				for (int i = num3; i >= num; i--)
+				int delta = nInts - start;
+				for (int i = magEnd; i >= nInts; i--)
 				{
-					mag[i] = mag[i - num4];
+					mag[i] = mag[i - delta];
 				}
-				for (int j = num - 1; j >= start; j--)
+				for (int j = nInts - 1; j >= start; j--)
 				{
 					mag[j] = 0;
 				}
 			}
-			if (num2 != 0)
+			if (nBits != 0)
 			{
-				int num5 = 32 - num2;
-				int num6 = mag[num3];
-				for (int k = num3; k > num; k--)
+				int nBits2 = 32 - nBits;
+				int k = mag[magEnd];
+				for (int l = magEnd; l > nInts; l--)
 				{
-					int num7 = mag[k - 1];
-					mag[k] = (int)(((uint)num6 >> num2) | (uint)((uint)num7 << num5));
-					num6 = num7;
+					int next = mag[l - 1];
+					mag[l] = (int)(((uint)k >> nBits) | (uint)((uint)next << nBits2));
+					k = next;
 				}
-				mag[num] = (int)((uint)mag[num] >> num2);
+				mag[nInts] = (int)((uint)mag[nInts] >> nBits);
 			}
 			return mag;
 		}
 
 		private static int[] ShiftRightOneInPlace(int start, int[] mag)
 		{
-			int num = mag.Length;
-			int num2 = mag[num - 1];
-			while (--num > start)
+			int i = mag.Length;
+			int j = mag[i - 1];
+			while (--i > start)
 			{
-				int num3 = mag[num - 1];
-				mag[num] = (int)(((uint)num2 >> 1) | (uint)((uint)num3 << 31));
-				num2 = num3;
+				int next = mag[i - 1];
+				mag[i] = (int)(((uint)j >> 1) | (uint)((uint)next << 31));
+				j = next;
 			}
 			mag[start] = (int)((uint)mag[start] >> 1);
 			return mag;
@@ -1715,28 +1715,28 @@ namespace DNA.Net.Lidgren
 			}
 			if (n < this.BitLength)
 			{
-				int num = this.BitLength - n + 31 >> 5;
-				int[] array = new int[num];
-				int num2 = n >> 5;
-				int num3 = n & 31;
-				if (num3 == 0)
+				int resultLength = this.BitLength - n + 31 >> 5;
+				int[] res = new int[resultLength];
+				int numInts = n >> 5;
+				int numBits = n & 31;
+				if (numBits == 0)
 				{
-					Array.Copy(this.m_magnitude, 0, array, 0, array.Length);
+					Array.Copy(this.m_magnitude, 0, res, 0, res.Length);
 				}
 				else
 				{
-					int num4 = 32 - num3;
-					int num5 = this.m_magnitude.Length - 1 - num2;
-					for (int i = num - 1; i >= 0; i--)
+					int numBits2 = 32 - numBits;
+					int magPos = this.m_magnitude.Length - 1 - numInts;
+					for (int i = resultLength - 1; i >= 0; i--)
 					{
-						array[i] = (int)((uint)this.m_magnitude[num5--] >> (num3 & 31));
-						if (num5 >= 0)
+						res[i] = (int)((uint)this.m_magnitude[magPos--] >> (numBits & 31));
+						if (magPos >= 0)
 						{
-							array[i] |= this.m_magnitude[num5] << num4;
+							res[i] |= this.m_magnitude[magPos] << numBits2;
 						}
 					}
 				}
-				return new NetBigInteger(this.m_sign, array, false);
+				return new NetBigInteger(this.m_sign, res, false);
 			}
 			if (this.m_sign >= 0)
 			{
@@ -1755,19 +1755,19 @@ namespace DNA.Net.Lidgren
 
 		private static int[] Subtract(int xStart, int[] x, int yStart, int[] y)
 		{
-			int num = x.Length;
-			int num2 = y.Length;
-			int num3 = 0;
+			int iT = x.Length;
+			int iV = y.Length;
+			int borrow = 0;
 			do
 			{
-				long num4 = ((long)x[--num] & (long)((ulong)(-1))) - ((long)y[--num2] & (long)((ulong)(-1))) + (long)num3;
-				x[num] = (int)num4;
-				num3 = (int)(num4 >> 63);
+				long i = ((long)x[--iT] & (long)((ulong)(-1))) - ((long)y[--iV] & (long)((ulong)(-1))) + (long)borrow;
+				x[iT] = (int)i;
+				borrow = (int)(i >> 63);
 			}
-			while (num2 > yStart);
-			if (num3 != 0)
+			while (iV > yStart);
+			if (borrow != 0)
 			{
-				while (--x[--num] == -1)
+				while (--x[--iT] == -1)
 				{
 				}
 			}
@@ -1788,30 +1788,30 @@ namespace DNA.Net.Lidgren
 			{
 				return this.Add(n.Negate());
 			}
-			int num = NetBigInteger.CompareNoLeadingZeroes(0, this.m_magnitude, 0, n.m_magnitude);
-			if (num == 0)
+			int compare = NetBigInteger.CompareNoLeadingZeroes(0, this.m_magnitude, 0, n.m_magnitude);
+			if (compare == 0)
 			{
 				return NetBigInteger.Zero;
 			}
-			NetBigInteger netBigInteger;
-			NetBigInteger netBigInteger2;
-			if (num < 0)
+			NetBigInteger bigun;
+			NetBigInteger lilun;
+			if (compare < 0)
 			{
-				netBigInteger = n;
-				netBigInteger2 = this;
+				bigun = n;
+				lilun = this;
 			}
 			else
 			{
-				netBigInteger = this;
-				netBigInteger2 = n;
+				bigun = this;
+				lilun = n;
 			}
-			return new NetBigInteger(this.m_sign * num, NetBigInteger.doSubBigLil(netBigInteger.m_magnitude, netBigInteger2.m_magnitude), true);
+			return new NetBigInteger(this.m_sign * compare, NetBigInteger.doSubBigLil(bigun.m_magnitude, lilun.m_magnitude), true);
 		}
 
 		private static int[] doSubBigLil(int[] bigMag, int[] lilMag)
 		{
-			int[] array = (int[])bigMag.Clone();
-			return NetBigInteger.Subtract(0, array, 0, lilMag);
+			int[] res = (int[])bigMag.Clone();
+			return NetBigInteger.Subtract(0, res, 0, lilMag);
 		}
 
 		public byte[] ToByteArray()
@@ -1828,60 +1828,60 @@ namespace DNA.Net.Lidgren
 		{
 			if (this.m_sign != 0)
 			{
-				int num = ((unsigned && this.m_sign > 0) ? this.BitLength : (this.BitLength + 1));
-				int byteLength = NetBigInteger.GetByteLength(num);
-				byte[] array = new byte[byteLength];
-				int i = this.m_magnitude.Length;
-				int num2 = array.Length;
+				int nBits = ((unsigned && this.m_sign > 0) ? this.BitLength : (this.BitLength + 1));
+				int nBytes = NetBigInteger.GetByteLength(nBits);
+				byte[] bytes = new byte[nBytes];
+				int magIndex = this.m_magnitude.Length;
+				int bytesIndex = bytes.Length;
 				if (this.m_sign > 0)
 				{
-					while (i > 1)
+					while (magIndex > 1)
 					{
-						uint num3 = (uint)this.m_magnitude[--i];
-						array[--num2] = (byte)num3;
-						array[--num2] = (byte)(num3 >> 8);
-						array[--num2] = (byte)(num3 >> 16);
-						array[--num2] = (byte)(num3 >> 24);
+						uint mag = (uint)this.m_magnitude[--magIndex];
+						bytes[--bytesIndex] = (byte)mag;
+						bytes[--bytesIndex] = (byte)(mag >> 8);
+						bytes[--bytesIndex] = (byte)(mag >> 16);
+						bytes[--bytesIndex] = (byte)(mag >> 24);
 					}
-					uint num4;
-					for (num4 = (uint)this.m_magnitude[0]; num4 > 255U; num4 >>= 8)
+					uint lastMag;
+					for (lastMag = (uint)this.m_magnitude[0]; lastMag > 255U; lastMag >>= 8)
 					{
-						array[--num2] = (byte)num4;
+						bytes[--bytesIndex] = (byte)lastMag;
 					}
-					array[num2 - 1] = (byte)num4;
+					bytes[bytesIndex - 1] = (byte)lastMag;
 				}
 				else
 				{
-					bool flag = true;
-					while (i > 1)
+					bool carry = true;
+					while (magIndex > 1)
 					{
-						uint num5 = (uint)(~(uint)this.m_magnitude[--i]);
-						if (flag)
+						uint mag2 = (uint)(~(uint)this.m_magnitude[--magIndex]);
+						if (carry)
 						{
-							flag = (num5 += 1U) == 0U;
+							carry = (mag2 += 1U) == 0U;
 						}
-						array[--num2] = (byte)num5;
-						array[--num2] = (byte)(num5 >> 8);
-						array[--num2] = (byte)(num5 >> 16);
-						array[--num2] = (byte)(num5 >> 24);
+						bytes[--bytesIndex] = (byte)mag2;
+						bytes[--bytesIndex] = (byte)(mag2 >> 8);
+						bytes[--bytesIndex] = (byte)(mag2 >> 16);
+						bytes[--bytesIndex] = (byte)(mag2 >> 24);
 					}
-					uint num6 = (uint)this.m_magnitude[0];
-					if (flag)
+					uint lastMag2 = (uint)this.m_magnitude[0];
+					if (carry)
 					{
-						num6 -= 1U;
+						lastMag2 -= 1U;
 					}
-					while (num6 > 255U)
+					while (lastMag2 > 255U)
 					{
-						array[--num2] = (byte)(~(byte)num6);
-						num6 >>= 8;
+						bytes[--bytesIndex] = (byte)(~(byte)lastMag2);
+						lastMag2 >>= 8;
 					}
-					array[--num2] = (byte)(~(byte)num6);
-					if (num2 > 0)
+					bytes[--bytesIndex] = (byte)(~(byte)lastMag2);
+					if (bytesIndex > 0)
 					{
-						array[num2 - 1] = byte.MaxValue;
+						bytes[bytesIndex - 1] = byte.MaxValue;
 					}
 				}
-				return array;
+				return bytes;
 			}
 			if (!unsigned)
 			{
@@ -1909,78 +1909,78 @@ namespace DNA.Net.Lidgren
 			{
 				return "0";
 			}
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder sb = new StringBuilder();
 			if (radix == 16)
 			{
-				stringBuilder.Append(this.m_magnitude[0].ToString("x"));
+				sb.Append(this.m_magnitude[0].ToString("x"));
 				for (int i = 1; i < this.m_magnitude.Length; i++)
 				{
-					stringBuilder.Append(this.m_magnitude[i].ToString("x8"));
+					sb.Append(this.m_magnitude[i].ToString("x8"));
 				}
 			}
 			else if (radix == 2)
 			{
-				stringBuilder.Append('1');
+				sb.Append('1');
 				for (int j = this.BitLength - 2; j >= 0; j--)
 				{
-					stringBuilder.Append(this.TestBit(j) ? '1' : '0');
+					sb.Append(this.TestBit(j) ? '1' : '0');
 				}
 			}
 			else
 			{
-				Stack stack = new Stack();
-				NetBigInteger netBigInteger = NetBigInteger.ValueOf((long)radix);
-				NetBigInteger netBigInteger2 = this.Abs();
-				while (netBigInteger2.m_sign != 0)
+				Stack S = new Stack();
+				NetBigInteger bs = NetBigInteger.ValueOf((long)radix);
+				NetBigInteger u = this.Abs();
+				while (u.m_sign != 0)
 				{
-					NetBigInteger netBigInteger3 = netBigInteger2.Mod(netBigInteger);
-					if (netBigInteger3.m_sign == 0)
+					NetBigInteger b = u.Mod(bs);
+					if (b.m_sign == 0)
 					{
-						stack.Push("0");
+						S.Push("0");
 					}
 					else
 					{
-						stack.Push(netBigInteger3.m_magnitude[0].ToString("d"));
+						S.Push(b.m_magnitude[0].ToString("d"));
 					}
-					netBigInteger2 = netBigInteger2.Divide(netBigInteger);
+					u = u.Divide(bs);
 				}
-				while (stack.Count != 0)
+				while (S.Count != 0)
 				{
-					stringBuilder.Append((string)stack.Pop());
+					sb.Append((string)S.Pop());
 				}
 			}
-			string text = stringBuilder.ToString();
-			if (text[0] == '0')
+			string s = sb.ToString();
+			if (s[0] == '0')
 			{
-				int num = 0;
-				while (text[++num] == '0')
+				int nonZeroPos = 0;
+				while (s[++nonZeroPos] == '0')
 				{
 				}
-				text = text.Substring(num);
+				s = s.Substring(nonZeroPos);
 			}
 			if (this.m_sign == -1)
 			{
-				text = "-" + text;
+				s = "-" + s;
 			}
-			return text;
+			return s;
 		}
 
 		private static NetBigInteger createUValueOf(ulong value)
 		{
-			int num = (int)(value >> 32);
-			int num2 = (int)value;
-			if (num != 0)
+			int msw = (int)(value >> 32);
+			int lsw = (int)value;
+			if (msw != 0)
 			{
-				return new NetBigInteger(1, new int[] { num, num2 }, false);
+				return new NetBigInteger(1, new int[] { msw, lsw }, false);
 			}
-			if (num2 != 0)
+			if (lsw != 0)
 			{
-				NetBigInteger netBigInteger = new NetBigInteger(1, new int[] { num2 }, false);
-				if ((num2 & -num2) == num2)
+				NetBigInteger i = new NetBigInteger(1, new int[] { lsw }, false);
+				if ((lsw & -lsw) == lsw)
 				{
-					netBigInteger.m_numBits = 1;
+					i.m_numBits = 1;
 				}
-				return netBigInteger;
+				return i;
 			}
 			return NetBigInteger.Zero;
 		}
@@ -2032,17 +2032,17 @@ namespace DNA.Net.Lidgren
 			{
 				return -1;
 			}
-			int num = this.m_magnitude.Length;
-			while (--num > 0 && this.m_magnitude[num] == 0)
+			int w = this.m_magnitude.Length;
+			while (--w > 0 && this.m_magnitude[w] == 0)
 			{
 			}
-			int num2 = this.m_magnitude[num];
-			int num3 = (((num2 & 65535) == 0) ? (((num2 & 16711680) == 0) ? 7 : 15) : (((num2 & 255) == 0) ? 23 : 31));
-			while (num3 > 0 && num2 << num3 != -2147483648)
+			int word = this.m_magnitude[w];
+			int b = (((word & 65535) == 0) ? (((word & 16711680) == 0) ? 7 : 15) : (((word & 255) == 0) ? 23 : 31));
+			while (b > 0 && word << b != -2147483648)
 			{
-				num3--;
+				b--;
 			}
-			return (this.m_magnitude.Length - num) * 32 - (num3 + 1);
+			return (this.m_magnitude.Length - w) * 32 - (b + 1);
 		}
 
 		public bool TestBit(int n)
@@ -2055,13 +2055,13 @@ namespace DNA.Net.Lidgren
 			{
 				return !this.Not().TestBit(n);
 			}
-			int num = n / 32;
-			if (num >= this.m_magnitude.Length)
+			int wordNum = n / 32;
+			if (wordNum >= this.m_magnitude.Length)
 			{
 				return false;
 			}
-			int num2 = this.m_magnitude[this.m_magnitude.Length - 1 - num];
-			return ((num2 >> n % 32) & 1) > 0;
+			int word = this.m_magnitude[this.m_magnitude.Length - 1 - wordNum];
+			return ((word >> n % 32) & 1) > 0;
 		}
 
 		private const long IMASK = 4294967295L;

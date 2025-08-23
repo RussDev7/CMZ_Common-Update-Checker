@@ -8,9 +8,9 @@ namespace DNA.Security.Cryptography
 	{
 		private static RsaDigestSigner GetSigner(GenericHashProvider hashProvider, RSAKey key)
 		{
-			RsaDigestSigner rsaDigestSigner = new RsaDigestSigner(hashProvider.GetHashAlgorythim());
-			rsaDigestSigner.Init(key.IsPrivate, key.Key);
-			return rsaDigestSigner;
+			RsaDigestSigner signer = new RsaDigestSigner(hashProvider.GetHashAlgorythim());
+			signer.Init(key.IsPrivate, key.Key);
+			return signer;
 		}
 
 		public RSASignatureProvider(GenericHashProvider hashProvider, RSAKey key)
@@ -30,12 +30,12 @@ namespace DNA.Security.Cryptography
 
 		public override Signature Parse(string s)
 		{
-			byte[] array = new byte[s.Length / 2];
-			for (int i = 0; i < array.Length; i++)
+			byte[] data = new byte[s.Length / 2];
+			for (int i = 0; i < data.Length; i++)
 			{
-				array[i] = byte.Parse(s.Substring(i * 2, 2), NumberStyles.HexNumber);
+				data[i] = byte.Parse(s.Substring(i * 2, 2), NumberStyles.HexNumber);
 			}
-			return new RSASignatureProvider.RSASignature(array);
+			return new RSASignatureProvider.RSASignature(data);
 		}
 
 		private class RSASignature : Signature
@@ -47,10 +47,10 @@ namespace DNA.Security.Cryptography
 
 			public override bool Verify(ISignatureProvider signer, byte[] data, long start, long length)
 			{
-				RSASignatureProvider rsasignatureProvider = (RSASignatureProvider)signer;
-				RsaDigestSigner rsaDigestSigner = (RsaDigestSigner)rsasignatureProvider.Signer;
-				rsaDigestSigner.BlockUpdate(data, (int)start, (int)length);
-				return rsaDigestSigner.VerifySignature(base.Data);
+				RSASignatureProvider pvr = (RSASignatureProvider)signer;
+				RsaDigestSigner rsa = (RsaDigestSigner)pvr.Signer;
+				rsa.BlockUpdate(data, (int)start, (int)length);
+				return rsa.VerifySignature(base.Data);
 			}
 		}
 	}

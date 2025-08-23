@@ -33,17 +33,17 @@ namespace DNA.Audio.SignalProcessing.Processors
 		{
 			lock (this)
 			{
-				byte[] array;
+				byte[] buffer;
 				if (this.bufferRecycle.Count == 0)
 				{
-					array = new byte[data.ChannelData.Length];
+					buffer = new byte[data.ChannelData.Length];
 				}
 				else
 				{
-					array = this.bufferRecycle.Pop();
+					buffer = this.bufferRecycle.Pop();
 				}
-				Buffer.BlockCopy(data.ChannelData, 0, array, 0, array.Length);
-				this.waitingBuffers.Enqueue(array);
+				Buffer.BlockCopy(data.ChannelData, 0, buffer, 0, buffer.Length);
+				this.waitingBuffers.Enqueue(buffer);
 			}
 		}
 
@@ -93,7 +93,7 @@ namespace DNA.Audio.SignalProcessing.Processors
 
 		private void _playbackBuffer_BufferNeeded(object sender, EventArgs e)
 		{
-			for (int i = 2 - this._playbackBuffer.PendingBufferCount; i > 0; i--)
+			for (int count = 2 - this._playbackBuffer.PendingBufferCount; count > 0; count--)
 			{
 				this.PopBuffer();
 			}

@@ -21,12 +21,12 @@ namespace DNA.Text
 
 		public static int CountSame(this string a, int starta, string b, int startb)
 		{
-			int num = 0;
-			while (num + starta < a.Length && num + startb < b.Length && a[starta + num] == b[startb + num])
+			int same = 0;
+			while (same + starta < a.Length && same + startb < b.Length && a[starta + same] == b[startb + same])
 			{
-				num++;
+				same++;
 			}
-			return num;
+			return same;
 		}
 
 		public static string RemovePatternWhiteSpace(this string source)
@@ -45,103 +45,103 @@ namespace DNA.Text
 
 		public static string ReplaceAny(this string source, string[] strings, string newValue)
 		{
-			foreach (string text in strings)
+			foreach (string c in strings)
 			{
-				source = source.Replace(text, newValue);
+				source = source.Replace(c, newValue);
 			}
 			return source;
 		}
 
 		public static string Capitalize(this string word)
 		{
-			StringBuilder stringBuilder = new StringBuilder(word.ToLower());
-			stringBuilder[0] = char.ToUpper(stringBuilder[0]);
-			return stringBuilder.ToString();
+			StringBuilder sb = new StringBuilder(word.ToLower());
+			sb[0] = char.ToUpper(sb[0]);
+			return sb.ToString();
 		}
 
 		public static string[] SplitWords(this string text)
 		{
-			MatchCollection matchCollection = TextTools.SplitWordsRE.Matches(text);
-			string[] array = new string[matchCollection.Count];
-			int num = 0;
-			foreach (object obj in matchCollection)
+			MatchCollection matches = TextTools.SplitWordsRE.Matches(text);
+			string[] output = new string[matches.Count];
+			int cnt = 0;
+			foreach (object obj in matches)
 			{
-				Match match = (Match)obj;
-				array[num++] = match.Value;
+				Match i = (Match)obj;
+				output[cnt++] = i.Value;
 			}
-			return array;
+			return output;
 		}
 
 		public static string IntsToString(int[] ints)
 		{
-			byte[] array = TextTools.IntsToBytes(ints);
-			string @string = Encoding.UTF8.GetString(array, 0, array.Length);
-			return @string.Replace("\0", "");
+			byte[] bytes = TextTools.IntsToBytes(ints);
+			string ret = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+			return ret.Replace("\0", "");
 		}
 
 		public static byte[] IntsToBytes(int[] ints)
 		{
-			byte[] array = new byte[ints.Length * 4];
-			int num = 0;
+			byte[] ret = new byte[ints.Length * 4];
+			int byteIndex = 0;
 			for (int i = 0; i < ints.Length; i++)
 			{
-				array[num++] = (byte)ints[i];
-				array[num++] = (byte)(ints[i] >> 8);
-				array[num++] = (byte)(ints[i] >> 16);
-				array[num++] = (byte)(ints[i] >> 24);
+				ret[byteIndex++] = (byte)ints[i];
+				ret[byteIndex++] = (byte)(ints[i] >> 8);
+				ret[byteIndex++] = (byte)(ints[i] >> 16);
+				ret[byteIndex++] = (byte)(ints[i] >> 24);
 			}
-			return array;
+			return ret;
 		}
 
 		public static int[] BytesToInts(byte[] strBytes)
 		{
-			List<int> list = new List<int>();
-			int num = 0;
-			int i = 0;
-			int num2 = 0;
-			while (i < strBytes.Length)
+			List<int> intsOut = new List<int>();
+			int shift = 0;
+			int byteIndex = 0;
+			int acc = 0;
+			while (byteIndex < strBytes.Length)
 			{
-				if (num >= 32)
+				if (shift >= 32)
 				{
-					list.Add(num2);
-					num2 = 0;
-					num = 0;
+					intsOut.Add(acc);
+					acc = 0;
+					shift = 0;
 				}
-				num2 |= (int)strBytes[i] << num;
-				i++;
-				num += 8;
+				acc |= (int)strBytes[byteIndex] << shift;
+				byteIndex++;
+				shift += 8;
 			}
-			if (num > 0)
+			if (shift > 0)
 			{
-				list.Add(num2);
+				intsOut.Add(acc);
 			}
-			return list.ToArray();
+			return intsOut.ToArray();
 		}
 
 		public static int[] StringToInts(string str, int maxInts)
 		{
-			Encoding utf = Encoding.UTF8;
-			char[] array = str.ToCharArray();
+			Encoding encoding = Encoding.UTF8;
+			char[] chars = str.ToCharArray();
 			new List<int>();
-			int num = maxInts * 4;
-			int num2 = 0;
-			while (utf.GetByteCount(array, 0, num2) < num && num2 < array.Length)
+			int maxBytes = maxInts * 4;
+			int charCount = 0;
+			while (encoding.GetByteCount(chars, 0, charCount) < maxBytes && charCount < chars.Length)
 			{
-				num2++;
+				charCount++;
 			}
-			if (utf.GetByteCount(array, 0, num2) > num)
+			if (encoding.GetByteCount(chars, 0, charCount) > maxBytes)
 			{
-				num2--;
+				charCount--;
 			}
-			byte[] bytes = Encoding.UTF8.GetBytes(array, 0, num2);
-			return TextTools.BytesToInts(bytes);
+			byte[] strBytes = Encoding.UTF8.GetBytes(chars, 0, charCount);
+			return TextTools.BytesToInts(strBytes);
 		}
 
 		public static int[] StringToInts(string str)
 		{
 			new List<int>();
-			byte[] bytes = Encoding.UTF8.GetBytes(str);
-			return TextTools.BytesToInts(bytes);
+			byte[] strBytes = Encoding.UTF8.GetBytes(str);
+			return TextTools.BytesToInts(strBytes);
 		}
 
 		private static Regex SplitWordsRE = new Regex("[a-zA-Z]+", RegexOptions.Compiled);

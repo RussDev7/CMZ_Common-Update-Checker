@@ -142,152 +142,152 @@ namespace DNA.Input
 			this._lastState = this._currentState;
 			this._currentState = GamePad.GetState(this._playerIndex);
 			this._caps = GamePad.GetCapabilities(this._playerIndex);
-			Buttons buttons = (Buttons)0;
+			Buttons buttonsPressed = (Buttons)0;
 			if (this._lastState.Triggers.Left <= this.LeftTriggerPullThreshhold && this._currentState.Triggers.Left > this.LeftTriggerPullThreshhold)
 			{
-				buttons |= Buttons.LeftTrigger;
+				buttonsPressed |= Buttons.LeftTrigger;
 			}
 			if (this._lastState.Triggers.Right <= this.RightTriggerPullThreshhold && this._currentState.Triggers.Right > this.RightTriggerPullThreshhold)
 			{
-				buttons |= Buttons.RightTrigger;
+				buttonsPressed |= Buttons.RightTrigger;
 			}
 			if (this._lastState.Buttons.A == ButtonState.Released && this._currentState.Buttons.A == ButtonState.Pressed)
 			{
-				buttons |= Buttons.A;
+				buttonsPressed |= Buttons.A;
 			}
 			if (this._lastState.Buttons.X == ButtonState.Released && this._currentState.Buttons.X == ButtonState.Pressed)
 			{
-				buttons |= Buttons.X;
+				buttonsPressed |= Buttons.X;
 			}
 			if (this._lastState.Buttons.B == ButtonState.Released && this._currentState.Buttons.B == ButtonState.Pressed)
 			{
-				buttons |= Buttons.B;
+				buttonsPressed |= Buttons.B;
 			}
 			if (this._lastState.Buttons.Y == ButtonState.Released && this._currentState.Buttons.Y == ButtonState.Pressed)
 			{
-				buttons |= Buttons.Y;
+				buttonsPressed |= Buttons.Y;
 			}
 			if (this._lastState.Buttons.Start == ButtonState.Released && this._currentState.Buttons.Start == ButtonState.Pressed)
 			{
-				buttons |= Buttons.Start;
+				buttonsPressed |= Buttons.Start;
 			}
 			if (this._lastState.Buttons.Back == ButtonState.Released && this._currentState.Buttons.Back == ButtonState.Pressed)
 			{
-				buttons |= Buttons.Back;
+				buttonsPressed |= Buttons.Back;
 			}
 			if (this._lastState.Buttons.BigButton == ButtonState.Released && this._currentState.Buttons.BigButton == ButtonState.Pressed)
 			{
-				buttons |= Buttons.BigButton;
+				buttonsPressed |= Buttons.BigButton;
 			}
 			if (this._lastState.Buttons.LeftShoulder == ButtonState.Released && this._currentState.Buttons.LeftShoulder == ButtonState.Pressed)
 			{
-				buttons |= Buttons.LeftShoulder;
+				buttonsPressed |= Buttons.LeftShoulder;
 			}
 			if (this._lastState.Buttons.LeftStick == ButtonState.Released && this._currentState.Buttons.LeftStick == ButtonState.Pressed)
 			{
-				buttons |= Buttons.LeftStick;
+				buttonsPressed |= Buttons.LeftStick;
 			}
 			if (this._lastState.Buttons.RightShoulder == ButtonState.Released && this._currentState.Buttons.RightShoulder == ButtonState.Pressed)
 			{
-				buttons |= Buttons.RightShoulder;
+				buttonsPressed |= Buttons.RightShoulder;
 			}
 			if (this._lastState.Buttons.RightStick == ButtonState.Released && this._currentState.Buttons.RightStick == ButtonState.Pressed)
 			{
-				buttons |= Buttons.RightStick;
+				buttonsPressed |= Buttons.RightStick;
 			}
-			this._pressedButtons = new ControllerButtons(buttons);
-			Buttons buttons2 = (Buttons)0;
+			this._pressedButtons = new ControllerButtons(buttonsPressed);
+			Buttons buttonsReleased = (Buttons)0;
 			if (this._lastState.Triggers.Left > this.LeftTriggerPullThreshhold && this._currentState.Triggers.Left <= this.LeftTriggerPullThreshhold)
 			{
-				buttons2 |= Buttons.LeftTrigger;
+				buttonsReleased |= Buttons.LeftTrigger;
 			}
 			if (this._lastState.Triggers.Right > this.RightTriggerPullThreshhold && this._currentState.Triggers.Right <= this.RightTriggerPullThreshhold)
 			{
-				buttons2 |= Buttons.RightTrigger;
+				buttonsReleased |= Buttons.RightTrigger;
 			}
 			if (this._lastState.Buttons.A == ButtonState.Pressed && this._currentState.Buttons.A == ButtonState.Released)
 			{
-				buttons2 |= Buttons.A;
+				buttonsReleased |= Buttons.A;
 			}
 			if (this._lastState.Buttons.X == ButtonState.Pressed && this._currentState.Buttons.X == ButtonState.Released)
 			{
-				buttons2 |= Buttons.X;
+				buttonsReleased |= Buttons.X;
 			}
 			if (this._lastState.Buttons.B == ButtonState.Pressed && this._currentState.Buttons.B == ButtonState.Released)
 			{
-				buttons2 |= Buttons.B;
+				buttonsReleased |= Buttons.B;
 			}
 			if (this._lastState.Buttons.Y == ButtonState.Pressed && this._currentState.Buttons.Y == ButtonState.Released)
 			{
-				buttons2 |= Buttons.Y;
+				buttonsReleased |= Buttons.Y;
 			}
 			if (this._lastState.Buttons.Start == ButtonState.Pressed && this._currentState.Buttons.Start == ButtonState.Released)
 			{
-				buttons2 |= Buttons.Start;
+				buttonsReleased |= Buttons.Start;
 			}
 			if (this._lastState.Buttons.Back == ButtonState.Pressed && this._currentState.Buttons.Back == ButtonState.Released)
 			{
-				buttons2 |= Buttons.Back;
+				buttonsReleased |= Buttons.Back;
 			}
 			if (this._lastState.Buttons.BigButton == ButtonState.Pressed && this._currentState.Buttons.BigButton == ButtonState.Released)
 			{
-				buttons2 |= Buttons.BigButton;
+				buttonsReleased |= Buttons.BigButton;
 			}
 			if (this._lastState.Buttons.LeftShoulder == ButtonState.Pressed && this._currentState.Buttons.LeftShoulder == ButtonState.Released)
 			{
-				buttons2 |= Buttons.LeftShoulder;
+				buttonsReleased |= Buttons.LeftShoulder;
 			}
 			if (this._lastState.Buttons.LeftStick == ButtonState.Pressed && this._currentState.Buttons.LeftStick == ButtonState.Released)
 			{
-				buttons2 |= Buttons.LeftStick;
+				buttonsReleased |= Buttons.LeftStick;
 			}
 			if (this._lastState.Buttons.RightShoulder == ButtonState.Pressed && this._currentState.Buttons.RightShoulder == ButtonState.Released)
 			{
-				buttons2 |= Buttons.RightShoulder;
+				buttonsReleased |= Buttons.RightShoulder;
 			}
 			if (this._lastState.Buttons.RightStick == ButtonState.Pressed && this._currentState.Buttons.RightStick == ButtonState.Released)
 			{
-				buttons2 |= Buttons.RightStick;
+				buttonsReleased |= Buttons.RightStick;
 			}
-			this._releasedButtons = new ControllerButtons(buttons2);
-			bool flag = false;
-			bool flag2 = false;
-			bool flag3 = false;
-			bool flag4 = false;
+			this._releasedButtons = new ControllerButtons(buttonsReleased);
+			bool dpadUp = false;
+			bool dpadDown = false;
+			bool dpadLeft = false;
+			bool dpadRight = false;
 			if (this._lastState.DPad.Up == ButtonState.Released && this._currentState.DPad.Up == ButtonState.Pressed)
 			{
-				flag = true;
+				dpadUp = true;
 			}
 			if (this._lastState.DPad.Down == ButtonState.Released && this._currentState.DPad.Down == ButtonState.Pressed)
 			{
-				flag2 = true;
+				dpadDown = true;
 			}
 			if (this._lastState.DPad.Left == ButtonState.Released && this._currentState.DPad.Left == ButtonState.Pressed)
 			{
-				flag3 = true;
+				dpadLeft = true;
 			}
 			if (this._lastState.DPad.Right == ButtonState.Released && this._currentState.DPad.Right == ButtonState.Pressed)
 			{
-				flag4 = true;
+				dpadRight = true;
 			}
-			this._pressedDPad = new ControllerDPad(flag, flag2, flag3, flag4);
+			this._pressedDPad = new ControllerDPad(dpadUp, dpadDown, dpadLeft, dpadRight);
 			if (this._lastState.DPad.Up == ButtonState.Pressed && this._currentState.DPad.Up == ButtonState.Released)
 			{
-				flag = true;
+				dpadUp = true;
 			}
 			if (this._lastState.DPad.Down == ButtonState.Pressed && this._currentState.DPad.Down == ButtonState.Released)
 			{
-				flag2 = true;
+				dpadDown = true;
 			}
 			if (this._lastState.DPad.Left == ButtonState.Pressed && this._currentState.DPad.Left == ButtonState.Released)
 			{
-				flag3 = true;
+				dpadLeft = true;
 			}
 			if (this._lastState.DPad.Right == ButtonState.Pressed && this._currentState.DPad.Right == ButtonState.Released)
 			{
-				flag4 = true;
+				dpadRight = true;
 			}
-			this._releasedDPad = new ControllerDPad(flag, flag2, flag3, flag4);
+			this._releasedDPad = new ControllerDPad(dpadUp, dpadDown, dpadLeft, dpadRight);
 		}
 
 		private PlayerIndex _playerIndex;

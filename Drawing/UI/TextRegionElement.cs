@@ -35,41 +35,41 @@ namespace DNA.Drawing.UI
 
 		protected override void ProcessText(string text, StringBuilder builder)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			StringBuilder stringBuilder2 = new StringBuilder();
-			float x = this._size.X;
+			StringBuilder sb = new StringBuilder();
+			StringBuilder sb2 = new StringBuilder();
+			float sizeOfLine = this._size.X;
 			this.NumberOfLines = 1;
-			float num = (this.ScaleOnScreenResize ? Screen.Adjuster.ScaleFactor.Y : 1f);
+			float scale = (this.ScaleOnScreenResize ? Screen.Adjuster.ScaleFactor.Y : 1f);
 			for (int i = 0; i < text.Length; i++)
 			{
 				char c = text[i];
-				char c2 = '\0';
+				char next = '\0';
 				if (i != text.Length - 1)
 				{
-					c2 = text[i + 1];
+					next = text[i + 1];
 				}
-				stringBuilder.Append(c);
-				if (this._isSeparator(c, c2))
+				sb.Append(c);
+				if (this._isSeparator(c, next))
 				{
-					if (this.Font.MeasureString(stringBuilder).X * num > x)
+					if (this.Font.MeasureString(sb).X * scale > sizeOfLine)
 					{
-						builder.Append(stringBuilder2);
+						builder.Append(sb2);
 						builder.Append('\n');
 						this.NumberOfLines++;
-						stringBuilder.Remove(0, stringBuilder2.Length);
+						sb.Remove(0, sb2.Length);
 					}
-					stringBuilder2.Length = 0;
-					stringBuilder2.Append(stringBuilder);
+					sb2.Length = 0;
+					sb2.Append(sb);
 				}
 			}
-			if (this.Font.MeasureString(stringBuilder).X * num > x)
+			if (this.Font.MeasureString(sb).X * scale > sizeOfLine)
 			{
-				builder.Append(stringBuilder2);
+				builder.Append(sb2);
 				builder.Append('\n');
 				this.NumberOfLines++;
-				stringBuilder.Remove(0, stringBuilder2.Length);
+				sb.Remove(0, sb2.Length);
 			}
-			builder.Append(stringBuilder);
+			builder.Append(sb);
 		}
 
 		private bool _isSeparator(char c, char next)

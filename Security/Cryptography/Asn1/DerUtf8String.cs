@@ -48,8 +48,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerUtf8String derUtf8String = asn1Object as DerUtf8String;
-			return derUtf8String != null && this.str.Equals(derUtf8String.str);
+			DerUtf8String other = asn1Object as DerUtf8String;
+			return other != null && this.str.Equals(other.str);
 		}
 
 		internal override void Encode(DerOutputStream derOut)

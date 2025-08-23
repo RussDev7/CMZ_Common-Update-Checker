@@ -9,8 +9,8 @@ namespace DNA
 		{
 			for (int i = 0; i < this.checkStr.Length; i++)
 			{
-				string text = SecurityTools.DecryptString(GVerifier.Key, this.checkStr[i]);
-				if (data == text)
+				string name = SecurityTools.DecryptString(GVerifier.Key, this.checkStr[i]);
+				if (data == name)
 				{
 					return false;
 				}

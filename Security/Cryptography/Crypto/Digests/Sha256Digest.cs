@@ -101,54 +101,54 @@ namespace DNA.Security.Cryptography.Crypto.Digests
 
 		internal override void ProcessBlock()
 		{
-			for (int i = 16; i <= 63; i++)
+			for (int ti = 16; ti <= 63; ti++)
 			{
-				this.X[i] = Sha256Digest.Theta1(this.X[i - 2]) + this.X[i - 7] + Sha256Digest.Theta0(this.X[i - 15]) + this.X[i - 16];
+				this.X[ti] = Sha256Digest.Theta1(this.X[ti - 2]) + this.X[ti - 7] + Sha256Digest.Theta0(this.X[ti - 15]) + this.X[ti - 16];
 			}
-			uint num = this.H1;
-			uint num2 = this.H2;
-			uint num3 = this.H3;
-			uint num4 = this.H4;
-			uint num5 = this.H5;
-			uint num6 = this.H6;
-			uint num7 = this.H7;
-			uint num8 = this.H8;
-			int num9 = 0;
-			for (int j = 0; j < 8; j++)
+			uint a = this.H1;
+			uint b = this.H2;
+			uint c = this.H3;
+			uint d = this.H4;
+			uint e = this.H5;
+			uint f = this.H6;
+			uint g = this.H7;
+			uint h = this.H8;
+			int t = 0;
+			for (int i = 0; i < 8; i++)
 			{
-				num8 += Sha256Digest.Sum1Ch(num5, num6, num7) + Sha256Digest.K[num9] + this.X[num9++];
-				num4 += num8;
-				num8 += Sha256Digest.Sum0Maj(num, num2, num3);
-				num7 += Sha256Digest.Sum1Ch(num4, num5, num6) + Sha256Digest.K[num9] + this.X[num9++];
-				num3 += num7;
-				num7 += Sha256Digest.Sum0Maj(num8, num, num2);
-				num6 += Sha256Digest.Sum1Ch(num3, num4, num5) + Sha256Digest.K[num9] + this.X[num9++];
-				num2 += num6;
-				num6 += Sha256Digest.Sum0Maj(num7, num8, num);
-				num5 += Sha256Digest.Sum1Ch(num2, num3, num4) + Sha256Digest.K[num9] + this.X[num9++];
-				num += num5;
-				num5 += Sha256Digest.Sum0Maj(num6, num7, num8);
-				num4 += Sha256Digest.Sum1Ch(num, num2, num3) + Sha256Digest.K[num9] + this.X[num9++];
-				num8 += num4;
-				num4 += Sha256Digest.Sum0Maj(num5, num6, num7);
-				num3 += Sha256Digest.Sum1Ch(num8, num, num2) + Sha256Digest.K[num9] + this.X[num9++];
-				num7 += num3;
-				num3 += Sha256Digest.Sum0Maj(num4, num5, num6);
-				num2 += Sha256Digest.Sum1Ch(num7, num8, num) + Sha256Digest.K[num9] + this.X[num9++];
-				num6 += num2;
-				num2 += Sha256Digest.Sum0Maj(num3, num4, num5);
-				num += Sha256Digest.Sum1Ch(num6, num7, num8) + Sha256Digest.K[num9] + this.X[num9++];
-				num5 += num;
-				num += Sha256Digest.Sum0Maj(num2, num3, num4);
+				h += Sha256Digest.Sum1Ch(e, f, g) + Sha256Digest.K[t] + this.X[t++];
+				d += h;
+				h += Sha256Digest.Sum0Maj(a, b, c);
+				g += Sha256Digest.Sum1Ch(d, e, f) + Sha256Digest.K[t] + this.X[t++];
+				c += g;
+				g += Sha256Digest.Sum0Maj(h, a, b);
+				f += Sha256Digest.Sum1Ch(c, d, e) + Sha256Digest.K[t] + this.X[t++];
+				b += f;
+				f += Sha256Digest.Sum0Maj(g, h, a);
+				e += Sha256Digest.Sum1Ch(b, c, d) + Sha256Digest.K[t] + this.X[t++];
+				a += e;
+				e += Sha256Digest.Sum0Maj(f, g, h);
+				d += Sha256Digest.Sum1Ch(a, b, c) + Sha256Digest.K[t] + this.X[t++];
+				h += d;
+				d += Sha256Digest.Sum0Maj(e, f, g);
+				c += Sha256Digest.Sum1Ch(h, a, b) + Sha256Digest.K[t] + this.X[t++];
+				g += c;
+				c += Sha256Digest.Sum0Maj(d, e, f);
+				b += Sha256Digest.Sum1Ch(g, h, a) + Sha256Digest.K[t] + this.X[t++];
+				f += b;
+				b += Sha256Digest.Sum0Maj(c, d, e);
+				a += Sha256Digest.Sum1Ch(f, g, h) + Sha256Digest.K[t] + this.X[t++];
+				e += a;
+				a += Sha256Digest.Sum0Maj(b, c, d);
 			}
-			this.H1 += num;
-			this.H2 += num2;
-			this.H3 += num3;
-			this.H4 += num4;
-			this.H5 += num5;
-			this.H6 += num6;
-			this.H7 += num7;
-			this.H8 += num8;
+			this.H1 += a;
+			this.H2 += b;
+			this.H3 += c;
+			this.H4 += d;
+			this.H5 += e;
+			this.H6 += f;
+			this.H7 += g;
+			this.H8 += h;
 			this.xOff = 0;
 			Array.Clear(this.X, 0, 16);
 		}

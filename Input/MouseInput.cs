@@ -42,9 +42,9 @@ namespace DNA.Input
 		{
 			get
 			{
-				Vector2 vector = this._game.ScreenToBuffer(new Vector2((float)this._currentState.X, (float)this._currentState.Y));
-				Vector2 vector2 = this._game.ScreenToBuffer(new Vector2((float)this._lastState.X, (float)this._lastState.Y));
-				return new Vector2(vector.X - vector2.X, vector.Y - vector2.Y);
+				Vector2 currentState = this._game.ScreenToBuffer(new Vector2((float)this._currentState.X, (float)this._currentState.Y));
+				Vector2 lastState = this._game.ScreenToBuffer(new Vector2((float)this._lastState.X, (float)this._lastState.Y));
+				return new Vector2(currentState.X - lastState.X, currentState.Y - lastState.Y);
 			}
 		}
 

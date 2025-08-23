@@ -12,20 +12,20 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				return null;
 			}
-			DerInteger derInteger = obj as DerInteger;
-			if (derInteger != null)
+			DerInteger i = obj as DerInteger;
+			if (i != null)
 			{
-				return derInteger;
+				return i;
 			}
-			Asn1OctetString asn1OctetString = obj as Asn1OctetString;
-			if (asn1OctetString != null)
+			Asn1OctetString octs = obj as Asn1OctetString;
+			if (octs != null)
 			{
-				return new DerInteger(asn1OctetString.GetOctets());
+				return new DerInteger(octs.GetOctets());
 			}
-			Asn1TaggedObject asn1TaggedObject = obj as Asn1TaggedObject;
-			if (asn1TaggedObject != null)
+			Asn1TaggedObject tagged = obj as Asn1TaggedObject;
+			if (tagged != null)
 			{
-				return DerInteger.GetInstance(asn1TaggedObject.GetObject());
+				return DerInteger.GetInstance(tagged.GetObject());
 			}
 			throw new ArgumentException("illegal object in GetInstance: " + obj.GetType().Name);
 		}
@@ -86,8 +86,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerInteger derInteger = asn1Object as DerInteger;
-			return derInteger != null && Arrays.AreEqual(this.bytes, derInteger.bytes);
+			DerInteger other = asn1Object as DerInteger;
+			return other != null && Arrays.AreEqual(this.bytes, other.bytes);
 		}
 
 		public override string ToString()

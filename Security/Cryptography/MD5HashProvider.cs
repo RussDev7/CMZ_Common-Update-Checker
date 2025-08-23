@@ -14,12 +14,12 @@ namespace DNA.Security.Cryptography
 
 		public override Hash Parse(string s)
 		{
-			byte[] array = new byte[s.Length / 2];
-			for (int i = 0; i < array.Length; i++)
+			byte[] data = new byte[s.Length / 2];
+			for (int i = 0; i < data.Length; i++)
 			{
-				array[i] = byte.Parse(s.Substring(i * 2, 2), NumberStyles.HexNumber);
+				data[i] = byte.Parse(s.Substring(i * 2, 2), NumberStyles.HexNumber);
 			}
-			return new MD5HashProvider.MD5Hash(array);
+			return new MD5HashProvider.MD5Hash(data);
 		}
 
 		internal override IDigest GetHashAlgorythim()

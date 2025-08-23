@@ -16,12 +16,12 @@ namespace DNA.Multimedia.Audio
 			{
 				if (this._value < 0f)
 				{
-					int num = (int)Math.Ceiling((double)this._value);
-					int num2 = num / 12;
-					return num2 - 1;
+					int noteIndex = (int)Math.Ceiling((double)this._value);
+					int octive = noteIndex / 12;
+					return octive - 1;
 				}
-				int num3 = (int)Math.Floor((double)this._value);
-				return num3 / 12;
+				int noteIndex2 = (int)Math.Floor((double)this._value);
+				return noteIndex2 / 12;
 			}
 		}
 
@@ -65,15 +65,15 @@ namespace DNA.Multimedia.Audio
 		{
 			get
 			{
-				int num = (int)Math.Round((double)this._value);
-				if (num < 0)
+				int noteIndex = (int)Math.Round((double)this._value);
+				if (noteIndex < 0)
 				{
-					num = -num;
-					num %= 12;
-					num = 12 - num;
-					return (Notes)(num % 12);
+					noteIndex = -noteIndex;
+					noteIndex %= 12;
+					noteIndex = 12 - noteIndex;
+					return (Notes)(noteIndex % 12);
 				}
-				return (Notes)(num % 12);
+				return (Notes)(noteIndex % 12);
 			}
 		}
 
@@ -81,8 +81,8 @@ namespace DNA.Multimedia.Audio
 		{
 			get
 			{
-				int num = (int)Math.Round((double)this._value);
-				return this._value - (float)num;
+				int noteIndex = (int)Math.Round((double)this._value);
+				return this._value - (float)noteIndex;
 			}
 		}
 
@@ -121,8 +121,8 @@ namespace DNA.Multimedia.Audio
 			{
 				octive++;
 			}
-			float num = (float)note + (float)(12 * octive);
-			return new Tone(num);
+			float value = (float)note + (float)(12 * octive);
+			return new Tone(value);
 		}
 
 		private static float NoteFromFrequency(Frequency frequency)
@@ -137,62 +137,62 @@ namespace DNA.Multimedia.Audio
 
 		public static Tone Parse(string value)
 		{
-			int num = value.IndexOfAny(new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' });
-			int num2 = 5;
-			string text2;
-			if (num > 0)
+			int index = value.IndexOfAny(new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' });
+			int octive = 5;
+			string noteText;
+			if (index > 0)
 			{
-				string text = value.Substring(num);
-				num2 = int.Parse(text);
-				text2 = value.Substring(0, num);
+				string octiveText = value.Substring(index);
+				octive = int.Parse(octiveText);
+				noteText = value.Substring(0, index);
 			}
 			else
 			{
-				text2 = value;
+				noteText = value;
 			}
-			text2 = text2.Trim();
-			Notes notes;
+			noteText = noteText.Trim();
+			Notes noteIndex;
 			try
 			{
-				notes = (Notes)Enum.Parse(typeof(Notes), text2, true);
+				noteIndex = (Notes)Enum.Parse(typeof(Notes), noteText, true);
 			}
 			catch
 			{
-				string text3;
-				if ((text3 = text2) != null)
+				string text;
+				if ((text = noteText) != null)
 				{
-					if (!(text3 == "C#"))
+					if (!(text == "C#"))
 					{
-						if (!(text3 == "D#"))
+						if (!(text == "D#"))
 						{
-							if (!(text3 == "F#"))
+							if (!(text == "F#"))
 							{
-								if (!(text3 == "G#"))
+								if (!(text == "G#"))
 								{
-									if (!(text3 == "A#"))
+									if (!(text == "A#"))
 									{
 										goto IL_00C6;
 									}
-									notes = Notes.Bb;
+									noteIndex = Notes.Bb;
 								}
 								else
 								{
-									notes = Notes.Ab;
+									noteIndex = Notes.Ab;
 								}
 							}
 							else
 							{
-								notes = Notes.Gb;
+								noteIndex = Notes.Gb;
 							}
 						}
 						else
 						{
-							notes = Notes.Eb;
+							noteIndex = Notes.Eb;
 						}
 					}
 					else
 					{
-						notes = Notes.Db;
+						noteIndex = Notes.Db;
 					}
 					goto IL_00D3;
 				}
@@ -200,7 +200,7 @@ namespace DNA.Multimedia.Audio
 				throw new FormatException("Invalid Note");
 			}
 			IL_00D3:
-			return Tone.FromNote(notes, num2);
+			return Tone.FromNote(noteIndex, octive);
 		}
 
 		private Tone(float noteNumber)

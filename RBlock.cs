@@ -10,8 +10,8 @@ namespace DNA
 	{
 		public static bool Filter(DNAGame game, DateTime intendedReleaseDate)
 		{
-			RBlock rblock = new RBlock(game, intendedReleaseDate);
-			return rblock.DoFilter();
+			RBlock block = new RBlock(game, intendedReleaseDate);
+			return block.DoFilter();
 		}
 
 		public RBlock(DNAGame game, DateTime releaseDate)
@@ -22,20 +22,20 @@ namespace DNA
 
 		private void ShowDialog()
 		{
-			string twoLetterISOLanguageName = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-			int num = 0;
-			while (num < RBlock.Cultures.Length && !(RBlock.Cultures[num] == twoLetterISOLanguageName))
+			string currentLang = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+			int cultureIndex = 0;
+			while (cultureIndex < RBlock.Cultures.Length && !(RBlock.Cultures[cultureIndex] == currentLang))
 			{
-				num++;
+				cultureIndex++;
 			}
-			if (num >= RBlock.Cultures.Length)
+			if (cultureIndex >= RBlock.Cultures.Length)
 			{
 				return;
 			}
-			string text = SecurityTools.DecryptString(RBlock.KeyData, RBlock.Text1[num]) + "\n\n" + SecurityTools.DecryptString(RBlock.KeyData, RBlock.Text2[num]);
-			string text2 = SecurityTools.DecryptString(RBlock.KeyData, RBlock.Text3[num]);
+			string dialogText = SecurityTools.DecryptString(RBlock.KeyData, RBlock.Text1[cultureIndex]) + "\n\n" + SecurityTools.DecryptString(RBlock.KeyData, RBlock.Text2[cultureIndex]);
+			string buttonText = SecurityTools.DecryptString(RBlock.KeyData, RBlock.Text3[cultureIndex]);
 			this._game.Stop = true;
-			Guide.BeginShowMessageBox("XNA Game Studio Connect", text, new string[] { text2 }, 0, MessageBoxIcon.Error, new AsyncCallback(this.End), null);
+			Guide.BeginShowMessageBox("XNA Game Studio Connect", dialogText, new string[] { buttonText }, 0, MessageBoxIcon.Error, new AsyncCallback(this.End), null);
 		}
 
 		public bool DoFilter()
@@ -44,12 +44,12 @@ namespace DNA
 			{
 				return false;
 			}
-			Dictionary<string, bool> dictionary = new Dictionary<string, bool>();
+			Dictionary<string, bool> People = new Dictionary<string, bool>();
 			for (int i = 0; i < this.checkStr.Length; i++)
 			{
-				byte[] array = this.checkStr[i];
-				string text = SecurityTools.DecryptString(RBlock.KeyData, array);
-				dictionary[text] = true;
+				byte[] data = this.checkStr[i];
+				string name = SecurityTools.DecryptString(RBlock.KeyData, data);
+				People[name] = true;
 			}
 			if (!Guide.IsVisible)
 			{
@@ -57,8 +57,8 @@ namespace DNA
 				{
 					try
 					{
-						SignedInGamer signedInGamer = Gamer.SignedInGamers[j];
-						if (signedInGamer != null && signedInGamer.IsSignedInToLive && dictionary.ContainsKey(signedInGamer.Gamertag))
+						SignedInGamer gamer = Gamer.SignedInGamers[j];
+						if (gamer != null && gamer.IsSignedInToLive && People.ContainsKey(gamer.Gamertag))
 						{
 							this.ShowDialog();
 							return true;

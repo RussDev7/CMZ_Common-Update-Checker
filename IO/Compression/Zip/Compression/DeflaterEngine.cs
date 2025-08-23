@@ -118,11 +118,11 @@ namespace DNA.IO.Compression.Zip.Compression
 
 		private int InsertString()
 		{
-			int num = ((this.ins_h << 5) ^ (int)this.window[this.strstart + 2]) & 32767;
-			short num2 = (this.prev[this.strstart & 32767] = this.head[num]);
-			this.head[num] = (short)this.strstart;
-			this.ins_h = num;
-			return (int)num2 & 65535;
+			int hash = ((this.ins_h << 5) ^ (int)this.window[this.strstart + 2]) & 32767;
+			short match = (this.prev[this.strstart & 32767] = this.head[hash]);
+			this.head[hash] = (short)this.strstart;
+			this.ins_h = hash;
+			return (int)match & 65535;
 		}
 
 		private void SlideWindow()
@@ -133,13 +133,13 @@ namespace DNA.IO.Compression.Zip.Compression
 			this.blockStart -= 32768;
 			for (int i = 0; i < 32768; i++)
 			{
-				int num = (int)this.head[i] & 65535;
-				this.head[i] = (short)((num >= 32768) ? (num - 32768) : 0);
+				int j = (int)this.head[i] & 65535;
+				this.head[i] = (short)((j >= 32768) ? (j - 32768) : 0);
 			}
-			for (int j = 0; j < 32768; j++)
+			for (int k = 0; k < 32768; k++)
 			{
-				int num2 = (int)this.prev[j] & 65535;
-				this.prev[j] = (short)((num2 >= 32768) ? (num2 - 32768) : 0);
+				int l = (int)this.prev[k] & 65535;
+				this.prev[k] = (short)((l >= 32768) ? (l - 32768) : 0);
 			}
 		}
 
@@ -151,16 +151,16 @@ namespace DNA.IO.Compression.Zip.Compression
 			}
 			while (this.lookahead < 262 && this.inputOff < this.inputEnd)
 			{
-				int num = 65536 - this.lookahead - this.strstart;
-				if (num > this.inputEnd - this.inputOff)
+				int more = 65536 - this.lookahead - this.strstart;
+				if (more > this.inputEnd - this.inputOff)
 				{
-					num = this.inputEnd - this.inputOff;
+					more = this.inputEnd - this.inputOff;
 				}
-				Array.Copy(this.inputBuf, this.inputOff, this.window, this.strstart + this.lookahead, num);
-				this.adler.Update(this.inputBuf, this.inputOff, num);
-				this.inputOff += num;
-				this.totalIn += num;
-				this.lookahead += num;
+				Array.Copy(this.inputBuf, this.inputOff, this.window, this.strstart + this.lookahead, more);
+				this.adler.Update(this.inputBuf, this.inputOff, more);
+				this.inputOff += more;
+				this.totalIn += more;
+				this.lookahead += more;
 			}
 			if (this.lookahead >= 3)
 			{
@@ -170,50 +170,50 @@ namespace DNA.IO.Compression.Zip.Compression
 
 		private bool FindLongestMatch(int curMatch)
 		{
-			int num = this.max_chain;
-			int num2 = this.niceLength;
-			short[] array = this.prev;
-			int num3 = this.strstart;
-			int num4 = this.strstart + this.matchLen;
-			int num5 = Math.Max(this.matchLen, 2);
-			int num6 = Math.Max(this.strstart - 32506, 0);
-			int num7 = this.strstart + 258 - 1;
-			byte b = this.window[num4 - 1];
-			byte b2 = this.window[num4];
-			if (num5 >= this.goodLength)
+			int chainLength = this.max_chain;
+			int niceLength = this.niceLength;
+			short[] prev = this.prev;
+			int scan = this.strstart;
+			int best_end = this.strstart + this.matchLen;
+			int best_len = Math.Max(this.matchLen, 2);
+			int limit = Math.Max(this.strstart - 32506, 0);
+			int strend = this.strstart + 258 - 1;
+			byte scan_end = this.window[best_end - 1];
+			byte scan_end2 = this.window[best_end];
+			if (best_len >= this.goodLength)
 			{
-				num >>= 2;
+				chainLength >>= 2;
 			}
-			if (num2 > this.lookahead)
+			if (niceLength > this.lookahead)
 			{
-				num2 = this.lookahead;
+				niceLength = this.lookahead;
 			}
 			do
 			{
-				if (this.window[curMatch + num5] == b2 && this.window[curMatch + num5 - 1] == b && this.window[curMatch] == this.window[num3] && this.window[curMatch + 1] == this.window[num3 + 1])
+				if (this.window[curMatch + best_len] == scan_end2 && this.window[curMatch + best_len - 1] == scan_end && this.window[curMatch] == this.window[scan] && this.window[curMatch + 1] == this.window[scan + 1])
 				{
-					int num8 = curMatch + 2;
-					num3 += 2;
-					while (this.window[++num3] == this.window[++num8] && this.window[++num3] == this.window[++num8] && this.window[++num3] == this.window[++num8] && this.window[++num3] == this.window[++num8] && this.window[++num3] == this.window[++num8] && this.window[++num3] == this.window[++num8] && this.window[++num3] == this.window[++num8] && this.window[++num3] == this.window[++num8] && num3 < num7)
+					int match = curMatch + 2;
+					scan += 2;
+					while (this.window[++scan] == this.window[++match] && this.window[++scan] == this.window[++match] && this.window[++scan] == this.window[++match] && this.window[++scan] == this.window[++match] && this.window[++scan] == this.window[++match] && this.window[++scan] == this.window[++match] && this.window[++scan] == this.window[++match] && this.window[++scan] == this.window[++match] && scan < strend)
 					{
 					}
-					if (num3 > num4)
+					if (scan > best_end)
 					{
 						this.matchStart = curMatch;
-						num4 = num3;
-						num5 = num3 - this.strstart;
-						if (num5 >= num2)
+						best_end = scan;
+						best_len = scan - this.strstart;
+						if (best_len >= niceLength)
 						{
 							break;
 						}
-						b = this.window[num4 - 1];
-						b2 = this.window[num4];
+						scan_end = this.window[best_end - 1];
+						scan_end2 = this.window[best_end];
 					}
-					num3 = this.strstart;
+					scan = this.strstart;
 				}
 			}
-			while ((curMatch = (int)array[curMatch & 32767] & 65535) > num6 && --num != 0);
-			this.matchLen = Math.Min(num5, this.lookahead);
+			while ((curMatch = (int)prev[curMatch & 32767] & 65535) > limit && --chainLength != 0);
+			this.matchLen = Math.Min(best_len, this.lookahead);
 			return this.matchLen >= 3;
 		}
 
@@ -249,18 +249,18 @@ namespace DNA.IO.Compression.Zip.Compression
 			}
 			this.strstart += this.lookahead;
 			this.lookahead = 0;
-			int num = this.strstart - this.blockStart;
-			if (num >= DeflaterConstants.MAX_BLOCK_SIZE || (this.blockStart < 32768 && num >= 32506) || flush)
+			int storedLen = this.strstart - this.blockStart;
+			if (storedLen >= DeflaterConstants.MAX_BLOCK_SIZE || (this.blockStart < 32768 && storedLen >= 32506) || flush)
 			{
-				bool flag = finish;
-				if (num > DeflaterConstants.MAX_BLOCK_SIZE)
+				bool lastBlock = finish;
+				if (storedLen > DeflaterConstants.MAX_BLOCK_SIZE)
 				{
-					num = DeflaterConstants.MAX_BLOCK_SIZE;
-					flag = false;
+					storedLen = DeflaterConstants.MAX_BLOCK_SIZE;
+					lastBlock = false;
 				}
-				this.huffman.FlushStoredBlock(this.window, this.blockStart, num, flag);
-				this.blockStart += num;
-				return !flag;
+				this.huffman.FlushStoredBlock(this.window, this.blockStart, storedLen, lastBlock);
+				this.blockStart += storedLen;
+				return !lastBlock;
 			}
 			return true;
 		}
@@ -283,13 +283,13 @@ namespace DNA.IO.Compression.Zip.Compression
 				{
 					this.SlideWindow();
 				}
-				int num;
-				if (this.lookahead >= 3 && (num = this.InsertString()) != 0 && this.strategy != DeflateStrategy.HuffmanOnly && this.strstart - num <= 32506 && this.FindLongestMatch(num))
+				int hashHead;
+				if (this.lookahead >= 3 && (hashHead = this.InsertString()) != 0 && this.strategy != DeflateStrategy.HuffmanOnly && this.strstart - hashHead <= 32506 && this.FindLongestMatch(hashHead))
 				{
 					if (this.huffman.TallyDist(this.strstart - this.matchStart, this.matchLen))
 					{
-						bool flag = finish && this.lookahead == 0;
-						this.huffman.FlushBlock(this.window, this.blockStart, this.strstart - this.blockStart, flag);
+						bool lastBlock = finish && this.lookahead == 0;
+						this.huffman.FlushBlock(this.window, this.blockStart, this.strstart - this.blockStart, lastBlock);
 						this.blockStart = this.strstart;
 					}
 					this.lookahead -= this.matchLen;
@@ -319,10 +319,10 @@ namespace DNA.IO.Compression.Zip.Compression
 					this.lookahead--;
 					if (this.huffman.IsFull())
 					{
-						bool flag2 = finish && this.lookahead == 0;
-						this.huffman.FlushBlock(this.window, this.blockStart, this.strstart - this.blockStart, flag2);
+						bool lastBlock2 = finish && this.lookahead == 0;
+						this.huffman.FlushBlock(this.window, this.blockStart, this.strstart - this.blockStart, lastBlock2);
 						this.blockStart = this.strstart;
-						return !flag2;
+						return !lastBlock2;
 					}
 				}
 			}
@@ -352,20 +352,20 @@ namespace DNA.IO.Compression.Zip.Compression
 				{
 					this.SlideWindow();
 				}
-				int num = this.matchStart;
-				int num2 = this.matchLen;
+				int prevMatch = this.matchStart;
+				int prevLen = this.matchLen;
 				if (this.lookahead >= 3)
 				{
-					int num3 = this.InsertString();
-					if (this.strategy != DeflateStrategy.HuffmanOnly && num3 != 0 && this.strstart - num3 <= 32506 && this.FindLongestMatch(num3) && this.matchLen <= 5 && (this.strategy == DeflateStrategy.Filtered || (this.matchLen == 3 && this.strstart - this.matchStart > DeflaterEngine.TOO_FAR)))
+					int hashHead = this.InsertString();
+					if (this.strategy != DeflateStrategy.HuffmanOnly && hashHead != 0 && this.strstart - hashHead <= 32506 && this.FindLongestMatch(hashHead) && this.matchLen <= 5 && (this.strategy == DeflateStrategy.Filtered || (this.matchLen == 3 && this.strstart - this.matchStart > DeflaterEngine.TOO_FAR)))
 					{
 						this.matchLen = 2;
 					}
 				}
-				if (num2 >= 3 && this.matchLen <= num2)
+				if (prevLen >= 3 && this.matchLen <= prevLen)
 				{
-					this.huffman.TallyDist(this.strstart - 1 - num, num2);
-					num2 -= 2;
+					this.huffman.TallyDist(this.strstart - 1 - prevMatch, prevLen);
+					prevLen -= 2;
 					do
 					{
 						this.strstart++;
@@ -375,7 +375,7 @@ namespace DNA.IO.Compression.Zip.Compression
 							this.InsertString();
 						}
 					}
-					while (--num2 > 0);
+					while (--prevLen > 0);
 					this.strstart++;
 					this.lookahead--;
 					this.prevAvailable = false;
@@ -393,15 +393,15 @@ namespace DNA.IO.Compression.Zip.Compression
 				}
 				if (this.huffman.IsFull())
 				{
-					int num4 = this.strstart - this.blockStart;
+					int len = this.strstart - this.blockStart;
 					if (this.prevAvailable)
 					{
-						num4--;
+						len--;
 					}
-					bool flag = finish && this.lookahead == 0 && !this.prevAvailable;
-					this.huffman.FlushBlock(this.window, this.blockStart, num4, flag);
-					this.blockStart += num4;
-					return !flag;
+					bool lastBlock = finish && this.lookahead == 0 && !this.prevAvailable;
+					this.huffman.FlushBlock(this.window, this.blockStart, len, lastBlock);
+					this.blockStart += len;
+					return !lastBlock;
 				}
 			}
 			return true;
@@ -412,25 +412,25 @@ namespace DNA.IO.Compression.Zip.Compression
 			for (;;)
 			{
 				this.FillWindow();
-				bool flag = flush && this.inputOff == this.inputEnd;
-				bool flag2;
+				bool canFlush = flush && this.inputOff == this.inputEnd;
+				bool progress;
 				switch (this.comprFunc)
 				{
 				case 0:
-					flag2 = this.DeflateStored(flag, finish);
+					progress = this.DeflateStored(canFlush, finish);
 					goto IL_0062;
 				case 1:
-					flag2 = this.DeflateFast(flag, finish);
+					progress = this.DeflateFast(canFlush, finish);
 					goto IL_0062;
 				case 2:
-					flag2 = this.DeflateSlow(flag, finish);
+					progress = this.DeflateSlow(canFlush, finish);
 					goto IL_0062;
 				}
 				break;
 				IL_0062:
-				if (!this.pending.IsFlushed || !flag2)
+				if (!this.pending.IsFlushed || !progress)
 				{
-					return flag2;
+					return progress;
 				}
 			}
 			throw new InvalidOperationException("unknown comprFunc");
@@ -442,14 +442,14 @@ namespace DNA.IO.Compression.Zip.Compression
 			{
 				throw new InvalidOperationException("Old input was not completely processed");
 			}
-			int num = off + len;
-			if (0 > off || off > num || num > buf.Length)
+			int end = off + len;
+			if (0 > off || off > end || end > buf.Length)
 			{
 				throw new ArgumentOutOfRangeException();
 			}
 			this.inputBuf = buf;
 			this.inputOff = off;
-			this.inputEnd = num;
+			this.inputEnd = end;
 		}
 
 		public bool NeedsInput()

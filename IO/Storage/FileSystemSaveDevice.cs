@@ -47,33 +47,33 @@ namespace DNA.IO.Storage
 
 		protected override string[] DeviceGetDirectoryNames()
 		{
-			string[] directories = Directory.GetDirectories(this._rootPath);
-			for (int i = 0; i < directories.Length; i++)
+			string[] files = Directory.GetDirectories(this._rootPath);
+			for (int i = 0; i < files.Length; i++)
 			{
-				directories[i] = directories[i].Substring(this._rootPath.Length);
+				files[i] = files[i].Substring(this._rootPath.Length);
 			}
-			return directories;
+			return files;
 		}
 
 		protected override string[] DeviceGetDirectoryNames(string pattern)
 		{
 			pattern = this.MakeRootRelative(pattern);
-			string directoryName = Path.GetDirectoryName(pattern);
-			string fileName = Path.GetFileName(pattern);
-			string[] array;
-			if (string.IsNullOrEmpty(fileName))
+			string path = Path.GetDirectoryName(pattern);
+			string pat = Path.GetFileName(pattern);
+			string[] files;
+			if (string.IsNullOrEmpty(pat))
 			{
-				array = Directory.GetDirectories(directoryName);
+				files = Directory.GetDirectories(path);
 			}
 			else
 			{
-				array = Directory.GetDirectories(directoryName, fileName);
+				files = Directory.GetDirectories(path, pat);
 			}
-			for (int i = 0; i < array.Length; i++)
+			for (int i = 0; i < files.Length; i++)
 			{
-				array[i] = array[i].Substring(this._rootPath.Length);
+				files[i] = files[i].Substring(this._rootPath.Length);
 			}
-			return array;
+			return files;
 		}
 
 		protected override string[] DeviceGetFileNames()
@@ -89,22 +89,22 @@ namespace DNA.IO.Storage
 		protected override string[] DeviceGetFileNames(string pattern)
 		{
 			pattern = this.MakeRootRelative(pattern);
-			string directoryName = Path.GetDirectoryName(pattern);
-			string fileName = Path.GetFileName(pattern);
-			string[] array;
-			if (string.IsNullOrEmpty(fileName))
+			string path = Path.GetDirectoryName(pattern);
+			string pat = Path.GetFileName(pattern);
+			string[] files;
+			if (string.IsNullOrEmpty(pat))
 			{
-				array = Directory.GetFiles(directoryName);
+				files = Directory.GetFiles(path);
 			}
 			else
 			{
-				array = Directory.GetFiles(directoryName, fileName);
+				files = Directory.GetFiles(path, pat);
 			}
-			for (int i = 0; i < array.Length; i++)
+			for (int i = 0; i < files.Length; i++)
 			{
-				array[i] = array[i].Substring(this._rootPath.Length);
+				files[i] = files[i].Substring(this._rootPath.Length);
 			}
-			return array;
+			return files;
 		}
 
 		protected override void DeviceCreateDirectory(string path)

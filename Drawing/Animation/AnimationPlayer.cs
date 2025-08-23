@@ -260,16 +260,16 @@ namespace DNA.Drawing.Animation
 
 		public void Update(TimeSpan timeSpan)
 		{
-			TimeSpan timeSpan2 = TimeSpan.FromSeconds(timeSpan.TotalSeconds * (double)base.Speed);
+			TimeSpan adjTime = TimeSpan.FromSeconds(timeSpan.TotalSeconds * (double)base.Speed);
 			if (base.Playing)
 			{
 				if (this._onPong)
 				{
-					this._currentTime -= timeSpan2;
+					this._currentTime -= adjTime;
 				}
 				else
 				{
-					this._currentTime += timeSpan2;
+					this._currentTime += adjTime;
 				}
 			}
 			if (this._currentTime > this.Duration)
@@ -317,12 +317,12 @@ namespace DNA.Drawing.Animation
 					this._currentTime = TimeSpan.Zero;
 				}
 			}
-			TimeSpan timeSpan3 = this._currentTime;
+			TimeSpan adjustedPosition = this._currentTime;
 			if (this._reversed)
 			{
-				timeSpan3 = this.Duration - this._currentTime;
+				adjustedPosition = this.Duration - this._currentTime;
 			}
-			this._currentAnimationClip.CopyTransforms(this._translations, this._rotations, this._scales, timeSpan3, this._influencedBones);
+			this._currentAnimationClip.CopyTransforms(this._translations, this._rotations, this._scales, adjustedPosition, this._influencedBones);
 		}
 
 		public override void Update(TimeSpan timeSpan, IList<Bone> boneTransforms)

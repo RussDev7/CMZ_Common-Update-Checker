@@ -40,9 +40,9 @@ namespace DNA.Drawing.UI.Controls
 				this._curPos = this._text.Length;
 				if (this.HideInput)
 				{
-					StringBuilder stringBuilder = new StringBuilder();
-					stringBuilder.Append('*', this._text.Length);
-					this._visibleText = stringBuilder.ToString();
+					StringBuilder builder = new StringBuilder();
+					builder.Append('*', this._text.Length);
+					this._visibleText = builder.ToString();
 					return;
 				}
 				this._visibleText = this._text;
@@ -97,8 +97,8 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnInput(InputManager inputManager, GameController controller, KeyboardInput chatPad, GameTime gameTime)
 		{
-			bool flag = this.HitTest(inputManager.Mouse.Position);
-			if (flag && inputManager.Mouse.LeftButtonPressed)
+			bool hitTest = this.HitTest(inputManager.Mouse.Position);
+			if (hitTest && inputManager.Mouse.LeftButtonPressed)
 			{
 				base.CaptureInput = true;
 			}
@@ -115,8 +115,8 @@ namespace DNA.Drawing.UI.Controls
 
 		public int LetterHitTest(int xloc)
 		{
-			Rectangle rectangle = this.Frame.CenterRegion(base.ScreenBounds);
-			if (xloc <= rectangle.Left)
+			Rectangle textBounds = this.Frame.CenterRegion(base.ScreenBounds);
+			if (xloc <= textBounds.Left)
 			{
 				return 0;
 			}
@@ -126,8 +126,8 @@ namespace DNA.Drawing.UI.Controls
 				for (int i = 0; i < this._visibleText.Length; i++)
 				{
 					this._builder.Append(this._visibleText, i, 1);
-					Vector2 vector = this.Font.MeasureString(this._builder) * this.Scale;
-					if ((float)xloc <= (float)rectangle.Left + vector.X)
+					Vector2 size = this.Font.MeasureString(this._builder) * this.Scale;
+					if ((float)xloc <= (float)textBounds.Left + size.X)
 					{
 						return i;
 					}
@@ -140,13 +140,13 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnChar(char c)
 		{
-			StringBuilder stringBuilder = new StringBuilder(this.Text);
+			StringBuilder textBuilder = new StringBuilder(this.Text);
 			switch (c)
 			{
 			case '\b':
-				if (stringBuilder.Length > 0 && this._curPos > 0)
+				if (textBuilder.Length > 0 && this._curPos > 0)
 				{
-					stringBuilder.Remove(this._curPos - 1, 1);
+					textBuilder.Remove(this._curPos - 1, 1);
 					this._curPos--;
 				}
 				break;
@@ -157,13 +157,13 @@ namespace DNA.Drawing.UI.Controls
 				{
 					if (c != '\u0016' && (char.IsLetterOrDigit(c) || char.IsPunctuation(c) || char.IsWhiteSpace(c)) && (this.MaxChars < 0 || this.Text.Length < this.MaxChars))
 					{
-						StringBuilder stringBuilder2 = new StringBuilder(stringBuilder.ToString());
-						stringBuilder2.Insert(this._curPos, c);
-						Vector2 vector = this.Font.MeasureString(stringBuilder2) * this.Scale;
-						Rectangle rectangle = this.Frame.CenterRegion(base.ScreenBounds);
-						if (vector.X < (float)rectangle.Width)
+						StringBuilder tb2 = new StringBuilder(textBuilder.ToString());
+						tb2.Insert(this._curPos, c);
+						Vector2 newSize = this.Font.MeasureString(tb2) * this.Scale;
+						Rectangle textBounds = this.Frame.CenterRegion(base.ScreenBounds);
+						if (newSize.X < (float)textBounds.Width)
 						{
-							stringBuilder.Insert(this._curPos, c);
+							textBuilder.Insert(this._curPos, c);
 							this._curPos++;
 						}
 					}
@@ -174,11 +174,11 @@ namespace DNA.Drawing.UI.Controls
 					{
 						this.EnterPressed(this, new EventArgs());
 					}
-					stringBuilder = new StringBuilder(this.Text);
+					textBuilder = new StringBuilder(this.Text);
 				}
 				break;
 			}
-			this.Text = stringBuilder.ToString();
+			this.Text = textBuilder.ToString();
 			base.OnChar(c);
 		}
 
@@ -190,14 +190,14 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			Rectangle screenBounds = base.ScreenBounds;
-			this.Frame.Draw(spriteBatch, screenBounds, this.FrameColor);
-			Rectangle rectangle = this.Frame.CenterRegion(base.ScreenBounds);
-			spriteBatch.DrawString(this.Font, this._visibleText, new Vector2((float)rectangle.Left, (float)screenBounds.Top), this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+			Rectangle screen = base.ScreenBounds;
+			this.Frame.Draw(spriteBatch, screen, this.FrameColor);
+			Rectangle textBounds = this.Frame.CenterRegion(base.ScreenBounds);
+			spriteBatch.DrawString(this.Font, this._visibleText, new Vector2((float)textBounds.Left, (float)screen.Top), this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 			if (base.HasFocus && this._cursorTimer.PercentComplete < 0.5f)
 			{
-				Vector2 vector = this.Font.MeasureString(this._visibleText.Substring(0, this._curPos)) * this.Scale;
-				spriteBatch.DrawString(this.Font, "|", new Vector2((float)(rectangle.Left + (int)vector.X), (float)(screenBounds.Top - 2)), this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+				Vector2 strMeasure = this.Font.MeasureString(this._visibleText.Substring(0, this._curPos)) * this.Scale;
+				spriteBatch.DrawString(this.Font, "|", new Vector2((float)(textBounds.Left + (int)strMeasure.X), (float)(screen.Top - 2)), this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 			}
 		}
 

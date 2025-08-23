@@ -64,21 +64,21 @@ namespace DNA.Input
 
 		protected void HandleChangeInMouseCapture()
 		{
-			bool captureMouse = this._game.ScreenManager.CaptureMouse;
-			bool isActive = this._game.IsActive;
-			if (isActive)
+			bool capture = this._game.ScreenManager.CaptureMouse;
+			bool active = this._game.IsActive;
+			if (active)
 			{
-				if (isActive != this._previousFrameWasActive && captureMouse)
+				if (active != this._previousFrameWasActive && capture)
 				{
 					this.ResetMouse(true);
 				}
-				else if (captureMouse != this._previousFrameCaptureMouse)
+				else if (capture != this._previousFrameCaptureMouse)
 				{
 					this.ResetMouse(true);
 				}
 			}
-			this._previousFrameWasActive = isActive;
-			this._previousFrameCaptureMouse = captureMouse;
+			this._previousFrameWasActive = active;
+			this._previousFrameCaptureMouse = capture;
 		}
 
 		protected void ResetMouse(bool zeroDeltas)
@@ -99,57 +99,57 @@ namespace DNA.Input
 					this._chatPads[i].Update();
 				}
 			}
-			Buttons buttons = (Buttons)0;
+			Buttons pressed = (Buttons)0;
 			for (int j = 0; j < this._controllers.Length; j++)
 			{
-				GameController gameController = this._controllers[j];
-				gameController.Update();
-				if (gameController.PressedButtons.A)
+				GameController controller = this._controllers[j];
+				controller.Update();
+				if (controller.PressedButtons.A)
 				{
-					buttons |= Buttons.A;
+					pressed |= Buttons.A;
 				}
-				if (gameController.PressedButtons.B)
+				if (controller.PressedButtons.B)
 				{
-					buttons |= Buttons.B;
+					pressed |= Buttons.B;
 				}
-				if (gameController.PressedButtons.Back)
+				if (controller.PressedButtons.Back)
 				{
-					buttons |= Buttons.Back;
+					pressed |= Buttons.Back;
 				}
-				if (gameController.PressedButtons.BigButton)
+				if (controller.PressedButtons.BigButton)
 				{
-					buttons |= Buttons.BigButton;
+					pressed |= Buttons.BigButton;
 				}
-				if (gameController.PressedButtons.LeftShoulder)
+				if (controller.PressedButtons.LeftShoulder)
 				{
-					buttons |= Buttons.LeftShoulder;
+					pressed |= Buttons.LeftShoulder;
 				}
-				if (gameController.PressedButtons.LeftStick)
+				if (controller.PressedButtons.LeftStick)
 				{
-					buttons |= Buttons.LeftStick;
+					pressed |= Buttons.LeftStick;
 				}
-				if (gameController.PressedButtons.RightShoulder)
+				if (controller.PressedButtons.RightShoulder)
 				{
-					buttons |= Buttons.RightShoulder;
+					pressed |= Buttons.RightShoulder;
 				}
-				if (gameController.PressedButtons.RightStick)
+				if (controller.PressedButtons.RightStick)
 				{
-					buttons |= Buttons.RightStick;
+					pressed |= Buttons.RightStick;
 				}
-				if (gameController.PressedButtons.Start)
+				if (controller.PressedButtons.Start)
 				{
-					buttons |= Buttons.Start;
+					pressed |= Buttons.Start;
 				}
-				if (gameController.PressedButtons.X)
+				if (controller.PressedButtons.X)
 				{
-					buttons |= Buttons.X;
+					pressed |= Buttons.X;
 				}
-				if (gameController.PressedButtons.Y)
+				if (controller.PressedButtons.Y)
 				{
-					buttons |= Buttons.Y;
+					pressed |= Buttons.Y;
 				}
 			}
-			this._buttonsPressed = new ControllerButtons(buttons);
+			this._buttonsPressed = new ControllerButtons(pressed);
 			if (this._game.IsActive && this._game.ScreenManager.CaptureMouse)
 			{
 				this.ResetMouse(false);

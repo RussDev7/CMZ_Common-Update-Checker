@@ -19,12 +19,12 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 
 		protected virtual void CreateSessionsThread(object state)
 		{
-			NetworkSessionStaticProvider.BeginCreateSessionState beginCreateSessionState = (NetworkSessionStaticProvider.BeginCreateSessionState)state;
-			beginCreateSessionState.Session.StartHost(beginCreateSessionState);
-			beginCreateSessionState.Event.Set();
-			if (beginCreateSessionState.Callback != null)
+			NetworkSessionStaticProvider.BeginCreateSessionState sqs = (NetworkSessionStaticProvider.BeginCreateSessionState)state;
+			sqs.Session.StartHost(sqs);
+			sqs.Event.Set();
+			if (sqs.Callback != null)
 			{
-				beginCreateSessionState.Callback(beginCreateSessionState);
+				sqs.Callback(sqs);
 			}
 		}
 
@@ -35,19 +35,19 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 
 		protected virtual void BeginJoinThread(object state)
 		{
-			NetworkSessionStaticProvider.BeginJoinSessionState beginJoinSessionState = (NetworkSessionStaticProvider.BeginJoinSessionState)state;
-			beginJoinSessionState.Session.StartClient(beginJoinSessionState);
-			while ((beginJoinSessionState.Session.HostConnectionResult != NetworkSession.ResultCode.Succeeded || beginJoinSessionState.Session.LocalGamers.Count <= 0) && beginJoinSessionState.Session.HostConnectionResult <= NetworkSession.ResultCode.Succeeded)
+			NetworkSessionStaticProvider.BeginJoinSessionState sqs = (NetworkSessionStaticProvider.BeginJoinSessionState)state;
+			sqs.Session.StartClient(sqs);
+			while ((sqs.Session.HostConnectionResult != NetworkSession.ResultCode.Succeeded || sqs.Session.LocalGamers.Count <= 0) && sqs.Session.HostConnectionResult <= NetworkSession.ResultCode.Succeeded)
 			{
 				Thread.Sleep(100);
-				beginJoinSessionState.Session.Update();
+				sqs.Session.Update();
 			}
-			beginJoinSessionState.HostConnectionResult = beginJoinSessionState.Session.HostConnectionResult;
-			beginJoinSessionState.HostConnectionResultString = beginJoinSessionState.Session.HostConnectionResultString;
-			beginJoinSessionState.Event.Set();
-			if (beginJoinSessionState.Callback != null)
+			sqs.HostConnectionResult = sqs.Session.HostConnectionResult;
+			sqs.HostConnectionResultString = sqs.Session.HostConnectionResultString;
+			sqs.Event.Set();
+			if (sqs.Callback != null)
 			{
-				beginJoinSessionState.Callback(beginJoinSessionState);
+				sqs.Callback(sqs);
 			}
 		}
 
@@ -63,24 +63,24 @@ namespace DNA.Net.GamerServices.LidgrenProvider
 
 		protected virtual void FindAvailableSessionsThread(object state)
 		{
-			NetworkSessionStaticProvider.SessionQueryState sessionQueryState = (NetworkSessionStaticProvider.SessionQueryState)state;
-			List<AvailableNetworkSession> list = new List<AvailableNetworkSession>();
+			NetworkSessionStaticProvider.SessionQueryState sqs = (NetworkSessionStaticProvider.SessionQueryState)state;
+			List<AvailableNetworkSession> sessions = new List<AvailableNetworkSession>();
 			try
 			{
-				ClientSessionInfo[] array = this.NetworkSessionServices.QueryClientInfo(sessionQueryState.SearchProperties);
-				foreach (ClientSessionInfo clientSessionInfo in array)
+				ClientSessionInfo[] clientSessions = this.NetworkSessionServices.QueryClientInfo(sqs.SearchProperties);
+				foreach (ClientSessionInfo info in clientSessions)
 				{
-					list.Add(new AvailableNetworkSession(clientSessionInfo));
+					sessions.Add(new AvailableNetworkSession(info));
 				}
 			}
 			catch
 			{
 			}
-			sessionQueryState.Sessions = new AvailableNetworkSessionCollection(list);
-			sessionQueryState.Event.Set();
-			if (sessionQueryState.Callback != null)
+			sqs.Sessions = new AvailableNetworkSessionCollection(sessions);
+			sqs.Event.Set();
+			if (sqs.Callback != null)
 			{
-				sessionQueryState.Callback(sessionQueryState);
+				sqs.Callback(sqs);
 			}
 		}
 

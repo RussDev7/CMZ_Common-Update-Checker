@@ -6,16 +6,16 @@ namespace DNA.Audio.SignalProcessing.Processors
 	{
 		public override bool ProcessBlock(RealPCMData data)
 		{
-			float[] data2 = data.GetData(0);
+			float[] cdata = data.GetData(0);
 			this.PeakLevel = 0f;
 			this.averageLevel = 0f;
-			for (int i = 0; i < data2.Length; i++)
+			for (int i = 0; i < cdata.Length; i++)
 			{
-				float num = Math.Abs(data2[i]);
-				this.PeakLevel = ((num > this.PeakLevel) ? num : this.PeakLevel);
-				this.averageLevel += num;
+				float val = Math.Abs(cdata[i]);
+				this.PeakLevel = ((val > this.PeakLevel) ? val : this.PeakLevel);
+				this.averageLevel += val;
 			}
-			this.averageLevel /= (float)data2.Length;
+			this.averageLevel /= (float)cdata.Length;
 			return true;
 		}
 

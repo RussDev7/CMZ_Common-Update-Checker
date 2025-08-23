@@ -35,16 +35,16 @@ namespace DNA.Data.Distributed
 
 		public void Serialize(Stream stream, string user)
 		{
-			BinaryWriter binaryWriter = new BinaryWriter(stream);
-			MemoryStream memoryStream = new MemoryStream();
-			this.SerializeData(memoryStream);
-			Hash hash = this.hasher.Compute(memoryStream.GetBuffer(), 0L, memoryStream.Position);
-			hash != this._hash;
-			this._hash = hash;
-			binaryWriter.Write(memoryStream.GetBuffer(), 0, (int)memoryStream.Position);
-			binaryWriter.Write(this._hash.Data.Length);
-			binaryWriter.Write(this._hash.Data);
-			binaryWriter.Write(this.Name);
+			BinaryWriter writer = new BinaryWriter(stream);
+			MemoryStream memStream = new MemoryStream();
+			this.SerializeData(memStream);
+			Hash newHash = this.hasher.Compute(memStream.GetBuffer(), 0L, memStream.Position);
+			newHash != this._hash;
+			this._hash = newHash;
+			writer.Write(memStream.GetBuffer(), 0, (int)memStream.Position);
+			writer.Write(this._hash.Data.Length);
+			writer.Write(this._hash.Data);
+			writer.Write(this.Name);
 		}
 
 		public DistributedRecord(string name, string creator)

@@ -12,9 +12,9 @@ namespace DNA.Net.GamerServices
 		public LidgrenHostDiscovery(string gamename, int version, PlayerID playerID)
 			: base(gamename, version, playerID)
 		{
-			NetPeerConfiguration netPeerConfiguration = new NetPeerConfiguration(this._gameName + "Discovery");
-			netPeerConfiguration.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
-			this._client = new NetClient(netPeerConfiguration);
+			NetPeerConfiguration config = new NetPeerConfiguration(this._gameName + "Discovery");
+			config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
+			this._client = new NetClient(config);
 			this._client.Start();
 		}
 
@@ -22,38 +22,38 @@ namespace DNA.Net.GamerServices
 		{
 			wc.HostEndPoint = endpoint;
 			this._awaitingResponse.Add(wc);
-			HostDiscoveryRequestMessage hostDiscoveryRequestMessage = new HostDiscoveryRequestMessage();
-			hostDiscoveryRequestMessage.GameName = this._gameName;
-			hostDiscoveryRequestMessage.RequestID = wc.WaitingID;
-			hostDiscoveryRequestMessage.NetworkVersion = this._version;
-			hostDiscoveryRequestMessage.PlayerID = this._playerID;
-			NetOutgoingMessage netOutgoingMessage = this._client.CreateMessage();
-			netOutgoingMessage.Write(hostDiscoveryRequestMessage, this._gameName, this._version);
+			HostDiscoveryRequestMessage hdrm = new HostDiscoveryRequestMessage();
+			hdrm.GameName = this._gameName;
+			hdrm.RequestID = wc.WaitingID;
+			hdrm.NetworkVersion = this._version;
+			hdrm.PlayerID = this._playerID;
+			NetOutgoingMessage msg = this._client.CreateMessage();
+			msg.Write(hdrm, this._gameName, this._version);
 			wc.Timer = Stopwatch.StartNew();
-			this._client.DiscoverKnownPeer(endpoint, netOutgoingMessage);
+			this._client.DiscoverKnownPeer(endpoint, msg);
 		}
 
 		public override int GetHostInfo(IPEndPoint endpoint, HostDiscovery.HostDiscoveryCallback callback, object context)
 		{
-			int num = this._nextWaitingID++;
+			int result = this._nextWaitingID++;
 			this.GetHostInfo(new HostDiscovery.WaitingForResponse
 			{
 				Callback = callback,
 				Context = context,
-				WaitingID = num
+				WaitingID = result
 			}, endpoint);
-			return num;
+			return result;
 		}
 
 		public override int GetHostInfo(string nameOrIP, int port, HostDiscovery.HostDiscoveryCallback callback, object context)
 		{
-			int num = this._nextWaitingID++;
-			HostDiscovery.WaitingForResponse waitingForResponse = new HostDiscovery.WaitingForResponse();
-			waitingForResponse.Callback = callback;
-			waitingForResponse.Context = context;
-			waitingForResponse.WaitingID = num;
+			int result = this._nextWaitingID++;
+			HostDiscovery.WaitingForResponse wc = new HostDiscovery.WaitingForResponse();
+			wc.Callback = callback;
+			wc.Context = context;
+			wc.WaitingID = result;
 			LidgrenHostDiscovery.WaitingForHostResolution wfhr = new LidgrenHostDiscovery.WaitingForHostResolution(this._awaitingResolution, this._waitingToSubmitDiscoveryRequest);
-			wfhr.ResponseWait = waitingForResponse;
+			wfhr.ResponseWait = wc;
 			lock (this._awaitingResolution)
 			{
 				this._awaitingResolution.Add(wfhr);
@@ -62,7 +62,7 @@ namespace DNA.Net.GamerServices
 			{
 				NetUtility.ResolveAsync(nameOrIP, port, new NetUtility.ResolveEndPointCallback(wfhr.ResolvedCallback));
 			});
-			return num;
+			return result;
 		}
 
 		public override void RemovePendingRequest(int id)
@@ -94,11 +94,11 @@ namespace DNA.Net.GamerServices
 
 		public override int GetHostInfo(string nameOrIPIncludingPort, HostDiscovery.HostDiscoveryCallback callback, object context)
 		{
-			string text;
-			int num;
-			if (this.SplitDomainName(nameOrIPIncludingPort, out text, out num))
+			string domain;
+			int port;
+			if (this.SplitDomainName(nameOrIPIncludingPort, out domain, out port))
 			{
-				return this.GetHostInfo(text, num, callback, context);
+				return this.GetHostInfo(domain, port, callback, context);
 			}
 			callback(HostDiscovery.ResultCode.HostNameInvalid, null, context);
 			return 0;
@@ -108,12 +108,12 @@ namespace DNA.Net.GamerServices
 		{
 			port = NetworkSession.DefaultPort;
 			result = name.Trim();
-			int num = result.LastIndexOf(':');
-			if (num < result.Length - 1 && num > 0)
+			int lastColon = result.LastIndexOf(':');
+			if (lastColon < result.Length - 1 && lastColon > 0)
 			{
-				string text = result.Substring(num + 1);
-				result = result.Substring(0, num);
-				if (!int.TryParse(text, out port) || port <= 0 || port >= 65536)
+				string portString = result.Substring(lastColon + 1);
+				result = result.Substring(0, lastColon);
+				if (!int.TryParse(portString, out port) || port <= 0 || port >= 65536)
 				{
 					return false;
 				}
@@ -129,9 +129,9 @@ namespace DNA.Net.GamerServices
 				{
 					if (this._awaitingResponse[i].HostEndPoint.Equals(endpoint))
 					{
-						HostDiscovery.WaitingForResponse waitingForResponse = this._awaitingResponse[i];
+						HostDiscovery.WaitingForResponse result = this._awaitingResponse[i];
 						this._awaitingResponse.RemoveAt(i);
-						return waitingForResponse;
+						return result;
 					}
 				}
 			}
@@ -140,87 +140,87 @@ namespace DNA.Net.GamerServices
 
 		public new virtual void Update()
 		{
-			NetIncomingMessage netIncomingMessage;
-			while ((netIncomingMessage = this._client.ReadMessage()) != null)
+			NetIncomingMessage msg;
+			while ((msg = this._client.ReadMessage()) != null)
 			{
-				NetIncomingMessageType messageType = netIncomingMessage.MessageType;
+				NetIncomingMessageType messageType = msg.MessageType;
 				if (messageType == NetIncomingMessageType.DiscoveryResponse)
 				{
-					HostDiscoveryResponseMessage hostDiscoveryResponseMessage = netIncomingMessage.ReadDiscoveryResponseMessage(this._gameName, this._version);
-					HostDiscovery.WaitingForResponse waitingForResponse;
+					HostDiscoveryResponseMessage hdrm = msg.ReadDiscoveryResponseMessage(this._gameName, this._version);
+					HostDiscovery.WaitingForResponse waiter;
 					do
 					{
-						if (hostDiscoveryResponseMessage.ReadResult == VersionCheckedMessage.ReadResultCode.Success && hostDiscoveryResponseMessage.Result == NetworkSession.ResultCode.Succeeded)
+						if (hdrm.ReadResult == VersionCheckedMessage.ReadResultCode.Success && hdrm.Result == NetworkSession.ResultCode.Succeeded)
 						{
-							waitingForResponse = base.FindWaiterByRequestID(hostDiscoveryResponseMessage.RequestID);
+							waiter = base.FindWaiterByRequestID(hdrm.RequestID);
 						}
 						else
 						{
-							waitingForResponse = this.FindWaiterByEndPoint(netIncomingMessage.SenderEndPoint);
+							waiter = this.FindWaiterByEndPoint(msg.SenderEndPoint);
 						}
-						if (waitingForResponse != null)
+						if (waiter != null)
 						{
-							AvailableNetworkSession availableNetworkSession = new AvailableNetworkSession(netIncomingMessage.SenderEndPoint, hostDiscoveryResponseMessage.HostUsername, hostDiscoveryResponseMessage.Message, hostDiscoveryResponseMessage.SessionID, hostDiscoveryResponseMessage.SessionProperties, hostDiscoveryResponseMessage.MaxPlayers, hostDiscoveryResponseMessage.CurrentPlayers, hostDiscoveryResponseMessage.PasswordProtected);
-							HostDiscovery.ResultCode resultCode = HostDiscovery.ResultCode.Success;
-							switch (hostDiscoveryResponseMessage.ReadResult)
+							AvailableNetworkSession session = new AvailableNetworkSession(msg.SenderEndPoint, hdrm.HostUsername, hdrm.Message, hdrm.SessionID, hdrm.SessionProperties, hdrm.MaxPlayers, hdrm.CurrentPlayers, hdrm.PasswordProtected);
+							HostDiscovery.ResultCode result = HostDiscovery.ResultCode.Success;
+							switch (hdrm.ReadResult)
 							{
 							case VersionCheckedMessage.ReadResultCode.Success:
-								switch (hostDiscoveryResponseMessage.Result)
+								switch (hdrm.Result)
 								{
 								case NetworkSession.ResultCode.GameNamesDontMatch:
-									resultCode = HostDiscovery.ResultCode.WrongGameName;
+									result = HostDiscovery.ResultCode.WrongGameName;
 									break;
 								case NetworkSession.ResultCode.VersionIsInvalid:
-									resultCode = HostDiscovery.ResultCode.VersionIsInvalid;
+									result = HostDiscovery.ResultCode.VersionIsInvalid;
 									break;
 								case NetworkSession.ResultCode.ServerHasNewerVersion:
-									resultCode = HostDiscovery.ResultCode.ServerHasNewerVersion;
+									result = HostDiscovery.ResultCode.ServerHasNewerVersion;
 									break;
 								case NetworkSession.ResultCode.ServerHasOlderVersion:
-									resultCode = HostDiscovery.ResultCode.ServerHasOlderVersion;
+									result = HostDiscovery.ResultCode.ServerHasOlderVersion;
 									break;
 								case NetworkSession.ResultCode.ConnectionDenied:
-									resultCode = HostDiscovery.ResultCode.ConnectionDenied;
+									result = HostDiscovery.ResultCode.ConnectionDenied;
 									break;
 								case NetworkSession.ResultCode.GamerAlreadyConnected:
-									resultCode = HostDiscovery.ResultCode.GamerAlreadyConnected;
+									result = HostDiscovery.ResultCode.GamerAlreadyConnected;
 									break;
 								}
 								break;
 							case VersionCheckedMessage.ReadResultCode.GameNameInvalid:
-								resultCode = HostDiscovery.ResultCode.WrongGameName;
+								result = HostDiscovery.ResultCode.WrongGameName;
 								break;
 							case VersionCheckedMessage.ReadResultCode.VersionInvalid:
-								resultCode = HostDiscovery.ResultCode.VersionIsInvalid;
+								result = HostDiscovery.ResultCode.VersionIsInvalid;
 								break;
 							case VersionCheckedMessage.ReadResultCode.LocalVersionIsHIgher:
-								resultCode = HostDiscovery.ResultCode.ServerHasOlderVersion;
+								result = HostDiscovery.ResultCode.ServerHasOlderVersion;
 								break;
 							case VersionCheckedMessage.ReadResultCode.LocalVersionIsLower:
-								resultCode = HostDiscovery.ResultCode.ServerHasNewerVersion;
+								result = HostDiscovery.ResultCode.ServerHasNewerVersion;
 								break;
 							}
-							waitingForResponse.Callback(resultCode, availableNetworkSession, waitingForResponse.Context);
+							waiter.Callback(result, session, waiter.Context);
 						}
 					}
-					while (waitingForResponse != null);
+					while (waiter != null);
 				}
-				this._client.Recycle(netIncomingMessage);
+				this._client.Recycle(msg);
 			}
 			lock (this._waitingToSubmitDiscoveryRequest)
 			{
 				for (int i = 0; i < this._waitingToSubmitDiscoveryRequest.Count; i++)
 				{
-					LidgrenHostDiscovery.WaitingForHostResolution waitingForHostResolution = this._waitingToSubmitDiscoveryRequest[i];
-					if (waitingForHostResolution.ResponseWait.Callback != null)
+					LidgrenHostDiscovery.WaitingForHostResolution w = this._waitingToSubmitDiscoveryRequest[i];
+					if (w.ResponseWait.Callback != null)
 					{
-						if (waitingForHostResolution.EndPoint == null)
+						if (w.EndPoint == null)
 						{
-							waitingForHostResolution.ResponseWait.Callback(HostDiscovery.ResultCode.FailedToResolveHostName, null, waitingForHostResolution.ResponseWait.Context);
+							w.ResponseWait.Callback(HostDiscovery.ResultCode.FailedToResolveHostName, null, w.ResponseWait.Context);
 						}
 						else
 						{
-							this.GetHostInfo(waitingForHostResolution.ResponseWait, waitingForHostResolution.EndPoint);
+							this.GetHostInfo(w.ResponseWait, w.EndPoint);
 						}
 					}
 				}

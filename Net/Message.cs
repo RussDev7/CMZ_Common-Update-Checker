@@ -49,22 +49,22 @@ namespace DNA.Net
 
 		protected static T GetSendInstance<T>() where T : Message
 		{
-			Type typeFromHandle = typeof(T);
-			return (T)((object)Message._sendInstances[(int)Message._messageIDs[typeFromHandle]]);
+			Type t = typeof(T);
+			return (T)((object)Message._sendInstances[(int)Message._messageIDs[t]]);
 		}
 
 		private void DoSendInternal(NetworkGamer recipiant)
 		{
 			lock (Message._writer)
 			{
-				MemoryStream memoryStream = (MemoryStream)Message._writeBufferStream.BaseStream;
-				memoryStream.Position = 0L;
+				MemoryStream baseStream = (MemoryStream)Message._writeBufferStream.BaseStream;
+				baseStream.Position = 0L;
 				Message._writeBufferStream.Reset();
 				Message._writer.Write(this.MessageID);
 				this.SendData(Message._writer);
 				Message._writer.Flush();
-				byte checksumValue = Message._writeBufferStream.ChecksumValue;
-				Message._writer.Write(checksumValue);
+				byte checksum = Message._writeBufferStream.ChecksumValue;
+				Message._writer.Write(checksum);
 				Message._writer.Flush();
 				if (!this._sender.HasLeftSession)
 				{
@@ -72,12 +72,12 @@ namespace DNA.Net
 					{
 						if (!recipiant.HasLeftSession)
 						{
-							((LocalNetworkGamer)this._sender).SendData(memoryStream.GetBuffer(), 0, (int)memoryStream.Position, this.SendDataOptions, recipiant);
+							((LocalNetworkGamer)this._sender).SendData(baseStream.GetBuffer(), 0, (int)baseStream.Position, this.SendDataOptions, recipiant);
 						}
 					}
 					else
 					{
-						((LocalNetworkGamer)this._sender).SendData(memoryStream.GetBuffer(), 0, (int)memoryStream.Position, this.SendDataOptions);
+						((LocalNetworkGamer)this._sender).SendData(baseStream.GetBuffer(), 0, (int)baseStream.Position, this.SendDataOptions);
 					}
 				}
 			}
@@ -104,36 +104,36 @@ namespace DNA.Net
 		{
 			Message._messageTypes = ReflectionTools.GetTypes(new Filter<Type>(Message.TypeFilter));
 			Message._messageIDs = new Dictionary<Type, byte>();
-			byte b = 0;
-			while ((int)b < Message._messageTypes.Length)
+			byte i = 0;
+			while ((int)i < Message._messageTypes.Length)
 			{
-				Message._messageIDs[Message._messageTypes[(int)b]] = b;
-				b += 1;
+				Message._messageIDs[Message._messageTypes[(int)i]] = i;
+				i += 1;
 			}
 			Message._receiveInstance = new Message[Message._messageTypes.Length];
 			Message._sendInstances = new Message[Message._messageTypes.Length];
-			for (int i = 0; i < Message._messageTypes.Length; i++)
+			for (int j = 0; j < Message._messageTypes.Length; j++)
 			{
-				ConstructorInfo constructor = Message._messageTypes[i].GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new Type[0], null);
-				if (constructor == null)
+				ConstructorInfo c = Message._messageTypes[j].GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new Type[0], null);
+				if (c == null)
 				{
-					throw new Exception(Message._messageTypes[i].Name + " Needs a private parameterless constructor");
+					throw new Exception(Message._messageTypes[j].Name + " Needs a private parameterless constructor");
 				}
-				Message._receiveInstance[i] = (Message)constructor.Invoke(new object[0]);
-				Message._sendInstances[i] = (Message)constructor.Invoke(new object[0]);
+				Message._receiveInstance[j] = (Message)c.Invoke(new object[0]);
+				Message._sendInstances[j] = (Message)c.Invoke(new object[0]);
 			}
 		}
 
 		private static Message ReadMessage(NetworkGamer sender)
 		{
 			Message._readBufferStream.Reset();
-			byte b = Message._reader.ReadByte();
-			Message message = Message._receiveInstance[(int)b];
+			byte messageID = Message._reader.ReadByte();
+			Message message = Message._receiveInstance[(int)messageID];
 			message._sender = sender;
 			message.RecieveData(Message._reader);
-			byte checksumValue = Message._readBufferStream.ChecksumValue;
-			byte b2 = Message._reader.ReadByte();
-			if (checksumValue != b2)
+			byte checksum = Message._readBufferStream.ChecksumValue;
+			byte fileChecksum = Message._reader.ReadByte();
+			if (checksum != fileChecksum)
 			{
 				throw new Exception("CheckSum Error");
 			}
@@ -145,14 +145,14 @@ namespace DNA.Net
 			Message message;
 			lock (Message._reader)
 			{
-				MemoryStream memoryStream = (MemoryStream)Message._readBufferStream.BaseStream;
-				int num = 0;
-				NetworkGamer networkGamer;
+				MemoryStream baseStream = (MemoryStream)Message._readBufferStream.BaseStream;
+				int packetSize = 0;
+				NetworkGamer sender;
 				for (;;)
 				{
 					try
 					{
-						num = localGamer.ReceiveData(Message.messageBuffer, out networkGamer);
+						packetSize = localGamer.ReceiveData(Message.messageBuffer, out sender);
 					}
 					catch (ArgumentException)
 					{
@@ -161,22 +161,22 @@ namespace DNA.Net
 					}
 					break;
 				}
-				memoryStream.Position = 0L;
-				memoryStream.Write(Message.messageBuffer, 0, num);
-				memoryStream.Position = 0L;
-				if (localGamer == networkGamer)
+				baseStream.Position = 0L;
+				baseStream.Write(Message.messageBuffer, 0, packetSize);
+				baseStream.Position = 0L;
+				if (localGamer == sender)
 				{
-					message = Message.ReadMessage(networkGamer);
+					message = Message.ReadMessage(sender);
 				}
 				else
 				{
 					try
 					{
-						message = Message.ReadMessage(networkGamer);
+						message = Message.ReadMessage(sender);
 					}
 					catch (Exception ex)
 					{
-						throw new InvalidMessageException(networkGamer, ex);
+						throw new InvalidMessageException(sender, ex);
 					}
 				}
 			}

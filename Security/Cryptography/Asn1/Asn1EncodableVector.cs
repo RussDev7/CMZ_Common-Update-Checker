@@ -8,13 +8,13 @@ namespace DNA.Security.Cryptography.Asn1
 	{
 		public static Asn1EncodableVector FromEnumerable(IEnumerable e)
 		{
-			Asn1EncodableVector asn1EncodableVector = new Asn1EncodableVector(new Asn1Encodable[0]);
-			foreach (object obj in e)
+			Asn1EncodableVector v = new Asn1EncodableVector(new Asn1Encodable[0]);
+			foreach (object obj2 in e)
 			{
-				Asn1Encodable asn1Encodable = (Asn1Encodable)obj;
-				asn1EncodableVector.Add(new Asn1Encodable[] { asn1Encodable });
+				Asn1Encodable obj = (Asn1Encodable)obj2;
+				v.Add(new Asn1Encodable[] { obj });
 			}
-			return asn1EncodableVector;
+			return v;
 		}
 
 		public Asn1EncodableVector(params Asn1Encodable[] v)
@@ -24,9 +24,9 @@ namespace DNA.Security.Cryptography.Asn1
 
 		public void Add(params Asn1Encodable[] objs)
 		{
-			foreach (Asn1Encodable asn1Encodable in objs)
+			foreach (Asn1Encodable obj in objs)
 			{
-				this.v.Add(asn1Encodable);
+				this.v.Add(obj);
 			}
 		}
 

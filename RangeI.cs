@@ -43,8 +43,8 @@ namespace DNA
 
 		public override bool Equals(object obj)
 		{
-			RangeI rangeI = (RangeI)obj;
-			return rangeI._max == rangeI.Min;
+			RangeI vobj = (RangeI)obj;
+			return vobj._max == vobj.Min;
 		}
 
 		public static bool operator ==(RangeI a, RangeI b)

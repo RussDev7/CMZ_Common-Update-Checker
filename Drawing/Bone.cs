@@ -177,22 +177,22 @@ namespace DNA.Drawing
 
 		public static Skeleton BuildSkeleton(Model model)
 		{
-			int count = model.Bones.Count;
-			Matrix[] array = new Matrix[count];
-			string[] array2 = new string[count];
-			int[] array3 = new int[count];
-			for (int i = 0; i < count; i++)
+			int boneCount = model.Bones.Count;
+			Matrix[] transforms = new Matrix[boneCount];
+			string[] names = new string[boneCount];
+			int[] parents = new int[boneCount];
+			for (int i = 0; i < boneCount; i++)
 			{
-				array[i] = model.Bones[i].Transform;
-				array2[i] = model.Bones[i].Name;
-				array3[i] = ((model.Bones[i].Parent == null) ? (-1) : model.Bones[i].Parent.Index);
+				transforms[i] = model.Bones[i].Transform;
+				names[i] = model.Bones[i].Name;
+				parents[i] = ((model.Bones[i].Parent == null) ? (-1) : model.Bones[i].Parent.Index);
 			}
-			return Bone.BuildSkeleton(array, array3, array2);
+			return Bone.BuildSkeleton(transforms, parents, names);
 		}
 
 		public static Skeleton BuildSkeleton(IList<Matrix> transforms, IList<int> heirachy, IList<string> names)
 		{
-			Bone[] array = new Bone[transforms.Count];
+			Bone[] bones = new Bone[transforms.Count];
 			for (int i = 0; i < transforms.Count; i++)
 			{
 				if (heirachy[i] < 0)
@@ -201,16 +201,16 @@ namespace DNA.Drawing
 					bone.Index = i;
 					bone.Name = names[i];
 					bone.SetTransform(transforms[i]);
-					array[bone.Index] = bone;
-					bone.BuildSubSkeleton(array, transforms, heirachy, names);
+					bones[bone.Index] = bone;
+					bone.BuildSubSkeleton(bones, transforms, heirachy, names);
 				}
 			}
-			return new Skeleton(array);
+			return new Skeleton(bones);
 		}
 
 		private void BuildSubSkeleton(Bone[] bones, IList<Matrix> transforms, IList<int> heirachy, IList<string> names)
 		{
-			List<Bone> list = new List<Bone>();
+			List<Bone> childBones = new List<Bone>();
 			for (int i = 0; i < transforms.Count; i++)
 			{
 				if (heirachy[i] == this.Index)
@@ -222,10 +222,10 @@ namespace DNA.Drawing
 					bone.Parent = this;
 					bones[bone.Index] = bone;
 					bone.BuildSubSkeleton(bones, transforms, heirachy, names);
-					list.Add(bone);
+					childBones.Add(bone);
 				}
 			}
-			this.Children = new ReadOnlyCollection<Bone>(list);
+			this.Children = new ReadOnlyCollection<Bone>(childBones);
 		}
 
 		public override string ToString()

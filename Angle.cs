@@ -112,36 +112,36 @@ namespace DNA
 
 		public static Angle FromLocations(Point pivot, Point point)
 		{
-			int num = point.X - pivot.X;
-			int num2 = point.Y - pivot.Y;
-			float num3 = (float)num2 / (float)num;
-			float num4;
-			if (num == 0)
+			int deltax = point.X - pivot.X;
+			int deltay = point.Y - pivot.Y;
+			float oa = (float)deltay / (float)deltax;
+			float rads;
+			if (deltax == 0)
 			{
-				if (num2 > 0)
+				if (deltay > 0)
 				{
-					num4 = 1.5707964f;
+					rads = 1.5707964f;
 				}
-				else if (num2 < 0)
+				else if (deltay < 0)
 				{
-					num4 = -1.5707964f;
+					rads = -1.5707964f;
 				}
 				else
 				{
-					num4 = 0f;
+					rads = 0f;
 				}
 			}
 			else
 			{
-				num4 = (float)Math.Atan((double)num3);
-				if (num < 0)
+				rads = (float)Math.Atan((double)oa);
+				if (deltax < 0)
 				{
-					num4 += 3.1415927f;
+					rads += 3.1415927f;
 				}
 			}
-			Angle angle = Angle.FromRadians(num4);
-			angle.Normalize();
-			return angle;
+			Angle ret = Angle.FromRadians(rads);
+			ret.Normalize();
+			return ret;
 		}
 
 		public static Angle FromRadians(double rads)
@@ -151,8 +151,8 @@ namespace DNA
 
 		public static Angle FromDegrees(double degs)
 		{
-			double num = Angle.DegreesToRadians(degs);
-			return new Angle(num);
+			double rads = Angle.DegreesToRadians(degs);
+			return new Angle(rads);
 		}
 
 		public static Angle FromRadians(float rads)
@@ -257,8 +257,8 @@ namespace DNA
 
 		public override bool Equals(object obj)
 		{
-			Angle angle = (Angle)obj;
-			return this._radians == angle._radians;
+			Angle b = (Angle)obj;
+			return this._radians == b._radians;
 		}
 
 		public static bool operator ==(Angle a, Angle b)

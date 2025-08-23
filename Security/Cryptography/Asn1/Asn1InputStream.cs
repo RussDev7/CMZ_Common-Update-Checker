@@ -24,13 +24,13 @@ namespace DNA.Security.Cryptography.Asn1
 
 		internal Asn1EncodableVector BuildEncodableVector()
 		{
-			Asn1EncodableVector asn1EncodableVector = new Asn1EncodableVector(new Asn1Encodable[0]);
-			Asn1Object asn1Object;
-			while ((asn1Object = this.ReadObject()) != null)
+			Asn1EncodableVector v = new Asn1EncodableVector(new Asn1Encodable[0]);
+			Asn1Object o;
+			while ((o = this.ReadObject()) != null)
 			{
-				asn1EncodableVector.Add(new Asn1Encodable[] { asn1Object });
+				v.Add(new Asn1Encodable[] { o });
 			}
-			return asn1EncodableVector;
+			return v;
 		}
 
 		internal virtual Asn1EncodableVector BuildDerEncodableVector(DefiniteLengthInputStream dIn)
@@ -50,10 +50,10 @@ namespace DNA.Security.Cryptography.Asn1
 
 		public Asn1Object ReadObject()
 		{
-			int num = this.ReadByte();
-			if (num <= 0)
+			int tag = this.ReadByte();
+			if (tag <= 0)
 			{
-				if (num == 0)
+				if (tag == 0)
 				{
 					throw new IOException("unexpected end-of-contents marker");
 				}
@@ -61,69 +61,69 @@ namespace DNA.Security.Cryptography.Asn1
 			}
 			else
 			{
-				int num2 = Asn1InputStream.ReadTagNumber(this, num);
-				bool flag = (num & 32) != 0;
-				int num3 = Asn1InputStream.ReadLength(this, this.limit);
-				if (num3 < 0)
+				int tagNo = Asn1InputStream.ReadTagNumber(this, tag);
+				bool isConstructed = (tag & 32) != 0;
+				int length = Asn1InputStream.ReadLength(this, this.limit);
+				if (length < 0)
 				{
-					if (!flag)
+					if (!isConstructed)
 					{
 						throw new IOException("indefinite length primitive encoding encountered");
 					}
-					IndefiniteLengthInputStream indefiniteLengthInputStream = new IndefiniteLengthInputStream(this);
-					if ((num & 64) != 0)
+					IndefiniteLengthInputStream indIn = new IndefiniteLengthInputStream(this);
+					if ((tag & 64) != 0)
 					{
-						Asn1StreamParser asn1StreamParser = new Asn1StreamParser(indefiniteLengthInputStream);
-						return new BerApplicationSpecificParser(num2, asn1StreamParser).ToAsn1Object();
+						Asn1StreamParser sp2 = new Asn1StreamParser(indIn);
+						return new BerApplicationSpecificParser(tagNo, sp2).ToAsn1Object();
 					}
-					if ((num & 128) != 0)
+					if ((tag & 128) != 0)
 					{
-						return new BerTaggedObjectParser(num, num2, indefiniteLengthInputStream).ToAsn1Object();
+						return new BerTaggedObjectParser(tag, tagNo, indIn).ToAsn1Object();
 					}
-					Asn1StreamParser asn1StreamParser2 = new Asn1StreamParser(indefiniteLengthInputStream);
-					int num4 = num2;
-					if (num4 == 4)
+					Asn1StreamParser sp3 = new Asn1StreamParser(indIn);
+					int num = tagNo;
+					if (num == 4)
 					{
-						return new BerOctetStringParser(asn1StreamParser2).ToAsn1Object();
+						return new BerOctetStringParser(sp3).ToAsn1Object();
 					}
-					switch (num4)
+					switch (num)
 					{
 					case 16:
-						return new BerSequenceParser(asn1StreamParser2).ToAsn1Object();
+						return new BerSequenceParser(sp3).ToAsn1Object();
 					case 17:
-						return new BerSetParser(asn1StreamParser2).ToAsn1Object();
+						return new BerSetParser(sp3).ToAsn1Object();
 					default:
 						throw new IOException("unknown BER object encountered");
 					}
 				}
 				else
 				{
-					DefiniteLengthInputStream definiteLengthInputStream = new DefiniteLengthInputStream(this, num3);
-					if ((num & 64) != 0)
+					DefiniteLengthInputStream defIn = new DefiniteLengthInputStream(this, length);
+					if ((tag & 64) != 0)
 					{
-						return new DerApplicationSpecific(flag, num2, definiteLengthInputStream.ToArray());
+						return new DerApplicationSpecific(isConstructed, tagNo, defIn.ToArray());
 					}
-					if ((num & 128) != 0)
+					if ((tag & 128) != 0)
 					{
-						return new BerTaggedObjectParser(num, num2, definiteLengthInputStream).ToAsn1Object();
+						return new BerTaggedObjectParser(tag, tagNo, defIn).ToAsn1Object();
 					}
-					if (!flag)
+					if (!isConstructed)
 					{
-						return Asn1InputStream.CreatePrimitiveDerObject(num2, definiteLengthInputStream.ToArray());
+						return Asn1InputStream.CreatePrimitiveDerObject(tagNo, defIn.ToArray());
 					}
-					int num5 = num2;
-					if (num5 == 4)
+					int num2 = tagNo;
+					if (num2 == 4)
 					{
-						return new BerOctetString(this.BuildDerEncodableVector(definiteLengthInputStream));
+						return new BerOctetString(this.BuildDerEncodableVector(defIn));
 					}
-					switch (num5)
+					switch (num2)
 					{
 					case 16:
-						return this.CreateDerSequence(definiteLengthInputStream);
+						return this.CreateDerSequence(defIn);
 					case 17:
-						return this.CreateDerSet(definiteLengthInputStream);
+						return this.CreateDerSet(defIn);
 					default:
-						return new DerUnknownTag(true, num2, definiteLengthInputStream.ToArray());
+						return new DerUnknownTag(true, tagNo, defIn.ToArray());
 					}
 				}
 			}
@@ -131,68 +131,68 @@ namespace DNA.Security.Cryptography.Asn1
 
 		internal static int ReadTagNumber(Stream s, int tag)
 		{
-			int num = tag & 31;
-			if (num == 31)
+			int tagNo = tag & 31;
+			if (tagNo == 31)
 			{
-				num = 0;
-				int num2 = s.ReadByte();
-				if ((num2 & 127) == 0)
+				tagNo = 0;
+				int b = s.ReadByte();
+				if ((b & 127) == 0)
 				{
 					throw new IOException("corrupted stream - invalid high tag number found");
 				}
-				while (num2 >= 0 && (num2 & 128) != 0)
+				while (b >= 0 && (b & 128) != 0)
 				{
-					num |= num2 & 127;
-					num <<= 7;
-					num2 = s.ReadByte();
+					tagNo |= b & 127;
+					tagNo <<= 7;
+					b = s.ReadByte();
 				}
-				if (num2 < 0)
+				if (b < 0)
 				{
 					throw new EndOfStreamException("EOF found inside tag value.");
 				}
-				num |= num2 & 127;
+				tagNo |= b & 127;
 			}
-			return num;
+			return tagNo;
 		}
 
 		internal static int ReadLength(Stream s, int limit)
 		{
-			int num = s.ReadByte();
-			if (num < 0)
+			int length = s.ReadByte();
+			if (length < 0)
 			{
 				throw new EndOfStreamException("EOF found when length expected");
 			}
-			if (num == 128)
+			if (length == 128)
 			{
 				return -1;
 			}
-			if (num > 127)
+			if (length > 127)
 			{
-				int num2 = num & 127;
-				if (num2 > 4)
+				int size = length & 127;
+				if (size > 4)
 				{
 					throw new IOException("DER length more than 4 bytes");
 				}
-				num = 0;
-				for (int i = 0; i < num2; i++)
+				length = 0;
+				for (int i = 0; i < size; i++)
 				{
-					int num3 = s.ReadByte();
-					if (num3 < 0)
+					int next = s.ReadByte();
+					if (next < 0)
 					{
 						throw new EndOfStreamException("EOF found reading length");
 					}
-					num = (num << 8) + num3;
+					length = (length << 8) + next;
 				}
-				if (num < 0)
+				if (length < 0)
 				{
 					throw new IOException("Corrupted stream - negative length found");
 				}
-				if (num >= limit)
+				if (length >= limit)
 				{
 					throw new IOException("Corrupted stream - out of bounds length found");
 				}
 			}
-			return num;
+			return length;
 		}
 
 		internal static Asn1Object CreatePrimitiveDerObject(int tagNo, byte[] bytes)
@@ -205,10 +205,10 @@ namespace DNA.Security.Cryptography.Asn1
 				return new DerInteger(bytes);
 			case 3:
 			{
-				int num = (int)bytes[0];
-				byte[] array = new byte[bytes.Length - 1];
-				Array.Copy(bytes, 1, array, 0, bytes.Length - 1);
-				return new DerBitString(array, num);
+				int padBits = (int)bytes[0];
+				byte[] data = new byte[bytes.Length - 1];
+				Array.Copy(bytes, 1, data, 0, bytes.Length - 1);
+				return new DerBitString(data, padBits);
 			}
 			case 4:
 				return new DerOctetString(bytes);

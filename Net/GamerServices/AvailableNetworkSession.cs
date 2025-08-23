@@ -27,9 +27,9 @@ namespace DNA.Net.GamerServices
 		{
 			if (this.IPEndPoint != null && this.IPEndPoint.Address.AddressFamily == AddressFamily.InterNetworkV6)
 			{
-				IPAddress ipaddress = IPAddress.Any;
-				ipaddress = this.IPEndPoint.Address.MaptoIPV4();
-				this._endPoint = new IPEndPoint(ipaddress, this._endPoint.Port);
+				IPAddress adr = IPAddress.Any;
+				adr = this.IPEndPoint.Address.MaptoIPV4();
+				this._endPoint = new IPEndPoint(adr, this._endPoint.Port);
 			}
 		}
 

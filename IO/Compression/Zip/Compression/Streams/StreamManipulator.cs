@@ -26,12 +26,12 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 
 		public int GetBits(int n)
 		{
-			int num = this.PeekBits(n);
-			if (num >= 0)
+			int bits = this.PeekBits(n);
+			if (bits >= 0)
 			{
 				this.DropBits(n);
 			}
-			return num;
+			return bits;
 		}
 
 		public int AvailableBits
@@ -74,23 +74,23 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 			{
 				throw new InvalidOperationException("Bit buffer is not byte aligned!");
 			}
-			int num = 0;
+			int count = 0;
 			while (this.bits_in_buffer > 0 && length > 0)
 			{
 				output[offset++] = (byte)this.buffer;
 				this.buffer >>= 8;
 				this.bits_in_buffer -= 8;
 				length--;
-				num++;
+				count++;
 			}
 			if (length == 0)
 			{
-				return num;
+				return count;
 			}
-			int num2 = this.window_end - this.window_start;
-			if (length > num2)
+			int avail = this.window_end - this.window_start;
+			if (length > avail)
 			{
-				length = num2;
+				length = avail;
 			}
 			Array.Copy(this.window, this.window_start, output, offset, length);
 			this.window_start += length;
@@ -99,7 +99,7 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 				this.buffer = (uint)(this.window[this.window_start++] & byte.MaxValue);
 				this.bits_in_buffer = 8;
 			}
-			return num + length;
+			return count + length;
 		}
 
 		public void Reset()
@@ -113,8 +113,8 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 			{
 				throw new InvalidOperationException("Old input was not completely processed");
 			}
-			int num = off + len;
-			if (0 > off || off > num || num > buf.Length)
+			int end = off + len;
+			if (0 > off || off > end || end > buf.Length)
 			{
 				throw new ArgumentOutOfRangeException();
 			}
@@ -125,7 +125,7 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 			}
 			this.window = buf;
 			this.window_start = off;
-			this.window_end = num;
+			this.window_end = end;
 		}
 
 		private byte[] window;

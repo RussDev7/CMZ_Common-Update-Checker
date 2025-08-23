@@ -60,12 +60,12 @@ namespace DNA.Drawing.UI.Controls
 				{
 					return Rectangle.Empty;
 				}
-				Rectangle rectangle = this._children[0].LocalBounds;
+				Rectangle bounds = this._children[0].LocalBounds;
 				for (int i = 1; i < this._children.Count; i++)
 				{
-					rectangle = Rectangle.Union(rectangle, this._children[i].LocalBounds);
+					bounds = Rectangle.Union(bounds, this._children[i].LocalBounds);
 				}
-				return rectangle;
+				return bounds;
 			}
 		}
 
@@ -86,8 +86,8 @@ namespace DNA.Drawing.UI.Controls
 		{
 			get
 			{
-				Rectangle localBounds = this.LocalBounds;
-				return new Size(localBounds.Width, localBounds.Height);
+				Rectangle bounds = this.LocalBounds;
+				return new Size(bounds.Width, bounds.Height);
 			}
 			set
 			{
@@ -113,33 +113,33 @@ namespace DNA.Drawing.UI.Controls
 		{
 			if (c == '\t')
 			{
-				List<UIControl> list = new List<UIControl>();
-				this.CollectControls(list);
-				UIControl uicontrol = this.FocusControl;
-				foreach (UIControl uicontrol2 in list)
+				List<UIControl> controls = new List<UIControl>();
+				this.CollectControls(controls);
+				UIControl focusControl = this.FocusControl;
+				foreach (UIControl control in controls)
 				{
-					if (uicontrol2 == uicontrol)
+					if (control == focusControl)
 					{
-						uicontrol = null;
+						focusControl = null;
 					}
-					else if (uicontrol2.IsTabStop && uicontrol == null)
+					else if (control.IsTabStop && focusControl == null)
 					{
-						uicontrol = uicontrol2;
+						focusControl = control;
 						break;
 					}
 				}
-				if (uicontrol == null)
+				if (focusControl == null)
 				{
-					foreach (UIControl uicontrol3 in list)
+					foreach (UIControl control2 in controls)
 					{
-						if (uicontrol3.IsTabStop)
+						if (control2.IsTabStop)
 						{
-							uicontrol = uicontrol3;
+							focusControl = control2;
 							break;
 						}
 					}
 				}
-				this.FocusControl = uicontrol;
+				this.FocusControl = focusControl;
 			}
 			else if (this.FocusControl != null)
 			{

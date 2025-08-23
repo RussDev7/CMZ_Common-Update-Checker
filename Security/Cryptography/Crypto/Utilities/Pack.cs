@@ -26,18 +26,18 @@ namespace DNA.Security.Cryptography.Crypto.Utilities
 
 		internal static uint BE_To_UInt32(byte[] bs)
 		{
-			uint num = (uint)((uint)bs[0] << 24);
-			num |= (uint)((uint)bs[1] << 16);
-			num |= (uint)((uint)bs[2] << 8);
-			return num | (uint)bs[3];
+			uint i = (uint)((uint)bs[0] << 24);
+			i |= (uint)((uint)bs[1] << 16);
+			i |= (uint)((uint)bs[2] << 8);
+			return i | (uint)bs[3];
 		}
 
 		internal static uint BE_To_UInt32(byte[] bs, int off)
 		{
-			uint num = (uint)((uint)bs[off++] << 24);
-			num |= (uint)((uint)bs[off++] << 16);
-			num |= (uint)((uint)bs[off++] << 8);
-			return num | (uint)bs[off];
+			uint i = (uint)((uint)bs[off++] << 24);
+			i |= (uint)((uint)bs[off++] << 16);
+			i |= (uint)((uint)bs[off++] << 8);
+			return i | (uint)bs[off];
 		}
 
 		internal static void UInt32_To_LE(uint n, byte[] bs)
@@ -58,18 +58,18 @@ namespace DNA.Security.Cryptography.Crypto.Utilities
 
 		internal static uint LE_To_UInt32(byte[] bs)
 		{
-			uint num = (uint)bs[0];
-			num |= (uint)((uint)bs[1] << 8);
-			num |= (uint)((uint)bs[2] << 16);
-			return num | (uint)((uint)bs[3] << 24);
+			uint i = (uint)bs[0];
+			i |= (uint)((uint)bs[1] << 8);
+			i |= (uint)((uint)bs[2] << 16);
+			return i | (uint)((uint)bs[3] << 24);
 		}
 
 		internal static uint LE_To_UInt32(byte[] bs, int off)
 		{
-			uint num = (uint)bs[off++];
-			num |= (uint)((uint)bs[off++] << 8);
-			num |= (uint)((uint)bs[off++] << 16);
-			return num | (uint)((uint)bs[off] << 24);
+			uint i = (uint)bs[off++];
+			i |= (uint)((uint)bs[off++] << 8);
+			i |= (uint)((uint)bs[off++] << 16);
+			return i | (uint)((uint)bs[off] << 24);
 		}
 	}
 }

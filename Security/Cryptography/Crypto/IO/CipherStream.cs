@@ -57,10 +57,10 @@ namespace DNA.Security.Cryptography.Crypto.IO
 			int num = 0;
 			while (num < count && ((this.mInBuf != null && this.mInPos < this.mInBuf.Length) || this.FillInBuf()))
 			{
-				int num2 = Math.Min(count - num, this.mInBuf.Length - this.mInPos);
-				Array.Copy(this.mInBuf, this.mInPos, buffer, offset + num, num2);
-				this.mInPos += num2;
-				num += num2;
+				int numToCopy = Math.Min(count - num, this.mInBuf.Length - this.mInPos);
+				Array.Copy(this.mInBuf, this.mInPos, buffer, offset + num, numToCopy);
+				this.mInPos += numToCopy;
+				num += numToCopy;
 			}
 			return num;
 		}
@@ -83,30 +83,30 @@ namespace DNA.Security.Cryptography.Crypto.IO
 		private byte[] ReadAndProcessBlock()
 		{
 			int blockSize = this.inCipher.GetBlockSize();
-			int num = ((blockSize == 0) ? 256 : blockSize);
-			byte[] array = new byte[num];
-			int num2 = 0;
+			int readSize = ((blockSize == 0) ? 256 : blockSize);
+			byte[] block = new byte[readSize];
+			int numRead = 0;
 			for (;;)
 			{
-				int num3 = this.stream.Read(array, num2, array.Length - num2);
-				if (num3 < 1)
+				int count = this.stream.Read(block, numRead, block.Length - numRead);
+				if (count < 1)
 				{
 					break;
 				}
-				num2 += num3;
-				if (num2 >= array.Length)
+				numRead += count;
+				if (numRead >= block.Length)
 				{
 					goto IL_004E;
 				}
 			}
 			this.inStreamEnded = true;
 			IL_004E:
-			byte[] array2 = (this.inStreamEnded ? this.inCipher.DoFinal(array, 0, num2) : this.inCipher.ProcessBytes(array));
-			if (array2 != null && array2.Length == 0)
+			byte[] bytes = (this.inStreamEnded ? this.inCipher.DoFinal(block, 0, numRead) : this.inCipher.ProcessBytes(block));
+			if (bytes != null && bytes.Length == 0)
 			{
-				array2 = null;
+				bytes = null;
 			}
-			return array2;
+			return bytes;
 		}
 
 		public override void Write(byte[] buffer, int offset, int count)
@@ -116,10 +116,10 @@ namespace DNA.Security.Cryptography.Crypto.IO
 				this.stream.Write(buffer, offset, count);
 				return;
 			}
-			byte[] array = this.outCipher.ProcessBytes(buffer, offset, count);
-			if (array != null)
+			byte[] data = this.outCipher.ProcessBytes(buffer, offset, count);
+			if (data != null)
 			{
-				this.stream.Write(array, 0, array.Length);
+				this.stream.Write(data, 0, data.Length);
 			}
 		}
 
@@ -130,10 +130,10 @@ namespace DNA.Security.Cryptography.Crypto.IO
 				this.stream.WriteByte(b);
 				return;
 			}
-			byte[] array = this.outCipher.ProcessByte(b);
-			if (array != null)
+			byte[] data = this.outCipher.ProcessByte(b);
+			if (data != null)
 			{
-				this.stream.Write(array, 0, array.Length);
+				this.stream.Write(data, 0, data.Length);
 			}
 		}
 
@@ -185,8 +185,8 @@ namespace DNA.Security.Cryptography.Crypto.IO
 		{
 			if (this.outCipher != null)
 			{
-				byte[] array = this.outCipher.DoFinal();
-				this.stream.Write(array, 0, array.Length);
+				byte[] data = this.outCipher.DoFinal();
+				this.stream.Write(data, 0, data.Length);
 				this.stream.Flush();
 			}
 			this.stream.Close();

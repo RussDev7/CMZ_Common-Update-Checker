@@ -7,11 +7,11 @@ namespace DNA.Drawing
 	{
 		public static Color Blend(Color c1, Color c2, float factor)
 		{
-			int num = (int)Math.Round((double)((float)c1.A * (1f - factor) + (float)c2.A * factor));
-			int num2 = (int)Math.Round((double)((float)c1.R * (1f - factor) + (float)c2.R * factor));
-			int num3 = (int)Math.Round((double)((float)c1.G * (1f - factor) + (float)c2.G * factor));
-			int num4 = (int)Math.Round((double)((float)c1.B * (1f - factor) + (float)c2.B * factor));
-			return new Color(num2, num3, num4, num);
+			int a = (int)Math.Round((double)((float)c1.A * (1f - factor) + (float)c2.A * factor));
+			int r = (int)Math.Round((double)((float)c1.R * (1f - factor) + (float)c2.R * factor));
+			int g = (int)Math.Round((double)((float)c1.G * (1f - factor) + (float)c2.G * factor));
+			int b = (int)Math.Round((double)((float)c1.B * (1f - factor) + (float)c2.B * factor));
+			return new Color(r, g, b, a);
 		}
 
 		public static Color FromAHSB(Angle h, float s, float b)
@@ -61,8 +61,8 @@ namespace DNA.Drawing
 
 		public static void ToCMYK(Color color, out float c, out float m, out float y, out float k)
 		{
-			float num;
-			ColorTools.ToACMYK(color, out num, out c, out m, out y, out k);
+			float alpha;
+			ColorTools.ToACMYK(color, out alpha, out c, out m, out y, out k);
 		}
 
 		public static void ToCMY(Color color, out float c, out float m, out float y)
@@ -84,9 +84,9 @@ namespace DNA.Drawing
 
 		public static void ToAHSL(Color color, out float alpha, out Angle h, out float s, out float l)
 		{
-			ColorF colorF = ColorF.FromColor(color);
+			ColorF cf = ColorF.FromColor(color);
 			alpha = (float)color.A / 255f;
-			colorF.GetHSL(out h, out s, out l);
+			cf.GetHSL(out h, out s, out l);
 		}
 
 		public static void ToAHSV(Color color, out float alpha, out Angle h, out float s, out float v)
@@ -107,8 +107,8 @@ namespace DNA.Drawing
 
 		public static Color GetRandomColor(Random rnd, float saturation, float brightness)
 		{
-			Angle angle = Angle.FromRevolutions((float)rnd.NextDouble());
-			return ColorTools.FromAHSV(angle, saturation, brightness);
+			Angle hue = Angle.FromRevolutions((float)rnd.NextDouble());
+			return ColorTools.FromAHSV(hue, saturation, brightness);
 		}
 
 		public static Color Brighten(Color c, float factor)

@@ -13,8 +13,8 @@ namespace DNA.Drawing
 
 		public bool Contains(Vector3 point)
 		{
-			Vector3 vector = this.Segment.ClosetPointTo(point);
-			return Vector3.DistanceSquared(vector, point) < this.Radius * this.Radius;
+			Vector3 cpoint = this.Segment.ClosetPointTo(point);
+			return Vector3.DistanceSquared(cpoint, point) < this.Radius * this.Radius;
 		}
 
 		public float Radius;

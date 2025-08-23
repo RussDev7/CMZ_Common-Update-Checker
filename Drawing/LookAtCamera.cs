@@ -11,12 +11,12 @@ namespace DNA.Drawing
 			{
 				if (this.LookAtEntity != null)
 				{
-					Matrix matrix = Matrix.CreateFromAxisAngle(Vector3.Forward, this.Roll.Radians);
-					Matrix matrix2 = matrix * base.LocalToWorld;
-					Vector3 vector = Vector3.TransformNormal(Vector3.Up, matrix2);
-					Vector3 worldPosition = base.WorldPosition;
-					Vector3 worldPosition2 = this.LookAtEntity.WorldPosition;
-					return Matrix.CreateLookAt(worldPosition, worldPosition2, vector);
+					Matrix cameraRollMatrix = Matrix.CreateFromAxisAngle(Vector3.Forward, this.Roll.Radians);
+					Matrix cameraTransformMatrix = cameraRollMatrix * base.LocalToWorld;
+					Vector3 up = Vector3.TransformNormal(Vector3.Up, cameraTransformMatrix);
+					Vector3 pos = base.WorldPosition;
+					Vector3 lookAt = this.LookAtEntity.WorldPosition;
+					return Matrix.CreateLookAt(pos, lookAt, up);
 				}
 				return base.View;
 			}

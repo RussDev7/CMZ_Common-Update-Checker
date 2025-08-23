@@ -36,38 +36,38 @@ namespace DNA.Drawing.Lights
 				return 1f;
 			case FallOffType.Linear:
 			{
-				float num = Vector3.DistanceSquared(worldLocation, this._lastLocation);
-				if (num > this._outerRadiusSquared)
+				float distanceSqu = Vector3.DistanceSquared(worldLocation, this._lastLocation);
+				if (distanceSqu > this._outerRadiusSquared)
 				{
 					return 0f;
 				}
-				float num2 = (float)Math.Sqrt((double)num);
-				if (num2 < this.InnerRadius)
+				float distance = (float)Math.Sqrt((double)distanceSqu);
+				if (distance < this.InnerRadius)
 				{
 					return 1f;
 				}
-				float num3 = this.OuterRadius - this.InnerRadius;
-				float num4 = num2 - this.InnerRadius;
-				float num5 = 1f - num4 / num3;
-				return Math.Max(num5, 0f);
+				float edgeRadius = this.OuterRadius - this.InnerRadius;
+				float distToInnner = distance - this.InnerRadius;
+				float blend = 1f - distToInnner / edgeRadius;
+				return Math.Max(blend, 0f);
 			}
 			case FallOffType.Squared:
 			{
-				float num6 = Vector3.DistanceSquared(worldLocation, this._lastLocation);
-				if (num6 > this._outerRadiusSquared)
+				float distanceSqu2 = Vector3.DistanceSquared(worldLocation, this._lastLocation);
+				if (distanceSqu2 > this._outerRadiusSquared)
 				{
 					return 0f;
 				}
-				float num7 = (float)Math.Sqrt((double)num6);
-				if (num7 < this.InnerRadius)
+				float distance2 = (float)Math.Sqrt((double)distanceSqu2);
+				if (distance2 < this.InnerRadius)
 				{
 					return 1f;
 				}
-				float num8 = this.OuterRadius - this.InnerRadius;
-				float num9 = num7 - this.InnerRadius;
-				float num10 = 1f - num9 / num8;
-				num10 *= num10;
-				return Math.Max(num10, 0f);
+				float edgeRadius2 = this.OuterRadius - this.InnerRadius;
+				float distToInnner2 = distance2 - this.InnerRadius;
+				float blend2 = 1f - distToInnner2 / edgeRadius2;
+				blend2 *= blend2;
+				return Math.Max(blend2, 0f);
 			}
 			default:
 				return 1f;

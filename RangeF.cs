@@ -68,8 +68,8 @@ namespace DNA
 
 		public override bool Equals(object obj)
 		{
-			RangeF rangeF = (RangeF)obj;
-			return this._min == rangeF._min && this._max == rangeF._max;
+			RangeF oval = (RangeF)obj;
+			return this._min == oval._min && this._max == oval._max;
 		}
 
 		public static bool operator ==(RangeF a, RangeF b)

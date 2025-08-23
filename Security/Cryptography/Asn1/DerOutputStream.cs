@@ -15,14 +15,14 @@ namespace DNA.Security.Cryptography.Asn1
 		{
 			if (length > 127)
 			{
-				int num = 1;
-				uint num2 = (uint)length;
-				while ((num2 >>= 8) != 0U)
+				int size = 1;
+				uint val = (uint)length;
+				while ((val >>= 8) != 0U)
 				{
-					num++;
+					size++;
 				}
-				this.WriteByte((byte)(num | 128));
-				for (int i = (num - 1) * 8; i >= 0; i -= 8)
+				this.WriteByte((byte)(size | 128));
+				for (int i = (size - 1) * 8; i >= 0; i -= 8)
 				{
 					this.WriteByte((byte)(length >> i));
 				}
@@ -58,16 +58,16 @@ namespace DNA.Security.Cryptography.Asn1
 				this.WriteByte((byte)tagNo);
 				return;
 			}
-			byte[] array = new byte[5];
-			int num = array.Length;
-			array[--num] = (byte)(tagNo & 127);
+			byte[] stack = new byte[5];
+			int pos = stack.Length;
+			stack[--pos] = (byte)(tagNo & 127);
 			do
 			{
 				tagNo >>= 7;
-				array[--num] = (byte)((tagNo & 127) | 128);
+				stack[--pos] = (byte)((tagNo & 127) | 128);
 			}
 			while (tagNo > 127);
-			this.Write(array, num, array.Length - num);
+			this.Write(stack, pos, stack.Length - pos);
 		}
 
 		internal void WriteEncoded(int flags, int tagNo, byte[] bytes)

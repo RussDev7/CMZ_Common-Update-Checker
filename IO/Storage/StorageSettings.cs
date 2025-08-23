@@ -17,15 +17,15 @@ namespace DNA.IO.Storage
 			{
 				throw new ArgumentException("supportedLanguages");
 			}
-			foreach (Language language in supportedLanguages)
+			foreach (Language i in supportedLanguages)
 			{
-				if (language < Language.German || language > Language.English)
+				if (i < Language.German || i > Language.English)
 				{
 					throw new ArgumentException("supportedLanguages");
 				}
 			}
-			Language language2;
-			if (!StorageSettings.languageMap.TryGetValue(CultureInfo.CurrentCulture.TwoLetterISOLanguageName.ToLower(), out language2) || !supportedLanguages.Contains(language2))
+			Language currentLanguage;
+			if (!StorageSettings.languageMap.TryGetValue(CultureInfo.CurrentCulture.TwoLetterISOLanguageName.ToLower(), out currentLanguage) || !supportedLanguages.Contains(currentLanguage))
 			{
 				Strings.Culture = new CultureInfo(StorageSettings.cultureMap[supportedLanguages[0]]);
 				StorageSettings.ResetSaveDeviceStrings();

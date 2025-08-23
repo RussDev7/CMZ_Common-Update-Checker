@@ -24,12 +24,12 @@ namespace DNA.Security.Cryptography.Checksums
 
 		public void Update(int inCh)
 		{
-			int num = (this.globalCrc >> 24) ^ inCh;
-			if (num < 0)
+			int temp = (this.globalCrc >> 24) ^ inCh;
+			if (temp < 0)
 			{
-				num = 256 + num;
+				temp = 256 + temp;
 			}
-			this.globalCrc = (int)((long)((long)this.globalCrc << 8) ^ (long)((ulong)StrangeCRC.crc32Table[num]));
+			this.globalCrc = (int)((long)((long)this.globalCrc << 8) ^ (long)((ulong)StrangeCRC.crc32Table[temp]));
 		}
 
 		public void Update(byte[] buf)

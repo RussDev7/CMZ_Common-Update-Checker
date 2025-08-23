@@ -10,12 +10,12 @@ namespace DNA.Diagnostics.IssueReporting
 		public CustomerCrashReportForm(CrashID cid)
 		{
 			this.InitializeComponent();
-			string text = "http:\\\\services.digitaldnagames.com\\Support.aspx";
+			string url = "http:\\\\services.digitaldnagames.com\\Support.aspx";
 			if (cid != null)
 			{
-				text = text + "?CrashID=" + cid.ToString();
+				url = url + "?CrashID=" + cid.ToString();
 			}
-			this.webBrowser1.Navigate(text);
+			this.webBrowser1.Navigate(url);
 		}
 	}
 }

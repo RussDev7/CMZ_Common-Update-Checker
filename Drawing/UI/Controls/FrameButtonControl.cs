@@ -54,45 +54,45 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			Rectangle rectangle = new Rectangle(base.ScreenBounds.X, base.ScreenBounds.Y, base.ScreenBounds.Width, base.ScreenBounds.Height);
-			Vector2 vector = new Vector2((float)rectangle.Center.X, (float)rectangle.Center.Y);
-			Vector2 vector2 = this.Font.MeasureString(this.Text) * this.Scale;
-			vector2.Y = (float)this.Font.LineSpacing * this.Scale;
-			Vector2 vector3 = Vector2.Zero;
+			Rectangle dest = new Rectangle(base.ScreenBounds.X, base.ScreenBounds.Y, base.ScreenBounds.Width, base.ScreenBounds.Height);
+			Vector2 center = new Vector2((float)dest.Center.X, (float)dest.Center.Y);
+			Vector2 textSize = this.Font.MeasureString(this.Text) * this.Scale;
+			textSize.Y = (float)this.Font.LineSpacing * this.Scale;
+			Vector2 textPos = Vector2.Zero;
 			switch (this.TextAlignment)
 			{
 			case FrameButtonControl.Alignment.Left:
-				vector3.X = (float)(rectangle.Left + 5);
-				vector3.Y = vector.Y - vector2.Y / 2f;
+				textPos.X = (float)(dest.Left + 5);
+				textPos.Y = center.Y - textSize.Y / 2f;
 				break;
 			case FrameButtonControl.Alignment.Right:
-				vector3.X = (float)rectangle.Right - vector2.X * this.Scale - 5f;
-				vector3.Y = vector.Y - vector2.Y / 2f;
+				textPos.X = (float)dest.Right - textSize.X * this.Scale - 5f;
+				textPos.Y = center.Y - textSize.Y / 2f;
 				break;
 			case FrameButtonControl.Alignment.Center:
-				vector3 = vector - vector2 / 2f;
+				textPos = center - textSize / 2f;
 				break;
 			}
 			if (!base.Enabled)
 			{
-				this.Frame.Draw(spriteBatch, rectangle, this.ButtonDisabledColor);
-				spriteBatch.DrawString(this.Font, this.Text, vector3, this.TextDisabledColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+				this.Frame.Draw(spriteBatch, dest, this.ButtonDisabledColor);
+				spriteBatch.DrawString(this.Font, this.Text, textPos, this.TextDisabledColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 				return;
 			}
 			if (base.CaptureInput)
 			{
-				this.Frame.Draw(spriteBatch, rectangle, this.ButtonPressedColor);
-				spriteBatch.DrawString(this.Font, this.Text, vector3, this.TextPressedColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+				this.Frame.Draw(spriteBatch, dest, this.ButtonPressedColor);
+				spriteBatch.DrawString(this.Font, this.Text, textPos, this.TextPressedColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 				return;
 			}
 			if (base.Hovering)
 			{
-				this.Frame.Draw(spriteBatch, rectangle, this.ButtonHoverColor);
-				spriteBatch.DrawString(this.Font, this.Text, vector3, this.TextHoverColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+				this.Frame.Draw(spriteBatch, dest, this.ButtonHoverColor);
+				spriteBatch.DrawString(this.Font, this.Text, textPos, this.TextHoverColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 				return;
 			}
-			this.Frame.Draw(spriteBatch, rectangle, this.ButtonColor);
-			spriteBatch.DrawString(this.Font, this.Text, vector3, this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+			this.Frame.Draw(spriteBatch, dest, this.ButtonColor);
+			spriteBatch.DrawString(this.Font, this.Text, textPos, this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 		}
 
 		public FrameButtonControl.Alignment TextAlignment = FrameButtonControl.Alignment.Center;

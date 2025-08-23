@@ -63,37 +63,37 @@ namespace DNA.Drawing.UI
 
 		protected override bool OnPlayerInput(InputManager input, GameController controller, KeyboardInput chatpad, GameTime gameTime)
 		{
-			int num = this.HitTest(input.Mouse.Position);
+			int hoverItem = this.HitTest(input.Mouse.Position);
 			if (!this._mouseActive)
 			{
-				num = -1;
+				hoverItem = -1;
 			}
 			if (input.Mouse.DeltaPosition != Vector2.Zero)
 			{
 				this._mouseActive = true;
 			}
-			bool flag = true;
-			if (num >= 0)
+			bool clickItem = true;
+			if (hoverItem >= 0)
 			{
-				if (this._menuItems[num].Visible)
+				if (this._menuItems[hoverItem].Visible)
 				{
-					if (this._selectedIndex != num)
+					if (this._selectedIndex != hoverItem)
 					{
 						if (this.SelectSound != null)
 						{
 							SoundManager.Instance.PlayInstance(this.SelectSound);
 						}
-						this._selectedIndex = num;
+						this._selectedIndex = hoverItem;
 					}
-					BarSettingItem barSettingItem = this._menuItems[num] as BarSettingItem;
-					if (barSettingItem != null)
+					BarSettingItem barItem = this._menuItems[hoverItem] as BarSettingItem;
+					if (barItem != null)
 					{
-						flag = !barSettingItem.SetBarValue(input.Mouse);
+						clickItem = !barItem.SetBarValue(input.Mouse);
 					}
 				}
 			}
-			float num2 = 0.25f;
-			if (controller.PressedDPad.Down || controller.PressedButtons.RightShoulder || (controller.CurrentState.ThumbSticks.Left.Y < -num2 && controller.LastState.ThumbSticks.Left.Y > -num2) || (controller.CurrentState.ThumbSticks.Right.Y < -num2 && controller.LastState.ThumbSticks.Right.Y > -num2) || input.Keyboard.WasKeyPressed(Keys.Down))
+			float deadZone = 0.25f;
+			if (controller.PressedDPad.Down || controller.PressedButtons.RightShoulder || (controller.CurrentState.ThumbSticks.Left.Y < -deadZone && controller.LastState.ThumbSticks.Left.Y > -deadZone) || (controller.CurrentState.ThumbSticks.Right.Y < -deadZone && controller.LastState.ThumbSticks.Right.Y > -deadZone) || input.Keyboard.WasKeyPressed(Keys.Down))
 			{
 				if (this.SelectSound != null)
 				{
@@ -101,7 +101,7 @@ namespace DNA.Drawing.UI
 				}
 				this.SelectNext();
 			}
-			if (controller.PressedDPad.Up || controller.PressedButtons.LeftShoulder || (controller.CurrentState.ThumbSticks.Left.Y > num2 && controller.LastState.ThumbSticks.Left.Y < num2) || (controller.CurrentState.ThumbSticks.Right.Y > num2 && controller.LastState.ThumbSticks.Right.Y < num2) || input.Keyboard.WasKeyPressed(Keys.Up))
+			if (controller.PressedDPad.Up || controller.PressedButtons.LeftShoulder || (controller.CurrentState.ThumbSticks.Left.Y > deadZone && controller.LastState.ThumbSticks.Left.Y < deadZone) || (controller.CurrentState.ThumbSticks.Right.Y > deadZone && controller.LastState.ThumbSticks.Right.Y < deadZone) || input.Keyboard.WasKeyPressed(Keys.Up))
 			{
 				if (this.SelectSound != null)
 				{
@@ -123,26 +123,26 @@ namespace DNA.Drawing.UI
 				{
 					SoundManager.Instance.PlayInstance(this.ClickSound);
 				}
-				if (flag)
+				if (clickItem)
 				{
 					this.ClickedMenuItem();
 				}
 			}
-			if (controller.PressedDPad.Left || (controller.CurrentState.ThumbSticks.Left.X < -num2 && controller.LastState.ThumbSticks.Left.X > -num2) || (controller.CurrentState.ThumbSticks.Right.X < -num2 && controller.LastState.ThumbSticks.Right.X > -num2) || input.Keyboard.WasKeyPressed(Keys.Left) || (input.Mouse.DeltaWheel < 0 && this.HitTest(input.Mouse.Position) >= 0))
+			if (controller.PressedDPad.Left || (controller.CurrentState.ThumbSticks.Left.X < -deadZone && controller.LastState.ThumbSticks.Left.X > -deadZone) || (controller.CurrentState.ThumbSticks.Right.X < -deadZone && controller.LastState.ThumbSticks.Right.X > -deadZone) || input.Keyboard.WasKeyPressed(Keys.Left) || (input.Mouse.DeltaWheel < 0 && this.HitTest(input.Mouse.Position) >= 0))
 			{
 				this.DecreasedMenuItem();
 				this._menuItems[this._selectedIndex].ResetTimer();
 			}
-			else if ((controller.CurrentState.DPad.Left == ButtonState.Pressed || controller.CurrentState.ThumbSticks.Left.X < -num2 || controller.CurrentState.ThumbSticks.Right.X < -num2 || input.Keyboard.IsKeyDown(Keys.Left)) && this._menuItems[this._selectedIndex].ChangeValue(gameTime.ElapsedGameTime))
+			else if ((controller.CurrentState.DPad.Left == ButtonState.Pressed || controller.CurrentState.ThumbSticks.Left.X < -deadZone || controller.CurrentState.ThumbSticks.Right.X < -deadZone || input.Keyboard.IsKeyDown(Keys.Left)) && this._menuItems[this._selectedIndex].ChangeValue(gameTime.ElapsedGameTime))
 			{
 				this.DecreasedMenuItem();
 			}
-			if (controller.PressedDPad.Right || (controller.CurrentState.ThumbSticks.Left.X > num2 && controller.LastState.ThumbSticks.Left.X < num2) || (controller.CurrentState.ThumbSticks.Right.X > num2 && controller.LastState.ThumbSticks.Right.X < num2) || input.Keyboard.WasKeyPressed(Keys.Right) || (input.Mouse.DeltaWheel > 0 && this.HitTest(input.Mouse.Position) >= 0))
+			if (controller.PressedDPad.Right || (controller.CurrentState.ThumbSticks.Left.X > deadZone && controller.LastState.ThumbSticks.Left.X < deadZone) || (controller.CurrentState.ThumbSticks.Right.X > deadZone && controller.LastState.ThumbSticks.Right.X < deadZone) || input.Keyboard.WasKeyPressed(Keys.Right) || (input.Mouse.DeltaWheel > 0 && this.HitTest(input.Mouse.Position) >= 0))
 			{
 				this.IncreasedMenuItem();
 				this._menuItems[this._selectedIndex].ResetTimer();
 			}
-			else if ((controller.CurrentState.DPad.Right == ButtonState.Pressed || controller.CurrentState.ThumbSticks.Left.X > num2 || controller.CurrentState.ThumbSticks.Right.X > num2 || input.Keyboard.IsKeyDown(Keys.Right)) && this._menuItems[this._selectedIndex].ChangeValue(gameTime.ElapsedGameTime))
+			else if ((controller.CurrentState.DPad.Right == ButtonState.Pressed || controller.CurrentState.ThumbSticks.Left.X > deadZone || controller.CurrentState.ThumbSticks.Right.X > deadZone || input.Keyboard.IsKeyDown(Keys.Right)) && this._menuItems[this._selectedIndex].ChangeValue(gameTime.ElapsedGameTime))
 			{
 				this.IncreasedMenuItem();
 			}
@@ -153,8 +153,8 @@ namespace DNA.Drawing.UI
 		{
 			if (this._selectedIndex >= 0)
 			{
-				SettingItemElement settingItemElement = this._menuItems[this._selectedIndex];
-				settingItemElement.OnClicked();
+				SettingItemElement selectedControl = this._menuItems[this._selectedIndex];
+				selectedControl.OnClicked();
 			}
 		}
 
@@ -162,8 +162,8 @@ namespace DNA.Drawing.UI
 		{
 			if (this._selectedIndex >= 0)
 			{
-				SettingItemElement settingItemElement = this._menuItems[this._selectedIndex];
-				settingItemElement.Increased();
+				SettingItemElement selectedControl = this._menuItems[this._selectedIndex];
+				selectedControl.Increased();
 			}
 		}
 
@@ -171,8 +171,8 @@ namespace DNA.Drawing.UI
 		{
 			if (this._selectedIndex >= 0)
 			{
-				SettingItemElement settingItemElement = this._menuItems[this._selectedIndex];
-				settingItemElement.Decreased();
+				SettingItemElement selectedControl = this._menuItems[this._selectedIndex];
+				selectedControl.Decreased();
 			}
 		}
 
@@ -193,7 +193,7 @@ namespace DNA.Drawing.UI
 				this._selectedIndex = -1;
 				return;
 			}
-			int selectedIndex = this._selectedIndex;
+			int startIndex = this._selectedIndex;
 			for (;;)
 			{
 				this._selectedIndex++;
@@ -201,7 +201,7 @@ namespace DNA.Drawing.UI
 				{
 					this._selectedIndex = 0;
 				}
-				if (this._selectedIndex == selectedIndex && !this._menuItems[this._selectedIndex].Visible)
+				if (this._selectedIndex == startIndex && !this._menuItems[this._selectedIndex].Visible)
 				{
 					break;
 				}
@@ -220,7 +220,7 @@ namespace DNA.Drawing.UI
 				this._selectedIndex = -1;
 				return;
 			}
-			int selectedIndex = this._selectedIndex;
+			int startIndex = this._selectedIndex;
 			for (;;)
 			{
 				this._selectedIndex--;
@@ -228,7 +228,7 @@ namespace DNA.Drawing.UI
 				{
 					this._selectedIndex = this._menuItems.Count - 1;
 				}
-				if (this._selectedIndex == selectedIndex && !this._menuItems[this._selectedIndex].Visible)
+				if (this._selectedIndex == startIndex && !this._menuItems[this._selectedIndex].Visible)
 				{
 					break;
 				}
@@ -242,8 +242,8 @@ namespace DNA.Drawing.UI
 
 		private Vector2 MeasureItem(SettingItemElement item)
 		{
-			SpriteFont spriteFont = ((item.Font == null) ? this.Font : item.Font);
-			return spriteFont.MeasureString(item.Text);
+			SpriteFont font = ((item.Font == null) ? this.Font : item.Font);
+			return font.MeasureString(item.Text);
 		}
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
@@ -258,52 +258,52 @@ namespace DNA.Drawing.UI
 				this._selectedIndex %= this._menuItems.Count;
 			}
 			spriteBatch.Begin();
-			float num = 0f;
-			float num2 = 0f;
+			float totalHeight = 0f;
+			float spacing = 0f;
 			if (this.LineSpacing != null)
 			{
-				num2 = (float)this.LineSpacing.Value;
+				spacing = (float)this.LineSpacing.Value;
 			}
 			for (int i = 0; i < this._menuItems.Count; i++)
 			{
 				if (this._menuItems[i].Visible)
 				{
-					num += this.MeasureItem(this._menuItems[i]).Y + num2;
+					totalHeight += this.MeasureItem(this._menuItems[i]).Y + spacing;
 				}
 			}
 			if (this.DrawArea == null)
 			{
 				this.DrawArea = new Rectangle?(device.Viewport.TitleSafeArea);
 			}
-			num -= num2;
-			float num3 = (float)this.DrawArea.Value.Height;
+			totalHeight -= spacing;
+			float screenHeight = (float)this.DrawArea.Value.Height;
 			int width = this.DrawArea.Value.Width;
-			float num4 = (num3 - num) / 2f + (float)this.DrawArea.Value.Y;
+			float yloc = (screenHeight - totalHeight) / 2f + (float)this.DrawArea.Value.Y;
 			if (this.MenuStart != null)
 			{
-				num4 = this.MenuStart.Value;
+				yloc = this.MenuStart.Value;
 			}
-			if (num4 < (float)this.DrawArea.Value.Top)
+			if (yloc < (float)this.DrawArea.Value.Top)
 			{
-				num4 = (float)this.DrawArea.Value.Top;
+				yloc = (float)this.DrawArea.Value.Top;
 			}
 			for (int j = 0; j < this._menuItems.Count; j++)
 			{
-				SettingItemElement settingItemElement = this._menuItems[j];
-				if (settingItemElement.Visible)
+				SettingItemElement item = this._menuItems[j];
+				if (item.Visible)
 				{
-					SpriteFont spriteFont = ((settingItemElement.Font == null) ? this.Font : settingItemElement.Font);
-					Color color = ((settingItemElement.TextColor != null) ? settingItemElement.TextColor.Value : this.TextColor);
-					Color color2 = ((settingItemElement.OutlineColor != null) ? settingItemElement.OutlineColor.Value : this.OutlineColor);
-					int num5 = ((settingItemElement.OnlineWidth != null) ? settingItemElement.OnlineWidth.Value : this.OnlineWidth);
-					Vector2 vector = this.MeasureItem(settingItemElement);
+					SpriteFont font = ((item.Font == null) ? this.Font : item.Font);
+					Color textColor = ((item.TextColor != null) ? item.TextColor.Value : this.TextColor);
+					Color outlineColor = ((item.OutlineColor != null) ? item.OutlineColor.Value : this.OutlineColor);
+					int outlineWidth = ((item.OnlineWidth != null) ? item.OnlineWidth.Value : this.OnlineWidth);
+					Vector2 size = this.MeasureItem(item);
 					if (j == this._selectedIndex)
 					{
-						color = ((settingItemElement.SelectedColor != null) ? settingItemElement.SelectedColor.Value : this.SelectedColor);
+						textColor = ((item.SelectedColor != null) ? item.SelectedColor.Value : this.SelectedColor);
 					}
-					this._itemLocations[j] = new Rectangle(this.DrawArea.Value.Left, (int)num4, this.DrawArea.Value.Width, (int)vector.Y);
-					settingItemElement.OnDraw(this._game, device, spriteBatch, spriteFont, color, color2, num5, new Vector2((float)this.DrawArea.Value.Left, num4));
-					num4 += vector.Y + num2;
+					this._itemLocations[j] = new Rectangle(this.DrawArea.Value.Left, (int)yloc, this.DrawArea.Value.Width, (int)size.Y);
+					item.OnDraw(this._game, device, spriteBatch, font, textColor, outlineColor, outlineWidth, new Vector2((float)this.DrawArea.Value.Left, yloc));
+					yloc += size.Y + spacing;
 				}
 			}
 			spriteBatch.End();

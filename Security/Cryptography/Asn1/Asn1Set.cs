@@ -18,35 +18,35 @@ namespace DNA.Security.Cryptography.Asn1
 
 		public static Asn1Set GetInstance(Asn1TaggedObject obj, bool explicitly)
 		{
-			Asn1Object @object = obj.GetObject();
+			Asn1Object inner = obj.GetObject();
 			if (explicitly)
 			{
 				if (!obj.IsExplicit())
 				{
 					throw new ArgumentException("object implicit - explicit expected.");
 				}
-				return (Asn1Set)@object;
+				return (Asn1Set)inner;
 			}
 			else
 			{
 				if (obj.IsExplicit())
 				{
-					return new DerSet(@object);
+					return new DerSet(inner);
 				}
-				if (@object is Asn1Set)
+				if (inner is Asn1Set)
 				{
-					return (Asn1Set)@object;
+					return (Asn1Set)inner;
 				}
-				if (@object is Asn1Sequence)
+				if (inner is Asn1Sequence)
 				{
-					Asn1EncodableVector asn1EncodableVector = new Asn1EncodableVector(new Asn1Encodable[0]);
-					Asn1Sequence asn1Sequence = (Asn1Sequence)@object;
-					foreach (object obj2 in asn1Sequence)
+					Asn1EncodableVector v = new Asn1EncodableVector(new Asn1Encodable[0]);
+					Asn1Sequence s = (Asn1Sequence)inner;
+					foreach (object obj2 in s)
 					{
-						Asn1Encodable asn1Encodable = (Asn1Encodable)obj2;
-						asn1EncodableVector.Add(new Asn1Encodable[] { asn1Encodable });
+						Asn1Encodable ae = (Asn1Encodable)obj2;
+						v.Add(new Asn1Encodable[] { ae });
 					}
-					return new DerSet(asn1EncodableVector, false);
+					return new DerSet(v, false);
 				}
 				throw new ArgumentException("Unknown object in GetInstance: " + obj.GetType().FullName, "obj");
 			}
@@ -109,35 +109,35 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override int Asn1GetHashCode()
 		{
-			int num = this.Count;
-			foreach (object obj in this)
+			int hc = this.Count;
+			foreach (object o in this)
 			{
-				num *= 17;
-				if (obj != null)
+				hc *= 17;
+				if (o != null)
 				{
-					num ^= obj.GetHashCode();
+					hc ^= o.GetHashCode();
 				}
 			}
-			return num;
+			return hc;
 		}
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			Asn1Set asn1Set = asn1Object as Asn1Set;
-			if (asn1Set == null)
+			Asn1Set other = asn1Object as Asn1Set;
+			if (other == null)
 			{
 				return false;
 			}
-			if (this.Count != asn1Set.Count)
+			if (this.Count != other.Count)
 			{
 				return false;
 			}
-			IEnumerator enumerator = this.GetEnumerator();
-			IEnumerator enumerator2 = asn1Set.GetEnumerator();
-			while (enumerator.MoveNext() && enumerator2.MoveNext())
+			IEnumerator s = this.GetEnumerator();
+			IEnumerator s2 = other.GetEnumerator();
+			while (s.MoveNext() && s2.MoveNext())
 			{
-				Asn1Object asn1Object2 = ((Asn1Encodable)enumerator.Current).ToAsn1Object();
-				if (!asn1Object2.Equals(enumerator2.Current))
+				Asn1Object o = ((Asn1Encodable)s.Current).ToAsn1Object();
+				if (!o.Equals(s2.Current))
 				{
 					return false;
 				}
@@ -147,14 +147,14 @@ namespace DNA.Security.Cryptography.Asn1
 
 		private bool LessThanOrEqual(byte[] a, byte[] b)
 		{
-			int num = Math.Min(a.Length, b.Length);
-			for (int i = 0; i < num; i++)
+			int cmpLen = Math.Min(a.Length, b.Length);
+			for (int i = 0; i < cmpLen; i++)
 			{
-				byte b2 = a[i];
-				byte b3 = b[i];
-				if (b2 != b3)
+				byte j = a[i];
+				byte r = b[i];
+				if (j != r)
 				{
-					return b3 > b2;
+					return r > j;
 				}
 			}
 			return a.Length <= b.Length;
@@ -164,32 +164,32 @@ namespace DNA.Security.Cryptography.Asn1
 		{
 			if (this._set.Count > 1)
 			{
-				bool flag = true;
-				int num = this._set.Count - 1;
-				while (flag)
+				bool swapped = true;
+				int lastSwap = this._set.Count - 1;
+				while (swapped)
 				{
-					int num2 = 0;
-					int num3 = 0;
-					byte[] array = this._set[0].GetEncoded();
-					flag = false;
-					while (num2 != num)
+					int index = 0;
+					int swapIndex = 0;
+					byte[] a = this._set[0].GetEncoded();
+					swapped = false;
+					while (index != lastSwap)
 					{
-						byte[] encoded = this._set[num2 + 1].GetEncoded();
-						if (this.LessThanOrEqual(array, encoded))
+						byte[] b = this._set[index + 1].GetEncoded();
+						if (this.LessThanOrEqual(a, b))
 						{
-							array = encoded;
+							a = b;
 						}
 						else
 						{
-							Asn1Encodable asn1Encodable = this._set[num2];
-							this._set[num2] = this._set[num2 + 1];
-							this._set[num2 + 1] = asn1Encodable;
-							flag = true;
-							num3 = num2;
+							Asn1Encodable o = this._set[index];
+							this._set[index] = this._set[index + 1];
+							this._set[index + 1] = o;
+							swapped = true;
+							swapIndex = index;
 						}
-						num2++;
+						index++;
 					}
-					num = num3;
+					lastSwap = swapIndex;
 				}
 			}
 		}
@@ -220,16 +220,16 @@ namespace DNA.Security.Cryptography.Asn1
 				{
 					return null;
 				}
-				Asn1Encodable asn1Encodable = this.outer[this.index++];
-				if (asn1Encodable is Asn1Sequence)
+				Asn1Encodable obj = this.outer[this.index++];
+				if (obj is Asn1Sequence)
 				{
-					return ((Asn1Sequence)asn1Encodable).Parser;
+					return ((Asn1Sequence)obj).Parser;
 				}
-				if (asn1Encodable is Asn1Set)
+				if (obj is Asn1Set)
 				{
-					return ((Asn1Set)asn1Encodable).Parser;
+					return ((Asn1Set)obj).Parser;
 				}
-				return asn1Encodable;
+				return obj;
 			}
 
 			public virtual Asn1Object ToAsn1Object()

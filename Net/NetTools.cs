@@ -18,16 +18,16 @@ namespace DNA.Net
 			}
 			if (adr.AddressFamily == AddressFamily.InterNetwork)
 			{
-				byte[] addressBytes = adr.GetAddressBytes();
+				byte[] ip4bytes = adr.GetAddressBytes();
 				byte[] array = new byte[16];
 				array[10] = byte.MaxValue;
 				array[11] = byte.MaxValue;
-				byte[] array2 = array;
-				array2[12] = addressBytes[0];
-				array2[13] = addressBytes[1];
-				array2[14] = addressBytes[2];
-				array2[15] = addressBytes[3];
-				return new IPAddress(array2);
+				byte[] ip6bytes = array;
+				ip6bytes[12] = ip4bytes[0];
+				ip6bytes[13] = ip4bytes[1];
+				ip6bytes[14] = ip4bytes[2];
+				ip6bytes[15] = ip4bytes[3];
+				return new IPAddress(ip6bytes);
 			}
 			throw new ApplicationException("Cannot convert this address");
 		}
@@ -44,13 +44,13 @@ namespace DNA.Net
 			}
 			if (adr.AddressFamily == AddressFamily.InterNetworkV6)
 			{
-				byte[] addressBytes = adr.GetAddressBytes();
+				byte[] ip6bytes = adr.GetAddressBytes();
 				return new IPAddress(new byte[]
 				{
-					addressBytes[12],
-					addressBytes[13],
-					addressBytes[14],
-					addressBytes[15]
+					ip6bytes[12],
+					ip6bytes[13],
+					ip6bytes[14],
+					ip6bytes[15]
 				});
 			}
 			throw new ApplicationException("Cannot convert this address");

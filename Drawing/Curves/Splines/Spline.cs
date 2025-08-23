@@ -13,11 +13,11 @@ namespace DNA.Drawing.Curves.Splines
 
 		protected static int GetControlPointIndex(int total, ref float t)
 		{
-			float num = 1f / (float)(total - 1);
-			float num2 = t / num;
-			int num3 = (int)num2;
-			t = num2 - (float)num3;
-			return num3;
+			float dt = 1f / (float)(total - 1);
+			float fidx = t / dt;
+			int idx = (int)fidx;
+			t = fidx - (float)idx;
+			return idx;
 		}
 	}
 }

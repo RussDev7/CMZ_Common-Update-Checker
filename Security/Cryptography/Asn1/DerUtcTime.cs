@@ -35,9 +35,9 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				this.ToDateTime();
 			}
-			catch (FormatException ex)
+			catch (FormatException e)
 			{
-				throw new ArgumentException("invalid date string: " + ex.Message);
+				throw new ArgumentException("invalid date string: " + e.Message);
 			}
 		}
 
@@ -80,34 +80,34 @@ namespace DNA.Security.Cryptography.Asn1
 				}
 				else
 				{
-					int num = this.time.IndexOf('-');
-					if (num < 0)
+					int index = this.time.IndexOf('-');
+					if (index < 0)
 					{
-						num = this.time.IndexOf('+');
+						index = this.time.IndexOf('+');
 					}
-					string text = this.time;
-					if (num == this.time.Length - 3)
+					string d = this.time;
+					if (index == this.time.Length - 3)
 					{
-						text += "00";
+						d += "00";
 					}
-					if (num == 10)
+					if (index == 10)
 					{
 						return string.Concat(new string[]
 						{
-							text.Substring(0, 10),
+							d.Substring(0, 10),
 							"00GMT",
-							text.Substring(10, 3),
+							d.Substring(10, 3),
 							":",
-							text.Substring(13, 2)
+							d.Substring(13, 2)
 						});
 					}
 					return string.Concat(new string[]
 					{
-						text.Substring(0, 12),
+						d.Substring(0, 12),
 						"GMT",
-						text.Substring(12, 3),
+						d.Substring(12, 3),
 						":",
-						text.Substring(15, 2)
+						d.Substring(15, 2)
 					});
 				}
 			}
@@ -126,9 +126,9 @@ namespace DNA.Security.Cryptography.Asn1
 		{
 			get
 			{
-				string timeString = this.TimeString;
-				string text = ((timeString[0] < '5') ? "20" : "19");
-				return text + timeString;
+				string d = this.TimeString;
+				string c = ((d[0] < '5') ? "20" : "19");
+				return c + d;
 			}
 		}
 
@@ -144,8 +144,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerUtcTime derUtcTime = asn1Object as DerUtcTime;
-			return derUtcTime != null && this.time.Equals(derUtcTime.time);
+			DerUtcTime other = asn1Object as DerUtcTime;
+			return other != null && this.time.Equals(other.time);
 		}
 
 		protected override int Asn1GetHashCode()

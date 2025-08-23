@@ -6,40 +6,40 @@ namespace DNA.Net.Lidgren
 	{
 		public static byte ReadByte(byte[] fromBuffer, int numberOfBits, int readBitOffset)
 		{
-			int num = readBitOffset >> 3;
-			int num2 = readBitOffset - num * 8;
-			if (num2 == 0 && numberOfBits == 8)
+			int bytePtr = readBitOffset >> 3;
+			int startReadAtIndex = readBitOffset - bytePtr * 8;
+			if (startReadAtIndex == 0 && numberOfBits == 8)
 			{
-				return fromBuffer[num];
+				return fromBuffer[bytePtr];
 			}
-			byte b = (byte)(fromBuffer[num] >> num2);
-			int num3 = numberOfBits - (8 - num2);
-			if (num3 < 1)
+			byte returnValue = (byte)(fromBuffer[bytePtr] >> startReadAtIndex);
+			int numberOfBitsInSecondByte = numberOfBits - (8 - startReadAtIndex);
+			if (numberOfBitsInSecondByte < 1)
 			{
-				return (byte)((int)b & (255 >> 8 - numberOfBits));
+				return (byte)((int)returnValue & (255 >> 8 - numberOfBits));
 			}
-			byte b2 = fromBuffer[num + 1];
-			b2 &= (byte)(255 >> 8 - num3);
-			return b | (byte)(b2 << numberOfBits - num3);
+			byte second = fromBuffer[bytePtr + 1];
+			second &= (byte)(255 >> 8 - numberOfBitsInSecondByte);
+			return returnValue | (byte)(second << numberOfBits - numberOfBitsInSecondByte);
 		}
 
 		public static void ReadBytes(byte[] fromBuffer, int numberOfBytes, int readBitOffset, byte[] destination, int destinationByteOffset)
 		{
-			int num = readBitOffset >> 3;
-			int num2 = readBitOffset - num * 8;
-			if (num2 == 0)
+			int readPtr = readBitOffset >> 3;
+			int startReadAtIndex = readBitOffset - readPtr * 8;
+			if (startReadAtIndex == 0)
 			{
-				Buffer.BlockCopy(fromBuffer, num, destination, destinationByteOffset, numberOfBytes);
+				Buffer.BlockCopy(fromBuffer, readPtr, destination, destinationByteOffset, numberOfBytes);
 				return;
 			}
-			int num3 = 8 - num2;
-			int num4 = 255 >> num3;
+			int secondPartLen = 8 - startReadAtIndex;
+			int secondMask = 255 >> secondPartLen;
 			for (int i = 0; i < numberOfBytes; i++)
 			{
-				int num5 = fromBuffer[num] >> num2;
-				num++;
-				int num6 = (int)fromBuffer[num] & num4;
-				destination[destinationByteOffset++] = (byte)(num5 | (num6 << num3));
+				int b = fromBuffer[readPtr] >> startReadAtIndex;
+				readPtr++;
+				int second = (int)fromBuffer[readPtr] & secondMask;
+				destination[destinationByteOffset++] = (byte)(b | (second << secondPartLen));
 			}
 		}
 
@@ -50,43 +50,43 @@ namespace DNA.Net.Lidgren
 				return;
 			}
 			source = (byte)((int)source & (255 >> 8 - numberOfBits));
-			int num = destBitOffset >> 3;
-			int num2 = destBitOffset & 7;
-			int num3 = 8 - num2;
-			int num4 = num3 - numberOfBits;
-			if (num4 >= 0)
+			int p = destBitOffset >> 3;
+			int bitsUsed = destBitOffset & 7;
+			int bitsFree = 8 - bitsUsed;
+			int bitsLeft = bitsFree - numberOfBits;
+			if (bitsLeft >= 0)
 			{
-				int num5 = (255 >> num3) | (255 << 8 - num4);
-				destination[num] = (byte)(((int)destination[num] & num5) | ((int)source << num2));
+				int mask = (255 >> bitsFree) | (255 << 8 - bitsLeft);
+				destination[p] = (byte)(((int)destination[p] & mask) | ((int)source << bitsUsed));
 				return;
 			}
-			destination[num] = (byte)(((int)destination[num] & (255 >> num3)) | ((int)source << num2));
-			num++;
-			destination[num] = (byte)(((int)destination[num] & (255 << numberOfBits - num3)) | (source >> num3));
+			destination[p] = (byte)(((int)destination[p] & (255 >> bitsFree)) | ((int)source << bitsUsed));
+			p++;
+			destination[p] = (byte)(((int)destination[p] & (255 << numberOfBits - bitsFree)) | (source >> bitsFree));
 		}
 
 		public static void WriteBytes(byte[] source, int sourceByteOffset, int numberOfBytes, byte[] destination, int destBitOffset)
 		{
-			int num = destBitOffset >> 3;
-			int num2 = destBitOffset % 8;
-			if (num2 == 0)
+			int dstBytePtr = destBitOffset >> 3;
+			int firstPartLen = destBitOffset % 8;
+			if (firstPartLen == 0)
 			{
-				Buffer.BlockCopy(source, sourceByteOffset, destination, num, numberOfBytes);
+				Buffer.BlockCopy(source, sourceByteOffset, destination, dstBytePtr, numberOfBytes);
 				return;
 			}
-			int num3 = 8 - num2;
+			int lastPartLen = 8 - firstPartLen;
 			for (int i = 0; i < numberOfBytes; i++)
 			{
-				byte b = source[sourceByteOffset + i];
-				int num4 = num;
-				destination[num4] &= (byte)(255 >> num3);
-				int num5 = num;
-				destination[num5] |= (byte)(b << num2);
-				num++;
-				int num6 = num;
-				destination[num6] &= (byte)(255 << num2);
-				int num7 = num;
-				destination[num7] |= (byte)(b >> num3);
+				byte src = source[sourceByteOffset + i];
+				int num = dstBytePtr;
+				destination[num] &= (byte)(255 >> lastPartLen);
+				int num2 = dstBytePtr;
+				destination[num2] |= (byte)(src << firstPartLen);
+				dstBytePtr++;
+				int num3 = dstBytePtr;
+				destination[num3] &= (byte)(255 << firstPartLen);
+				int num4 = dstBytePtr;
+				destination[num4] |= (byte)(src >> lastPartLen);
 			}
 		}
 
@@ -97,14 +97,14 @@ namespace DNA.Net.Lidgren
 			{
 				return (ushort)NetBitWriter.ReadByte(fromBuffer, numberOfBits, readBitOffset);
 			}
-			ushort num = (ushort)NetBitWriter.ReadByte(fromBuffer, 8, readBitOffset);
+			ushort returnValue = (ushort)NetBitWriter.ReadByte(fromBuffer, 8, readBitOffset);
 			numberOfBits -= 8;
 			readBitOffset += 8;
 			if (numberOfBits <= 8)
 			{
-				num |= (ushort)(NetBitWriter.ReadByte(fromBuffer, numberOfBits, readBitOffset) << 8);
+				returnValue |= (ushort)(NetBitWriter.ReadByte(fromBuffer, numberOfBits, readBitOffset) << 8);
 			}
-			return num;
+			return returnValue;
 		}
 
 		[CLSCompliant(false)]
@@ -114,26 +114,26 @@ namespace DNA.Net.Lidgren
 			{
 				return (uint)NetBitWriter.ReadByte(fromBuffer, numberOfBits, readBitOffset);
 			}
-			uint num = (uint)NetBitWriter.ReadByte(fromBuffer, 8, readBitOffset);
+			uint returnValue = (uint)NetBitWriter.ReadByte(fromBuffer, 8, readBitOffset);
 			numberOfBits -= 8;
 			readBitOffset += 8;
 			if (numberOfBits <= 8)
 			{
-				return num | (uint)((uint)NetBitWriter.ReadByte(fromBuffer, numberOfBits, readBitOffset) << 8);
+				return returnValue | (uint)((uint)NetBitWriter.ReadByte(fromBuffer, numberOfBits, readBitOffset) << 8);
 			}
-			num |= (uint)((uint)NetBitWriter.ReadByte(fromBuffer, 8, readBitOffset) << 8);
+			returnValue |= (uint)((uint)NetBitWriter.ReadByte(fromBuffer, 8, readBitOffset) << 8);
 			numberOfBits -= 8;
 			readBitOffset += 8;
 			if (numberOfBits <= 8)
 			{
-				uint num2 = (uint)NetBitWriter.ReadByte(fromBuffer, numberOfBits, readBitOffset);
-				num2 <<= 16;
-				return num | num2;
+				uint r = (uint)NetBitWriter.ReadByte(fromBuffer, numberOfBits, readBitOffset);
+				r <<= 16;
+				return returnValue | r;
 			}
-			num |= (uint)((uint)NetBitWriter.ReadByte(fromBuffer, 8, readBitOffset) << 16);
+			returnValue |= (uint)((uint)NetBitWriter.ReadByte(fromBuffer, 8, readBitOffset) << 16);
 			numberOfBits -= 8;
 			readBitOffset += 8;
-			return num | (uint)((uint)NetBitWriter.ReadByte(fromBuffer, numberOfBits, readBitOffset) << 24);
+			return returnValue | (uint)((uint)NetBitWriter.ReadByte(fromBuffer, numberOfBits, readBitOffset) << 24);
 		}
 
 		[CLSCompliant(false)]
@@ -159,11 +159,11 @@ namespace DNA.Net.Lidgren
 		[CLSCompliant(false)]
 		public static int WriteUInt32(uint source, int numberOfBits, byte[] destination, int destinationBitOffset)
 		{
-			int num = destinationBitOffset + numberOfBits;
+			int returnValue = destinationBitOffset + numberOfBits;
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)source, numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)source, 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
@@ -171,7 +171,7 @@ namespace DNA.Net.Lidgren
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)(source >> 8), numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)(source >> 8), 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
@@ -179,23 +179,23 @@ namespace DNA.Net.Lidgren
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)(source >> 16), numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)(source >> 16), 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
 			numberOfBits -= 8;
 			NetBitWriter.WriteByte((byte)(source >> 24), numberOfBits, destination, destinationBitOffset);
-			return num;
+			return returnValue;
 		}
 
 		[CLSCompliant(false)]
 		public static int WriteUInt64(ulong source, int numberOfBits, byte[] destination, int destinationBitOffset)
 		{
-			int num = destinationBitOffset + numberOfBits;
+			int returnValue = destinationBitOffset + numberOfBits;
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)source, numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)source, 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
@@ -203,7 +203,7 @@ namespace DNA.Net.Lidgren
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)(source >> 8), numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)(source >> 8), 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
@@ -211,7 +211,7 @@ namespace DNA.Net.Lidgren
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)(source >> 16), numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)(source >> 16), 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
@@ -219,7 +219,7 @@ namespace DNA.Net.Lidgren
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)(source >> 24), numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)(source >> 24), 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
@@ -227,7 +227,7 @@ namespace DNA.Net.Lidgren
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)(source >> 32), numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)(source >> 32), 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
@@ -235,7 +235,7 @@ namespace DNA.Net.Lidgren
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)(source >> 40), numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)(source >> 40), 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
@@ -243,7 +243,7 @@ namespace DNA.Net.Lidgren
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)(source >> 48), numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)(source >> 48), 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
@@ -251,27 +251,27 @@ namespace DNA.Net.Lidgren
 			if (numberOfBits <= 8)
 			{
 				NetBitWriter.WriteByte((byte)(source >> 56), numberOfBits, destination, destinationBitOffset);
-				return num;
+				return returnValue;
 			}
 			NetBitWriter.WriteByte((byte)(source >> 56), 8, destination, destinationBitOffset);
 			destinationBitOffset += 8;
 			numberOfBits -= 8;
-			return num;
+			return returnValue;
 		}
 
 		[CLSCompliant(false)]
 		public static int WriteVariableUInt32(byte[] intoBuffer, int offset, uint value)
 		{
-			int num = 0;
-			uint num2 = value;
-			while (num2 >= 128U)
+			int retval = 0;
+			uint num = value;
+			while (num >= 128U)
 			{
-				intoBuffer[offset + num] = (byte)(num2 | 128U);
-				num2 >>= 7;
-				num++;
+				intoBuffer[offset + retval] = (byte)(num | 128U);
+				num >>= 7;
+				retval++;
 			}
-			intoBuffer[offset + num] = (byte)num2;
-			return num + 1;
+			intoBuffer[offset + retval] = (byte)num;
+			return retval + 1;
 		}
 
 		[CLSCompliant(false)]
@@ -281,10 +281,10 @@ namespace DNA.Net.Lidgren
 			int num2 = 0;
 			while (num2 != 35)
 			{
-				byte b = buffer[offset++];
-				num |= (int)(b & 127) << num2;
+				byte num3 = buffer[offset++];
+				num |= (int)(num3 & 127) << num2;
 				num2 += 7;
-				if ((b & 128) == 0)
+				if ((num3 & 128) == 0)
 				{
 					return (uint)num;
 				}

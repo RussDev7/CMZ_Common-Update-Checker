@@ -24,8 +24,8 @@ namespace DNA.IO.Storage
 			{
 				if (object.ReferenceEquals(Strings.resourceMan, null))
 				{
-					ResourceManager resourceManager = new ResourceManager("DNA.IO.Storage.Strings", typeof(Strings).Assembly);
-					Strings.resourceMan = resourceManager;
+					ResourceManager temp = new ResourceManager("DNA.IO.Storage.Strings", typeof(Strings).Assembly);
+					Strings.resourceMan = temp;
 				}
 				return Strings.resourceMan;
 			}

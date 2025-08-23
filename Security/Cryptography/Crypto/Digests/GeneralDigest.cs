@@ -57,13 +57,13 @@ namespace DNA.Security.Cryptography.Crypto.Digests
 
 		public void Finish()
 		{
-			long num = this.byteCount << 3;
+			long bitLength = this.byteCount << 3;
 			this.Update(128);
 			while (this.xBufOff != 0)
 			{
 				this.Update(0);
 			}
-			this.ProcessLength(num);
+			this.ProcessLength(bitLength);
 			this.ProcessBlock();
 		}
 

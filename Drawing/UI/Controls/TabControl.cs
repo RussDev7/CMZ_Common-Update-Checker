@@ -97,19 +97,19 @@ namespace DNA.Drawing.UI.Controls
 		public override void CollectControls(List<UIControl> controlList)
 		{
 			base.CollectControls(controlList);
-			foreach (TabControl.TabPage tabPage in this.Tabs)
+			foreach (TabControl.TabPage page in this.Tabs)
 			{
-				foreach (UIControl uicontrol in tabPage.Children)
+				foreach (UIControl control in page.Children)
 				{
-					uicontrol.CollectControls(controlList);
+					control.CollectControls(controlList);
 				}
 			}
 		}
 
 		public override bool HitTest(Point screenPoint)
 		{
-			Rectangle rectangle = new Rectangle(base.ScreenBounds.Left, base.ScreenBounds.Top, base.ScreenBounds.Width, (int)((float)this.Font.LineSpacing * this.Scale));
-			return rectangle.Contains(screenPoint);
+			Rectangle barRegion = new Rectangle(base.ScreenBounds.Left, base.ScreenBounds.Top, base.ScreenBounds.Width, (int)((float)this.Font.LineSpacing * this.Scale));
+			return barRegion.Contains(screenPoint);
 		}
 
 		protected override void PreProcessInput(InputManager inputManager, GameController controller, KeyboardInput chatPad, GameTime gameTime)
@@ -131,7 +131,7 @@ namespace DNA.Drawing.UI.Controls
 			if (this.HitTest(inputManager.Mouse.Position))
 			{
 				this._hoverIndex = -1;
-				int num = screenBounds.Left;
+				int xloc = screenBounds.Left;
 				lock (this._drawBuilder)
 				{
 					for (int i = 0; i < this._tabs.Count; i++)
@@ -140,14 +140,14 @@ namespace DNA.Drawing.UI.Controls
 						this._drawBuilder.Append(" ");
 						this._drawBuilder.Append(this._tabs[i].Text);
 						this._drawBuilder.Append(" ");
-						Vector2 vector = this.Font.MeasureString(this._drawBuilder) * this.Scale;
-						Rectangle rectangle = new Rectangle(num, screenBounds.Top, (int)vector.X, (int)((float)this.Font.LineSpacing * this.Scale));
-						if (rectangle.Contains(inputManager.Mouse.Position))
+						Vector2 textSize = this.Font.MeasureString(this._drawBuilder) * this.Scale;
+						Rectangle tabRegion = new Rectangle(xloc, screenBounds.Top, (int)textSize.X, (int)((float)this.Font.LineSpacing * this.Scale));
+						if (tabRegion.Contains(inputManager.Mouse.Position))
 						{
 							this._hoverIndex = i;
 							break;
 						}
-						num += (int)vector.X;
+						xloc += (int)textSize.X;
 					}
 				}
 				if (this._hoverIndex >= 0 && inputManager.Mouse.LeftButtonDown)
@@ -180,11 +180,11 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			int num = (int)((float)this.Font.LineSpacing * this.Scale);
+			int lineSpace = (int)((float)this.Font.LineSpacing * this.Scale);
 			Rectangle screenBounds = base.ScreenBounds;
-			int num2 = (int)(4f * this.Scale);
-			spriteBatch.Draw(UIControl.DummyTexture, new Rectangle(screenBounds.Left, screenBounds.Top + num + num2, screenBounds.Width, num2), this.BarColor);
-			int num3 = screenBounds.Left;
+			int height = (int)(4f * this.Scale);
+			spriteBatch.Draw(UIControl.DummyTexture, new Rectangle(screenBounds.Left, screenBounds.Top + lineSpace + height, screenBounds.Width, height), this.BarColor);
+			int xloc = screenBounds.Left;
 			lock (this._drawBuilder)
 			{
 				for (int i = 0; i < this._tabs.Count; i++)
@@ -193,32 +193,32 @@ namespace DNA.Drawing.UI.Controls
 					this._drawBuilder.Append(" ");
 					this._drawBuilder.Append(this._tabs[i].Text);
 					this._drawBuilder.Append(" ");
-					Vector2 vector = this.Font.MeasureString(this._drawBuilder) * this.Scale;
-					Rectangle rectangle = new Rectangle(num3, screenBounds.Top, (int)vector.X, num + num2);
+					Vector2 textSize = this.Font.MeasureString(this._drawBuilder) * this.Scale;
+					Rectangle tabRegion = new Rectangle(xloc, screenBounds.Top, (int)textSize.X, lineSpace + height);
 					if (i == this._selectedTabIndex)
 					{
 						if (base.CaptureInput)
 						{
-							spriteBatch.Draw(UIControl.DummyTexture, rectangle, this.BarPressedColor);
-							spriteBatch.DrawString(this.Font, this._drawBuilder, new Vector2((float)num3, (float)screenBounds.Top), this.TextPressedColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+							spriteBatch.Draw(UIControl.DummyTexture, tabRegion, this.BarPressedColor);
+							spriteBatch.DrawString(this.Font, this._drawBuilder, new Vector2((float)xloc, (float)screenBounds.Top), this.TextPressedColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 						}
 						else
 						{
-							spriteBatch.DrawString(this.Font, this._drawBuilder, new Vector2((float)num3, (float)screenBounds.Top), this.BarSelectedColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
-							spriteBatch.Draw(UIControl.DummyTexture, new Rectangle(num3, screenBounds.Top + num, (int)vector.X, num2), this.TextSelectedColor);
+							spriteBatch.DrawString(this.Font, this._drawBuilder, new Vector2((float)xloc, (float)screenBounds.Top), this.BarSelectedColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+							spriteBatch.Draw(UIControl.DummyTexture, new Rectangle(xloc, screenBounds.Top + lineSpace, (int)textSize.X, height), this.TextSelectedColor);
 						}
 						this._tabs[i].Draw(device, spriteBatch, gameTime);
 					}
 					else if (this._hoverIndex == i)
 					{
-						spriteBatch.Draw(UIControl.DummyTexture, rectangle, this.BarHoverColor);
-						spriteBatch.DrawString(this.Font, this._drawBuilder, new Vector2((float)num3, (float)screenBounds.Top), this.TextHoverColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+						spriteBatch.Draw(UIControl.DummyTexture, tabRegion, this.BarHoverColor);
+						spriteBatch.DrawString(this.Font, this._drawBuilder, new Vector2((float)xloc, (float)screenBounds.Top), this.TextHoverColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 					}
 					else
 					{
-						spriteBatch.DrawString(this.Font, this._drawBuilder, new Vector2((float)num3, (float)screenBounds.Top), this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
+						spriteBatch.DrawString(this.Font, this._drawBuilder, new Vector2((float)xloc, (float)screenBounds.Top), this.TextColor, 0f, Vector2.Zero, this.Scale, SpriteEffects.None, 0f);
 					}
-					num3 += (int)vector.X;
+					xloc += (int)textSize.X;
 				}
 			}
 		}

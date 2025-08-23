@@ -15,9 +15,9 @@ namespace DNA.Reflection
 		public static bool ImplementsInterface(this Type type, Type interfaceType)
 		{
 			Type[] interfaces = type.GetInterfaces();
-			foreach (Type type2 in interfaces)
+			foreach (Type t in interfaces)
 			{
-				if (type2 == interfaceType)
+				if (t == interfaceType)
 				{
 					return true;
 				}
@@ -27,17 +27,17 @@ namespace DNA.Reflection
 
 		public static string GetCompanyName(this Assembly assembly)
 		{
-			object[] customAttributes = assembly.GetCustomAttributes(typeof(AssemblyCompanyAttribute), true);
-			if (customAttributes.Length == 0)
+			object[] objects = assembly.GetCustomAttributes(typeof(AssemblyCompanyAttribute), true);
+			if (objects.Length == 0)
 			{
 				return "My Company Name Here";
 			}
-			AssemblyCompanyAttribute assemblyCompanyAttribute = (AssemblyCompanyAttribute)customAttributes[0];
-			if (assemblyCompanyAttribute.Company == null || assemblyCompanyAttribute.Company == "")
+			AssemblyCompanyAttribute attrib = (AssemblyCompanyAttribute)objects[0];
+			if (attrib.Company == null || attrib.Company == "")
 			{
 				return "My Company Name Here";
 			}
-			return assemblyCompanyAttribute.Company;
+			return attrib.Company;
 		}
 
 		public static string GetCompanyName(this Type type)
@@ -108,49 +108,49 @@ namespace DNA.Reflection
 
 		public static T GetAttribute<T>(this Type type, bool inherit)
 		{
-			object[] customAttributes = type.GetCustomAttributes(typeof(T), inherit);
-			if (customAttributes.Length == 0)
+			object[] attribs = type.GetCustomAttributes(typeof(T), inherit);
+			if (attribs.Length == 0)
 			{
 				return default(T);
 			}
-			return (T)((object)customAttributes[0]);
+			return (T)((object)attribs[0]);
 		}
 
 		public static Assembly[] GetAssemblies()
 		{
-			Assembly[] array = new Assembly[ReflectionTools._assemblies.Count];
-			ReflectionTools._assemblies.Keys.CopyTo(array, 0);
-			return array;
+			Assembly[] ret = new Assembly[ReflectionTools._assemblies.Count];
+			ReflectionTools._assemblies.Keys.CopyTo(ret, 0);
+			return ret;
 		}
 
 		public static void RegisterAssembly(Assembly callingAssembly, Assembly assembly)
 		{
-			Dictionary<Assembly, int> dictionary = null;
-			if (!ReflectionTools._assemblies.TryGetValue(callingAssembly, out dictionary))
+			Dictionary<Assembly, int> referencedAssemblies = null;
+			if (!ReflectionTools._assemblies.TryGetValue(callingAssembly, out referencedAssemblies))
 			{
-				dictionary = new Dictionary<Assembly, int>();
-				ReflectionTools._assemblies[callingAssembly] = dictionary;
+				referencedAssemblies = new Dictionary<Assembly, int>();
+				ReflectionTools._assemblies[callingAssembly] = referencedAssemblies;
 			}
-			dictionary[assembly] = 0;
-			if (!ReflectionTools._assemblies.TryGetValue(assembly, out dictionary))
+			referencedAssemblies[assembly] = 0;
+			if (!ReflectionTools._assemblies.TryGetValue(assembly, out referencedAssemblies))
 			{
-				dictionary = new Dictionary<Assembly, int>();
-				ReflectionTools._assemblies[assembly] = dictionary;
+				referencedAssemblies = new Dictionary<Assembly, int>();
+				ReflectionTools._assemblies[assembly] = referencedAssemblies;
 			}
 		}
 
 		public static Type[] GetTypes(Filter<Type> filter)
 		{
-			Dictionary<string, Type> dictionary = new Dictionary<string, Type>();
+			Dictionary<string, Type> typeList = new Dictionary<string, Type>();
 			Assembly[] assemblies = ReflectionTools.GetAssemblies();
 			int i = 0;
 			while (i < assemblies.Length)
 			{
 				Assembly assembly = assemblies[i];
-				Type[] array = null;
+				Type[] types = null;
 				try
 				{
-					array = assembly.GetTypes();
+					types = assembly.GetTypes();
 				}
 				catch
 				{
@@ -161,30 +161,30 @@ namespace DNA.Reflection
 				i++;
 				continue;
 				IL_002A:
-				foreach (Type type in array)
+				foreach (Type t in types)
 				{
-					if (filter == null || filter(type))
+					if (filter == null || filter(t))
 					{
-						Type type2;
-						if (dictionary.TryGetValue(type.FullName, out type2))
+						Type foundType;
+						if (typeList.TryGetValue(t.FullName, out foundType))
 						{
-							if (type.Assembly.GetName().Version > type2.Assembly.GetName().Version)
+							if (t.Assembly.GetName().Version > foundType.Assembly.GetName().Version)
 							{
-								dictionary[type.FullName] = type;
+								typeList[t.FullName] = t;
 							}
 						}
 						else
 						{
-							dictionary[type.FullName] = type;
+							typeList[t.FullName] = t;
 						}
 					}
 				}
 				goto IL_00AB;
 			}
-			Type[] array2 = new Type[dictionary.Values.Count];
-			dictionary.Values.CopyTo(array2, 0);
-			Array.Sort<Type>(array2, new Comparison<Type>(ReflectionTools.TypeNameComparison));
-			return array2;
+			Type[] typesOut = new Type[typeList.Values.Count];
+			typeList.Values.CopyTo(typesOut, 0);
+			Array.Sort<Type>(typesOut, new Comparison<Type>(ReflectionTools.TypeNameComparison));
+			return typesOut;
 		}
 
 		public static Type[] GetTypes()

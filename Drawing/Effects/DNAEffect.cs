@@ -459,15 +459,15 @@ namespace DNA.Drawing.Effects
 				}
 				if (this._worldInvParam != null || this._worldInvTrnParam != null)
 				{
-					Matrix matrix;
-					Matrix.Invert(ref this._world, out matrix);
+					Matrix worldI;
+					Matrix.Invert(ref this._world, out worldI);
 					if (this._worldInvParam != null)
 					{
-						this._worldInvParam.SetValue(matrix);
+						this._worldInvParam.SetValue(worldI);
 					}
 					if (this._worldInvTrnParam != null)
 					{
-						this._worldInvTrnParam.SetValue(Matrix.Transpose(matrix));
+						this._worldInvTrnParam.SetValue(Matrix.Transpose(worldI));
 					}
 				}
 				if (this._worldTrnParam != null)
@@ -480,15 +480,15 @@ namespace DNA.Drawing.Effects
 				}
 				if (this._viewInvParam != null || this._viewInvTrnParam != null)
 				{
-					Matrix matrix2;
-					Matrix.Invert(ref this._view, out matrix2);
+					Matrix viewI;
+					Matrix.Invert(ref this._view, out viewI);
 					if (this._viewInvParam != null)
 					{
-						this._viewInvParam.SetValue(matrix2);
+						this._viewInvParam.SetValue(viewI);
 					}
 					if (this._viewInvTrnParam != null)
 					{
-						this._viewInvTrnParam.SetValue(Matrix.Transpose(matrix2));
+						this._viewInvTrnParam.SetValue(Matrix.Transpose(viewI));
 					}
 				}
 				if (this._viewTrnParam != null)
@@ -501,15 +501,15 @@ namespace DNA.Drawing.Effects
 				}
 				if (this._projInvParam != null || this._projInvTrnParam != null)
 				{
-					Matrix matrix3;
-					Matrix.Invert(ref this._proj, out matrix3);
+					Matrix projI;
+					Matrix.Invert(ref this._proj, out projI);
 					if (this._projInvParam != null)
 					{
-						this._projInvParam.SetValue(matrix3);
+						this._projInvParam.SetValue(projI);
 					}
 					if (this._projInvTrnParam != null)
 					{
-						this._projInvTrnParam.SetValue(Matrix.Transpose(matrix3));
+						this._projInvTrnParam.SetValue(Matrix.Transpose(projI));
 					}
 				}
 				if (this._projTrnParam != null)
@@ -518,42 +518,42 @@ namespace DNA.Drawing.Effects
 				}
 				if (this._worldViewParam != null || this._worldViewInvParam != null || this._worldViewInvTrnParam != null || this._worldViewProjParam != null || this._worldViewProjInvParam != null || this._worldViewProjInvTrnParam != null)
 				{
-					Matrix matrix4;
-					Matrix.Multiply(ref this._world, ref this._view, out matrix4);
+					Matrix worldView;
+					Matrix.Multiply(ref this._world, ref this._view, out worldView);
 					if (this._worldViewParam != null)
 					{
-						this._worldViewParam.SetValue(matrix4);
+						this._worldViewParam.SetValue(worldView);
 					}
 					if (this._worldViewInvParam != null || this._worldViewInvTrnParam != null)
 					{
-						Matrix matrix5 = Matrix.Invert(matrix4);
+						Matrix worldViewI = Matrix.Invert(worldView);
 						if (this._worldViewInvParam != null)
 						{
-							this._worldViewInvParam.SetValue(matrix5);
+							this._worldViewInvParam.SetValue(worldViewI);
 						}
 						if (this._worldViewInvTrnParam != null)
 						{
-							this._worldViewInvTrnParam.SetValue(Matrix.Transpose(matrix5));
+							this._worldViewInvTrnParam.SetValue(Matrix.Transpose(worldViewI));
 						}
 					}
 					if (this._worldViewProjParam != null || this._worldViewProjInvParam != null || this._worldViewProjInvTrnParam != null)
 					{
-						Matrix matrix6;
-						Matrix.Multiply(ref matrix4, ref this._proj, out matrix6);
+						Matrix worldViewProj;
+						Matrix.Multiply(ref worldView, ref this._proj, out worldViewProj);
 						if (this._worldViewProjParam != null)
 						{
-							this._worldViewProjParam.SetValue(matrix6);
+							this._worldViewProjParam.SetValue(worldViewProj);
 						}
 						if (this._worldViewProjInvParam != null || this._worldViewProjInvTrnParam != null)
 						{
-							Matrix matrix7 = Matrix.Invert(matrix6);
+							Matrix worldViewProjI = Matrix.Invert(worldViewProj);
 							if (this._worldViewProjInvParam != null)
 							{
-								this._worldViewProjInvParam.SetValue(matrix7);
+								this._worldViewProjInvParam.SetValue(worldViewProjI);
 							}
 							if (this._worldViewProjInvTrnParam != null)
 							{
-								this._worldViewProjInvTrnParam.SetValue(Matrix.Transpose(matrix7));
+								this._worldViewProjInvTrnParam.SetValue(Matrix.Transpose(worldViewProjI));
 							}
 						}
 					}
@@ -752,30 +752,30 @@ namespace DNA.Drawing.Effects
 		{
 			protected override DNAEffect Read(ContentReader input, DNAEffect existingInstance)
 			{
-				Effect effect = input.ReadExternalReference<Effect>();
-				int num = input.ReadInt32();
-				for (int i = 0; i < num; i++)
+				Effect baseEffect = input.ReadExternalReference<Effect>();
+				int textureCount = input.ReadInt32();
+				for (int i = 0; i < textureCount; i++)
 				{
-					string text = input.ReadString();
+					string textureName = input.ReadString();
 					Texture texture = input.ReadExternalReference<Texture>();
-					effect.Parameters[text].SetValue(texture);
+					baseEffect.Parameters[textureName].SetValue(texture);
 				}
-				int num2 = input.ReadInt32();
-				for (int j = 0; j < num2; j++)
+				int valueCount = input.ReadInt32();
+				for (int j = 0; j < valueCount; j++)
 				{
-					string text2 = input.ReadString();
-					EffectParameter effectParameter = effect.Parameters[text2];
-					DNAEffect.EffectValueTypes effectValueTypes = (DNAEffect.EffectValueTypes)input.ReadByte();
-					int num3 = input.ReadInt32();
-					if (effectParameter == null)
+					string valueName = input.ReadString();
+					EffectParameter param = baseEffect.Parameters[valueName];
+					DNAEffect.EffectValueTypes valueType = (DNAEffect.EffectValueTypes)input.ReadByte();
+					int vcount = input.ReadInt32();
+					if (param == null)
 					{
-						if (num3 != 0)
+						if (vcount != 0)
 						{
-							switch (effectValueTypes)
+							switch (valueType)
 							{
 							case DNAEffect.EffectValueTypes.intValue:
 							{
-								int[] array = new int[num3];
+								int[] array = new int[vcount];
 								for (int k = 0; k < array.Length; k++)
 								{
 									array[k] = input.ReadInt32();
@@ -784,7 +784,7 @@ namespace DNA.Drawing.Effects
 							}
 							case DNAEffect.EffectValueTypes.boolValue:
 							{
-								bool[] array2 = new bool[num3];
+								bool[] array2 = new bool[vcount];
 								for (int l = 0; l < array2.Length; l++)
 								{
 									array2[l] = input.ReadBoolean();
@@ -793,7 +793,7 @@ namespace DNA.Drawing.Effects
 							}
 							case DNAEffect.EffectValueTypes.floatValue:
 							{
-								float[] array3 = new float[num3];
+								float[] array3 = new float[vcount];
 								for (int m = 0; m < array3.Length; m++)
 								{
 									array3[m] = input.ReadSingle();
@@ -802,7 +802,7 @@ namespace DNA.Drawing.Effects
 							}
 							case DNAEffect.EffectValueTypes.Vector2Value:
 							{
-								Vector2[] array4 = new Vector2[num3];
+								Vector2[] array4 = new Vector2[vcount];
 								for (int n = 0; n < array4.Length; n++)
 								{
 									array4[n] = input.ReadVector2();
@@ -811,35 +811,35 @@ namespace DNA.Drawing.Effects
 							}
 							case DNAEffect.EffectValueTypes.Vector3Value:
 							{
-								Vector3[] array5 = new Vector3[num3];
-								for (int num4 = 0; num4 < array5.Length; num4++)
+								Vector3[] array5 = new Vector3[vcount];
+								for (int j2 = 0; j2 < array5.Length; j2++)
 								{
-									array5[num4] = input.ReadVector3();
+									array5[j2] = input.ReadVector3();
 								}
 								goto IL_05B2;
 							}
 							case DNAEffect.EffectValueTypes.Vector4Value:
 							{
-								Vector4[] array6 = new Vector4[num3];
-								for (int num5 = 0; num5 < array6.Length; num5++)
+								Vector4[] array6 = new Vector4[vcount];
+								for (int j3 = 0; j3 < array6.Length; j3++)
 								{
-									array6[num5] = input.ReadVector4();
+									array6[j3] = input.ReadVector4();
 								}
 								goto IL_05B2;
 							}
 							case DNAEffect.EffectValueTypes.MatrixValue:
 							{
-								Matrix[] array7 = new Matrix[num3];
-								for (int num6 = 0; num6 < array7.Length; num6++)
+								Matrix[] array7 = new Matrix[vcount];
+								for (int j4 = 0; j4 < array7.Length; j4++)
 								{
-									array7[num6] = input.ReadMatrix();
+									array7[j4] = input.ReadMatrix();
 								}
 								goto IL_05B2;
 							}
 							}
 							throw new Exception("Unsupported Value Type");
 						}
-						switch (effectValueTypes)
+						switch (valueType)
 						{
 						case DNAEffect.EffectValueTypes.intValue:
 							input.ReadInt32();
@@ -871,122 +871,122 @@ namespace DNA.Drawing.Effects
 					}
 					else
 					{
-						if (num3 != 0)
+						if (vcount != 0)
 						{
-							switch (effectValueTypes)
+							switch (valueType)
 							{
 							case DNAEffect.EffectValueTypes.intValue:
 							{
-								int[] array8 = new int[num3];
-								for (int num7 = 0; num7 < array8.Length; num7++)
+								int[] array8 = new int[vcount];
+								for (int j5 = 0; j5 < array8.Length; j5++)
 								{
-									array8[num7] = input.ReadInt32();
+									array8[j5] = input.ReadInt32();
 								}
-								effectParameter.SetValue(array8);
+								param.SetValue(array8);
 								goto IL_05B2;
 							}
 							case DNAEffect.EffectValueTypes.boolValue:
 							{
-								bool[] array9 = new bool[num3];
-								for (int num8 = 0; num8 < array9.Length; num8++)
+								bool[] array9 = new bool[vcount];
+								for (int j6 = 0; j6 < array9.Length; j6++)
 								{
-									array9[num8] = input.ReadBoolean();
+									array9[j6] = input.ReadBoolean();
 								}
-								effectParameter.SetValue(array9);
+								param.SetValue(array9);
 								goto IL_05B2;
 							}
 							case DNAEffect.EffectValueTypes.floatValue:
 							{
-								float[] array10 = new float[num3];
-								for (int num9 = 0; num9 < array10.Length; num9++)
+								float[] array10 = new float[vcount];
+								for (int j7 = 0; j7 < array10.Length; j7++)
 								{
-									array10[num9] = input.ReadSingle();
+									array10[j7] = input.ReadSingle();
 								}
-								effectParameter.SetValue(array10);
+								param.SetValue(array10);
 								goto IL_05B2;
 							}
 							case DNAEffect.EffectValueTypes.Vector2Value:
 							{
-								Vector2[] array11 = new Vector2[num3];
-								for (int num10 = 0; num10 < array11.Length; num10++)
+								Vector2[] array11 = new Vector2[vcount];
+								for (int j8 = 0; j8 < array11.Length; j8++)
 								{
-									array11[num10] = input.ReadVector2();
+									array11[j8] = input.ReadVector2();
 								}
-								effectParameter.SetValue(array11);
+								param.SetValue(array11);
 								goto IL_05B2;
 							}
 							case DNAEffect.EffectValueTypes.Vector3Value:
 							{
-								Vector3[] array12 = new Vector3[num3];
-								for (int num11 = 0; num11 < array12.Length; num11++)
+								Vector3[] array12 = new Vector3[vcount];
+								for (int j9 = 0; j9 < array12.Length; j9++)
 								{
-									array12[num11] = input.ReadVector3();
+									array12[j9] = input.ReadVector3();
 								}
-								effectParameter.SetValue(array12);
+								param.SetValue(array12);
 								goto IL_05B2;
 							}
 							case DNAEffect.EffectValueTypes.Vector4Value:
 							{
-								Vector4[] array13 = new Vector4[num3];
-								for (int num12 = 0; num12 < array13.Length; num12++)
+								Vector4[] array13 = new Vector4[vcount];
+								for (int j10 = 0; j10 < array13.Length; j10++)
 								{
-									array13[num12] = input.ReadVector4();
+									array13[j10] = input.ReadVector4();
 								}
-								effectParameter.SetValue(array13);
+								param.SetValue(array13);
 								goto IL_05B2;
 							}
 							case DNAEffect.EffectValueTypes.MatrixValue:
 							{
-								Matrix[] array14 = new Matrix[num3];
-								for (int num13 = 0; num13 < array14.Length; num13++)
+								Matrix[] array14 = new Matrix[vcount];
+								for (int j11 = 0; j11 < array14.Length; j11++)
 								{
-									array14[num13] = input.ReadMatrix();
+									array14[j11] = input.ReadMatrix();
 								}
-								effectParameter.SetValue(array14);
+								param.SetValue(array14);
 								goto IL_05B2;
 							}
 							}
 							throw new Exception("Unsupported Value Type");
 						}
-						switch (effectValueTypes)
+						switch (valueType)
 						{
 						case DNAEffect.EffectValueTypes.intValue:
-							effectParameter.SetValue(input.ReadInt32());
+							param.SetValue(input.ReadInt32());
 							break;
 						case DNAEffect.EffectValueTypes.stringValue:
-							effectParameter.SetValue(input.ReadString());
+							param.SetValue(input.ReadString());
 							break;
 						case DNAEffect.EffectValueTypes.boolValue:
-							effectParameter.SetValue(input.ReadBoolean());
+							param.SetValue(input.ReadBoolean());
 							break;
 						case DNAEffect.EffectValueTypes.floatValue:
-							effectParameter.SetValue(input.ReadSingle());
+							param.SetValue(input.ReadSingle());
 							break;
 						case DNAEffect.EffectValueTypes.Vector2Value:
-							effectParameter.SetValue(input.ReadVector2());
+							param.SetValue(input.ReadVector2());
 							break;
 						case DNAEffect.EffectValueTypes.Vector3Value:
-							effectParameter.SetValue(input.ReadVector3());
+							param.SetValue(input.ReadVector3());
 							break;
 						case DNAEffect.EffectValueTypes.Vector4Value:
 						{
-							Vector4 vector = input.ReadVector4();
-							if (effectParameter.ColumnCount == 2)
+							Vector4 vec = input.ReadVector4();
+							if (param.ColumnCount == 2)
 							{
-								effectParameter.SetValue(new Vector2(vector.X, vector.Y));
+								param.SetValue(new Vector2(vec.X, vec.Y));
 							}
-							else if (effectParameter.ColumnCount == 3)
+							else if (param.ColumnCount == 3)
 							{
-								effectParameter.SetValue(new Vector3(vector.X, vector.Y, vector.Z));
+								param.SetValue(new Vector3(vec.X, vec.Y, vec.Z));
 							}
 							else
 							{
-								effectParameter.SetValue(vector);
+								param.SetValue(vec);
 							}
 							break;
 						}
 						case DNAEffect.EffectValueTypes.MatrixValue:
-							effect.Parameters[text2].SetValue(input.ReadMatrix());
+							baseEffect.Parameters[valueName].SetValue(input.ReadMatrix());
 							break;
 						default:
 							throw new Exception("Unsupported Value Type");
@@ -994,7 +994,7 @@ namespace DNA.Drawing.Effects
 					}
 					IL_05B2:;
 				}
-				return new DNAEffect(effect);
+				return new DNAEffect(baseEffect);
 			}
 		}
 

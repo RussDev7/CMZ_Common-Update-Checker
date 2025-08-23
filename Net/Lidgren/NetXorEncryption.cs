@@ -17,22 +17,22 @@ namespace DNA.Net.Lidgren
 
 		public bool Encrypt(NetOutgoingMessage msg)
 		{
-			int lengthBytes = msg.LengthBytes;
-			for (int i = 0; i < lengthBytes; i++)
+			int numBytes = msg.LengthBytes;
+			for (int i = 0; i < numBytes; i++)
 			{
-				int num = i % this.m_key.Length;
-				msg.m_data[i] = msg.m_data[i] ^ this.m_key[num];
+				int offset = i % this.m_key.Length;
+				msg.m_data[i] = msg.m_data[i] ^ this.m_key[offset];
 			}
 			return true;
 		}
 
 		public bool Decrypt(NetIncomingMessage msg)
 		{
-			int lengthBytes = msg.LengthBytes;
-			for (int i = 0; i < lengthBytes; i++)
+			int numBytes = msg.LengthBytes;
+			for (int i = 0; i < numBytes; i++)
 			{
-				int num = i % this.m_key.Length;
-				msg.m_data[i] = msg.m_data[i] ^ this.m_key[num];
+				int offset = i % this.m_key.Length;
+				msg.m_data[i] = msg.m_data[i] ^ this.m_key[offset];
 			}
 			return true;
 		}

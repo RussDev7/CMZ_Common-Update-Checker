@@ -18,28 +18,28 @@ namespace DNA.Security.Cryptography.Asn1
 
 		public static Asn1Sequence GetInstance(Asn1TaggedObject obj, bool explicitly)
 		{
-			Asn1Object @object = obj.GetObject();
+			Asn1Object inner = obj.GetObject();
 			if (explicitly)
 			{
 				if (!obj.IsExplicit())
 				{
 					throw new ArgumentException("object implicit - explicit expected.");
 				}
-				return (Asn1Sequence)@object;
+				return (Asn1Sequence)inner;
 			}
 			else if (obj.IsExplicit())
 			{
 				if (obj is BerTaggedObject)
 				{
-					return new BerSequence(@object);
+					return new BerSequence(inner);
 				}
-				return new DerSequence(@object);
+				return new DerSequence(inner);
 			}
 			else
 			{
-				if (@object is Asn1Sequence)
+				if (inner is Asn1Sequence)
 				{
-					return (Asn1Sequence)@object;
+					return (Asn1Sequence)inner;
 				}
 				throw new ArgumentException("Unknown object in GetInstance: " + obj.GetType().FullName, "obj");
 			}
@@ -102,35 +102,35 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override int Asn1GetHashCode()
 		{
-			int num = this.Count;
-			foreach (object obj in this)
+			int hc = this.Count;
+			foreach (object o in this)
 			{
-				num *= 17;
-				if (obj != null)
+				hc *= 17;
+				if (o != null)
 				{
-					num ^= obj.GetHashCode();
+					hc ^= o.GetHashCode();
 				}
 			}
-			return num;
+			return hc;
 		}
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			Asn1Sequence asn1Sequence = asn1Object as Asn1Sequence;
-			if (asn1Sequence == null)
+			Asn1Sequence other = asn1Object as Asn1Sequence;
+			if (other == null)
 			{
 				return false;
 			}
-			if (this.Count != asn1Sequence.Count)
+			if (this.Count != other.Count)
 			{
 				return false;
 			}
-			IEnumerator enumerator = this.GetEnumerator();
-			IEnumerator enumerator2 = asn1Sequence.GetEnumerator();
-			while (enumerator.MoveNext() && enumerator2.MoveNext())
+			IEnumerator s = this.GetEnumerator();
+			IEnumerator s2 = other.GetEnumerator();
+			while (s.MoveNext() && s2.MoveNext())
 			{
-				Asn1Object asn1Object2 = ((Asn1Encodable)enumerator.Current).ToAsn1Object();
-				if (!asn1Object2.Equals(enumerator2.Current))
+				Asn1Object o = ((Asn1Encodable)s.Current).ToAsn1Object();
+				if (!o.Equals(s2.Current))
 				{
 					return false;
 				}
@@ -164,16 +164,16 @@ namespace DNA.Security.Cryptography.Asn1
 				{
 					return null;
 				}
-				Asn1Encodable asn1Encodable = this.outer[this.index++];
-				if (asn1Encodable is Asn1Sequence)
+				Asn1Encodable obj = this.outer[this.index++];
+				if (obj is Asn1Sequence)
 				{
-					return ((Asn1Sequence)asn1Encodable).Parser;
+					return ((Asn1Sequence)obj).Parser;
 				}
-				if (asn1Encodable is Asn1Set)
+				if (obj is Asn1Set)
 				{
-					return ((Asn1Set)asn1Encodable).Parser;
+					return ((Asn1Set)obj).Parser;
 				}
-				return asn1Encodable;
+				return obj;
 			}
 
 			public Asn1Object ToAsn1Object()

@@ -275,16 +275,16 @@ namespace DNA.Drawing.UI.Controls
 			{
 				foreach (T t in this)
 				{
-					UIControl uicontrol = t;
-					if (this._owner.FocusControl == uicontrol)
+					UIControl child = t;
+					if (this._owner.FocusControl == child)
 					{
 						this._owner.FocusControl = null;
 					}
-					if (this._owner.CaptureControl == uicontrol)
+					if (this._owner.CaptureControl == child)
 					{
 						this._owner.CaptureControl = null;
 					}
-					uicontrol._owner = null;
+					child._owner = null;
 				}
 				base.OnClear();
 			}

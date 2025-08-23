@@ -40,8 +40,8 @@ namespace DNA.Security.Cryptography.Asn1
 				derOut.WriteByte(128);
 				foreach (object obj in this)
 				{
-					Asn1Encodable asn1Encodable = (Asn1Encodable)obj;
-					derOut.WriteObject(asn1Encodable);
+					Asn1Encodable o = (Asn1Encodable)obj;
+					derOut.WriteObject(o);
 				}
 				derOut.WriteByte(0);
 				derOut.WriteByte(0);

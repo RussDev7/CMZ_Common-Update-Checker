@@ -53,23 +53,23 @@ namespace DNA.Runtime.InteropServices.Win32
 
 		public static Win32MemoryStatusEx GlobalMemoryStatus()
 		{
-			Win32MemoryStatusEx win32MemoryStatusEx = default(Win32MemoryStatusEx);
-			win32MemoryStatusEx.Length = (uint)Marshal.SizeOf(typeof(Win32MemoryStatusEx));
-			if (!Win32API._GlobalMemoryStatusEx(ref win32MemoryStatusEx))
+			Win32MemoryStatusEx mem = default(Win32MemoryStatusEx);
+			mem.Length = (uint)Marshal.SizeOf(typeof(Win32MemoryStatusEx));
+			if (!Win32API._GlobalMemoryStatusEx(ref mem))
 			{
 				throw new Win32Exception();
 			}
-			return win32MemoryStatusEx;
+			return mem;
 		}
 
 		public static IntPtr CreateFile(string fileName, Win32FileAccess access, Win32FileShare share, SecurityAttributes security, CreationDisposition dwCreationDisposition, Win32FileFlags flags, IntPtr templateFile)
 		{
-			IntPtr intPtr = Win32API._CreateFile(fileName, access, share, security, dwCreationDisposition, flags, templateFile);
-			if (intPtr == Win32API.InvalidFileHandle)
+			IntPtr handle = Win32API._CreateFile(fileName, access, share, security, dwCreationDisposition, flags, templateFile);
+			if (handle == Win32API.InvalidFileHandle)
 			{
 				throw new Win32Exception();
 			}
-			return intPtr;
+			return handle;
 		}
 
 		public static void CloseHandle(IntPtr handle)
@@ -82,12 +82,12 @@ namespace DNA.Runtime.InteropServices.Win32
 
 		public static uint DeviceIoControl(IntPtr hDevice, IOControlCode dwIoControlCode, IntPtr InBuffer, uint InBufferSize, IntPtr OutBuffer, uint OutBufferSize, Overlapped overlapped)
 		{
-			uint num;
-			if (!Win32API._DeviceIoControl(hDevice, dwIoControlCode, InBuffer, InBufferSize, OutBuffer, OutBufferSize, out num, overlapped))
+			uint bytesReturned;
+			if (!Win32API._DeviceIoControl(hDevice, dwIoControlCode, InBuffer, InBufferSize, OutBuffer, OutBufferSize, out bytesReturned, overlapped))
 			{
 				throw new Win32Exception();
 			}
-			return num;
+			return bytesReturned;
 		}
 
 		public const int MaxPath = 260;

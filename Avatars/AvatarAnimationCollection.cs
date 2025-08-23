@@ -15,11 +15,11 @@ namespace DNA.Avatars
 
 		public AnimationPlayer Play(string id, int channel, TimeSpan blendTime)
 		{
-			int num = this.currentPlayers[channel];
-			AnimationPlayer animationPlayer = this.players[channel, num];
+			int currentPlayer = this.currentPlayers[channel];
+			AnimationPlayer animationPlayer = this.players[channel, currentPlayer];
 			if (animationPlayer == null)
 			{
-				animationPlayer = (this.players[channel, num] = AvatarAnimationManager.Instance.GetAnimation(id, this._avatar.IsMale));
+				animationPlayer = (this.players[channel, currentPlayer] = AvatarAnimationManager.Instance.GetAnimation(id, this._avatar.IsMale));
 			}
 			else
 			{

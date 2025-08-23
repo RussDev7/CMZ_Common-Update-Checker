@@ -24,13 +24,13 @@ namespace DNA.Security.Cryptography.Crypto.Prng
 			{
 				this.counter = 0;
 				this.stop = false;
-				byte[] array = new byte[numBytes];
-				int num = 0;
-				int num2 = (fast ? numBytes : (numBytes * 8));
+				byte[] result = new byte[numBytes];
+				int last = 0;
+				int end = (fast ? numBytes : (numBytes * 8));
 				ThreadPool.QueueUserWorkItem(new WaitCallback(this.Run));
-				for (int i = 0; i < num2; i++)
+				for (int i = 0; i < end; i++)
 				{
-					while (this.counter == num)
+					while (this.counter == last)
 					{
 						try
 						{
@@ -40,19 +40,19 @@ namespace DNA.Security.Cryptography.Crypto.Prng
 						{
 						}
 					}
-					num = this.counter;
+					last = this.counter;
 					if (fast)
 					{
-						array[i] = (byte)num;
+						result[i] = (byte)last;
 					}
 					else
 					{
-						int num3 = i / 8;
-						array[num3] = (byte)(((int)array[num3] << 1) | (num & 1));
+						int bytepos = i / 8;
+						result[bytepos] = (byte)(((int)result[bytepos] << 1) | (last & 1));
 					}
 				}
 				this.stop = true;
-				return array;
+				return result;
 			}
 
 			private volatile int counter;

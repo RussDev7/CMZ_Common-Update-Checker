@@ -20,105 +20,105 @@ namespace DNA.Security
 
 		public static string GeneratePassword(int length, char[] charset)
 		{
-			Random random = new Random();
-			return SecurityTools.GeneratePassword(length, charset, random);
+			Random rand = new Random();
+			return SecurityTools.GeneratePassword(length, charset, rand);
 		}
 
 		public static string GeneratePassword(int length, char[] charset, Random rand)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < length; i++)
 			{
-				int num = rand.Next(charset.Length);
-				stringBuilder.Append(charset[num]);
+				int idx = rand.Next(charset.Length);
+				sb.Append(charset[idx]);
 			}
-			return stringBuilder.ToString();
+			return sb.ToString();
 		}
 
 		public static byte[] EncryptData(byte[] key, byte[] data)
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			AesFastEngine aesFastEngine = new AesFastEngine();
-			KeyParameter keyParameter = new KeyParameter(key);
-			aesFastEngine.Init(true, keyParameter);
-			BufferedBlockCipher bufferedBlockCipher = new BufferedBlockCipher(aesFastEngine);
-			CipherStream cipherStream = new CipherStream(memoryStream, null, bufferedBlockCipher);
-			BinaryWriter binaryWriter = new BinaryWriter(cipherStream);
-			binaryWriter.Write(data.Length);
-			binaryWriter.Write(data);
-			binaryWriter.Flush();
-			int blockSize = bufferedBlockCipher.GetBlockSize();
-			int bufOff = bufferedBlockCipher.bufOff;
-			int num = blockSize - bufOff % blockSize;
-			for (int i = 0; i < num; i++)
+			MemoryStream stream = new MemoryStream();
+			AesFastEngine encrypter = new AesFastEngine();
+			KeyParameter keyParam = new KeyParameter(key);
+			encrypter.Init(true, keyParam);
+			BufferedBlockCipher cipher = new BufferedBlockCipher(encrypter);
+			CipherStream encryptStream = new CipherStream(stream, null, cipher);
+			BinaryWriter writer = new BinaryWriter(encryptStream);
+			writer.Write(data.Length);
+			writer.Write(data);
+			writer.Flush();
+			int blockSize = cipher.GetBlockSize();
+			int dataSize = cipher.bufOff;
+			int padBytes = blockSize - dataSize % blockSize;
+			for (int i = 0; i < padBytes; i++)
 			{
-				binaryWriter.Write(0);
+				writer.Write(0);
 			}
-			cipherStream.Close();
-			return memoryStream.ToArray();
+			encryptStream.Close();
+			return stream.ToArray();
 		}
 
 		public static byte[] DecryptData(byte[] key, byte[] code)
 		{
-			MemoryStream memoryStream = new MemoryStream(code);
-			AesFastEngine aesFastEngine = new AesFastEngine();
-			KeyParameter keyParameter = new KeyParameter(key);
-			aesFastEngine.Init(false, keyParameter);
-			BufferedBlockCipher bufferedBlockCipher = new BufferedBlockCipher(aesFastEngine);
-			CipherStream cipherStream = new CipherStream(memoryStream, bufferedBlockCipher, null);
-			BinaryReader binaryReader = new BinaryReader(cipherStream);
-			int num = binaryReader.ReadInt32();
-			return binaryReader.ReadBytes(num);
+			MemoryStream stream = new MemoryStream(code);
+			AesFastEngine cipher = new AesFastEngine();
+			KeyParameter keyParam = new KeyParameter(key);
+			cipher.Init(false, keyParam);
+			BufferedBlockCipher bufCypher = new BufferedBlockCipher(cipher);
+			CipherStream encryptStream = new CipherStream(stream, bufCypher, null);
+			BinaryReader reader = new BinaryReader(encryptStream);
+			int dlen = reader.ReadInt32();
+			return reader.ReadBytes(dlen);
 		}
 
 		public static string EncryptStringText(string password, string text)
 		{
-			MD5HashProvider md5HashProvider = new MD5HashProvider();
-			Hash hash = md5HashProvider.Compute(Encoding.UTF8.GetBytes(password));
-			byte[] array = SecurityTools.EncryptString(hash.Data, text);
-			return TextConverter.ToBase32String(array);
+			MD5HashProvider hasher = new MD5HashProvider();
+			Hash hash = hasher.Compute(Encoding.UTF8.GetBytes(password));
+			byte[] data = SecurityTools.EncryptString(hash.Data, text);
+			return TextConverter.ToBase32String(data);
 		}
 
 		public static string DecryptStringText(string password, string text)
 		{
-			byte[] array = TextConverter.FromBase32String(text);
-			MD5HashProvider md5HashProvider = new MD5HashProvider();
-			Hash hash = md5HashProvider.Compute(Encoding.UTF8.GetBytes(password));
-			return SecurityTools.DecryptString(hash.Data, array);
+			byte[] data = TextConverter.FromBase32String(text);
+			MD5HashProvider hasher = new MD5HashProvider();
+			Hash hash = hasher.Compute(Encoding.UTF8.GetBytes(password));
+			return SecurityTools.DecryptString(hash.Data, data);
 		}
 
 		public static byte[] EncryptString(byte[] key, string text)
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			AesFastEngine aesFastEngine = new AesFastEngine();
-			KeyParameter keyParameter = new KeyParameter(key);
-			aesFastEngine.Init(true, keyParameter);
-			BufferedBlockCipher bufferedBlockCipher = new BufferedBlockCipher(aesFastEngine);
-			CipherStream cipherStream = new CipherStream(memoryStream, null, bufferedBlockCipher);
-			BinaryWriter binaryWriter = new BinaryWriter(cipherStream);
-			binaryWriter.Write(text);
-			binaryWriter.Flush();
-			int blockSize = bufferedBlockCipher.GetBlockSize();
-			int bufOff = bufferedBlockCipher.bufOff;
-			int num = blockSize - bufOff % blockSize;
-			for (int i = 0; i < num; i++)
+			MemoryStream stream = new MemoryStream();
+			AesFastEngine encrypter = new AesFastEngine();
+			KeyParameter keyParam = new KeyParameter(key);
+			encrypter.Init(true, keyParam);
+			BufferedBlockCipher cipher = new BufferedBlockCipher(encrypter);
+			CipherStream encryptStream = new CipherStream(stream, null, cipher);
+			BinaryWriter writer = new BinaryWriter(encryptStream);
+			writer.Write(text);
+			writer.Flush();
+			int blockSize = cipher.GetBlockSize();
+			int dataSize = cipher.bufOff;
+			int padBytes = blockSize - dataSize % blockSize;
+			for (int i = 0; i < padBytes; i++)
 			{
-				binaryWriter.Write(0);
+				writer.Write(0);
 			}
-			cipherStream.Close();
-			return memoryStream.ToArray();
+			encryptStream.Close();
+			return stream.ToArray();
 		}
 
 		public static string DecryptString(byte[] key, byte[] code)
 		{
-			MemoryStream memoryStream = new MemoryStream(code);
-			AesFastEngine aesFastEngine = new AesFastEngine();
-			KeyParameter keyParameter = new KeyParameter(key);
-			aesFastEngine.Init(false, keyParameter);
-			BufferedBlockCipher bufferedBlockCipher = new BufferedBlockCipher(aesFastEngine);
-			CipherStream cipherStream = new CipherStream(memoryStream, bufferedBlockCipher, null);
-			BinaryReader binaryReader = new BinaryReader(cipherStream);
-			return binaryReader.ReadString();
+			MemoryStream stream = new MemoryStream(code);
+			AesFastEngine cipher = new AesFastEngine();
+			KeyParameter keyParam = new KeyParameter(key);
+			cipher.Init(false, keyParam);
+			BufferedBlockCipher bufCypher = new BufferedBlockCipher(cipher);
+			CipherStream encryptStream = new CipherStream(stream, bufCypher, null);
+			BinaryReader reader = new BinaryReader(encryptStream);
+			return reader.ReadString();
 		}
 
 		public static byte[] GenerateKey(string password)
@@ -128,33 +128,33 @@ namespace DNA.Security
 
 		public static void WriteSignedData(BinaryWriter writer, RSAKey privateKey, byte[] data)
 		{
-			RSASignatureProvider rsasignatureProvider = new RSASignatureProvider(new SHA256HashProvider(), privateKey);
-			Signature signature = rsasignatureProvider.Sign(data);
+			RSASignatureProvider signer = new RSASignatureProvider(new SHA256HashProvider(), privateKey);
+			Signature signiture = signer.Sign(data);
 			writer.Write(1936089973);
 			writer.Write(1);
 			writer.Write(data.Length);
 			writer.Write(data);
-			writer.Write(signature.Data.Length);
-			writer.Write(signature.Data);
+			writer.Write(signiture.Data.Length);
+			writer.Write(signiture.Data);
 		}
 
 		public static byte[] ReadSignedData(BinaryReader reader, RSAKey publicKey)
 		{
-			RSASignatureProvider rsasignatureProvider = new RSASignatureProvider(new SHA256HashProvider(), publicKey);
+			RSASignatureProvider signer = new RSASignatureProvider(new SHA256HashProvider(), publicKey);
 			if (reader.ReadInt32() != 1936089973 || reader.ReadInt32() != 1)
 			{
 				throw new Exception("Bad Data Format");
 			}
-			int num = reader.ReadInt32();
-			byte[] array = reader.ReadBytes(num);
-			int num2 = reader.ReadInt32();
-			byte[] array2 = reader.ReadBytes(num2);
-			Signature signature = rsasignatureProvider.FromByteArray(array2);
-			if (!signature.Verify(rsasignatureProvider, array))
+			int dataLen = reader.ReadInt32();
+			byte[] data = reader.ReadBytes(dataLen);
+			int sigLen = reader.ReadInt32();
+			byte[] sigData = reader.ReadBytes(sigLen);
+			Signature sig = signer.FromByteArray(sigData);
+			if (!sig.Verify(signer, data))
 			{
 				throw new Exception("Data Corrupt");
 			}
-			return array;
+			return data;
 		}
 
 		private const int SignedDataID = 1936089973;

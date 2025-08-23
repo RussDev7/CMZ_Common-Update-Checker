@@ -16,33 +16,33 @@ namespace DNA.Drawing
 
 		private void SetDestinationTargetInternal(RenderTarget2D destinationTarget)
 		{
-			int num;
-			int num2;
-			SurfaceFormat surfaceFormat;
-			DepthFormat depthFormat;
-			int num3;
+			int width;
+			int height;
+			SurfaceFormat format;
+			DepthFormat dFormat;
+			int msac;
 			if (destinationTarget == null)
 			{
-				PresentationParameters presentationParameters = base.Game.GraphicsDevice.PresentationParameters;
-				num = presentationParameters.BackBufferWidth;
-				num2 = presentationParameters.BackBufferHeight;
-				surfaceFormat = presentationParameters.BackBufferFormat;
-				depthFormat = presentationParameters.DepthStencilFormat;
-				num3 = presentationParameters.MultiSampleCount;
+				PresentationParameters pp = base.Game.GraphicsDevice.PresentationParameters;
+				width = pp.BackBufferWidth;
+				height = pp.BackBufferHeight;
+				format = pp.BackBufferFormat;
+				dFormat = pp.DepthStencilFormat;
+				msac = pp.MultiSampleCount;
 			}
 			else
 			{
-				num = destinationTarget.Width;
-				num2 = destinationTarget.Height;
-				surfaceFormat = destinationTarget.Format;
-				depthFormat = destinationTarget.DepthStencilFormat;
-				num3 = destinationTarget.MultiSampleCount;
+				width = destinationTarget.Width;
+				height = destinationTarget.Height;
+				format = destinationTarget.Format;
+				dFormat = destinationTarget.DepthStencilFormat;
+				msac = destinationTarget.MultiSampleCount;
 			}
 			if (this._offScreenBuffer != null && !this._offScreenBuffer.IsDisposed)
 			{
 				this._offScreenBuffer.Dispose();
 			}
-			this._offScreenBuffer = new RenderTarget2D(base.Game.GraphicsDevice, num / this._downsample, num2 / this._downsample, this._mipMap, surfaceFormat, depthFormat, num3, RenderTargetUsage.DiscardContents);
+			this._offScreenBuffer = new RenderTarget2D(base.Game.GraphicsDevice, width / this._downsample, height / this._downsample, this._mipMap, format, dFormat, msac, RenderTargetUsage.DiscardContents);
 		}
 
 		public override void SetDestinationTarget(RenderTarget2D destinationTarget)

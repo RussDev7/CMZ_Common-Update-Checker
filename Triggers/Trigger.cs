@@ -35,13 +35,13 @@ namespace DNA.Triggers
 				return;
 			}
 			this.OnUpdate();
-			bool flag = this.IsSastisfied();
-			if (!this._lastState && flag)
+			bool sastisfied = this.IsSastisfied();
+			if (!this._lastState && sastisfied)
 			{
 				this._triggered = true;
 				this.OnTriggered();
 			}
-			this._lastState = flag;
+			this._lastState = sastisfied;
 		}
 
 		protected virtual void OnUpdate()

@@ -132,8 +132,8 @@ namespace DNA.Drawing.UI
 			{
 				if (this._screens.Count > 0)
 				{
-					Screen screen2 = this._screens.Peek();
-					screen2.OnLostFocus();
+					Screen oldScreen = this._screens.Peek();
+					oldScreen.OnLostFocus();
 				}
 				this._screens.Push(screen);
 				screen.OnPushed();
@@ -143,23 +143,23 @@ namespace DNA.Drawing.UI
 
 		public Screen PopScreen()
 		{
-			Screen screen;
+			Screen screen2;
 			lock (this)
 			{
 				if (this._screens.Count == 0)
 				{
-					screen = null;
+					screen2 = null;
 				}
 				else
 				{
-					Screen screen2 = this._screens.Pop();
-					screen2.OnPoped();
-					screen2.OnLostFocus();
+					Screen screen = this._screens.Pop();
+					screen.OnPoped();
+					screen.OnLostFocus();
 					this.screensList = this._screens.ToArray();
-					screen = screen2;
+					screen2 = screen;
 				}
 			}
-			return screen;
+			return screen2;
 		}
 
 		public bool Contains(Screen screen)
@@ -181,38 +181,38 @@ namespace DNA.Drawing.UI
 
 		public override bool ProcessChar(GameTime gameTime, char c)
 		{
-			bool flag3;
+			bool flag2;
 			lock (this)
 			{
-				bool flag2 = true;
-				int num = 0;
-				while (num < this.screensList.Length && flag2)
+				bool continueProcessing = true;
+				int i = 0;
+				while (i < this.screensList.Length && continueProcessing)
 				{
-					Screen screen = this.screensList[num];
-					flag2 = flag2 && screen.ProcessChar(gameTime, c);
-					num++;
+					Screen screen = this.screensList[i];
+					continueProcessing = continueProcessing && screen.ProcessChar(gameTime, c);
+					i++;
 				}
-				flag3 = flag2 && base.ProcessChar(gameTime, c);
+				flag2 = continueProcessing && base.ProcessChar(gameTime, c);
 			}
-			return flag3;
+			return flag2;
 		}
 
 		public override bool ProcessInput(InputManager inputManager, GameTime gameTime)
 		{
-			bool flag3;
+			bool flag2;
 			lock (this)
 			{
-				bool flag2 = true;
-				int num = 0;
-				while (num < this.screensList.Length && flag2)
+				bool continueProcessing = true;
+				int i = 0;
+				while (i < this.screensList.Length && continueProcessing)
 				{
-					Screen screen = this.screensList[num];
-					flag2 = flag2 && screen.ProcessInput(inputManager, gameTime);
-					num++;
+					Screen screen = this.screensList[i];
+					continueProcessing = continueProcessing && screen.ProcessInput(inputManager, gameTime);
+					i++;
 				}
-				flag3 = flag2 && base.ProcessInput(inputManager, gameTime);
+				flag2 = continueProcessing && base.ProcessInput(inputManager, gameTime);
 			}
-			return flag3;
+			return flag2;
 		}
 
 		public override void Update(DNAGame game, GameTime gameTime)
@@ -222,14 +222,14 @@ namespace DNA.Drawing.UI
 			{
 				while (this._screens.Count != 0 && this._screens.Peek().Exiting)
 				{
-					Screen screen = this.PopScreen();
-					screen.Exiting = false;
+					Screen poped = this.PopScreen();
+					poped.Exiting = false;
 				}
 				for (int i = 0; i < this.screensList.Length; i++)
 				{
-					Screen screen2 = this.screensList[i];
-					screen2.Update(game, gameTime);
-					if (!screen2.DrawBehind)
+					Screen screen = this.screensList[i];
+					screen.Update(game, gameTime);
+					if (!screen.DrawBehind)
 					{
 						break;
 					}
@@ -244,17 +244,17 @@ namespace DNA.Drawing.UI
 			{
 				return;
 			}
-			int num = this.screensList.Length - 1;
+			int endScreen = this.screensList.Length - 1;
 			for (int i = 0; i < this.screensList.Length; i++)
 			{
 				Screen screen = this.screensList[i];
 				if (!screen.DrawBehind)
 				{
-					num = i;
+					endScreen = i;
 					break;
 				}
 			}
-			for (int j = num; j >= 0; j--)
+			for (int j = endScreen; j >= 0; j--)
 			{
 				Screen screen2 = this.screensList[j];
 				screen2.Draw(device, spriteBatch, gameTime);

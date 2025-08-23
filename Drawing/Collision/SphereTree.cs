@@ -12,8 +12,8 @@ namespace DNA.Drawing.Collision
 	{
 		public SphereTree(Model model)
 		{
-			List<Triangle3D> list = model.ExtractModelTris(false);
-			this.Build(list);
+			List<Triangle3D> tris = model.ExtractModelTris(false);
+			this.Build(tris);
 		}
 
 		public SphereTree()
@@ -23,84 +23,84 @@ namespace DNA.Drawing.Collision
 
 		public void Build(IList<Triangle3D> tris)
 		{
-			List<Vector3> list = new List<Vector3>();
+			List<Vector3> points = new List<Vector3>();
 			for (int i = 0; i < tris.Count; i++)
 			{
-				list.Add(tris[i].A);
-				list.Add(tris[i].B);
-				list.Add(tris[i].C);
+				points.Add(tris[i].A);
+				points.Add(tris[i].B);
+				points.Add(tris[i].C);
 			}
-			BoundingBox boundingBox = BoundingBox.CreateFromPoints(list);
-			Vector3 vector = boundingBox.Max - boundingBox.Min;
-			float num = Math.Max(vector.X, Math.Max(vector.Y, vector.Z));
-			Vector3 vector2 = boundingBox.Min + vector / 2f;
-			Vector3 vector3 = new Vector3(num, num, num);
-			new BoundingBox(vector2 - vector3 / 2f, vector2 + vector3 / 2f);
-			float num2 = num / 128f;
-			int num3 = 128;
-			SphereTree.SphereTreeNode[,,] array = new SphereTree.SphereTreeNode[num3, num3, num3];
-			List<SphereTree.SphereTreeNode> list2 = new List<SphereTree.SphereTreeNode>();
-			foreach (Triangle3D triangle3D in tris)
+			BoundingBox bounds = BoundingBox.CreateFromPoints(points);
+			Vector3 size = bounds.Max - bounds.Min;
+			float largestSide = Math.Max(size.X, Math.Max(size.Y, size.Z));
+			Vector3 center = bounds.Min + size / 2f;
+			Vector3 newSize = new Vector3(largestSide, largestSide, largestSide);
+			new BoundingBox(center - newSize / 2f, center + newSize / 2f);
+			float floatdinc = largestSide / 128f;
+			int gridSize = 128;
+			SphereTree.SphereTreeNode[,,] nodes = new SphereTree.SphereTreeNode[gridSize, gridSize, gridSize];
+			List<SphereTree.SphereTreeNode> nodeList = new List<SphereTree.SphereTreeNode>();
+			foreach (Triangle3D tri in tris)
 			{
-				Vector3 vector4 = triangle3D.Centroid - boundingBox.Min;
-				int num4 = (int)(vector4.X / num2);
-				int num5 = (int)(vector4.Y / num2);
-				int num6 = (int)(vector4.Z / num2);
-				if (array[num4, num5, num6] == null)
+				Vector3 centroid = tri.Centroid - bounds.Min;
+				int xIndex = (int)(centroid.X / floatdinc);
+				int yIndex = (int)(centroid.Y / floatdinc);
+				int zIndex = (int)(centroid.Z / floatdinc);
+				if (nodes[xIndex, yIndex, zIndex] == null)
 				{
-					list2.Add(array[num4, num5, num6] = new SphereTree.SphereTreeNode());
+					nodeList.Add(nodes[xIndex, yIndex, zIndex] = new SphereTree.SphereTreeNode());
 				}
-				array[num4, num5, num6].Triangles.Add(triangle3D);
+				nodes[xIndex, yIndex, zIndex].Triangles.Add(tri);
 			}
-			foreach (SphereTree.SphereTreeNode sphereTreeNode in list2)
+			foreach (SphereTree.SphereTreeNode node in nodeList)
 			{
-				sphereTreeNode.RefineBoundingSphere();
+				node.RefineBoundingSphere();
 			}
-			SphereTree.SphereTreeNode[,,] array2;
+			SphereTree.SphereTreeNode[,,] newNodes;
 			do
 			{
-				num3 /= 2;
-				array2 = new SphereTree.SphereTreeNode[num3, num3, num3];
-				list2.Clear();
-				for (int j = 0; j < num3; j++)
+				gridSize /= 2;
+				newNodes = new SphereTree.SphereTreeNode[gridSize, gridSize, gridSize];
+				nodeList.Clear();
+				for (int x = 0; x < gridSize; x++)
 				{
-					for (int k = 0; k < num3; k++)
+					for (int y = 0; y < gridSize; y++)
 					{
-						for (int l = 0; l < num3; l++)
+						for (int z = 0; z < gridSize; z++)
 						{
-							SphereTree.SphereTreeNode sphereTreeNode2 = new SphereTree.SphereTreeNode();
-							bool flag = true;
-							for (int m = 0; m < 8; m++)
+							SphereTree.SphereTreeNode node2 = new SphereTree.SphereTreeNode();
+							bool isLeaf = true;
+							for (int j = 0; j < 8; j++)
 							{
-								sphereTreeNode2.Children[m] = array[j * 2 + ((m & 4) >> 2), k * 2 + ((m & 2) >> 1), l * 2 + (m & 1)];
-								if (sphereTreeNode2.Children[m] != null)
+								node2.Children[j] = nodes[x * 2 + ((j & 4) >> 2), y * 2 + ((j & 2) >> 1), z * 2 + (j & 1)];
+								if (node2.Children[j] != null)
 								{
-									flag = false;
+									isLeaf = false;
 								}
 							}
-							if (!flag)
+							if (!isLeaf)
 							{
-								array2[j, k, l] = sphereTreeNode2;
-								list2.Add(sphereTreeNode2);
+								newNodes[x, y, z] = node2;
+								nodeList.Add(node2);
 							}
 						}
 					}
 				}
-				foreach (SphereTree.SphereTreeNode sphereTreeNode3 in list2)
+				foreach (SphereTree.SphereTreeNode node3 in nodeList)
 				{
-					sphereTreeNode3.RefineBoundingSphere();
+					node3.RefineBoundingSphere();
 				}
-				array = array2;
+				nodes = newNodes;
 			}
-			while (num3 > 1);
-			this._root = array2[0, 0, 0];
+			while (gridSize > 1);
+			this._root = newNodes[0, 0, 0];
 		}
 
 		public override void FindCollisions(Ellipsoid ellipsoid, List<CollisionMap.ContactPoint> contacts)
 		{
 			contacts.Clear();
-			BoundingSphere boundingSphere = ellipsoid.GetBoundingSphere();
-			this._root.FindCollisions(boundingSphere, ellipsoid, contacts);
+			BoundingSphere sphere = ellipsoid.GetBoundingSphere();
+			this._root.FindCollisions(sphere, ellipsoid, contacts);
 		}
 
 		public override void FindCollisions(BoundingSphere sphere, List<CollisionMap.ContactPoint> contacts)
@@ -124,13 +124,13 @@ namespace DNA.Drawing.Collision
 
 		public override void Load(BinaryReader reader)
 		{
-			string text = reader.ReadString();
-			if (text != this.FileID)
+			string id = reader.ReadString();
+			if (id != this.FileID)
 			{
 				throw new Exception("Bad SPT file Format");
 			}
-			int num = reader.ReadInt32();
-			if (num != 1)
+			int verison = reader.ReadInt32();
+			if (verison != 1)
 			{
 				throw new Exception("Bad SPT version");
 			}
@@ -161,9 +161,9 @@ namespace DNA.Drawing.Collision
 					existingInstance.Load(input);
 					return existingInstance;
 				}
-				SphereTree sphereTree = new SphereTree();
-				sphereTree.Load(input);
-				return sphereTree;
+				SphereTree tree = new SphereTree();
+				tree.Load(input);
+				return tree;
 			}
 		}
 
@@ -190,24 +190,24 @@ namespace DNA.Drawing.Collision
 
 			public static SphereTree.SphereTreeNode Load(BinaryReader reader)
 			{
-				Vector3 vector = reader.ReadVector3();
-				float num = reader.ReadSingle();
-				SphereTree.SphereTreeNode sphereTreeNode = new SphereTree.SphereTreeNode(new BoundingSphere(vector, num));
-				int num2 = reader.ReadInt32();
-				sphereTreeNode.Triangles = new List<Triangle3D>(num2);
-				for (int i = 0; i < num2; i++)
+				Vector3 sphereCenter = reader.ReadVector3();
+				float radius = reader.ReadSingle();
+				SphereTree.SphereTreeNode node = new SphereTree.SphereTreeNode(new BoundingSphere(sphereCenter, radius));
+				int tris = reader.ReadInt32();
+				node.Triangles = new List<Triangle3D>(tris);
+				for (int i = 0; i < tris; i++)
 				{
-					sphereTreeNode.Triangles.Add(Triangle3D.Read(reader));
+					node.Triangles.Add(Triangle3D.Read(reader));
 				}
-				byte b = reader.ReadByte();
+				byte mask = reader.ReadByte();
 				for (int j = 0; j < 8; j++)
 				{
-					if (((int)b & (1 << j)) != 0)
+					if (((int)mask & (1 << j)) != 0)
 					{
-						sphereTreeNode.Children[j] = SphereTree.SphereTreeNode.Load(reader);
+						node.Children[j] = SphereTree.SphereTreeNode.Load(reader);
 					}
 				}
-				return sphereTreeNode;
+				return node;
 			}
 
 			public void Save(BinaryWriter writer)
@@ -215,19 +215,19 @@ namespace DNA.Drawing.Collision
 				writer.Write(this.Sphere.Center);
 				writer.Write(this.Sphere.Radius);
 				writer.Write(this.Triangles.Count);
-				foreach (Triangle3D triangle3D in this.Triangles)
+				foreach (Triangle3D tri in this.Triangles)
 				{
-					triangle3D.Write(writer);
+					tri.Write(writer);
 				}
-				byte b = 0;
+				byte mask = 0;
 				for (int i = 0; i < 8; i++)
 				{
 					if (this.Children[i] != null)
 					{
-						b |= (byte)(1 << i);
+						mask |= (byte)(1 << i);
 					}
 				}
-				writer.Write(b);
+				writer.Write(mask);
 				for (int j = 0; j < 8; j++)
 				{
 					if (this.Children[j] != null)
@@ -269,31 +269,31 @@ namespace DNA.Drawing.Collision
 				}
 				for (int j = 0; j < this.Triangles.Count; j++)
 				{
-					Triangle3D triangle3D = this.Triangles[j];
-					Plane plane = triangle3D.GetPlane();
-					Vector3 normal = triangle3D.Normal;
-					float num = Math.Abs(plane.DotCoordinate(sphere.Center));
-					Vector3 vector = sphere.Center - triangle3D.A;
-					Vector3.Dot(normal, vector);
-					Vector3 vector2 = num * normal;
-					Vector3 vector3 = sphere.Center + vector2;
-					Vector3 vector4 = triangle3D.B - triangle3D.A;
-					Vector3 vector5 = triangle3D.C - triangle3D.A;
-					float num2 = Vector3.Dot(vector4, vector4);
-					float num3 = Vector3.Dot(vector4, vector5);
-					float num4 = Vector3.Dot(vector5, vector5);
-					Vector3 vector6 = vector3 - triangle3D.A;
-					float num5 = Vector3.Dot(vector6, vector4);
-					float num6 = Vector3.Dot(vector6, vector5);
-					float num7 = num3 * num3 - num2 * num4;
-					float num8 = (num3 * num6 - num4 * num5) / num7;
-					if ((double)num8 >= 0.0 && (double)num8 <= 1.0)
+					Triangle3D tri = this.Triangles[j];
+					Plane plane = tri.GetPlane();
+					Vector3 planeNormal = tri.Normal;
+					float distanceToPlane = Math.Abs(plane.DotCoordinate(sphere.Center));
+					Vector3 w0 = sphere.Center - tri.A;
+					Vector3.Dot(planeNormal, w0);
+					Vector3 dt = distanceToPlane * planeNormal;
+					Vector3 intersectionPoint = sphere.Center + dt;
+					Vector3 u = tri.B - tri.A;
+					Vector3 v = tri.C - tri.A;
+					float uu = Vector3.Dot(u, u);
+					float uv = Vector3.Dot(u, v);
+					float vv = Vector3.Dot(v, v);
+					Vector3 w = intersectionPoint - tri.A;
+					float wu = Vector3.Dot(w, u);
+					float wv = Vector3.Dot(w, v);
+					float D = uv * uv - uu * vv;
+					float sI = (uv * wv - vv * wu) / D;
+					if ((double)sI >= 0.0 && (double)sI <= 1.0)
 					{
-						float num9 = (num3 * num5 - num2 * num6) / num7;
-						if ((double)num9 >= 0.0 && (double)(num8 + num9) <= 1.0 && num <= sphere.Radius)
+						float tI = (uv * wu - uu * wv) / D;
+						if ((double)tI >= 0.0 && (double)(sI + tI) <= 1.0 && distanceToPlane <= sphere.Radius)
 						{
-							Vector3 vector7 = (sphere.Radius - num) * normal;
-							contacts.Add(new CollisionMap.ContactPoint(vector7, triangle3D));
+							Vector3 pVect = (sphere.Radius - distanceToPlane) * planeNormal;
+							contacts.Add(new CollisionMap.ContactPoint(pVect, tri));
 						}
 					}
 				}
@@ -312,69 +312,69 @@ namespace DNA.Drawing.Collision
 						this.Children[i].FindCollisions(sphere, ellipsoid, contacts);
 					}
 				}
-				Triangle3D triangle3D = default(Triangle3D);
+				Triangle3D localTri = default(Triangle3D);
 				for (int j = 0; j < this.Triangles.Count; j++)
 				{
-					Plane plane = this.Triangles[j].GetPlane();
-					ellipsoid.TransformWorldSpaceTriToUnitSphereSpace(this.Triangles[j], ref triangle3D);
-					Plane plane2 = ellipsoid.TransformWorldSpacePlaneToUnitSphereSpace(plane);
-					float d = plane2.D;
-					if (d <= 1f)
+					Plane triPLane = this.Triangles[j].GetPlane();
+					ellipsoid.TransformWorldSpaceTriToUnitSphereSpace(this.Triangles[j], ref localTri);
+					Plane localPlane = ellipsoid.TransformWorldSpacePlaneToUnitSphereSpace(triPLane);
+					float distanceToLocalPlane = localPlane.D;
+					if (distanceToLocalPlane <= 1f)
 					{
-						Vector3.Dot(plane2.Normal, triangle3D.A);
-						Vector3 vector = -d * plane2.Normal;
-						Vector3 vector2 = triangle3D.B - triangle3D.A;
-						Vector3 vector3 = triangle3D.C - triangle3D.A;
-						float num = Vector3.Dot(vector2, vector2);
-						float num2 = Vector3.Dot(vector2, vector3);
-						float num3 = Vector3.Dot(vector3, vector3);
-						Vector3 vector4 = vector - triangle3D.A;
-						float num4 = Vector3.Dot(vector4, vector2);
-						float num5 = Vector3.Dot(vector4, vector3);
-						float num6 = num2 * num2 - num * num3;
-						float num7 = (num2 * num5 - num3 * num4) / num6;
-						if ((double)num7 >= 0.0 && (double)num7 <= 1.0)
+						Vector3.Dot(localPlane.Normal, localTri.A);
+						Vector3 intersectionPoint = -distanceToLocalPlane * localPlane.Normal;
+						Vector3 u = localTri.B - localTri.A;
+						Vector3 v = localTri.C - localTri.A;
+						float uu = Vector3.Dot(u, u);
+						float uv = Vector3.Dot(u, v);
+						float vv = Vector3.Dot(v, v);
+						Vector3 w = intersectionPoint - localTri.A;
+						float wu = Vector3.Dot(w, u);
+						float wv = Vector3.Dot(w, v);
+						float D = uv * uv - uu * vv;
+						float sI = (uv * wv - vv * wu) / D;
+						if ((double)sI >= 0.0 && (double)sI <= 1.0)
 						{
-							float num8 = (num2 * num4 - num * num5) / num6;
-							if ((double)num8 >= 0.0 && (double)(num7 + num8) <= 1.0)
+							float tI = (uv * wu - uu * wv) / D;
+							if ((double)tI >= 0.0 && (double)(sI + tI) <= 1.0)
 							{
-								contacts.Add(new CollisionMap.ContactPoint(plane2.Normal, this.Triangles[j]));
+								contacts.Add(new CollisionMap.ContactPoint(localPlane.Normal, this.Triangles[j]));
 								return;
 							}
 						}
-						Vector3 vector5 = Vector3.Zero;
-						LineF3D lineF3D = new LineF3D(triangle3D.A, triangle3D.B);
-						LineF3D lineF3D2 = new LineF3D(triangle3D.A, triangle3D.C);
-						LineF3D lineF3D3 = new LineF3D(triangle3D.B, triangle3D.C);
-						Vector3 vector6 = lineF3D.ClosetPointTo(Vector3.Zero);
-						Vector3 vector7 = lineF3D2.ClosetPointTo(Vector3.Zero);
-						Vector3 vector8 = lineF3D3.ClosetPointTo(Vector3.Zero);
-						float num9 = vector6.LengthSquared();
-						float num10 = vector7.LengthSquared();
-						float num11 = vector8.LengthSquared();
-						bool flag = false;
-						float num12 = 1f;
-						if (num9 <= num12)
+						Vector3 colNormal = Vector3.Zero;
+						LineF3D lineAB = new LineF3D(localTri.A, localTri.B);
+						LineF3D lineAC = new LineF3D(localTri.A, localTri.C);
+						LineF3D lineBC = new LineF3D(localTri.B, localTri.C);
+						Vector3 p = lineAB.ClosetPointTo(Vector3.Zero);
+						Vector3 p2 = lineAC.ClosetPointTo(Vector3.Zero);
+						Vector3 p3 = lineBC.ClosetPointTo(Vector3.Zero);
+						float dd = p.LengthSquared();
+						float dd2 = p2.LengthSquared();
+						float dd3 = p3.LengthSquared();
+						bool foundCollsion = false;
+						float closestDist = 1f;
+						if (dd <= closestDist)
 						{
-							num12 = num9;
-							vector5 = vector6;
-							flag = true;
+							closestDist = dd;
+							colNormal = p;
+							foundCollsion = true;
 						}
-						if (num10 <= num12)
+						if (dd2 <= closestDist)
 						{
-							num12 = num10;
-							vector5 = vector7;
-							flag = true;
+							closestDist = dd2;
+							colNormal = p2;
+							foundCollsion = true;
 						}
-						if (num11 <= num12)
+						if (dd3 <= closestDist)
 						{
-							vector5 = vector8;
-							flag = true;
+							colNormal = p3;
+							foundCollsion = true;
 						}
-						if (flag)
+						if (foundCollsion)
 						{
-							vector5 = ellipsoid.TransformUnitSphereSpaceVectorToWorldSpace(Vector3.Negate(vector5));
-							contacts.Add(new CollisionMap.ContactPoint(vector5, this.Triangles[j]));
+							colNormal = ellipsoid.TransformUnitSphereSpaceVectorToWorldSpace(Vector3.Negate(colNormal));
+							contacts.Add(new CollisionMap.ContactPoint(colNormal, this.Triangles[j]));
 						}
 					}
 				}
@@ -382,109 +382,109 @@ namespace DNA.Drawing.Collision
 
 			public static bool RaySphereIntersection(BoundingSphere sphere, Ray ray, out float t1out, out float t2out)
 			{
-				Vector3 vector = ray.Position - sphere.Center;
-				float num = Vector3.Dot(vector, vector) - sphere.Radius * sphere.Radius;
-				float num2 = Vector3.Dot(ray.Direction, vector);
+				Vector3 diff = ray.Position - sphere.Center;
+				float a0 = Vector3.Dot(diff, diff) - sphere.Radius * sphere.Radius;
+				float a = Vector3.Dot(ray.Direction, diff);
 				t1out = float.MinValue;
 				t2out = float.MaxValue;
-				float num3;
-				if (num <= 0f)
+				float discr;
+				if (a0 <= 0f)
 				{
-					num3 = num2 * num2 - num;
-					float num4 = (float)Math.Sqrt((double)num3);
+					discr = a * a - a0;
+					float root = (float)Math.Sqrt((double)discr);
 					t1out = float.MinValue;
-					t2out = -num2 + num4;
+					t2out = -a + root;
 					return true;
 				}
-				if (num2 >= 0f)
+				if (a >= 0f)
 				{
 					return false;
 				}
-				num3 = num2 * num2 - num;
-				if (num3 < 0f)
+				discr = a * a - a0;
+				if (discr < 0f)
 				{
 					return false;
 				}
-				if (num3 > 0f)
+				if (discr > 0f)
 				{
-					float num4 = (float)Math.Sqrt((double)num3);
-					t1out = -num2 - num4;
-					t2out = -num2 + num4;
+					float root = (float)Math.Sqrt((double)discr);
+					t1out = -a - root;
+					t2out = -a + root;
 					if (t1out > t2out)
 					{
-						float num5 = t1out;
+						float temp = t1out;
 						t1out = t2out;
-						t2out = num5;
+						t2out = temp;
 					}
 					return true;
 				}
-				t2out = (t1out = -num2);
+				t2out = (t1out = -a);
 				return true;
 			}
 
 			public CollisionMap.RayQueryResult? CollidesWith(Ray ray, float minT, float maxT)
 			{
-				float num;
-				float num2;
-				if (!SphereTree.SphereTreeNode.RaySphereIntersection(this.Sphere, ray, out num, out num2))
+				float t;
+				float t2;
+				if (!SphereTree.SphereTreeNode.RaySphereIntersection(this.Sphere, ray, out t, out t2))
 				{
 					return null;
 				}
-				if (num >= 0f && num > maxT)
+				if (t >= 0f && t > maxT)
 				{
 					return null;
 				}
-				CollisionMap.RayQueryResult? rayQueryResult = null;
+				CollisionMap.RayQueryResult? ret = null;
 				for (int i = 0; i < this.Children.Length; i++)
 				{
 					if (this.Children[i] != null)
 					{
-						CollisionMap.RayQueryResult? rayQueryResult2 = this.Children[i].CollidesWith(ray, minT, maxT);
-						if (rayQueryResult2 != null && rayQueryResult2.Value.T < maxT)
+						CollisionMap.RayQueryResult? result = this.Children[i].CollidesWith(ray, minT, maxT);
+						if (result != null && result.Value.T < maxT)
 						{
-							maxT = rayQueryResult2.Value.T;
-							rayQueryResult = rayQueryResult2;
+							maxT = result.Value.T;
+							ret = result;
 						}
 					}
 				}
 				for (int j = 0; j < this.Triangles.Count; j++)
 				{
 					SphereTree.SphereTreeNode.RayTriangleTests++;
-					float? num3 = this.Triangles[j].Intersects(ray);
-					if (num3 != null)
+					float? tval = this.Triangles[j].Intersects(ray);
+					if (tval != null)
 					{
-						float value = num3.Value;
-						if (value >= minT && value < maxT)
+						float t3 = tval.Value;
+						if (t3 >= minT && t3 < maxT)
 						{
-							maxT = value;
-							rayQueryResult = new CollisionMap.RayQueryResult?(new CollisionMap.RayQueryResult(value, this.Triangles[j]));
+							maxT = t3;
+							ret = new CollisionMap.RayQueryResult?(new CollisionMap.RayQueryResult(t3, this.Triangles[j]));
 						}
 					}
 				}
-				return rayQueryResult;
+				return ret;
 			}
 
 			public void RefineBoundingSphere()
 			{
-				List<Vector3> list = new List<Vector3>();
-				this.GetPoints(list);
-				BoundingSphere boundingSphere = BoundingSphere.CreateFromPoints(list);
-				this.Sphere = boundingSphere;
+				List<Vector3> points = new List<Vector3>();
+				this.GetPoints(points);
+				BoundingSphere sphere = BoundingSphere.CreateFromPoints(points);
+				this.Sphere = sphere;
 			}
 
 			public void GetPoints(List<Vector3> points)
 			{
-				foreach (Triangle3D triangle3D in this.Triangles)
+				foreach (Triangle3D tri in this.Triangles)
 				{
-					points.Add(triangle3D.A);
-					points.Add(triangle3D.B);
-					points.Add(triangle3D.C);
+					points.Add(tri.A);
+					points.Add(tri.B);
+					points.Add(tri.C);
 				}
-				foreach (SphereTree.SphereTreeNode sphereTreeNode in this.Children)
+				foreach (SphereTree.SphereTreeNode node in this.Children)
 				{
-					if (sphereTreeNode != null)
+					if (node != null)
 					{
-						sphereTreeNode.GetPoints(points);
+						node.GetPoints(points);
 					}
 				}
 			}
@@ -492,11 +492,11 @@ namespace DNA.Drawing.Collision
 			public void GetTriangles(List<Triangle3D> tris)
 			{
 				tris.AddRange(this.Triangles);
-				foreach (SphereTree.SphereTreeNode sphereTreeNode in this.Children)
+				foreach (SphereTree.SphereTreeNode node in this.Children)
 				{
-					if (sphereTreeNode != null)
+					if (node != null)
 					{
-						sphereTreeNode.GetTriangles(tris);
+						node.GetTriangles(tris);
 					}
 				}
 			}

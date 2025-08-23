@@ -41,22 +41,22 @@ namespace DNA.Drawing
 
 		public override void Accelerate(TimeSpan dt)
 		{
-			float num = (float)dt.TotalSeconds;
-			Entity owner = base.Owner;
-			Vector3 worldVelocity = this.WorldVelocity;
-			Vector3 vector = Vector3.TransformNormal(this.LocalAcceleration, owner.LocalToParent) + this.WorldAcceleration;
-			worldVelocity.LengthSquared();
-			this.WorldVelocity += vector * num;
+			float seconds = (float)dt.TotalSeconds;
+			Entity e = base.Owner;
+			Vector3 currentVel = this.WorldVelocity;
+			Vector3 worldAccel = Vector3.TransformNormal(this.LocalAcceleration, e.LocalToParent) + this.WorldAcceleration;
+			currentVel.LengthSquared();
+			this.WorldVelocity += worldAccel * seconds;
 		}
 
 		public override void Move(TimeSpan dt)
 		{
-			Entity owner = base.Owner;
-			float num = (float)dt.TotalSeconds;
-			float num2 = this.WorldVelocity.Length();
-			if (num2 != 0f)
+			Entity e = base.Owner;
+			float seconds = (float)dt.TotalSeconds;
+			float speed = this.WorldVelocity.Length();
+			if (speed != 0f)
 			{
-				owner.LocalPosition += this.WorldVelocity * num;
+				e.LocalPosition += this.WorldVelocity * seconds;
 			}
 		}
 

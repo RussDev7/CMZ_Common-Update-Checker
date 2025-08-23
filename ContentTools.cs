@@ -9,18 +9,18 @@ namespace DNA
 	{
 		public static string GetLocalizedAssetName(string rootDirectory, string assetName)
 		{
-			string[] array = new string[]
+			string[] cultureNames = new string[]
 			{
 				CultureInfo.CurrentUICulture.Name,
 				CultureInfo.CurrentUICulture.TwoLetterISOLanguageName
 			};
-			foreach (string text in array)
+			foreach (string cultureName in cultureNames)
 			{
-				string text2 = assetName + '.' + text;
-				string text3 = Path.Combine(rootDirectory, text2 + ".xnb");
-				if (File.Exists(text3))
+				string localizedAssetName = assetName + '.' + cultureName;
+				string localizedAssetPath = Path.Combine(rootDirectory, localizedAssetName + ".xnb");
+				if (File.Exists(localizedAssetPath))
 				{
-					return text2;
+					return localizedAssetName;
 				}
 			}
 			return assetName;
@@ -28,8 +28,8 @@ namespace DNA
 
 		public static T LoadLocalized<T>(this ContentManager content, string name)
 		{
-			string localizedAssetName = ContentTools.GetLocalizedAssetName(content.RootDirectory, name);
-			return content.Load<T>(localizedAssetName);
+			string locName = ContentTools.GetLocalizedAssetName(content.RootDirectory, name);
+			return content.Load<T>(locName);
 		}
 	}
 }

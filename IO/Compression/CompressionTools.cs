@@ -26,12 +26,12 @@ namespace DNA.IO.Compression
 				this.deflater.Reset();
 				this.outStream.Position = 0L;
 				this.outStream.SetLength(0L);
-				DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(this.outStream, this.deflater);
-				BinaryWriter binaryWriter = new BinaryWriter(deflaterOutputStream);
-				binaryWriter.Write(data.Length);
-				binaryWriter.Write(data, 0, data.Length);
-				binaryWriter.Flush();
-				deflaterOutputStream.Finish();
+				DeflaterOutputStream stream = new DeflaterOutputStream(this.outStream, this.deflater);
+				BinaryWriter writer = new BinaryWriter(stream);
+				writer.Write(data.Length);
+				writer.Write(data, 0, data.Length);
+				writer.Flush();
+				stream.Finish();
 				array = this.outStream.ToArray();
 			}
 			return array;
@@ -42,12 +42,12 @@ namespace DNA.IO.Compression
 			byte[] array;
 			lock (this.inflater)
 			{
-				MemoryStream memoryStream = new MemoryStream(data);
+				MemoryStream inStream = new MemoryStream(data);
 				this.inflater.Reset();
-				InflaterInputStream inflaterInputStream = new InflaterInputStream(memoryStream, this.inflater);
-				BinaryReader binaryReader = new BinaryReader(inflaterInputStream);
-				int num = binaryReader.ReadInt32();
-				array = binaryReader.ReadBytes(num);
+				InflaterInputStream inflateStream = new InflaterInputStream(inStream, this.inflater);
+				BinaryReader reader = new BinaryReader(inflateStream);
+				int len = reader.ReadInt32();
+				array = reader.ReadBytes(len);
 			}
 			return array;
 		}

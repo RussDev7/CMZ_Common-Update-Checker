@@ -69,8 +69,8 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnInput(InputManager inputManager, GameController controller, KeyboardInput chatPad, GameTime gameTime)
 		{
-			bool flag = this.GetSliderLocation(base.ScreenBounds).Contains(inputManager.Mouse.Position);
-			if (flag)
+			bool hitTest = this.GetSliderLocation(base.ScreenBounds).Contains(inputManager.Mouse.Position);
+			if (hitTest)
 			{
 				this.Hovering = true;
 				if (inputManager.Mouse.LeftButtonPressed)
@@ -88,21 +88,21 @@ namespace DNA.Drawing.UI.Controls
 			}
 			if (base.CaptureInput)
 			{
-				Rectangle trackLocation = this.GetTrackLocation(base.ScreenBounds);
-				int x = inputManager.Mouse.Position.X;
-				int num = (x - trackLocation.Left) * (this.MaxValue - this.MinValue) / (trackLocation.Width - 1);
-				num += this.MinValue;
-				if (num > this.MaxValue)
+				Rectangle trackBounds = this.GetTrackLocation(base.ScreenBounds);
+				int screen = inputManager.Mouse.Position.X;
+				int value = (screen - trackBounds.Left) * (this.MaxValue - this.MinValue) / (trackBounds.Width - 1);
+				value += this.MinValue;
+				if (value > this.MaxValue)
 				{
 					this.Value = this.MaxValue;
 				}
-				else if (num < this.MinValue)
+				else if (value < this.MinValue)
 				{
 					this.Value = this.MinValue;
 				}
 				else
 				{
-					this.Value = num;
+					this.Value = value;
 				}
 			}
 			base.OnInput(inputManager, controller, chatPad, gameTime);
@@ -110,9 +110,9 @@ namespace DNA.Drawing.UI.Controls
 
 		private Rectangle GetSliderLocation(Rectangle screenBounds)
 		{
-			Rectangle trackLocation = this.GetTrackLocation(screenBounds);
-			int num = this._value * (trackLocation.Width - 1) / (this.MaxValue - this.MinValue) + trackLocation.Left;
-			return new Rectangle(num - 6, screenBounds.Y, 12, screenBounds.Height);
+			Rectangle trackBounds = this.GetTrackLocation(screenBounds);
+			int sliderX = this._value * (trackBounds.Width - 1) / (this.MaxValue - this.MinValue) + trackBounds.Left;
+			return new Rectangle(sliderX - 6, screenBounds.Y, 12, screenBounds.Height);
 		}
 
 		private Rectangle GetTrackLocation(Rectangle screenBounds)
@@ -127,27 +127,27 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			Rectangle screenBounds = base.ScreenBounds;
-			Rectangle sliderLocation = this.GetSliderLocation(screenBounds);
-			Rectangle trackLocation = this.GetTrackLocation(screenBounds);
-			Rectangle rectangle = new Rectangle(trackLocation.X, trackLocation.Y, sliderLocation.Center.X - trackLocation.X, trackLocation.Height);
-			Color color = Color.White;
+			Rectangle dest = base.ScreenBounds;
+			Rectangle sliderRect = this.GetSliderLocation(dest);
+			Rectangle trackRect = this.GetTrackLocation(dest);
+			Rectangle filledSliderRect = new Rectangle(trackRect.X, trackRect.Y, sliderRect.Center.X - trackRect.X, trackRect.Height);
+			Color col = Color.White;
 			if (base.CaptureInput)
 			{
-				color = Color.Black;
+				col = Color.Black;
 			}
 			else if (this.Hovering)
 			{
-				color = Color.Gray;
+				col = Color.Gray;
 			}
-			spriteBatch.Draw(UIControl.DummyTexture, trackLocation, Color.Black);
-			trackLocation.Inflate(-1, -1);
-			spriteBatch.Draw(UIControl.DummyTexture, trackLocation, Color.White);
-			rectangle.Inflate(-1, -1);
-			spriteBatch.Draw(UIControl.DummyTexture, rectangle, this.FillColor);
-			spriteBatch.Draw(UIControl.DummyTexture, sliderLocation, Color.Black);
-			sliderLocation.Inflate(-1, -1);
-			spriteBatch.Draw(UIControl.DummyTexture, sliderLocation, color);
+			spriteBatch.Draw(UIControl.DummyTexture, trackRect, Color.Black);
+			trackRect.Inflate(-1, -1);
+			spriteBatch.Draw(UIControl.DummyTexture, trackRect, Color.White);
+			filledSliderRect.Inflate(-1, -1);
+			spriteBatch.Draw(UIControl.DummyTexture, filledSliderRect, this.FillColor);
+			spriteBatch.Draw(UIControl.DummyTexture, sliderRect, Color.Black);
+			sliderRect.Inflate(-1, -1);
+			spriteBatch.Draw(UIControl.DummyTexture, sliderRect, col);
 		}
 
 		private const int ControlHeight = 20;

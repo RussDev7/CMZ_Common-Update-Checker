@@ -25,22 +25,22 @@ namespace DNA
 
 		public float GetNextValue()
 		{
-			float num2;
+			float ans;
 			do
 			{
 				this._idnum ^= 123459876;
-				int num = this._idnum / 127773;
-				this._idnum = 16807 * (this._idnum - num * 127773) - 2836 * num;
+				int i = this._idnum / 127773;
+				this._idnum = 16807 * (this._idnum - i * 127773) - 2836 * i;
 				if (this._idnum < 0)
 				{
 					this._idnum += int.MaxValue;
 				}
-				num2 = 4.656613E-10f * (float)this._idnum;
+				ans = 4.656613E-10f * (float)this._idnum;
 				this._idnum ^= 123459876;
-				num2 = 1f - num2;
+				ans = 1f - ans;
 			}
-			while (num2 >= 1f);
-			return num2;
+			while (ans >= 1f);
+			return ans;
 		}
 
 		public int GetNextValue(int min, int max)
@@ -50,8 +50,8 @@ namespace DNA
 
 		public float GetNextValue(float min, float max)
 		{
-			float num = this.GetNextValue() * (max - min);
-			return num + min;
+			float val = this.GetNextValue() * (max - min);
+			return val + min;
 		}
 
 		private const int IA = 16807;

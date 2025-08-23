@@ -152,14 +152,14 @@ namespace DNA.Drawing.UI
 			{
 				return true;
 			}
-			bool flag = this.OnChar(gameTime, c);
+			bool continueProcessing = this.OnChar(gameTime, c);
 			if (this.ProcessingChar != null)
 			{
-				CharEventArgs charEventArgs = new CharEventArgs(c, gameTime, flag);
-				this.ProcessingChar(this, charEventArgs);
-				flag = charEventArgs.ContiuneProcessing;
+				CharEventArgs args = new CharEventArgs(c, gameTime, continueProcessing);
+				this.ProcessingChar(this, args);
+				continueProcessing = args.ContiuneProcessing;
 			}
-			return flag;
+			return continueProcessing;
 		}
 
 		public virtual bool ProcessInput(InputManager inputManager, GameTime gameTime)
@@ -168,18 +168,18 @@ namespace DNA.Drawing.UI
 			{
 				return true;
 			}
-			bool flag = this.OnInput(inputManager, gameTime);
+			bool continueProcessing = this.OnInput(inputManager, gameTime);
 			if (this.ProcessingInput != null)
 			{
-				InputEventArgs inputEventArgs = new InputEventArgs(inputManager, gameTime, flag);
-				this.ProcessingInput(this, inputEventArgs);
-				flag = inputEventArgs.ContiuneProcessing;
+				InputEventArgs args = new InputEventArgs(inputManager, gameTime, continueProcessing);
+				this.ProcessingInput(this, args);
+				continueProcessing = args.ContiuneProcessing;
 			}
 			if (Screen._selectedPlayerIndex != null)
 			{
-				flag = flag || this.ProcessInput(inputManager, inputManager.Controllers[(int)Screen._selectedPlayerIndex.Value], inputManager.ChatPads[(int)Screen._selectedPlayerIndex.Value], gameTime);
+				continueProcessing = continueProcessing || this.ProcessInput(inputManager, inputManager.Controllers[(int)Screen._selectedPlayerIndex.Value], inputManager.ChatPads[(int)Screen._selectedPlayerIndex.Value], gameTime);
 			}
-			return flag;
+			return continueProcessing;
 		}
 
 		public event EventHandler<ControllerInputEventArgs> ProcessingPlayerInput;
@@ -195,7 +195,7 @@ namespace DNA.Drawing.UI
 
 		protected virtual bool ProcessInput(InputManager inputManager, GameController controller, KeyboardInput chatPad, GameTime gameTime)
 		{
-			bool flag = this.OnPlayerInput(inputManager, controller, chatPad, gameTime);
+			bool continueProcessing = this.OnPlayerInput(inputManager, controller, chatPad, gameTime);
 			if (this.ProcessingPlayerInput != null)
 			{
 				this._controllerEventArgs.Mouse = inputManager.Mouse;
@@ -203,11 +203,11 @@ namespace DNA.Drawing.UI
 				this._controllerEventArgs.Chatpad = chatPad;
 				this._controllerEventArgs.Controller = controller;
 				this._controllerEventArgs.GameTime = gameTime;
-				this._controllerEventArgs.ContinueProcessing = flag;
+				this._controllerEventArgs.ContinueProcessing = continueProcessing;
 				this.ProcessingPlayerInput(this, this._controllerEventArgs);
-				flag = flag || this._controllerEventArgs.ContinueProcessing;
+				continueProcessing = continueProcessing || this._controllerEventArgs.ContinueProcessing;
 			}
-			return flag;
+			return continueProcessing;
 		}
 
 		public event EventHandler<DrawEventArgs> BeforeDraw;
@@ -229,13 +229,13 @@ namespace DNA.Drawing.UI
 			if (this.BackgroundImage != null)
 			{
 				device.Clear(ClearOptions.DepthBuffer, Color.Red, 1f, 0);
-				int width = device.Viewport.Width;
-				int height = device.Viewport.Height;
-				int num = width * this.BackgroundImage.Height / height;
-				int num2 = num - width;
-				int num3 = num2 / 2;
+				int screenWidth = device.Viewport.Width;
+				int screenHeight = device.Viewport.Height;
+				int newWidth = screenWidth * this.BackgroundImage.Height / screenHeight;
+				int dif = newWidth - screenWidth;
+				int offset = dif / 2;
 				spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.AnisotropicClamp, DepthStencilState.None, RasterizerState.CullNone);
-				spriteBatch.Draw(this.BackgroundImage, new Rectangle(-num3, 0, num, height), new Rectangle?(new Rectangle(0, 0, this.BackgroundImage.Width, this.BackgroundImage.Height)), Color.White);
+				spriteBatch.Draw(this.BackgroundImage, new Rectangle(-offset, 0, newWidth, screenHeight), new Rectangle?(new Rectangle(0, 0, this.BackgroundImage.Width, this.BackgroundImage.Height)), Color.White);
 				spriteBatch.End();
 			}
 			else if (this.BackgroundColor != null)

@@ -31,22 +31,22 @@ namespace DNA.Security.Cryptography.Asn1
 				{
 					if (!this.explicitly)
 					{
-						IEnumerable enumerable;
+						IEnumerable eObj;
 						if (this.obj is Asn1OctetString)
 						{
 							if (this.obj is BerOctetString)
 							{
-								enumerable = (BerOctetString)this.obj;
+								eObj = (BerOctetString)this.obj;
 							}
 							else
 							{
-								Asn1OctetString asn1OctetString = (Asn1OctetString)this.obj;
-								enumerable = new BerOctetString(asn1OctetString.GetOctets());
+								Asn1OctetString octs = (Asn1OctetString)this.obj;
+								eObj = new BerOctetString(octs.GetOctets());
 							}
 						}
 						else if (this.obj is Asn1Sequence)
 						{
-							enumerable = (Asn1Sequence)this.obj;
+							eObj = (Asn1Sequence)this.obj;
 						}
 						else
 						{
@@ -54,15 +54,15 @@ namespace DNA.Security.Cryptography.Asn1
 							{
 								throw Platform.CreateNotImplementedException(this.obj.GetType().Name);
 							}
-							enumerable = (Asn1Set)this.obj;
+							eObj = (Asn1Set)this.obj;
 						}
-						using (IEnumerator enumerator = enumerable.GetEnumerator())
+						using (IEnumerator enumerator = eObj.GetEnumerator())
 						{
 							while (enumerator.MoveNext())
 							{
 								object obj = enumerator.Current;
-								Asn1Encodable asn1Encodable = (Asn1Encodable)obj;
-								derOut.WriteObject(asn1Encodable);
+								Asn1Encodable o = (Asn1Encodable)obj;
+								derOut.WriteObject(o);
 							}
 							goto IL_0119;
 						}

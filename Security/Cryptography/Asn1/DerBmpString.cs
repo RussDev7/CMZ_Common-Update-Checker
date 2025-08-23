@@ -32,12 +32,12 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				throw new ArgumentNullException("str");
 			}
-			char[] array = new char[str.Length / 2];
-			for (int num = 0; num != array.Length; num++)
+			char[] cs = new char[str.Length / 2];
+			for (int i = 0; i != cs.Length; i++)
 			{
-				array[num] = (char)(((int)str[2 * num] << 8) | (int)(str[2 * num + 1] & byte.MaxValue));
+				cs[i] = (char)(((int)str[2 * i] << 8) | (int)(str[2 * i + 1] & byte.MaxValue));
 			}
-			this.str = new string(array);
+			this.str = new string(cs);
 		}
 
 		public DerBmpString(string str)
@@ -56,20 +56,20 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerBmpString derBmpString = asn1Object as DerBmpString;
-			return derBmpString != null && this.str.Equals(derBmpString.str);
+			DerBmpString other = asn1Object as DerBmpString;
+			return other != null && this.str.Equals(other.str);
 		}
 
 		internal override void Encode(DerOutputStream derOut)
 		{
-			char[] array = this.str.ToCharArray();
-			byte[] array2 = new byte[array.Length * 2];
-			for (int num = 0; num != array.Length; num++)
+			char[] c = this.str.ToCharArray();
+			byte[] b = new byte[c.Length * 2];
+			for (int i = 0; i != c.Length; i++)
 			{
-				array2[2 * num] = (byte)(array[num] >> 8);
-				array2[2 * num + 1] = (byte)array[num];
+				b[2 * i] = (byte)(c[i] >> 8);
+				b[2 * i + 1] = (byte)c[i];
 			}
-			derOut.WriteEncoded(30, array2);
+			derOut.WriteEncoded(30, b);
 		}
 
 		private readonly string str;

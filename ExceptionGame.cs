@@ -33,27 +33,27 @@ namespace DNA
 			this.batch.Begin();
 			this._lastError = this._lastError.GetBaseException();
 			base.GraphicsDevice.Clear(Color.Black);
-			Rectangle titleSafeArea = base.GraphicsDevice.Viewport.TitleSafeArea;
-			int num = titleSafeArea.Top;
+			Rectangle titleSafe = base.GraphicsDevice.Viewport.TitleSafeArea;
+			int ypos = titleSafe.Top;
 			string name = this._lastError.GetType().Name;
-			this.batch.DrawString(this.font, "Sorry, this game has encountered an error", new Vector2((float)titleSafeArea.X, (float)num), Color.White);
-			num += this.font.LineSpacing;
-			this.batch.DrawString(this.font, "Take a picture of this screen and email it to: " + this._link, new Vector2((float)titleSafeArea.X, (float)num), Color.White);
-			num += this.font.LineSpacing;
-			this.batch.DrawString(this.font, this._gameName + ", Version " + this._version + " ", new Vector2((float)titleSafeArea.X, (float)num), Color.White);
-			num += this.font.LineSpacing;
-			this.batch.DrawString(this.font, this._startTime.ToString("MM/dd/yy HH:mm") + " " + this._runTime.ToString(), new Vector2((float)titleSafeArea.X, (float)num), Color.White);
-			num += this.font.LineSpacing * 2;
-			this.batch.DrawString(this.font, this._lastError.Message, new Vector2((float)titleSafeArea.X, (float)num), Color.White);
-			num += this.font.LineSpacing * 2;
-			this.batch.DrawString(this.font, this._lastError.GetType().Name, new Vector2((float)titleSafeArea.X, (float)num), Color.White);
-			num += this.font.LineSpacing * 2;
-			string[] array = this._lastError.StackTrace.Split(new char[] { '\n' });
-			foreach (string text in array)
+			this.batch.DrawString(this.font, "Sorry, this game has encountered an error", new Vector2((float)titleSafe.X, (float)ypos), Color.White);
+			ypos += this.font.LineSpacing;
+			this.batch.DrawString(this.font, "Take a picture of this screen and email it to: " + this._link, new Vector2((float)titleSafe.X, (float)ypos), Color.White);
+			ypos += this.font.LineSpacing;
+			this.batch.DrawString(this.font, this._gameName + ", Version " + this._version + " ", new Vector2((float)titleSafe.X, (float)ypos), Color.White);
+			ypos += this.font.LineSpacing;
+			this.batch.DrawString(this.font, this._startTime.ToString("MM/dd/yy HH:mm") + " " + this._runTime.ToString(), new Vector2((float)titleSafe.X, (float)ypos), Color.White);
+			ypos += this.font.LineSpacing * 2;
+			this.batch.DrawString(this.font, this._lastError.Message, new Vector2((float)titleSafe.X, (float)ypos), Color.White);
+			ypos += this.font.LineSpacing * 2;
+			this.batch.DrawString(this.font, this._lastError.GetType().Name, new Vector2((float)titleSafe.X, (float)ypos), Color.White);
+			ypos += this.font.LineSpacing * 2;
+			string[] lines = this._lastError.StackTrace.Split(new char[] { '\n' });
+			foreach (string line in lines)
 			{
-				string text2 = text.Trim();
-				this.batch.DrawString(this.font, text2, new Vector2((float)titleSafeArea.X, (float)num), Color.White);
-				num += this.font.LineSpacing;
+				string tline = line.Trim();
+				this.batch.DrawString(this.font, tline, new Vector2((float)titleSafe.X, (float)ypos), Color.White);
+				ypos += this.font.LineSpacing;
 			}
 			this.batch.End();
 			base.Draw(gameTime);

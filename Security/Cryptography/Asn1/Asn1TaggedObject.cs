@@ -39,18 +39,18 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			Asn1TaggedObject asn1TaggedObject = asn1Object as Asn1TaggedObject;
-			return asn1TaggedObject != null && (this.tagNo == asn1TaggedObject.tagNo && this.explicitly == asn1TaggedObject.explicitly) && object.Equals(this.GetObject(), asn1TaggedObject.GetObject());
+			Asn1TaggedObject other = asn1Object as Asn1TaggedObject;
+			return other != null && (this.tagNo == other.tagNo && this.explicitly == other.explicitly) && object.Equals(this.GetObject(), other.GetObject());
 		}
 
 		protected override int Asn1GetHashCode()
 		{
-			int num = this.tagNo.GetHashCode();
+			int code = this.tagNo.GetHashCode();
 			if (this.obj != null)
 			{
-				num ^= this.obj.GetHashCode();
+				code ^= this.obj.GetHashCode();
 			}
-			return num;
+			return code;
 		}
 
 		public int TagNo

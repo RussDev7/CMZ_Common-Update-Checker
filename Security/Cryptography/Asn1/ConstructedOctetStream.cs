@@ -19,40 +19,40 @@ namespace DNA.Security.Cryptography.Asn1
 				{
 					return 0;
 				}
-				Asn1OctetStringParser asn1OctetStringParser = (Asn1OctetStringParser)this._parser.ReadObject();
-				if (asn1OctetStringParser == null)
+				Asn1OctetStringParser s = (Asn1OctetStringParser)this._parser.ReadObject();
+				if (s == null)
 				{
 					return 0;
 				}
 				this._first = false;
-				this._currentStream = asn1OctetStringParser.GetOctetStream();
+				this._currentStream = s.GetOctetStream();
 			}
-			int num = 0;
+			int totalRead = 0;
 			for (;;)
 			{
-				int num2 = this._currentStream.Read(buffer, offset + num, count - num);
-				if (num2 > 0)
+				int numRead = this._currentStream.Read(buffer, offset + totalRead, count - totalRead);
+				if (numRead > 0)
 				{
-					num += num2;
-					if (num == count)
+					totalRead += numRead;
+					if (totalRead == count)
 					{
 						break;
 					}
 				}
 				else
 				{
-					Asn1OctetStringParser asn1OctetStringParser2 = (Asn1OctetStringParser)this._parser.ReadObject();
-					if (asn1OctetStringParser2 == null)
+					Asn1OctetStringParser aos = (Asn1OctetStringParser)this._parser.ReadObject();
+					if (aos == null)
 					{
 						goto Block_6;
 					}
-					this._currentStream = asn1OctetStringParser2.GetOctetStream();
+					this._currentStream = aos.GetOctetStream();
 				}
 			}
-			return num;
+			return totalRead;
 			Block_6:
 			this._currentStream = null;
-			return num;
+			return totalRead;
 		}
 
 		public override int ReadByte()
@@ -63,30 +63,30 @@ namespace DNA.Security.Cryptography.Asn1
 				{
 					return 0;
 				}
-				Asn1OctetStringParser asn1OctetStringParser = (Asn1OctetStringParser)this._parser.ReadObject();
-				if (asn1OctetStringParser == null)
+				Asn1OctetStringParser s = (Asn1OctetStringParser)this._parser.ReadObject();
+				if (s == null)
 				{
 					return 0;
 				}
 				this._first = false;
-				this._currentStream = asn1OctetStringParser.GetOctetStream();
+				this._currentStream = s.GetOctetStream();
 			}
-			int num;
+			int b;
 			for (;;)
 			{
-				num = this._currentStream.ReadByte();
-				if (num >= 0)
+				b = this._currentStream.ReadByte();
+				if (b >= 0)
 				{
 					break;
 				}
-				Asn1OctetStringParser asn1OctetStringParser2 = (Asn1OctetStringParser)this._parser.ReadObject();
-				if (asn1OctetStringParser2 == null)
+				Asn1OctetStringParser aos = (Asn1OctetStringParser)this._parser.ReadObject();
+				if (aos == null)
 				{
 					goto Block_5;
 				}
-				this._currentStream = asn1OctetStringParser2.GetOctetStream();
+				this._currentStream = aos.GetOctetStream();
 			}
-			return num;
+			return b;
 			Block_5:
 			this._currentStream = null;
 			return -1;

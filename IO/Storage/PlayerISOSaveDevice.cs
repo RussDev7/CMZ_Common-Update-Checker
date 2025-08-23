@@ -59,8 +59,8 @@ namespace DNA.IO.Storage
 
 		protected override Stream DeviceOpenFile(string fileName, FileMode mode, FileAccess access, FileShare share)
 		{
-			string text = this.MakeRootRelative(fileName);
-			return base.DeviceOpenFile(text, mode, access, share);
+			string path = this.MakeRootRelative(fileName);
+			return base.DeviceOpenFile(path, mode, access, share);
 		}
 
 		protected override void DeviceDeleteFile(string fileName)
@@ -80,44 +80,44 @@ namespace DNA.IO.Storage
 
 		protected override string[] DeviceGetDirectoryNames()
 		{
-			string[] array = base.DeviceGetDirectoryNames(this.Gamer.Gamertag);
-			for (int i = 0; i < array.Length; i++)
+			string[] files = base.DeviceGetDirectoryNames(this.Gamer.Gamertag);
+			for (int i = 0; i < files.Length; i++)
 			{
-				array[i] = array[i].Substring((this.Gamer.Gamertag + Path.DirectorySeparatorChar).Length);
+				files[i] = files[i].Substring((this.Gamer.Gamertag + Path.DirectorySeparatorChar).Length);
 			}
-			return array;
+			return files;
 		}
 
 		protected override string[] DeviceGetFileNames()
 		{
-			string[] array = base.DeviceGetFileNames(this.Gamer.Gamertag);
-			for (int i = 0; i < array.Length; i++)
+			string[] files = base.DeviceGetFileNames(this.Gamer.Gamertag);
+			for (int i = 0; i < files.Length; i++)
 			{
-				array[i] = array[i].Substring((this.Gamer.Gamertag + Path.DirectorySeparatorChar).Length);
+				files[i] = files[i].Substring((this.Gamer.Gamertag + Path.DirectorySeparatorChar).Length);
 			}
-			return array;
+			return files;
 		}
 
 		protected override string[] DeviceGetFileNames(string pattern)
 		{
 			pattern = this.MakeRootRelative(pattern);
-			string[] array = base.DeviceGetFileNames(pattern);
-			for (int i = 0; i < array.Length; i++)
+			string[] files = base.DeviceGetFileNames(pattern);
+			for (int i = 0; i < files.Length; i++)
 			{
-				array[i] = array[i].Substring((this.Gamer.Gamertag + Path.DirectorySeparatorChar).Length);
+				files[i] = files[i].Substring((this.Gamer.Gamertag + Path.DirectorySeparatorChar).Length);
 			}
-			return array;
+			return files;
 		}
 
 		protected override string[] DeviceGetDirectoryNames(string pattern)
 		{
 			pattern = this.MakeRootRelative(pattern);
-			string[] array = base.DeviceGetDirectoryNames(pattern);
-			for (int i = 0; i < array.Length; i++)
+			string[] files = base.DeviceGetDirectoryNames(pattern);
+			for (int i = 0; i < files.Length; i++)
 			{
-				array[i] = array[i].Substring((this.Gamer.Gamertag + Path.DirectorySeparatorChar).Length);
+				files[i] = files[i].Substring((this.Gamer.Gamertag + Path.DirectorySeparatorChar).Length);
 			}
-			return array;
+			return files;
 		}
 
 		protected override void DeviceCreateDirectory(string path)

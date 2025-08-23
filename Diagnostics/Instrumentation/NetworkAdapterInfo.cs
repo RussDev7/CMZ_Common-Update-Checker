@@ -48,17 +48,17 @@ namespace DNA.Diagnostics.Instrumentation
 
 		public static NetworkAdapterInfo FromManagmentObject(ManagementObject mo, bool physical)
 		{
-			string text = (string)mo["MacAddress"];
-			string[] array = (string[])mo["IPAddress"];
-			List<IPAddress> list = new List<IPAddress>();
-			if (array != null)
+			string macaddress = (string)mo["MacAddress"];
+			string[] ipstrs = (string[])mo["IPAddress"];
+			List<IPAddress> adrs = new List<IPAddress>();
+			if (ipstrs != null)
 			{
-				foreach (string text2 in array)
+				foreach (string s in ipstrs)
 				{
-					list.Add(IPAddress.Parse(text2));
+					adrs.Add(IPAddress.Parse(s));
 				}
 			}
-			return new NetworkAdapterInfo(text, list.ToArray(), physical);
+			return new NetworkAdapterInfo(macaddress, adrs.ToArray(), physical);
 		}
 
 		private IPAddress[] _ipAddreses;

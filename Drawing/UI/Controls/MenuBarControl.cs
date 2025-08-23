@@ -37,37 +37,37 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			Rectangle screenBounds = base.ScreenBounds;
-			Vector2 vector = new Vector2((float)screenBounds.Center.X, (float)screenBounds.Center.Y);
-			Vector2 vector2 = this.Font.MeasureString(this.Text);
-			vector2.Y = (float)this.Font.LineSpacing;
-			Vector2 vector3 = Vector2.Zero;
+			Rectangle dest = base.ScreenBounds;
+			Vector2 center = new Vector2((float)dest.Center.X, (float)dest.Center.Y);
+			Vector2 textSize = this.Font.MeasureString(this.Text);
+			textSize.Y = (float)this.Font.LineSpacing;
+			Vector2 textPos = Vector2.Zero;
 			switch (this.TextAlignment)
 			{
 			case MenuBarControl.Alignment.Left:
-				vector3.X = (float)(screenBounds.Left + 5);
-				vector3.Y = vector.Y - (float)(this.Font.LineSpacing / 2);
+				textPos.X = (float)(dest.Left + 5);
+				textPos.Y = center.Y - (float)(this.Font.LineSpacing / 2);
 				break;
 			case MenuBarControl.Alignment.Right:
-				vector3.X = (float)screenBounds.Right - vector2.X - 5f;
-				vector3.Y = vector.Y - (float)(this.Font.LineSpacing / 2);
+				textPos.X = (float)dest.Right - textSize.X - 5f;
+				textPos.Y = center.Y - (float)(this.Font.LineSpacing / 2);
 				break;
 			case MenuBarControl.Alignment.Center:
-				vector3 = vector - vector2 / 2f;
+				textPos = center - textSize / 2f;
 				break;
 			}
-			this.Frame.Draw(spriteBatch, screenBounds, this.ButtonColor);
+			this.Frame.Draw(spriteBatch, dest, this.ButtonColor);
 			if (this.Font != null && this.Text != null)
 			{
-				spriteBatch.DrawString(this.Font, this.Text, vector3, this.TextColor);
+				spriteBatch.DrawString(this.Font, this.Text, textPos, this.TextColor);
 			}
 		}
 
 		protected override void OnInput(InputManager inputManager, GameController controller, KeyboardInput chatPad, GameTime gameTime)
 		{
 			base.CaptureInput = false;
-			bool flag = this.HitTest(inputManager.Mouse.Position);
-			if (flag && inputManager.Mouse.LeftButtonPressed)
+			bool hitTest = this.HitTest(inputManager.Mouse.Position);
+			if (hitTest && inputManager.Mouse.LeftButtonPressed)
 			{
 				this.DragMenu = true;
 			}

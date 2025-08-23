@@ -58,32 +58,32 @@ namespace DNA.Drawing.Imaging.Photoshop
 		internal Mask(PsdBinaryReader reader, Layer layer)
 		{
 			this.Layer = layer;
-			uint num = reader.ReadUInt32();
-			if (num <= 0U)
+			uint maskLength = reader.ReadUInt32();
+			if (maskLength <= 0U)
 			{
 				return;
 			}
-			long position = reader.BaseStream.Position;
-			Rectangle rectangle = default(Rectangle);
-			rectangle.Y = reader.ReadInt32();
-			rectangle.X = reader.ReadInt32();
-			rectangle.Height = reader.ReadInt32() - rectangle.Y;
-			rectangle.Width = reader.ReadInt32() - rectangle.X;
-			this.Rect = rectangle;
+			long startPosition = reader.BaseStream.Position;
+			Rectangle rect = default(Rectangle);
+			rect.Y = reader.ReadInt32();
+			rect.X = reader.ReadInt32();
+			rect.Height = reader.ReadInt32() - rect.Y;
+			rect.Width = reader.ReadInt32() - rect.X;
+			this.Rect = rect;
 			this.DefaultColor = reader.ReadByte();
-			byte b = reader.ReadByte();
-			this.flags = new BitVector32((int)b);
-			if (num == 36U)
+			byte flagsByte = reader.ReadByte();
+			this.flags = new BitVector32((int)flagsByte);
+			if (maskLength == 36U)
 			{
 				new BitVector32((int)reader.ReadByte());
 				reader.ReadByte();
-				Rectangle rectangle2 = default(Rectangle);
-				rectangle2.Y = reader.ReadInt32();
-				rectangle2.X = reader.ReadInt32();
-				rectangle2.Height = reader.ReadInt32() - rectangle.Y;
-				rectangle2.Width = reader.ReadInt32() - rectangle.X;
+				Rectangle realRect = default(Rectangle);
+				realRect.Y = reader.ReadInt32();
+				realRect.X = reader.ReadInt32();
+				realRect.Height = reader.ReadInt32() - rect.Y;
+				realRect.Width = reader.ReadInt32() - rect.X;
 			}
-			reader.BaseStream.Position = position + (long)((ulong)num);
+			reader.BaseStream.Position = startPosition + (long)((ulong)maskLength);
 		}
 
 		public void Save(PsdBinaryWriter writer)

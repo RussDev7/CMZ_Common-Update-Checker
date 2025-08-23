@@ -25,9 +25,9 @@ namespace DNA.Drawing
 		{
 			get
 			{
-				Vector3 vector = this.End - this.Start;
-				vector.Normalize();
-				return vector;
+				Vector3 vect = this.End - this.Start;
+				vect.Normalize();
+				return vect;
 			}
 		}
 
@@ -52,38 +52,38 @@ namespace DNA.Drawing
 
 		public float DistanceTo(Vector3 point)
 		{
-			Vector3 vector = this.ClosetPointTo(point);
-			return Vector3.Distance(vector, point);
+			Vector3 closestPoint = this.ClosetPointTo(point);
+			return Vector3.Distance(closestPoint, point);
 		}
 
 		public Vector3 ClosetPointTo(Vector3 point)
 		{
-			Vector3 vector = this.End - this.Start;
-			Vector3 vector2 = point - this.Start;
-			float num = Vector3.Dot(vector, vector2);
-			if (num <= 0f)
+			Vector3 a = this.End - this.Start;
+			Vector3 b = point - this.Start;
+			float ab = Vector3.Dot(a, b);
+			if (ab <= 0f)
 			{
 				return this.Start;
 			}
-			float num2 = Vector3.Dot(vector2, vector2);
-			if (num2 >= num)
+			float bb = Vector3.Dot(b, b);
+			if (bb >= ab)
 			{
 				return this.End;
 			}
-			float num3 = num2 / num;
-			return this.Start + vector * num3;
+			float t = bb / ab;
+			return this.Start + a * t;
 		}
 
 		public float? Intersects(Plane plane)
 		{
-			float num = plane.DotCoordinate(this.Start);
-			float num2 = num - plane.DotCoordinate(this.End);
-			if (num2 != 0f)
+			float t = plane.DotCoordinate(this.Start);
+			float denom = t - plane.DotCoordinate(this.End);
+			if (denom != 0f)
 			{
-				float num3 = num / num2;
-				if ((double)num3 >= 0.0 && num3 <= 1f)
+				float t2 = t / denom;
+				if ((double)t2 >= 0.0 && t2 <= 1f)
 				{
-					return new float?(num3);
+					return new float?(t2);
 				}
 			}
 			return null;
@@ -91,33 +91,33 @@ namespace DNA.Drawing
 
 		public bool Intersects(Plane plane, out float t, out bool parallel, int precisionDigits)
 		{
-			double num = (double)plane.DotCoordinate(this.Start);
-			double num2 = num - (double)plane.DotCoordinate(this.End);
-			if (Math.Round(num2, precisionDigits) == 0.0)
+			double t2 = (double)plane.DotCoordinate(this.Start);
+			double denom = t2 - (double)plane.DotCoordinate(this.End);
+			if (Math.Round(denom, precisionDigits) == 0.0)
 			{
 				t = float.NaN;
 				parallel = true;
-				return num == 0.0;
+				return t2 == 0.0;
 			}
 			parallel = false;
-			double num3 = num / num2;
-			t = (float)Math.Round(num3, precisionDigits);
+			double dt = t2 / denom;
+			t = (float)Math.Round(dt, precisionDigits);
 			return (double)t >= 0.0 && t <= 1f;
 		}
 
 		public bool Intersects(Triangle3D triangle, out float t, out bool parallel)
 		{
-			Vector3 vector = triangle.B - triangle.A;
-			Vector3 vector2 = triangle.C - triangle.A;
-			Vector3 vector3 = Vector3.Cross(vector, vector2);
-			Vector3 vector4 = this.End - this.Start;
-			Vector3 vector5 = this.Start - triangle.A;
-			float num = -Vector3.Dot(vector3, vector5);
-			float num2 = Vector3.Dot(vector3, vector4);
-			if (num2 == 0f)
+			Vector3 u = triangle.B - triangle.A;
+			Vector3 v = triangle.C - triangle.A;
+			Vector3 i = Vector3.Cross(u, v);
+			Vector3 dir = this.End - this.Start;
+			Vector3 w0 = this.Start - triangle.A;
+			float a = -Vector3.Dot(i, w0);
+			float b = Vector3.Dot(i, dir);
+			if (b == 0f)
 			{
 				parallel = true;
-				if (num == 0f)
+				if (a == 0f)
 				{
 					t = 0f;
 					return true;
@@ -128,65 +128,65 @@ namespace DNA.Drawing
 			else
 			{
 				parallel = false;
-				t = num / num2;
+				t = a / b;
 				if (t < 0f || t > 1f)
 				{
 					return false;
 				}
-				Vector3 vector6 = this.Start + t * vector4;
-				float num3 = Vector3.Dot(vector, vector);
-				float num4 = Vector3.Dot(vector, vector2);
-				float num5 = Vector3.Dot(vector2, vector2);
-				Vector3 vector7 = vector6 - triangle.A;
-				float num6 = Vector3.Dot(vector7, vector);
-				float num7 = Vector3.Dot(vector7, vector2);
-				float num8 = num4 * num4 - num3 * num5;
-				float num9 = (num4 * num7 - num5 * num6) / num8;
-				if ((double)num9 < 0.0 || (double)num9 > 1.0)
+				Vector3 I = this.Start + t * dir;
+				float uu = Vector3.Dot(u, u);
+				float uv = Vector3.Dot(u, v);
+				float vv = Vector3.Dot(v, v);
+				Vector3 w = I - triangle.A;
+				float wu = Vector3.Dot(w, u);
+				float wv = Vector3.Dot(w, v);
+				float D = uv * uv - uu * vv;
+				float sI = (uv * wv - vv * wu) / D;
+				if ((double)sI < 0.0 || (double)sI > 1.0)
 				{
 					return false;
 				}
-				float num10 = (num4 * num6 - num3 * num7) / num8;
-				return (double)num10 >= 0.0 && (double)(num9 + num10) <= 1.0;
+				float tI = (uv * wu - uu * wv) / D;
+				return (double)tI >= 0.0 && (double)(sI + tI) <= 1.0;
 			}
 		}
 
 		public int Intersects(Capsule capsule, out float? t1, out float? t2)
 		{
 			Ray ray = new Ray(this.Start, this.End - this.Start);
-			int num = ray.Intersects(capsule, out t1, out t2);
+			int intersections = ray.Intersects(capsule, out t1, out t2);
 			if (t1 != null)
 			{
-				float? num2 = t1;
-				if (num2.GetValueOrDefault() < 0f && num2 != null)
+				float? num = t1;
+				if (num.GetValueOrDefault() < 0f && num != null)
 				{
 					goto IL_0074;
 				}
 			}
-			float? num3 = t1;
-			if (num3.GetValueOrDefault() <= 1f || num3 == null)
+			float? num2 = t1;
+			if (num2.GetValueOrDefault() <= 1f || num2 == null)
 			{
 				goto IL_007F;
 			}
 			IL_0074:
-			num--;
+			intersections--;
 			t1 = null;
 			IL_007F:
 			if (t2 != null)
 			{
-				float? num4 = t2;
-				if (num4.GetValueOrDefault() < 0f && num4 != null)
+				float? num3 = t2;
+				if (num3.GetValueOrDefault() < 0f && num3 != null)
 				{
 					goto IL_00CD;
 				}
 			}
-			float? num5 = t2;
-			if (num5.GetValueOrDefault() <= 1f || num5 == null)
+			float? num4 = t2;
+			if (num4.GetValueOrDefault() <= 1f || num4 == null)
 			{
 				goto IL_00D8;
 			}
 			IL_00CD:
-			num--;
+			intersections--;
 			t2 = null;
 			IL_00D8:
 			if (t1 == null && t2 != null)
@@ -194,35 +194,35 @@ namespace DNA.Drawing
 				t1 = t2;
 				t2 = null;
 			}
-			return num;
+			return intersections;
 		}
 
 		public bool Intersects(BoundingSphere sphere)
 		{
-			float num;
-			float num2;
-			return this.Intersects(sphere, out num, out num2);
+			float t;
+			float t2;
+			return this.Intersects(sphere, out t, out t2);
 		}
 
 		public bool Intersects(BoundingSphere sphere, out float t1, out float t2)
 		{
 			Vector3 center = sphere.Center;
-			float radius = sphere.Radius;
-			Vector3 vector = this.End - this.Start;
-			Vector3 vector2 = this.Start - center;
-			double num = (double)vector.LengthSquared();
-			double num2 = (double)(2f * Vector3.Dot(vector, vector2));
-			double num3 = (double)(center.LengthSquared() + this.Start.LengthSquared() - 2f * Vector3.Dot(center, this.Start) - radius * radius);
-			double num4 = num2 * num2 - 4.0 * num * num3;
-			if (num == 0.0 || num4 < 0.0)
+			float r = sphere.Radius;
+			Vector3 dist = this.End - this.Start;
+			Vector3 v2 = this.Start - center;
+			double a = (double)dist.LengthSquared();
+			double b = (double)(2f * Vector3.Dot(dist, v2));
+			double c = (double)(center.LengthSquared() + this.Start.LengthSquared() - 2f * Vector3.Dot(center, this.Start) - r * r);
+			double bb4ac = b * b - 4.0 * a * c;
+			if (a == 0.0 || bb4ac < 0.0)
 			{
 				t1 = 0f;
 				t2 = 0f;
 				return false;
 			}
-			double num5 = Math.Sqrt(num4);
-			t1 = (float)((-(float)num2 + num5) / (2.0 * num));
-			t2 = (float)((-(float)num2 - num5) / (2.0 * num));
+			double sqbb4ac = Math.Sqrt(bb4ac);
+			t1 = (float)((-(float)b + sqbb4ac) / (2.0 * a));
+			t2 = (float)((-(float)b - sqbb4ac) / (2.0 * a));
 			if (t1 >= 0f && t1 <= 1f)
 			{
 				return true;
@@ -237,15 +237,15 @@ namespace DNA.Drawing
 
 		public bool Intersects(Plane plane, out Vector3 pos, out bool parallel, int precisionDigits)
 		{
-			float num;
-			bool flag = this.Intersects(plane, out num, out parallel, precisionDigits);
+			float t;
+			bool res = this.Intersects(plane, out t, out parallel, precisionDigits);
 			if (parallel)
 			{
 				pos = new Vector3(float.NaN, float.NaN, float.NaN);
-				return flag;
+				return res;
 			}
-			pos = this.GetValue(num);
-			return flag;
+			pos = this.GetValue(t);
+			return res;
 		}
 
 		public bool Intersects(LineF3D line, out float intersection)

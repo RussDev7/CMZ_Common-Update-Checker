@@ -38,13 +38,13 @@ namespace DNA.Drawing.UI
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime, bool selected)
 		{
-			Vector2 destinationSize = this._destinationSize;
+			Vector2 finalSize = this._destinationSize;
 			if (selected && this._selectedSprite != null)
 			{
-				this._selectedSprite.Draw(spriteBatch, new Rectangle((int)base.Location.X, (int)base.Location.Y, (int)destinationSize.X, (int)destinationSize.Y), base.Color);
+				this._selectedSprite.Draw(spriteBatch, new Rectangle((int)base.Location.X, (int)base.Location.Y, (int)finalSize.X, (int)finalSize.Y), base.Color);
 				return;
 			}
-			this._unselectedSprite.Draw(spriteBatch, new Rectangle((int)base.Location.X, (int)base.Location.Y, (int)destinationSize.X, (int)destinationSize.Y), base.Color);
+			this._unselectedSprite.Draw(spriteBatch, new Rectangle((int)base.Location.X, (int)base.Location.Y, (int)finalSize.X, (int)finalSize.Y), base.Color);
 		}
 
 		private Sprite _selectedSprite;

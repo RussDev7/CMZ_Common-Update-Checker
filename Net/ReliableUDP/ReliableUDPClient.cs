@@ -25,11 +25,11 @@ namespace DNA.Net.ReliableUDP
 				return -1;
 			}
 			ReliableUDPClient.Packet packet = this.DispatchQueue.Dequeue();
-			int payloadLength = packet.PayloadLength;
-			Array.Copy(packet.PayloadBuffer, 0, buffer, offset, payloadLength);
+			int datalen = packet.PayloadLength;
+			Array.Copy(packet.PayloadBuffer, 0, buffer, offset, datalen);
 			endpoint = packet.Sender.EndPoint;
 			packet.Release();
-			return payloadLength;
+			return datalen;
 		}
 
 		private ReliableUDPClient.Host GetHostFromEndpoint(IPEndPoint endPoint)
@@ -49,9 +49,9 @@ namespace DNA.Net.ReliableUDP
 
 		public ReliableUDPClient(int port)
 		{
-			IPEndPoint ipendPoint = new IPEndPoint(IPAddress.Any, port);
+			IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, port);
 			this._socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-			this._socket.Bind(ipendPoint);
+			this._socket.Bind(endPoint);
 			this._receiveStream = new MemoryStream(65535);
 			this._receiveStream.SetLength((long)this._receiveStream.Capacity);
 			this._receiveReader = new BinaryReader(this._receiveStream);
@@ -80,33 +80,33 @@ namespace DNA.Net.ReliableUDP
 		{
 			ReliableUDPClient.Packet packet = ReliableUDPClient.Packet.Create(ReliableUDPClient.ToCommandWord(option));
 			packet.SetData(sendData, offset, length);
-			ReliableUDPClient.Host hostFromEndpoint = this.GetHostFromEndpoint(endPoint);
+			ReliableUDPClient.Host sendTo = this.GetHostFromEndpoint(endPoint);
 			switch (option)
 			{
 			case SendDataOptions.None:
-				packet.Send(hostFromEndpoint);
+				packet.Send(sendTo);
 				packet.Release();
 				return;
 			case SendDataOptions.Reliable:
-				packet.SequenceNumber = hostFromEndpoint.NextReliablePacketNumberSent++;
-				lock (hostFromEndpoint._unacknolegedReliablePackets)
+				packet.SequenceNumber = sendTo.NextReliablePacketNumberSent++;
+				lock (sendTo._unacknolegedReliablePackets)
 				{
-					hostFromEndpoint._unacknolegedReliablePackets[packet.SequenceNumber] = packet;
+					sendTo._unacknolegedReliablePackets[packet.SequenceNumber] = packet;
 				}
-				packet.Send(hostFromEndpoint);
+				packet.Send(sendTo);
 				return;
 			case SendDataOptions.InOrder:
-				packet.SequenceNumber = hostFromEndpoint.NextInOrderPacketNumberSent++;
-				packet.Send(hostFromEndpoint);
+				packet.SequenceNumber = sendTo.NextInOrderPacketNumberSent++;
+				packet.Send(sendTo);
 				packet.Release();
 				return;
 			case SendDataOptions.ReliableInOrder:
-				packet.SequenceNumber = hostFromEndpoint.NextReliableInOrderPacketNumberSent++;
-				lock (hostFromEndpoint._unacknolegedReliableInOrderPackets)
+				packet.SequenceNumber = sendTo.NextReliableInOrderPacketNumberSent++;
+				lock (sendTo._unacknolegedReliableInOrderPackets)
 				{
-					hostFromEndpoint._unacknolegedReliableInOrderPackets[packet.SequenceNumber] = packet;
+					sendTo._unacknolegedReliableInOrderPackets[packet.SequenceNumber] = packet;
 				}
-				packet.Send(hostFromEndpoint);
+				packet.Send(sendTo);
 				return;
 			default:
 				return;
@@ -149,16 +149,16 @@ namespace DNA.Net.ReliableUDP
 			{
 				this._receiveStream.Position = 0L;
 				EndPoint endPoint = new IPEndPoint(0L, 0);
-				int num = this._socket.ReceiveFrom(this._receiveStream.GetBuffer(), ref endPoint);
-				ReliableUDPClient.Host hostFromEndpoint = this.GetHostFromEndpoint((IPEndPoint)endPoint);
-				bool flag2 = false;
-				bool flag3 = false;
-				bool flag4 = false;
-				bool flag5 = false;
+				int packetLength = this._socket.ReceiveFrom(this._receiveStream.GetBuffer(), ref endPoint);
+				ReliableUDPClient.Host sender = this.GetHostFromEndpoint((IPEndPoint)endPoint);
+				bool checkNack = false;
+				bool checkNackRIO = false;
+				bool sendNack = false;
+				bool sendNackRIO = false;
 				IL_0415:
-				while (this._receiveStream.Position < (long)num)
+				while (this._receiveStream.Position < (long)packetLength)
 				{
-					ReliableUDPClient.Packet packet = ReliableUDPClient.Packet.Read(hostFromEndpoint, this._receiveReader);
+					ReliableUDPClient.Packet packet = ReliableUDPClient.Packet.Read(sender, this._receiveReader);
 					if (this._pakectLossRand.Decide(this.SimulatePacketLoss))
 					{
 						packet.Release();
@@ -172,46 +172,46 @@ namespace DNA.Net.ReliableUDP
 							continue;
 						case ReliableUDPClient.CommandWords.DataReliable:
 						{
-							flag2 = true;
-							LinkedListNode<int> linkedListNode = hostFromEndpoint.ReliablePacketsReceived.First;
-							ReliableUDPClient.Packet packet2 = ReliableUDPClient.Packet.Create(ReliableUDPClient.CommandWords.ACK);
-							packet2.AckNumber = packet.SequenceNumber;
-							packet2.Send(hostFromEndpoint);
-							packet2.Release();
-							LinkedListNode<int> next;
+							checkNack = true;
+							LinkedListNode<int> node = sender.ReliablePacketsReceived.First;
+							ReliableUDPClient.Packet ackPacket = ReliableUDPClient.Packet.Create(ReliableUDPClient.CommandWords.ACK);
+							ackPacket.AckNumber = packet.SequenceNumber;
+							ackPacket.Send(sender);
+							ackPacket.Release();
+							LinkedListNode<int> nextNode;
 							for (;;)
 							{
-								next = linkedListNode.Next;
-								if (packet.SequenceNumber <= linkedListNode.Value)
+								nextNode = node.Next;
+								if (packet.SequenceNumber <= node.Value)
 								{
 									goto Block_6;
 								}
-								if (next == null)
+								if (nextNode == null)
 								{
 									goto Block_7;
 								}
-								if (next.Value > packet.SequenceNumber)
+								if (nextNode.Value > packet.SequenceNumber)
 								{
 									goto Block_8;
 								}
-								linkedListNode = next;
+								node = nextNode;
 							}
 							IL_01DF:
-							while (hostFromEndpoint.ReliablePacketsReceived.First.Next != null)
+							while (sender.ReliablePacketsReceived.First.Next != null)
 							{
-								if (hostFromEndpoint.ReliablePacketsReceived.First.Value != hostFromEndpoint.ReliablePacketsReceived.First.Next.Value - 1)
+								if (sender.ReliablePacketsReceived.First.Value != sender.ReliablePacketsReceived.First.Next.Value - 1)
 								{
 									break;
 								}
-								hostFromEndpoint.ReliablePacketsReceived.RemoveFirst();
+								sender.ReliablePacketsReceived.RemoveFirst();
 							}
 							continue;
 							Block_8:
-							linkedListNode = hostFromEndpoint.ReliablePacketsReceived.AddBefore(next, packet.SequenceNumber);
+							node = sender.ReliablePacketsReceived.AddBefore(nextNode, packet.SequenceNumber);
 							this.DispatchQueue.Enqueue(packet);
 							goto IL_01DF;
 							Block_7:
-							linkedListNode = hostFromEndpoint.ReliablePacketsReceived.AddLast(packet.SequenceNumber);
+							node = sender.ReliablePacketsReceived.AddLast(packet.SequenceNumber);
 							this.DispatchQueue.Enqueue(packet);
 							goto IL_01DF;
 							Block_6:
@@ -229,57 +229,57 @@ namespace DNA.Net.ReliableUDP
 							continue;
 						case ReliableUDPClient.CommandWords.DataInOrderReliable:
 						{
-							ReliableUDPClient.Packet packet3 = ReliableUDPClient.Packet.Create(ReliableUDPClient.CommandWords.ACKRIO);
-							packet3.AckNumber = packet.SequenceNumber;
-							packet3.Send(hostFromEndpoint);
-							packet3.Release();
-							flag3 = true;
-							LinkedListNode<ReliableUDPClient.Packet> linkedListNode2 = hostFromEndpoint.ReliableInOrderPacketsReceived.First;
-							if (packet.SequenceNumber <= hostFromEndpoint.LastRIOPacketDispatched)
+							ReliableUDPClient.Packet ackPacket2 = ReliableUDPClient.Packet.Create(ReliableUDPClient.CommandWords.ACKRIO);
+							ackPacket2.AckNumber = packet.SequenceNumber;
+							ackPacket2.Send(sender);
+							ackPacket2.Release();
+							checkNackRIO = true;
+							LinkedListNode<ReliableUDPClient.Packet> node2 = sender.ReliableInOrderPacketsReceived.First;
+							if (packet.SequenceNumber <= sender.LastRIOPacketDispatched)
 							{
 								packet.Release();
 								continue;
 							}
-							while (linkedListNode2 != null)
+							while (node2 != null)
 							{
-								if (packet.SequenceNumber == linkedListNode2.Value.SequenceNumber)
+								if (packet.SequenceNumber == node2.Value.SequenceNumber)
 								{
 									packet.Release();
 								}
 								else
 								{
-									if (packet.SequenceNumber >= linkedListNode2.Value.SequenceNumber)
+									if (packet.SequenceNumber >= node2.Value.SequenceNumber)
 									{
-										linkedListNode2 = linkedListNode2.Next;
+										node2 = node2.Next;
 										continue;
 									}
-									hostFromEndpoint.ReliableInOrderPacketsReceived.AddBefore(linkedListNode2, packet);
+									sender.ReliableInOrderPacketsReceived.AddBefore(node2, packet);
 								}
 								IL_0310:
-								while (hostFromEndpoint.ReliableInOrderPacketsReceived.First != null)
+								while (sender.ReliableInOrderPacketsReceived.First != null)
 								{
-									if (hostFromEndpoint.ReliableInOrderPacketsReceived.First.Value.SequenceNumber != hostFromEndpoint.LastRIOPacketDispatched + 1)
+									if (sender.ReliableInOrderPacketsReceived.First.Value.SequenceNumber != sender.LastRIOPacketDispatched + 1)
 									{
 										break;
 									}
-									ReliableUDPClient.Packet value = hostFromEndpoint.ReliableInOrderPacketsReceived.First.Value;
-									hostFromEndpoint.LastRIOPacketDispatched = value.SequenceNumber;
-									this.DispatchQueue.Enqueue(value);
-									hostFromEndpoint.ReliableInOrderPacketsReceived.RemoveFirst();
+									ReliableUDPClient.Packet toDispatch = sender.ReliableInOrderPacketsReceived.First.Value;
+									sender.LastRIOPacketDispatched = toDispatch.SequenceNumber;
+									this.DispatchQueue.Enqueue(toDispatch);
+									sender.ReliableInOrderPacketsReceived.RemoveFirst();
 								}
 								goto IL_0415;
 							}
-							hostFromEndpoint.ReliableInOrderPacketsReceived.AddLast(packet);
+							sender.ReliableInOrderPacketsReceived.AddLast(packet);
 							goto IL_0310;
 						}
 						case ReliableUDPClient.CommandWords.ACK:
-							lock (hostFromEndpoint._unacknolegedReliablePackets)
+							lock (sender._unacknolegedReliablePackets)
 							{
-								ReliableUDPClient.Packet packet4;
-								if (hostFromEndpoint._unacknolegedReliablePackets.TryGetValue(packet.AckNumber, out packet4))
+								ReliableUDPClient.Packet rioPacket;
+								if (sender._unacknolegedReliablePackets.TryGetValue(packet.AckNumber, out rioPacket))
 								{
-									hostFromEndpoint._unacknolegedReliablePackets.Remove(packet.AckNumber);
-									packet4.Release();
+									sender._unacknolegedReliablePackets.Remove(packet.AckNumber);
+									rioPacket.Release();
 								}
 								packet.Release();
 								continue;
@@ -290,53 +290,53 @@ namespace DNA.Net.ReliableUDP
 						case ReliableUDPClient.CommandWords.NACK:
 							goto IL_03F7;
 						case ReliableUDPClient.CommandWords.NACKRIO:
-							flag5 = true;
+							sendNackRIO = true;
 							packet.Release();
 							continue;
 						default:
 							throw new NotImplementedException();
 						}
-						lock (hostFromEndpoint._unacknolegedReliableInOrderPackets)
+						lock (sender._unacknolegedReliableInOrderPackets)
 						{
-							ReliableUDPClient.Packet packet5;
-							if (hostFromEndpoint._unacknolegedReliableInOrderPackets.TryGetValue(packet.AckNumber, out packet5))
+							ReliableUDPClient.Packet rioPacket2;
+							if (sender._unacknolegedReliableInOrderPackets.TryGetValue(packet.AckNumber, out rioPacket2))
 							{
-								hostFromEndpoint._unacknolegedReliableInOrderPackets.Remove(packet.AckNumber);
-								packet5.Release();
+								sender._unacknolegedReliableInOrderPackets.Remove(packet.AckNumber);
+								rioPacket2.Release();
 							}
 							packet.Release();
 							continue;
 						}
 						IL_03F7:
-						flag4 = true;
+						sendNack = true;
 						packet.Release();
 					}
 				}
-				if (flag2 && hostFromEndpoint.ReliablePacketsReceived.Count > 1)
+				if (checkNack && sender.ReliablePacketsReceived.Count > 1)
 				{
-					this.SendNACK(hostFromEndpoint);
+					this.SendNACK(sender);
 				}
-				if (flag3 && hostFromEndpoint.ReliableInOrderPacketsReceived.Count > 0)
+				if (checkNackRIO && sender.ReliableInOrderPacketsReceived.Count > 0)
 				{
-					this.SendNACKRIO(hostFromEndpoint);
+					this.SendNACKRIO(sender);
 				}
-				if (flag4)
+				if (sendNack)
 				{
-					lock (hostFromEndpoint._unacknolegedReliablePackets)
+					lock (sender._unacknolegedReliablePackets)
 					{
-						foreach (KeyValuePair<int, ReliableUDPClient.Packet> keyValuePair in hostFromEndpoint._unacknolegedReliablePackets)
+						foreach (KeyValuePair<int, ReliableUDPClient.Packet> pair in sender._unacknolegedReliablePackets)
 						{
-							keyValuePair.Value.Send(hostFromEndpoint);
+							pair.Value.Send(sender);
 						}
 					}
 				}
-				if (flag5)
+				if (sendNackRIO)
 				{
-					lock (hostFromEndpoint._unacknolegedReliableInOrderPackets)
+					lock (sender._unacknolegedReliableInOrderPackets)
 					{
-						foreach (KeyValuePair<int, ReliableUDPClient.Packet> keyValuePair2 in hostFromEndpoint._unacknolegedReliableInOrderPackets)
+						foreach (KeyValuePair<int, ReliableUDPClient.Packet> pair2 in sender._unacknolegedReliableInOrderPackets)
 						{
-							keyValuePair2.Value.Send(hostFromEndpoint);
+							pair2.Value.Send(sender);
 						}
 					}
 				}
@@ -462,8 +462,8 @@ namespace DNA.Net.ReliableUDP
 
 			public static ReliableUDPClient.Packet Read(ReliableUDPClient.Host sender, BinaryReader reader)
 			{
-				ReliableUDPClient.CommandWords commandWords = (ReliableUDPClient.CommandWords)reader.ReadByte();
-				ReliableUDPClient.Packet packet = ReliableUDPClient.Packet.Create(commandWords);
+				ReliableUDPClient.CommandWords word = (ReliableUDPClient.CommandWords)reader.ReadByte();
+				ReliableUDPClient.Packet packet = ReliableUDPClient.Packet.Create(word);
 				packet.Receive(sender, reader);
 				return packet;
 			}
@@ -532,8 +532,8 @@ namespace DNA.Net.ReliableUDP
 
 			private void ReadPayload(BinaryReader reader)
 			{
-				int num = (int)reader.ReadUInt16();
-				this._playloadStream.SetLength((long)num);
+				int len = (int)reader.ReadUInt16();
+				this._playloadStream.SetLength((long)len);
 				reader.Read(this._playloadStream.GetBuffer(), 0, (int)this._playloadStream.Length);
 			}
 
@@ -543,8 +543,8 @@ namespace DNA.Net.ReliableUDP
 				{
 					throw new Exception("Packet too Big");
 				}
-				ushort num = (ushort)this._playloadStream.Position;
-				writer.Write(num);
+				ushort len = (ushort)this._playloadStream.Position;
+				writer.Write(len);
 				writer.Write(this._playloadStream.GetBuffer(), 0, (int)this._playloadStream.Position);
 			}
 
@@ -552,32 +552,32 @@ namespace DNA.Net.ReliableUDP
 			{
 				this.LastSent = DateTime.Now;
 				sendTo.LastSentTo = DateTime.Now;
-				BinaryWriter sendWriter = sendTo._sendWriter;
-				lock (sendWriter)
+				BinaryWriter writer = sendTo._sendWriter;
+				lock (writer)
 				{
-					sendWriter.Write((byte)this._packetType);
+					writer.Write((byte)this._packetType);
 					switch (this.PacketType)
 					{
 					case ReliableUDPClient.CommandWords.Data:
 						this.WritePayload(sendTo._sendWriter);
 						break;
 					case ReliableUDPClient.CommandWords.DataReliable:
-						sendWriter.Write(this.SequenceNumber);
+						writer.Write(this.SequenceNumber);
 						this.WritePayload(sendTo._sendWriter);
 						break;
 					case ReliableUDPClient.CommandWords.DataInOrder:
-						sendWriter.Write(this.SequenceNumber);
+						writer.Write(this.SequenceNumber);
 						this.WritePayload(sendTo._sendWriter);
 						break;
 					case ReliableUDPClient.CommandWords.DataInOrderReliable:
-						sendWriter.Write(this.SequenceNumber);
+						writer.Write(this.SequenceNumber);
 						this.WritePayload(sendTo._sendWriter);
 						break;
 					case ReliableUDPClient.CommandWords.ACK:
-						sendWriter.Write(this.AckNumber);
+						writer.Write(this.AckNumber);
 						break;
 					case ReliableUDPClient.CommandWords.ACKRIO:
-						sendWriter.Write(this.AckNumber);
+						writer.Write(this.AckNumber);
 						break;
 					case ReliableUDPClient.CommandWords.NACK:
 					case ReliableUDPClient.CommandWords.NACKRIO:

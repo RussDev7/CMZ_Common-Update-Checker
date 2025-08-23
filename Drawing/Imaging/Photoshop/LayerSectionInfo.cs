@@ -21,8 +21,8 @@ namespace DNA.Drawing.Imaging.Photoshop
 			this.SectionType = (LayerSectionType)reader.ReadInt32();
 			if (dataLength == 12)
 			{
-				string text = new string(reader.ReadChars(4));
-				if (text == "8BIM")
+				string signature = new string(reader.ReadChars(4));
+				if (signature == "8BIM")
 				{
 					this.BlendModeKey = new string(reader.ReadChars(4));
 				}

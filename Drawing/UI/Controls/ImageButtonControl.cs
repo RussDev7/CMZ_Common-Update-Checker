@@ -23,22 +23,22 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			Vector2 vector = new Vector2((float)base.LocalPosition.X, (float)base.LocalPosition.Y);
-			Vector2 vector2 = new Vector2(vector.X + (float)(this.Image.Width / 2) - this.Font.MeasureString(this.Text).X / 2f, vector.Y + (float)(this.Image.Height / 2) - this.Font.MeasureString(this.Text).Y / 2f);
+			Vector2 imgPos = new Vector2((float)base.LocalPosition.X, (float)base.LocalPosition.Y);
+			Vector2 strPos = new Vector2(imgPos.X + (float)(this.Image.Width / 2) - this.Font.MeasureString(this.Text).X / 2f, imgPos.Y + (float)(this.Image.Height / 2) - this.Font.MeasureString(this.Text).Y / 2f);
 			if (base.CaptureInput)
 			{
-				spriteBatch.Draw(this.Image, vector, Color.White);
-				spriteBatch.DrawString(this.Font, this.Text, vector2, Color.Black);
+				spriteBatch.Draw(this.Image, imgPos, Color.White);
+				spriteBatch.DrawString(this.Font, this.Text, strPos, Color.Black);
 				return;
 			}
 			if (base.Hovering)
 			{
-				spriteBatch.Draw(this.Image, vector, Color.Gray);
-				spriteBatch.DrawString(this.Font, this.Text, vector2, Color.White);
+				spriteBatch.Draw(this.Image, imgPos, Color.Gray);
+				spriteBatch.DrawString(this.Font, this.Text, strPos, Color.White);
 				return;
 			}
-			spriteBatch.Draw(this.Image, vector, this.ImageDefaultColor);
-			spriteBatch.DrawString(this.Font, this.Text, vector2, Color.White);
+			spriteBatch.Draw(this.Image, imgPos, this.ImageDefaultColor);
+			spriteBatch.DrawString(this.Font, this.Text, strPos, Color.White);
 		}
 
 		public Sprite Image;

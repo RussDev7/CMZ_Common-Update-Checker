@@ -56,12 +56,12 @@ namespace DNA.Drawing.UI
 
 		protected override void OnUpdate(DNAGame game, GameTime gameTime)
 		{
-			int itemsToDraw = this._itemsToDraw;
+			int prevItemsToDraw = this._itemsToDraw;
 			this._itemsToDraw = this._drawArea.Height / (this._itemSize.Height + 5);
 			this._scrollBar.LocalPosition = new Point(this._drawArea.X, this._drawArea.Y);
 			this._scrollBar.Size = new Size(20, this._itemsToDraw * (this._itemSize.Height + 5));
 			this._scrollBar.SliderHeight = Math.Max(10, this._drawArea.Height - this._scrollBar.ArrowSize * 2 - 30 - (this.Items.Count - this._itemsToDraw) * 20);
-			if (itemsToDraw != this._itemsToDraw)
+			if (prevItemsToDraw != this._itemsToDraw)
 			{
 				this._updateControls();
 			}
@@ -142,8 +142,8 @@ namespace DNA.Drawing.UI
 			this._updateControls();
 			if (this._scrollBar.Visible)
 			{
-				int num = this.Items.Count - this._itemsToDraw;
-				this._scrollBar.Value = (float)this._topItemIndex / (float)num;
+				int maxTopItem = this.Items.Count - this._itemsToDraw;
+				this._scrollBar.Value = (float)this._topItemIndex / (float)maxTopItem;
 			}
 			else
 			{
@@ -154,15 +154,15 @@ namespace DNA.Drawing.UI
 
 		protected void UpdateAfterPopulate()
 		{
-			int topItemIndex = this._topItemIndex;
-			int itemsToDraw = this._itemsToDraw;
+			int tii = this._topItemIndex;
+			int itd = this._itemsToDraw;
 			this._updateControls();
-			if (this._itemsToDraw != itemsToDraw || this._topItemIndex != topItemIndex)
+			if (this._itemsToDraw != itd || this._topItemIndex != tii)
 			{
 				if (this._scrollBar.Visible)
 				{
-					int num = this.Items.Count - this._itemsToDraw;
-					this._scrollBar.Value = (float)this._topItemIndex / (float)num;
+					int maxTopItem = this.Items.Count - this._itemsToDraw;
+					this._scrollBar.Value = (float)this._topItemIndex / (float)maxTopItem;
 					return;
 				}
 				this._scrollBar.Value = 0f;
@@ -192,14 +192,14 @@ namespace DNA.Drawing.UI
 				{
 					this._selectedItemIndex = this.Items.Count - 1;
 				}
-				Point point = new Point(this._drawArea.X + 30, this._drawArea.Y);
-				int num = Math.Min(this.Items.Count, this._topItemIndex + this._itemsToDraw);
-				for (int i = this._topItemIndex; i < num; i++)
+				Point drawLoc = new Point(this._drawArea.X + 30, this._drawArea.Y);
+				int maxi = Math.Min(this.Items.Count, this._topItemIndex + this._itemsToDraw);
+				for (int i = this._topItemIndex; i < maxi; i++)
 				{
-					this.Items[i].LocalPosition = point;
+					this.Items[i].LocalPosition = drawLoc;
 					this.Items[i].Selected = this._selectedItemIndex == i;
 					this._listItems.Children.Add(this.Items[i]);
-					point.Y += this._itemSize.Height + 5;
+					drawLoc.Y += this._itemSize.Height + 5;
 				}
 				return;
 			}
@@ -225,15 +225,15 @@ namespace DNA.Drawing.UI
 						this._topItemIndex = this.Items.Count - this._itemsToDraw;
 					}
 				}
-				Point point = new Point(this._drawArea.X + 30, this._drawArea.Y);
-				int num = Math.Min(this.Items.Count, this._topItemIndex + this._itemsToDraw);
+				Point drawLoc = new Point(this._drawArea.X + 30, this._drawArea.Y);
+				int maxi = Math.Min(this.Items.Count, this._topItemIndex + this._itemsToDraw);
 				for (int i = 0; i < this.Items.Count; i++)
 				{
-					if (i >= this._topItemIndex && i < num)
+					if (i >= this._topItemIndex && i < maxi)
 					{
-						this.Items[i].LocalPosition = point;
+						this.Items[i].LocalPosition = drawLoc;
 						this._listItems.Children.Add(this.Items[i]);
-						point.Y += this._itemSize.Height + 5;
+						drawLoc.Y += this._itemSize.Height + 5;
 					}
 					if (this.Items[i].Selected)
 					{
@@ -258,8 +258,8 @@ namespace DNA.Drawing.UI
 				this._updateControls();
 				if (setScrollbar)
 				{
-					int num = this.Items.Count - this._itemsToDraw;
-					this._scrollBar.Value = (float)this._topItemIndex / (float)num;
+					int maxTopItem = this.Items.Count - this._itemsToDraw;
+					this._scrollBar.Value = (float)this._topItemIndex / (float)maxTopItem;
 				}
 			}
 		}
@@ -272,8 +272,8 @@ namespace DNA.Drawing.UI
 				this._updateControls();
 				if (setScrollBar)
 				{
-					int num = this.Items.Count - this._itemsToDraw;
-					this._scrollBar.Value = (float)this._topItemIndex / (float)num;
+					int maxTopItem = this.Items.Count - this._itemsToDraw;
+					this._scrollBar.Value = (float)this._topItemIndex / (float)maxTopItem;
 				}
 			}
 		}
@@ -321,8 +321,8 @@ namespace DNA.Drawing.UI
 				}
 				if (inputManager.Mouse.CurrentState.LeftButton == ButtonState.Pressed && !this._scrollBar.CaptureInput)
 				{
-					int num = Math.Min(this.Items.Count, this._topItemIndex + this._itemsToDraw);
-					for (int i = this._topItemIndex; i < num; i++)
+					int maxi = Math.Min(this.Items.Count, this._topItemIndex + this._itemsToDraw);
+					for (int i = this._topItemIndex; i < maxi; i++)
 					{
 						if (this.Items[i].CaptureInput)
 						{
@@ -377,11 +377,11 @@ namespace DNA.Drawing.UI
 			this._doubleClickTimer.Update(gameTime.ElapsedGameTime);
 			if (this._scrollBar.Visible)
 			{
-				int num = this.Items.Count - this._itemsToDraw;
-				int num2 = ((int)Math.Round((double)(this._scrollBar.Value * (float)num))).Clamp(0, num);
-				while (num2 != this._topItemIndex)
+				int maxTopItem = this.Items.Count - this._itemsToDraw;
+				int targetValue = ((int)Math.Round((double)(this._scrollBar.Value * (float)maxTopItem))).Clamp(0, maxTopItem);
+				while (targetValue != this._topItemIndex)
 				{
-					if (num2 < this._topItemIndex)
+					if (targetValue < this._topItemIndex)
 					{
 						this._moveUp(false);
 					}

@@ -15,31 +15,31 @@ namespace DNA.Runtime.Serialization
 
 		public override Type BindToType(string assemblyName, string typeName)
 		{
-			string text;
-			if (this.TypeNameReplacements.TryGetValue(typeName, out text))
+			string newTypeName;
+			if (this.TypeNameReplacements.TryGetValue(typeName, out newTypeName))
 			{
-				typeName = text;
+				typeName = newTypeName;
 			}
-			Type type = null;
-			string text2 = Assembly.CreateQualifiedName(assemblyName, typeName);
+			Type t = null;
+			string strongTypeName = Assembly.CreateQualifiedName(assemblyName, typeName);
 			try
 			{
-				type = Type.GetType(text2);
+				t = Type.GetType(strongTypeName);
 			}
 			catch
 			{
-				type = Type.GetType(typeName);
+				t = Type.GetType(typeName);
 			}
-			Type type2;
-			if (this.TypeReplacements.TryGetValue(type, out type2))
+			Type newType;
+			if (this.TypeReplacements.TryGetValue(t, out newType))
 			{
-				type = type2;
+				t = newType;
 			}
-			if (type == null)
+			if (t == null)
 			{
 				throw new SerializationException(string.Concat(new string[] { "Type ", typeName, " ", assemblyName, " Not Found" }));
 			}
-			return type;
+			return t;
 		}
 
 		public Dictionary<Type, Type> TypeReplacements = new Dictionary<Type, Type>();

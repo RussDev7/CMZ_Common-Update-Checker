@@ -64,15 +64,15 @@ namespace DNA.Drawing.UI
 
 		public override void OnDraw(DNAGame _game, GraphicsDevice device, SpriteBatch spriteBatch, SpriteFont font, Color textColor, Color outlineColor, int outlineWidth, Vector2 loc)
 		{
-			Rectangle titleSafeArea = device.Viewport.TitleSafeArea;
-			Vector2 vector = font.MeasureString(">");
-			float num = (float)(titleSafeArea.Right - titleSafeArea.Center.X - 50) - vector.X * 2f;
-			float num2 = (float)(titleSafeArea.Center.X + 15);
+			Rectangle titleSafe = device.Viewport.TitleSafeArea;
+			Vector2 size = font.MeasureString(">");
+			float TextWidth = (float)(titleSafe.Right - titleSafe.Center.X - 50) - size.X * 2f;
+			float bracketLocation = (float)(titleSafe.Center.X + 15);
 			string text = this.CurrentItem.ToString();
-			float num3 = num2 + vector.X + 10f + num / 2f - font.MeasureString(text).X / 2f;
-			spriteBatch.DrawOutlinedText(font, "<", new Vector2(num2, loc.Y), textColor, outlineColor, outlineWidth);
-			spriteBatch.DrawOutlinedText(font, ">", new Vector2((float)(titleSafeArea.Right - 15) - vector.X, loc.Y), textColor, outlineColor, outlineWidth);
-			spriteBatch.DrawOutlinedText(font, text, new Vector2(num3, loc.Y), textColor, outlineColor, outlineWidth);
+			float textLoc = bracketLocation + size.X + 10f + TextWidth / 2f - font.MeasureString(text).X / 2f;
+			spriteBatch.DrawOutlinedText(font, "<", new Vector2(bracketLocation, loc.Y), textColor, outlineColor, outlineWidth);
+			spriteBatch.DrawOutlinedText(font, ">", new Vector2((float)(titleSafe.Right - 15) - size.X, loc.Y), textColor, outlineColor, outlineWidth);
+			spriteBatch.DrawOutlinedText(font, text, new Vector2(textLoc, loc.Y), textColor, outlineColor, outlineWidth);
 			base.OnDraw(_game, device, spriteBatch, font, textColor, outlineColor, outlineWidth, loc);
 		}
 

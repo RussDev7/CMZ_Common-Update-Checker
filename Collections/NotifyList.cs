@@ -79,10 +79,10 @@ namespace DNA.Collections
 
 		public void RemoveAt(int index)
 		{
-			T t = this._list[index];
-			this.OnRemove(index, t);
+			T item = this._list[index];
+			this.OnRemove(index, item);
 			this._list.RemoveAt(index);
-			this.OnRemoveComplete(index, t);
+			this.OnRemoveComplete(index, item);
 			if (this.Removed != null)
 			{
 				this.Removed(this, null);
@@ -102,10 +102,10 @@ namespace DNA.Collections
 			set
 			{
 				this.OnValidate(value);
-				T t = this._list[index];
+				T old = this._list[index];
 				this.OnSet(index, this._list[index], value);
 				this._list[index] = value;
-				this.OnSetComplete(index, t, value);
+				this.OnSetComplete(index, old, value);
 				if (this.Set != null)
 				{
 					this.Set(this, null);
@@ -176,14 +176,14 @@ namespace DNA.Collections
 
 		public bool Remove(T item)
 		{
-			int num = this._list.IndexOf(item);
-			if (num < 0)
+			int index = this._list.IndexOf(item);
+			if (index < 0)
 			{
 				return false;
 			}
-			this.OnRemove(num, item);
-			this._list.RemoveAt(num);
-			this.OnRemoveComplete(num, item);
+			this.OnRemove(index, item);
+			this._list.RemoveAt(index);
+			this.OnRemoveComplete(index, item);
 			if (this.Removed != null)
 			{
 				this.Removed(this, null);

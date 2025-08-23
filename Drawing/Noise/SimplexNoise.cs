@@ -7,332 +7,332 @@ namespace DNA.Drawing.Noise
 	{
 		public float ComputeNoise(float x, float y)
 		{
-			float num = 0.3660254f;
-			float num2 = (x + y) * num;
-			int num3 = SimplexNoise.FastFloor(x + num2);
-			int num4 = SimplexNoise.FastFloor(y + num2);
-			float num5 = 0.21132487f;
-			float num6 = (float)(num3 + num4) * num5;
-			float num7 = (float)num3 - num6;
-			float num8 = (float)num4 - num6;
-			float num9 = x - num7;
-			float num10 = y - num8;
-			int num11;
-			int num12;
-			if (num9 > num10)
+			float F2 = 0.3660254f;
+			float s = (x + y) * F2;
+			int i = SimplexNoise.FastFloor(x + s);
+			int j = SimplexNoise.FastFloor(y + s);
+			float G2 = 0.21132487f;
+			float t = (float)(i + j) * G2;
+			float X0 = (float)i - t;
+			float Y0 = (float)j - t;
+			float x2 = x - X0;
+			float y2 = y - Y0;
+			int i2;
+			int j2;
+			if (x2 > y2)
 			{
-				num11 = 1;
-				num12 = 0;
+				i2 = 1;
+				j2 = 0;
 			}
 			else
 			{
-				num11 = 0;
-				num12 = 1;
+				i2 = 0;
+				j2 = 1;
 			}
-			float num13 = num9 - (float)num11 + num5;
-			float num14 = num10 - (float)num12 + num5;
-			float num15 = num9 - 1f + 2f * num5;
-			float num16 = num10 - 1f + 2f * num5;
-			int num17 = num3 & 255;
-			int num18 = num4 & 255;
-			int num19 = this._permute[num17 + this._permute[num18]] % 12;
-			int num20 = this._permute[num17 + num11 + this._permute[num18 + num12]] % 12;
-			int num21 = this._permute[num17 + 1 + this._permute[num18 + 1]] % 12;
-			float num22 = 0.5f - num9 * num9 - num10 * num10;
-			float num23;
-			if (num22 < 0f)
+			float x3 = x2 - (float)i2 + G2;
+			float y3 = y2 - (float)j2 + G2;
+			float x4 = x2 - 1f + 2f * G2;
+			float y4 = y2 - 1f + 2f * G2;
+			int ii = i & 255;
+			int jj = j & 255;
+			int gi0 = this._permute[ii + this._permute[jj]] % 12;
+			int gi = this._permute[ii + i2 + this._permute[jj + j2]] % 12;
+			int gi2 = this._permute[ii + 1 + this._permute[jj + 1]] % 12;
+			float t2 = 0.5f - x2 * x2 - y2 * y2;
+			float n0;
+			if (t2 < 0f)
 			{
-				num23 = 0f;
+				n0 = 0f;
 			}
 			else
 			{
-				num22 *= num22;
-				num23 = num22 * num22 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[num19], num9, num10);
+				t2 *= t2;
+				n0 = t2 * t2 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[gi0], x2, y2);
 			}
-			float num24 = 0.5f - num13 * num13 - num14 * num14;
-			float num25;
-			if (num24 < 0f)
+			float t3 = 0.5f - x3 * x3 - y3 * y3;
+			float n;
+			if (t3 < 0f)
 			{
-				num25 = 0f;
+				n = 0f;
 			}
 			else
 			{
-				num24 *= num24;
-				num25 = num24 * num24 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[num20], num13, num14);
+				t3 *= t3;
+				n = t3 * t3 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[gi], x3, y3);
 			}
-			float num26 = 0.5f - num15 * num15 - num16 * num16;
-			float num27;
-			if (num26 < 0f)
+			float t4 = 0.5f - x4 * x4 - y4 * y4;
+			float n2;
+			if (t4 < 0f)
 			{
-				num27 = 0f;
+				n2 = 0f;
 			}
 			else
 			{
-				num26 *= num26;
-				num27 = num26 * num26 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[num21], num15, num16);
+				t4 *= t4;
+				n2 = t4 * t4 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[gi2], x4, y4);
 			}
-			return 70f * (num23 + num25 + num27);
+			return 70f * (n0 + n + n2);
 		}
 
 		public float ComputeNoise(float x, float y, float z)
 		{
-			float num = 0.33333334f;
-			float num2 = (x + y + z) * num;
-			int num3 = SimplexNoise.FastFloor(x + num2);
-			int num4 = SimplexNoise.FastFloor(y + num2);
-			int num5 = SimplexNoise.FastFloor(z + num2);
-			float num6 = 0.16666667f;
-			float num7 = (float)(num3 + num4 + num5) * num6;
-			float num8 = (float)num3 - num7;
-			float num9 = (float)num4 - num7;
-			float num10 = (float)num5 - num7;
-			float num11 = x - num8;
-			float num12 = y - num9;
-			float num13 = z - num10;
-			int num14;
-			int num15;
-			int num16;
-			int num17;
-			int num18;
-			int num19;
-			if (num11 >= num12)
+			float F3 = 0.33333334f;
+			float s = (x + y + z) * F3;
+			int i = SimplexNoise.FastFloor(x + s);
+			int j = SimplexNoise.FastFloor(y + s);
+			int k = SimplexNoise.FastFloor(z + s);
+			float G3 = 0.16666667f;
+			float t = (float)(i + j + k) * G3;
+			float X0 = (float)i - t;
+			float Y0 = (float)j - t;
+			float Z0 = (float)k - t;
+			float x2 = x - X0;
+			float y2 = y - Y0;
+			float z2 = z - Z0;
+			int i2;
+			int j2;
+			int k2;
+			int i3;
+			int j3;
+			int k3;
+			if (x2 >= y2)
 			{
-				if (num12 >= num13)
+				if (y2 >= z2)
 				{
-					num14 = 1;
-					num15 = 0;
-					num16 = 0;
-					num17 = 1;
-					num18 = 1;
-					num19 = 0;
+					i2 = 1;
+					j2 = 0;
+					k2 = 0;
+					i3 = 1;
+					j3 = 1;
+					k3 = 0;
 				}
-				else if (num11 >= num13)
+				else if (x2 >= z2)
 				{
-					num14 = 1;
-					num15 = 0;
-					num16 = 0;
-					num17 = 1;
-					num18 = 0;
-					num19 = 1;
+					i2 = 1;
+					j2 = 0;
+					k2 = 0;
+					i3 = 1;
+					j3 = 0;
+					k3 = 1;
 				}
 				else
 				{
-					num14 = 0;
-					num15 = 0;
-					num16 = 1;
-					num17 = 1;
-					num18 = 0;
-					num19 = 1;
+					i2 = 0;
+					j2 = 0;
+					k2 = 1;
+					i3 = 1;
+					j3 = 0;
+					k3 = 1;
 				}
 			}
-			else if (num12 < num13)
+			else if (y2 < z2)
 			{
-				num14 = 0;
-				num15 = 0;
-				num16 = 1;
-				num17 = 0;
-				num18 = 1;
-				num19 = 1;
+				i2 = 0;
+				j2 = 0;
+				k2 = 1;
+				i3 = 0;
+				j3 = 1;
+				k3 = 1;
 			}
-			else if (num11 < num13)
+			else if (x2 < z2)
 			{
-				num14 = 0;
-				num15 = 1;
-				num16 = 0;
-				num17 = 0;
-				num18 = 1;
-				num19 = 1;
-			}
-			else
-			{
-				num14 = 0;
-				num15 = 1;
-				num16 = 0;
-				num17 = 1;
-				num18 = 1;
-				num19 = 0;
-			}
-			float num20 = num11 - (float)num14 + num6;
-			float num21 = num12 - (float)num15 + num6;
-			float num22 = num13 - (float)num16 + num6;
-			float num23 = num11 - (float)num17 + 2f * num6;
-			float num24 = num12 - (float)num18 + 2f * num6;
-			float num25 = num13 - (float)num19 + 2f * num6;
-			float num26 = num11 - 1f + 3f * num6;
-			float num27 = num12 - 1f + 3f * num6;
-			float num28 = num13 - 1f + 3f * num6;
-			int num29 = num3 & 255;
-			int num30 = num4 & 255;
-			int num31 = num5 & 255;
-			int num32 = this._permute[num29 + this._permute[num30 + this._permute[num31]]] % 12;
-			int num33 = this._permute[num29 + num14 + this._permute[num30 + num15 + this._permute[num31 + num16]]] % 12;
-			int num34 = this._permute[num29 + num17 + this._permute[num30 + num18 + this._permute[num31 + num19]]] % 12;
-			int num35 = this._permute[num29 + 1 + this._permute[num30 + 1 + this._permute[num31 + 1]]] % 12;
-			float num36 = 0.6f - num11 * num11 - num12 * num12 - num13 * num13;
-			float num37;
-			if (num36 < 0f)
-			{
-				num37 = 0f;
+				i2 = 0;
+				j2 = 1;
+				k2 = 0;
+				i3 = 0;
+				j3 = 1;
+				k3 = 1;
 			}
 			else
 			{
-				num36 *= num36;
-				num37 = num36 * num36 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[num32], num11, num12, num13);
+				i2 = 0;
+				j2 = 1;
+				k2 = 0;
+				i3 = 1;
+				j3 = 1;
+				k3 = 0;
 			}
-			float num38 = 0.6f - num20 * num20 - num21 * num21 - num22 * num22;
-			float num39;
-			if (num38 < 0f)
+			float x3 = x2 - (float)i2 + G3;
+			float y3 = y2 - (float)j2 + G3;
+			float z3 = z2 - (float)k2 + G3;
+			float x4 = x2 - (float)i3 + 2f * G3;
+			float y4 = y2 - (float)j3 + 2f * G3;
+			float z4 = z2 - (float)k3 + 2f * G3;
+			float x5 = x2 - 1f + 3f * G3;
+			float y5 = y2 - 1f + 3f * G3;
+			float z5 = z2 - 1f + 3f * G3;
+			int ii = i & 255;
+			int jj = j & 255;
+			int kk = k & 255;
+			int gi0 = this._permute[ii + this._permute[jj + this._permute[kk]]] % 12;
+			int gi = this._permute[ii + i2 + this._permute[jj + j2 + this._permute[kk + k2]]] % 12;
+			int gi2 = this._permute[ii + i3 + this._permute[jj + j3 + this._permute[kk + k3]]] % 12;
+			int gi3 = this._permute[ii + 1 + this._permute[jj + 1 + this._permute[kk + 1]]] % 12;
+			float t2 = 0.6f - x2 * x2 - y2 * y2 - z2 * z2;
+			float n0;
+			if (t2 < 0f)
 			{
-				num39 = 0f;
+				n0 = 0f;
 			}
 			else
 			{
-				num38 *= num38;
-				num39 = num38 * num38 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[num33], num20, num21, num22);
+				t2 *= t2;
+				n0 = t2 * t2 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[gi0], x2, y2, z2);
 			}
-			float num40 = 0.6f - num23 * num23 - num24 * num24 - num25 * num25;
-			float num41;
-			if (num40 < 0f)
+			float t3 = 0.6f - x3 * x3 - y3 * y3 - z3 * z3;
+			float n;
+			if (t3 < 0f)
 			{
-				num41 = 0f;
+				n = 0f;
 			}
 			else
 			{
-				num40 *= num40;
-				num41 = num40 * num40 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[num34], num23, num24, num25);
+				t3 *= t3;
+				n = t3 * t3 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[gi], x3, y3, z3);
 			}
-			float num42 = 0.6f - num26 * num26 - num27 * num27 - num28 * num28;
-			float num43;
-			if (num42 < 0f)
+			float t4 = 0.6f - x4 * x4 - y4 * y4 - z4 * z4;
+			float n2;
+			if (t4 < 0f)
 			{
-				num43 = 0f;
+				n2 = 0f;
 			}
 			else
 			{
-				num42 *= num42;
-				num43 = num42 * num42 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[num35], num26, num27, num28);
+				t4 *= t4;
+				n2 = t4 * t4 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[gi2], x4, y4, z4);
 			}
-			return 32f * (num37 + num39 + num41 + num43);
+			float t5 = 0.6f - x5 * x5 - y5 * y5 - z5 * z5;
+			float n3;
+			if (t5 < 0f)
+			{
+				n3 = 0f;
+			}
+			else
+			{
+				t5 *= t5;
+				n3 = t5 * t5 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors3[gi3], x5, y5, z5);
+			}
+			return 32f * (n0 + n + n2 + n3);
 		}
 
 		public float ComputeNoise(float x, float y, float z, float w)
 		{
-			float num = 0.309017f;
-			float num2 = 0.1381966f;
-			float num3 = (x + y + z + w) * num;
-			int num4 = SimplexNoise.FastFloor(x + num3);
-			int num5 = SimplexNoise.FastFloor(y + num3);
-			int num6 = SimplexNoise.FastFloor(z + num3);
-			int num7 = SimplexNoise.FastFloor(w + num3);
-			float num8 = (float)(num4 + num5 + num6 + num7) * num2;
-			float num9 = (float)num4 - num8;
-			float num10 = (float)num5 - num8;
-			float num11 = (float)num6 - num8;
-			float num12 = (float)num7 - num8;
-			float num13 = x - num9;
-			float num14 = y - num10;
-			float num15 = z - num11;
-			float num16 = w - num12;
-			int num17 = ((num13 > num14) ? 32 : 0);
-			int num18 = ((num13 > num15) ? 16 : 0);
-			int num19 = ((num14 > num15) ? 8 : 0);
-			int num20 = ((num13 > num16) ? 4 : 0);
-			int num21 = ((num14 > num16) ? 2 : 0);
-			int num22 = ((num15 > num16) ? 1 : 0);
-			int num23 = num17 + num18 + num19 + num20 + num21 + num22;
-			int num24 = ((SimplexNoise.s_simplex[num23][0] >= 3) ? 1 : 0);
-			int num25 = ((SimplexNoise.s_simplex[num23][1] >= 3) ? 1 : 0);
-			int num26 = ((SimplexNoise.s_simplex[num23][2] >= 3) ? 1 : 0);
-			int num27 = ((SimplexNoise.s_simplex[num23][3] >= 3) ? 1 : 0);
-			int num28 = ((SimplexNoise.s_simplex[num23][0] >= 2) ? 1 : 0);
-			int num29 = ((SimplexNoise.s_simplex[num23][1] >= 2) ? 1 : 0);
-			int num30 = ((SimplexNoise.s_simplex[num23][2] >= 2) ? 1 : 0);
-			int num31 = ((SimplexNoise.s_simplex[num23][3] >= 2) ? 1 : 0);
-			int num32 = ((SimplexNoise.s_simplex[num23][0] >= 1) ? 1 : 0);
-			int num33 = ((SimplexNoise.s_simplex[num23][1] >= 1) ? 1 : 0);
-			int num34 = ((SimplexNoise.s_simplex[num23][2] >= 1) ? 1 : 0);
-			int num35 = ((SimplexNoise.s_simplex[num23][3] >= 1) ? 1 : 0);
-			float num36 = num13 - (float)num24 + num2;
-			float num37 = num14 - (float)num25 + num2;
-			float num38 = num15 - (float)num26 + num2;
-			float num39 = num16 - (float)num27 + num2;
-			float num40 = num13 - (float)num28 + 2f * num2;
-			float num41 = num14 - (float)num29 + 2f * num2;
-			float num42 = num15 - (float)num30 + 2f * num2;
-			float num43 = num16 - (float)num31 + 2f * num2;
-			float num44 = num13 - (float)num32 + 3f * num2;
-			float num45 = num14 - (float)num33 + 3f * num2;
-			float num46 = num15 - (float)num34 + 3f * num2;
-			float num47 = num16 - (float)num35 + 3f * num2;
-			float num48 = num13 - 1f + 4f * num2;
-			float num49 = num14 - 1f + 4f * num2;
-			float num50 = num15 - 1f + 4f * num2;
-			float num51 = num16 - 1f + 4f * num2;
-			int num52 = num4 & 255;
-			int num53 = num5 & 255;
-			int num54 = num6 & 255;
-			int num55 = num7 & 255;
-			int num56 = this._permute[num52 + this._permute[num53 + this._permute[num54 + this._permute[num55]]]] % 32;
-			int num57 = this._permute[num52 + num24 + this._permute[num53 + num25 + this._permute[num54 + num26 + this._permute[num55 + num27]]]] % 32;
-			int num58 = this._permute[num52 + num28 + this._permute[num53 + num29 + this._permute[num54 + num30 + this._permute[num55 + num31]]]] % 32;
-			int num59 = this._permute[num52 + num32 + this._permute[num53 + num33 + this._permute[num54 + num34 + this._permute[num55 + num35]]]] % 32;
-			int num60 = this._permute[num52 + 1 + this._permute[num53 + 1 + this._permute[num54 + 1 + this._permute[num55 + 1]]]] % 32;
-			float num61 = 0.6f - num13 * num13 - num14 * num14 - num15 * num15 - num16 * num16;
-			float num62;
-			if (num61 < 0f)
+			float F4 = 0.309017f;
+			float G4 = 0.1381966f;
+			float s = (x + y + z + w) * F4;
+			int i = SimplexNoise.FastFloor(x + s);
+			int j = SimplexNoise.FastFloor(y + s);
+			int k = SimplexNoise.FastFloor(z + s);
+			int l = SimplexNoise.FastFloor(w + s);
+			float t = (float)(i + j + k + l) * G4;
+			float X0 = (float)i - t;
+			float Y0 = (float)j - t;
+			float Z0 = (float)k - t;
+			float W0 = (float)l - t;
+			float x2 = x - X0;
+			float y2 = y - Y0;
+			float z2 = z - Z0;
+			float w2 = w - W0;
+			int c = ((x2 > y2) ? 32 : 0);
+			int c2 = ((x2 > z2) ? 16 : 0);
+			int c3 = ((y2 > z2) ? 8 : 0);
+			int c4 = ((x2 > w2) ? 4 : 0);
+			int c5 = ((y2 > w2) ? 2 : 0);
+			int c6 = ((z2 > w2) ? 1 : 0);
+			int c7 = c + c2 + c3 + c4 + c5 + c6;
+			int i2 = ((SimplexNoise.s_simplex[c7][0] >= 3) ? 1 : 0);
+			int j2 = ((SimplexNoise.s_simplex[c7][1] >= 3) ? 1 : 0);
+			int k2 = ((SimplexNoise.s_simplex[c7][2] >= 3) ? 1 : 0);
+			int l2 = ((SimplexNoise.s_simplex[c7][3] >= 3) ? 1 : 0);
+			int i3 = ((SimplexNoise.s_simplex[c7][0] >= 2) ? 1 : 0);
+			int j3 = ((SimplexNoise.s_simplex[c7][1] >= 2) ? 1 : 0);
+			int k3 = ((SimplexNoise.s_simplex[c7][2] >= 2) ? 1 : 0);
+			int l3 = ((SimplexNoise.s_simplex[c7][3] >= 2) ? 1 : 0);
+			int i4 = ((SimplexNoise.s_simplex[c7][0] >= 1) ? 1 : 0);
+			int j4 = ((SimplexNoise.s_simplex[c7][1] >= 1) ? 1 : 0);
+			int k4 = ((SimplexNoise.s_simplex[c7][2] >= 1) ? 1 : 0);
+			int l4 = ((SimplexNoise.s_simplex[c7][3] >= 1) ? 1 : 0);
+			float x3 = x2 - (float)i2 + G4;
+			float y3 = y2 - (float)j2 + G4;
+			float z3 = z2 - (float)k2 + G4;
+			float w3 = w2 - (float)l2 + G4;
+			float x4 = x2 - (float)i3 + 2f * G4;
+			float y4 = y2 - (float)j3 + 2f * G4;
+			float z4 = z2 - (float)k3 + 2f * G4;
+			float w4 = w2 - (float)l3 + 2f * G4;
+			float x5 = x2 - (float)i4 + 3f * G4;
+			float y5 = y2 - (float)j4 + 3f * G4;
+			float z5 = z2 - (float)k4 + 3f * G4;
+			float w5 = w2 - (float)l4 + 3f * G4;
+			float x6 = x2 - 1f + 4f * G4;
+			float y6 = y2 - 1f + 4f * G4;
+			float z6 = z2 - 1f + 4f * G4;
+			float w6 = w2 - 1f + 4f * G4;
+			int ii = i & 255;
+			int jj = j & 255;
+			int kk = k & 255;
+			int ll = l & 255;
+			int gi0 = this._permute[ii + this._permute[jj + this._permute[kk + this._permute[ll]]]] % 32;
+			int gi = this._permute[ii + i2 + this._permute[jj + j2 + this._permute[kk + k2 + this._permute[ll + l2]]]] % 32;
+			int gi2 = this._permute[ii + i3 + this._permute[jj + j3 + this._permute[kk + k3 + this._permute[ll + l3]]]] % 32;
+			int gi3 = this._permute[ii + i4 + this._permute[jj + j4 + this._permute[kk + k4 + this._permute[ll + l4]]]] % 32;
+			int gi4 = this._permute[ii + 1 + this._permute[jj + 1 + this._permute[kk + 1 + this._permute[ll + 1]]]] % 32;
+			float t2 = 0.6f - x2 * x2 - y2 * y2 - z2 * z2 - w2 * w2;
+			float n0;
+			if (t2 < 0f)
 			{
-				num62 = 0f;
+				n0 = 0f;
 			}
 			else
 			{
-				num61 *= num61;
-				num62 = num61 * num61 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors4[num56], num13, num14, num15, num16);
+				t2 *= t2;
+				n0 = t2 * t2 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors4[gi0], x2, y2, z2, w2);
 			}
-			float num63 = 0.6f - num36 * num36 - num37 * num37 - num38 * num38 - num39 * num39;
-			float num64;
-			if (num63 < 0f)
+			float t3 = 0.6f - x3 * x3 - y3 * y3 - z3 * z3 - w3 * w3;
+			float n;
+			if (t3 < 0f)
 			{
-				num64 = 0f;
+				n = 0f;
 			}
 			else
 			{
-				num63 *= num63;
-				num64 = num63 * num63 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors4[num57], num36, num37, num38, num39);
+				t3 *= t3;
+				n = t3 * t3 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors4[gi], x3, y3, z3, w3);
 			}
-			float num65 = 0.6f - num40 * num40 - num41 * num41 - num42 * num42 - num43 * num43;
-			float num66;
-			if (num65 < 0f)
+			float t4 = 0.6f - x4 * x4 - y4 * y4 - z4 * z4 - w4 * w4;
+			float n2;
+			if (t4 < 0f)
 			{
-				num66 = 0f;
+				n2 = 0f;
 			}
 			else
 			{
-				num65 *= num65;
-				num66 = num65 * num65 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors4[num58], num40, num41, num42, num43);
+				t4 *= t4;
+				n2 = t4 * t4 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors4[gi2], x4, y4, z4, w4);
 			}
-			float num67 = 0.6f - num44 * num44 - num45 * num45 - num46 * num46 - num47 * num47;
-			float num68;
-			if (num67 < 0f)
+			float t5 = 0.6f - x5 * x5 - y5 * y5 - z5 * z5 - w5 * w5;
+			float n3;
+			if (t5 < 0f)
 			{
-				num68 = 0f;
+				n3 = 0f;
 			}
 			else
 			{
-				num67 *= num67;
-				num68 = num67 * num67 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors4[num59], num44, num45, num46, num47);
+				t5 *= t5;
+				n3 = t5 * t5 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors4[gi3], x5, y5, z5, w5);
 			}
-			float num69 = 0.6f - num48 * num48 - num49 * num49 - num50 * num50 - num51 * num51;
-			float num70;
-			if (num69 < 0f)
+			float t6 = 0.6f - x6 * x6 - y6 * y6 - z6 * z6 - w6 * w6;
+			float n4;
+			if (t6 < 0f)
 			{
-				num70 = 0f;
+				n4 = 0f;
 			}
 			else
 			{
-				num69 *= num69;
-				num70 = num69 * num69 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors4[num60], num48, num49, num50, num51);
+				t6 *= t6;
+				n4 = t6 * t6 * SimplexNoise.Dot(SimplexNoise.s_gradientVectors4[gi4], x6, y6, z6, w6);
 			}
-			return 27f * (num62 + num64 + num66 + num68 + num70);
+			return 27f * (n0 + n + n2 + n3 + n4);
 		}
 
 		public float ComputeNoise(Vector2 v)

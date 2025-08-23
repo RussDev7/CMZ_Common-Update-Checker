@@ -69,22 +69,22 @@ namespace DNA
 
 			public CheatCode RegisterCode(string systemName, string reward, string unlockCode, object tag)
 			{
-				CheatCode cheatCode = new CheatCode(this, systemName, reward, unlockCode, tag);
-				this.Codes[cheatCode.SystemName] = cheatCode;
-				return cheatCode;
+				CheatCode code = new CheatCode(this, systemName, reward, unlockCode, tag);
+				this.Codes[code.SystemName] = code;
+				return code;
 			}
 
 			public List<CheatCode> GetRedeemedCodes()
 			{
-				List<CheatCode> list = new List<CheatCode>();
-				foreach (KeyValuePair<string, CheatCode> keyValuePair in this.Codes)
+				List<CheatCode> redeemedCodes = new List<CheatCode>();
+				foreach (KeyValuePair<string, CheatCode> pair in this.Codes)
 				{
-					if (keyValuePair.Value.Redeemed)
+					if (pair.Value.Redeemed)
 					{
-						list.Add(keyValuePair.Value);
+						redeemedCodes.Add(pair.Value);
 					}
 				}
-				return list;
+				return redeemedCodes;
 			}
 
 			public CheatCode GetDisplayCode(string name, string description, string unlockCode, object tag)
@@ -98,15 +98,15 @@ namespace DNA
 				{
 					this._saveDevice.Load(CheatCode.CheatCodeManager.CodeFileName, delegate(Stream stream)
 					{
-						BinaryReader binaryReader = new BinaryReader(stream);
-						int num = binaryReader.ReadInt32();
-						for (int i = 0; i < num; i++)
+						BinaryReader reader = new BinaryReader(stream);
+						int count = reader.ReadInt32();
+						for (int i = 0; i < count; i++)
 						{
-							string text = binaryReader.ReadString();
-							CheatCode cheatCode;
-							if (this.Codes.TryGetValue(text, out cheatCode))
+							string name = reader.ReadString();
+							CheatCode code;
+							if (this.Codes.TryGetValue(name, out code))
 							{
-								cheatCode._redeemed = true;
+								code._redeemed = true;
 							}
 						}
 					});
@@ -127,13 +127,13 @@ namespace DNA
 						{
 							return;
 						}
-						BinaryWriter binaryWriter = new BinaryWriter(stream);
-						binaryWriter.Write(redeemedCodes.Count);
-						foreach (CheatCode cheatCode in redeemedCodes)
+						BinaryWriter writer = new BinaryWriter(stream);
+						writer.Write(redeemedCodes.Count);
+						foreach (CheatCode code in redeemedCodes)
 						{
-							binaryWriter.Write(cheatCode.SystemName);
+							writer.Write(code.SystemName);
 						}
-						binaryWriter.Flush();
+						writer.Flush();
 					});
 				}
 				catch
@@ -149,18 +149,18 @@ namespace DNA
 
 			public CheatCode Redeem(string code, out string reason)
 			{
-				string text = code.ToUpper();
+				string cheatcode = code.ToUpper();
 				reason = "Invalid Code";
-				foreach (KeyValuePair<string, CheatCode> keyValuePair in this.Codes)
+				foreach (KeyValuePair<string, CheatCode> pair in this.Codes)
 				{
-					if (text == keyValuePair.Value.Cheatcode)
+					if (cheatcode == pair.Value.Cheatcode)
 					{
-						if (!keyValuePair.Value.Redeemed)
+						if (!pair.Value.Redeemed)
 						{
-							keyValuePair.Value._redeemed = true;
+							pair.Value._redeemed = true;
 							reason = "Success";
 							this.SaveCodes();
-							return keyValuePair.Value;
+							return pair.Value;
 						}
 						reason = "Code Already Redeemed";
 					}

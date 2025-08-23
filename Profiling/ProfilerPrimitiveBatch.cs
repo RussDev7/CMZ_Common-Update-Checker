@@ -65,8 +65,8 @@ namespace DNA.Profiling
 			{
 				throw new InvalidOperationException("Begin must be called before AddVertex can be called.");
 			}
-			bool flag = this.positionInBuffer % this.numVertsPerPrimitive == 0;
-			if (flag && this.positionInBuffer + this.numVertsPerPrimitive >= this.vertices.Length)
+			bool newPrimitive = this.positionInBuffer % this.numVertsPerPrimitive == 0;
+			if (newPrimitive && this.positionInBuffer + this.numVertsPerPrimitive >= this.vertices.Length)
 			{
 				this.Flush();
 			}
@@ -95,8 +95,8 @@ namespace DNA.Profiling
 			{
 				return;
 			}
-			int num = this.positionInBuffer / this.numVertsPerPrimitive;
-			this.device.DrawUserPrimitives<VertexPositionColor>(this.primitiveType, this.vertices, 0, num);
+			int primitiveCount = this.positionInBuffer / this.numVertsPerPrimitive;
+			this.device.DrawUserPrimitives<VertexPositionColor>(this.primitiveType, this.vertices, 0, primitiveCount);
 			this.positionInBuffer = 0;
 		}
 
@@ -119,16 +119,16 @@ namespace DNA.Profiling
 
 		public void AddFilledBox(ref Vector2 coord, ref Vector2 size, Color color, bool centered)
 		{
-			Vector2 vector;
+			Vector2 upperLeft;
 			if (centered)
 			{
-				vector = coord - size * 0.5f;
+				upperLeft = coord - size * 0.5f;
 			}
 			else
 			{
-				vector = coord;
+				upperLeft = coord;
 			}
-			Vector2 vector2 = vector + size;
+			Vector2 lowerRight = upperLeft + size;
 			if (this.hasBegun && this.primitiveType != PrimitiveType.TriangleList)
 			{
 				this.End();
@@ -137,12 +137,12 @@ namespace DNA.Profiling
 			{
 				this.Begin(PrimitiveType.TriangleList, this.basicEffect.View);
 			}
-			this.AddVertex(new Vector2(vector.X, vector.Y), color);
-			this.AddVertex(new Vector2(vector2.X, vector.Y), color);
-			this.AddVertex(new Vector2(vector.X, vector2.Y), color);
-			this.AddVertex(new Vector2(vector.X, vector2.Y), color);
-			this.AddVertex(new Vector2(vector2.X, vector.Y), color);
-			this.AddVertex(new Vector2(vector2.X, vector2.Y), color);
+			this.AddVertex(new Vector2(upperLeft.X, upperLeft.Y), color);
+			this.AddVertex(new Vector2(lowerRight.X, upperLeft.Y), color);
+			this.AddVertex(new Vector2(upperLeft.X, lowerRight.Y), color);
+			this.AddVertex(new Vector2(upperLeft.X, lowerRight.Y), color);
+			this.AddVertex(new Vector2(lowerRight.X, upperLeft.Y), color);
+			this.AddVertex(new Vector2(lowerRight.X, lowerRight.Y), color);
 		}
 
 		public void AddLine(Vector2[] vectors, Color color, bool close)
@@ -177,34 +177,34 @@ namespace DNA.Profiling
 			{
 				this.Begin(PrimitiveType.LineList, this.basicEffect.View);
 			}
-			int num = startIndex;
-			float num2 = size.X / ((float)values.Length - 1f);
-			Vector2 vector = Vector2.Zero;
-			Vector2 vector2 = new Vector2(upperLeft.X, 0f);
-			for (int i = 0; i < values.Length; i++)
+			int i = startIndex;
+			float step = size.X / ((float)values.Length - 1f);
+			Vector2 prev = Vector2.Zero;
+			Vector2 next = new Vector2(upperLeft.X, 0f);
+			for (int count = 0; count < values.Length; count++)
 			{
-				vector2.X += num2;
-				if (values[num] < scale.X)
+				next.X += step;
+				if (values[i] < scale.X)
 				{
-					vector2.Y = upperLeft.Y + size.Y;
+					next.Y = upperLeft.Y + size.Y;
 				}
-				else if (values[num] > scale.Y)
+				else if (values[i] > scale.Y)
 				{
-					vector2.Y = upperLeft.Y;
+					next.Y = upperLeft.Y;
 				}
 				else
 				{
-					vector2.Y = upperLeft.Y + size.Y * (1f - (values[num] - scale.X) / (scale.Y - scale.X));
+					next.Y = upperLeft.Y + size.Y * (1f - (values[i] - scale.X) / (scale.Y - scale.X));
 				}
-				if (i != 0)
+				if (count != 0)
 				{
-					this.AddVertex(vector, color);
-					this.AddVertex(vector2, color);
+					this.AddVertex(prev, color);
+					this.AddVertex(next, color);
 				}
-				vector = vector2;
-				if (++num == values.Length)
+				prev = next;
+				if (++i == values.Length)
 				{
-					num = 0;
+					i = 0;
 				}
 			}
 		}
@@ -223,12 +223,12 @@ namespace DNA.Profiling
 			{
 				this.Begin(PrimitiveType.LineList, this.basicEffect.View);
 			}
-			Vector2 vector = new Vector2(upperLeft.X, 0f);
-			Vector2 vector2 = new Vector2(upperLeft.X + size.X, 0f);
-			vector.Y = upperLeft.Y + size.Y * (1f - (value - scale.X) / (scale.Y - scale.X));
-			vector2.Y = vector.Y;
-			this.AddVertex(vector, color);
-			this.AddVertex(vector2, color);
+			Vector2 startPoint = new Vector2(upperLeft.X, 0f);
+			Vector2 stopPoint = new Vector2(upperLeft.X + size.X, 0f);
+			startPoint.Y = upperLeft.Y + size.Y * (1f - (value - scale.X) / (scale.Y - scale.X));
+			stopPoint.Y = startPoint.Y;
+			this.AddVertex(startPoint, color);
+			this.AddVertex(stopPoint, color);
 		}
 
 		public void DrawGraphVerticalAxis(Vector2 upperLeft, Vector2 size, Color color)

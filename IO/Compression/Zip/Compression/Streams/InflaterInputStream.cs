@@ -185,8 +185,8 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 
 		public override int ReadByte()
 		{
-			int num = this.Read(this.onebytebuffer, 0, 1);
-			if (num > 0)
+			int nread = this.Read(this.onebytebuffer, 0, 1);
+			if (nread > 0)
 			{
 				return (int)(this.onebytebuffer[0] & byte.MaxValue);
 			}
@@ -195,18 +195,18 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 
 		public override int Read(byte[] b, int off, int len)
 		{
-			int num;
+			int count;
 			for (;;)
 			{
 				try
 				{
-					num = this.inf.Inflate(b, off, len);
+					count = this.inf.Inflate(b, off, len);
 				}
-				catch (Exception ex)
+				catch (Exception e)
 				{
-					throw new CompressionException(ex.ToString());
+					throw new CompressionException(e.ToString());
 				}
-				if (num > 0)
+				if (count > 0)
 				{
 					break;
 				}
@@ -224,7 +224,7 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 				}
 				this.Fill();
 			}
-			return num;
+			return count;
 			Block_2:
 			throw new CompressionException("Need a dictionary");
 			IL_0060:
@@ -242,19 +242,19 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 				this.baseInputStream.Seek(n, SeekOrigin.Current);
 				return n;
 			}
-			int num = 2048;
-			if (n < (long)num)
+			int len = 2048;
+			if (n < (long)len)
 			{
-				num = (int)n;
+				len = (int)n;
 			}
-			byte[] array = new byte[num];
-			return (long)this.baseInputStream.Read(array, 0, array.Length);
+			byte[] tmp = new byte[len];
+			return (long)this.baseInputStream.Read(tmp, 0, tmp.Length);
 		}
 
 		protected byte DecryptByte()
 		{
-			uint num = (this.keys[2] & 65535U) | 2U;
-			return (byte)(num * (num ^ 1U) >> 8);
+			uint temp = (this.keys[2] & 65535U) | 2U;
+			return (byte)(temp * (temp ^ 1U) >> 8);
 		}
 
 		protected void DecryptBlock(byte[] buf, int off, int len)

@@ -85,9 +85,9 @@ namespace DNA.Audio.SignalProcessing
 						break;
 					}
 					this.stopWatch.Stop();
-					TimeSpan elapsed = this.stopWatch.Elapsed;
-					TimeSpan timeSpan = TimeSpan.FromSeconds((double)((float)this.WindowSize / (float)this.SampleRate));
-					this.CPULoad = (float)(elapsed.TotalMilliseconds / timeSpan.TotalMilliseconds);
+					TimeSpan span = this.stopWatch.Elapsed;
+					TimeSpan realTime = TimeSpan.FromSeconds((double)((float)this.WindowSize / (float)this.SampleRate));
+					this.CPULoad = (float)(span.TotalMilliseconds / realTime.TotalMilliseconds);
 				}
 			}
 			catch (Exception)

@@ -32,9 +32,9 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				this.ToDateTime();
 			}
-			catch (FormatException ex)
+			catch (FormatException e)
 			{
-				throw new ArgumentException("invalid date string: " + ex.Message);
+				throw new ArgumentException("invalid date string: " + e.Message);
 			}
 		}
 
@@ -62,46 +62,46 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				return this.time.Substring(0, this.time.Length - 1) + "GMT+00:00";
 			}
-			int num = this.time.Length - 5;
-			char c = this.time[num];
-			if (c == '-' || c == '+')
+			int signPos = this.time.Length - 5;
+			char sign = this.time[signPos];
+			if (sign == '-' || sign == '+')
 			{
 				return string.Concat(new string[]
 				{
-					this.time.Substring(0, num),
+					this.time.Substring(0, signPos),
 					"GMT",
-					this.time.Substring(num, 3),
+					this.time.Substring(signPos, 3),
 					":",
-					this.time.Substring(num + 3)
+					this.time.Substring(signPos + 3)
 				});
 			}
-			num = this.time.Length - 3;
-			c = this.time[num];
-			if (c == '-' || c == '+')
+			signPos = this.time.Length - 3;
+			sign = this.time[signPos];
+			if (sign == '-' || sign == '+')
 			{
-				return this.time.Substring(0, num) + "GMT" + this.time.Substring(num) + ":00";
+				return this.time.Substring(0, signPos) + "GMT" + this.time.Substring(signPos) + ":00";
 			}
 			return this.time + this.CalculateGmtOffset();
 		}
 
 		private string CalculateGmtOffset()
 		{
-			char c = '+';
-			int num = TimeZone.CurrentTimeZone.GetUtcOffset(this.ToDateTime()).Minutes;
-			if (num < 0)
+			char sign = '+';
+			int minutes = TimeZone.CurrentTimeZone.GetUtcOffset(this.ToDateTime()).Minutes;
+			if (minutes < 0)
 			{
-				c = '-';
-				num = -num;
+				sign = '-';
+				minutes = -minutes;
 			}
-			int num2 = num / 60;
-			num %= 60;
+			int hours = minutes / 60;
+			minutes %= 60;
 			return string.Concat(new object[]
 			{
 				"GMT",
-				c,
-				DerGeneralizedTime.Convert(num2),
+				sign,
+				DerGeneralizedTime.Convert(hours),
 				":",
-				DerGeneralizedTime.Convert(num)
+				DerGeneralizedTime.Convert(minutes)
 			});
 		}
 
@@ -116,65 +116,65 @@ namespace DNA.Security.Cryptography.Asn1
 
 		public DateTime ToDateTime()
 		{
-			string text = this.time;
-			bool flag = false;
-			string text2;
-			if (text.EndsWith("Z"))
+			string d = this.time;
+			bool makeUniversal = false;
+			string formatStr;
+			if (d.EndsWith("Z"))
 			{
 				if (this.HasFractionalSeconds)
 				{
-					int num = text.Length - text.IndexOf('.') - 2;
-					text2 = "yyyyMMddHHmmss." + this.FString(num) + "\\Z";
+					int fCount = d.Length - d.IndexOf('.') - 2;
+					formatStr = "yyyyMMddHHmmss." + this.FString(fCount) + "\\Z";
 				}
 				else
 				{
-					text2 = "yyyyMMddHHmmss\\Z";
+					formatStr = "yyyyMMddHHmmss\\Z";
 				}
 			}
 			else if (this.time.IndexOf('-') > 0 || this.time.IndexOf('+') > 0)
 			{
-				text = this.GetTime();
-				flag = true;
+				d = this.GetTime();
+				makeUniversal = true;
 				if (this.HasFractionalSeconds)
 				{
-					int num2 = text.IndexOf("GMT") - 1 - text.IndexOf('.');
-					text2 = "yyyyMMddHHmmss." + this.FString(num2) + "'GMT'zzz";
+					int fCount2 = d.IndexOf("GMT") - 1 - d.IndexOf('.');
+					formatStr = "yyyyMMddHHmmss." + this.FString(fCount2) + "'GMT'zzz";
 				}
 				else
 				{
-					text2 = "yyyyMMddHHmmss'GMT'zzz";
+					formatStr = "yyyyMMddHHmmss'GMT'zzz";
 				}
 			}
 			else if (this.HasFractionalSeconds)
 			{
-				int num3 = text.Length - 1 - text.IndexOf('.');
-				text2 = "yyyyMMddHHmmss." + this.FString(num3);
+				int fCount3 = d.Length - 1 - d.IndexOf('.');
+				formatStr = "yyyyMMddHHmmss." + this.FString(fCount3);
 			}
 			else
 			{
-				text2 = "yyyyMMddHHmmss";
+				formatStr = "yyyyMMddHHmmss";
 			}
-			return this.ParseDateString(text, text2, flag);
+			return this.ParseDateString(d, formatStr, makeUniversal);
 		}
 
 		private string FString(int count)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < count; i++)
 			{
-				stringBuilder.Append('f');
+				sb.Append('f');
 			}
-			return stringBuilder.ToString();
+			return sb.ToString();
 		}
 
 		private DateTime ParseDateString(string dateStr, string formatStr, bool makeUniversal)
 		{
-			DateTime dateTime = DateTime.ParseExact(dateStr, formatStr, DateTimeFormatInfo.InvariantInfo);
+			DateTime dt = DateTime.ParseExact(dateStr, formatStr, DateTimeFormatInfo.InvariantInfo);
 			if (!makeUniversal)
 			{
-				return dateTime;
+				return dt;
 			}
-			return dateTime.ToUniversalTime();
+			return dt.ToUniversalTime();
 		}
 
 		private bool HasFractionalSeconds
@@ -197,8 +197,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerGeneralizedTime derGeneralizedTime = asn1Object as DerGeneralizedTime;
-			return derGeneralizedTime != null && this.time.Equals(derGeneralizedTime.time);
+			DerGeneralizedTime other = asn1Object as DerGeneralizedTime;
+			return other != null && this.time.Equals(other.time);
 		}
 
 		protected override int Asn1GetHashCode()

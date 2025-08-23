@@ -24,8 +24,8 @@ namespace DNA.Data.Units
 
 		public override bool Equals(object obj)
 		{
-			Work work = (Work)obj;
-			return this._watts == work._watts;
+			Work b = (Work)obj;
+			return this._watts == b._watts;
 		}
 
 		public static bool operator ==(Work a, Work b)

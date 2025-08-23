@@ -15,51 +15,51 @@ namespace DNA.Profiling
 
 		public void Push(T newNode)
 		{
-			T t = default(T);
+			T oldRoot = default(T);
 			do
 			{
-				t = this._root;
-				newNode.NextNode = t;
+				oldRoot = this._root;
+				newNode.NextNode = oldRoot;
 			}
-			while (t != Interlocked.CompareExchange<T>(ref this._root, newNode, t));
+			while (oldRoot != Interlocked.CompareExchange<T>(ref this._root, newNode, oldRoot));
 		}
 
 		public void PushList(T newList)
 		{
-			IProfilerLinkedListNode profilerLinkedListNode = newList;
-			while (profilerLinkedListNode.NextNode != null)
+			IProfilerLinkedListNode i = newList;
+			while (i.NextNode != null)
 			{
-				profilerLinkedListNode = profilerLinkedListNode.NextNode;
+				i = i.NextNode;
 			}
-			T t = default(T);
+			T oldRoot = default(T);
 			do
 			{
-				t = this._root;
-				profilerLinkedListNode.NextNode = t;
+				oldRoot = this._root;
+				i.NextNode = oldRoot;
 			}
-			while (t != Interlocked.CompareExchange<T>(ref this._root, newList, t));
+			while (oldRoot != Interlocked.CompareExchange<T>(ref this._root, newList, oldRoot));
 		}
 
 		public T Pop()
 		{
-			T root;
+			T result;
 			do
 			{
-				root = this._root;
+				result = this._root;
 			}
-			while (root != null && root != Interlocked.CompareExchange<T>(ref this._root, root.NextNode as T, root));
-			return root;
+			while (result != null && result != Interlocked.CompareExchange<T>(ref this._root, result.NextNode as T, result));
+			return result;
 		}
 
 		public T Clear()
 		{
-			T t = default(T);
+			T oldRoot = default(T);
 			do
 			{
-				t = this._root;
+				oldRoot = this._root;
 			}
-			while (t != Interlocked.CompareExchange<T>(ref this._root, default(T), t));
-			return t;
+			while (oldRoot != Interlocked.CompareExchange<T>(ref this._root, default(T), oldRoot));
+			return oldRoot;
 		}
 
 		public bool Empty

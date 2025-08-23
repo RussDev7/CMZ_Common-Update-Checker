@@ -24,39 +24,39 @@ namespace DNA.Audio
 		public void Update(VisualizationData visData, TimeSpan elaspedTime)
 		{
 			this.timeSinceLastPeek += elaspedTime;
-			float num = 0f;
+			float averageValue = 0f;
 			for (int i = 0; i < visData.Samples.Count; i++)
 			{
-				float num2 = visData.Samples[i];
-				num2 *= num2;
-				num += num2;
+				float value = visData.Samples[i];
+				value *= value;
+				averageValue += value;
 			}
-			num /= (float)visData.Samples.Count;
-			if (num != this.historicalAverages[this.historicalAverages.Length - 1])
+			averageValue /= (float)visData.Samples.Count;
+			if (averageValue != this.historicalAverages[this.historicalAverages.Length - 1])
 			{
-				float num3 = 0f;
+				float avgLevel = 0f;
 				for (int j = 0; j < this.historicalAverages.Length; j++)
 				{
-					num3 += this.historicalAverages[j];
+					avgLevel += this.historicalAverages[j];
 				}
-				num3 /= (float)this.historicalAverages.Length;
-				float num4 = 0f;
+				avgLevel /= (float)this.historicalAverages.Length;
+				float varaince = 0f;
 				for (int k = 0; k < this.historicalAverages.Length; k++)
 				{
-					num4 += Math.Abs(this.historicalAverages[k] - num3);
+					varaince += Math.Abs(this.historicalAverages[k] - avgLevel);
 				}
-				num4 /= (float)this.historicalAverages.Length;
-				float num5 = num - num3;
-				if (num5 >= num4 && this.timeSinceLastPeek.TotalSeconds > 0.20000000298023224)
+				varaince /= (float)this.historicalAverages.Length;
+				float diff = averageValue - avgLevel;
+				if (diff >= varaince && this.timeSinceLastPeek.TotalSeconds > 0.20000000298023224)
 				{
 					this.beatFound = true;
-					TimeSpan timeSpan = TimeSpan.Zero;
+					TimeSpan avgInterval = TimeSpan.Zero;
 					for (int l = 0; l < this.beats.Length - 1; l++)
 					{
-						timeSpan += this.beats[l];
+						avgInterval += this.beats[l];
 						this.beats[l] = this.beats[l + 1];
 					}
-					this.averageBMP = 60f / (float)TimeSpan.FromSeconds(timeSpan.TotalSeconds / (double)(this.beats.Length - 1)).TotalSeconds;
+					this.averageBMP = 60f / (float)TimeSpan.FromSeconds(avgInterval.TotalSeconds / (double)(this.beats.Length - 1)).TotalSeconds;
 					this.beats[this.beats.Length - 1] = this.timeSinceLastPeek;
 					this.timeSinceLastPeek = TimeSpan.Zero;
 				}
@@ -68,7 +68,7 @@ namespace DNA.Audio
 				{
 					this.historicalAverages[m] = this.historicalAverages[m + 1];
 				}
-				this.historicalAverages[this.historicalAverages.Length - 1] = num;
+				this.historicalAverages[this.historicalAverages.Length - 1] = averageValue;
 			}
 		}
 

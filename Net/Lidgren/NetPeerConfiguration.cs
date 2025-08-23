@@ -17,10 +17,10 @@ namespace DNA.Net.Lidgren
 			this.m_networkThreadName = "Lidgren network thread";
 			this.m_localAddress = IPAddress.Any;
 			this.m_broadcastAddress = IPAddress.Broadcast;
-			IPAddress broadcastAddress = NetUtility.GetBroadcastAddress();
-			if (broadcastAddress != null)
+			IPAddress ip = NetUtility.GetBroadcastAddress();
+			if (ip != null)
 			{
-				this.m_broadcastAddress = broadcastAddress;
+				this.m_broadcastAddress = ip;
 			}
 			this.m_port = 0;
 			this.m_receiveBufferSize = 131071;
@@ -381,9 +381,9 @@ namespace DNA.Net.Lidgren
 
 		public NetPeerConfiguration Clone()
 		{
-			NetPeerConfiguration netPeerConfiguration = base.MemberwiseClone() as NetPeerConfiguration;
-			netPeerConfiguration.m_isLocked = false;
-			return netPeerConfiguration;
+			NetPeerConfiguration retval = base.MemberwiseClone() as NetPeerConfiguration;
+			retval.m_isLocked = false;
+			return retval;
 		}
 
 		private const string c_isLockedMessage = "You may not modify the NetPeerConfiguration after it has been used to initialize a NetPeer";

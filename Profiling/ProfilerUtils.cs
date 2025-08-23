@@ -44,9 +44,9 @@ namespace DNA.Profiling
 
 		public static string ReadBinaryString(BinaryReader br)
 		{
-			int num = (int)br.ReadUInt16();
-			byte[] array = br.ReadBytes(num);
-			return Encoding.UTF8.GetString(array, 0, array.Length);
+			int s = (int)br.ReadUInt16();
+			byte[] c = br.ReadBytes(s);
+			return Encoding.UTF8.GetString(c, 0, c.Length);
 		}
 
 		public static void RemoveBySwap<T>(List<T> theList, T theElement) where T : class
@@ -64,11 +64,11 @@ namespace DNA.Profiling
 
 		public static Color MultiplyColors(Color c1, Color c2)
 		{
-			byte b = (byte)((uint)(c1.R * c2.R) >> 8);
-			byte b2 = (byte)((uint)(c1.G * c2.G) >> 8);
-			byte b3 = (byte)((uint)(c1.B * c2.B) >> 8);
-			byte b4 = (byte)((uint)(c1.A * c2.A) >> 8);
-			return new Color((int)b, (int)b2, (int)b3, (int)b4);
+			byte r = (byte)((uint)(c1.R * c2.R) >> 8);
+			byte g = (byte)((uint)(c1.G * c2.G) >> 8);
+			byte b = (byte)((uint)(c1.B * c2.B) >> 8);
+			byte a = (byte)((uint)(c1.A * c2.A) >> 8);
+			return new Color((int)r, (int)g, (int)b, (int)a);
 		}
 
 		public static Matrix _standard2DProjection;

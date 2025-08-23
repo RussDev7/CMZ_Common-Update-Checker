@@ -43,8 +43,8 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				return 0;
 			}
-			int num = this._in.Read(buffer, offset + 2, count - 2);
-			if (num <= 0)
+			int numRead = this._in.Read(buffer, offset + 2, count - 2);
+			if (numRead <= 0)
 			{
 				throw new EndOfStreamException();
 			}
@@ -56,7 +56,7 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				throw new EndOfStreamException();
 			}
-			return num + 2;
+			return numRead + 2;
 		}
 
 		public override int ReadByte()
@@ -65,15 +65,15 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				return -1;
 			}
-			int num = this._in.ReadByte();
-			if (num < 0)
+			int b = this._in.ReadByte();
+			if (b < 0)
 			{
 				throw new EndOfStreamException();
 			}
-			int b = this._b1;
+			int v = this._b1;
 			this._b1 = this._b2;
-			this._b2 = num;
-			return b;
+			this._b2 = b;
+			return v;
 		}
 
 		private int _b1;

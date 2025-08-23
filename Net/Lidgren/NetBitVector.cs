@@ -32,33 +32,33 @@ namespace DNA.Net.Lidgren
 
 		public void RotateDown()
 		{
-			int num = this.m_data.Length - 1;
-			int num2 = this.m_data[0] & 1;
-			for (int i = 0; i < num; i++)
+			int lenMinusOne = this.m_data.Length - 1;
+			int firstBit = this.m_data[0] & 1;
+			for (int i = 0; i < lenMinusOne; i++)
 			{
 				this.m_data[i] = ((this.m_data[i] >> 1) & int.MaxValue) | (this.m_data[i + 1] << 31);
 			}
-			int num3 = this.m_capacity - 1 - 32 * num;
-			int num4 = this.m_data[num];
-			num4 >>= 1;
-			num4 |= num2 << num3;
-			this.m_data[num] = num4;
+			int lastIndex = this.m_capacity - 1 - 32 * lenMinusOne;
+			int cur = this.m_data[lenMinusOne];
+			cur >>= 1;
+			cur |= firstBit << lastIndex;
+			this.m_data[lenMinusOne] = cur;
 		}
 
 		public int GetFirstSetIndex()
 		{
-			int num = 0;
-			int num2;
-			for (num2 = this.m_data[0]; num2 == 0; num2 = this.m_data[num])
+			int idx = 0;
+			int data;
+			for (data = this.m_data[0]; data == 0; data = this.m_data[idx])
 			{
-				num++;
+				idx++;
 			}
-			int num3 = 0;
-			while (((num2 >> num3) & 1) == 0)
+			int a = 0;
+			while (((data >> a) & 1) == 0)
 			{
-				num3++;
+				a++;
 			}
-			return num * 32 + num3;
+			return idx * 32 + a;
 		}
 
 		public bool Get(int bitIndex)
@@ -68,21 +68,21 @@ namespace DNA.Net.Lidgren
 
 		public void Set(int bitIndex, bool value)
 		{
-			int num = bitIndex / 32;
+			int idx = bitIndex / 32;
 			if (value)
 			{
-				if ((this.m_data[num] & (1 << bitIndex % 32)) == 0)
+				if ((this.m_data[idx] & (1 << bitIndex % 32)) == 0)
 				{
 					this.m_numBitsSet++;
 				}
-				this.m_data[num] |= 1 << bitIndex % 32;
+				this.m_data[idx] |= 1 << bitIndex % 32;
 				return;
 			}
-			if ((this.m_data[num] & (1 << bitIndex % 32)) != 0)
+			if ((this.m_data[idx] & (1 << bitIndex % 32)) != 0)
 			{
 				this.m_numBitsSet--;
 			}
-			this.m_data[num] &= ~(1 << bitIndex % 32);
+			this.m_data[idx] &= ~(1 << bitIndex % 32);
 		}
 
 		[IndexerName("Bit")]
@@ -106,14 +106,14 @@ namespace DNA.Net.Lidgren
 
 		public override string ToString()
 		{
-			StringBuilder stringBuilder = new StringBuilder(this.m_capacity + 2);
-			stringBuilder.Append('[');
+			StringBuilder bdr = new StringBuilder(this.m_capacity + 2);
+			bdr.Append('[');
 			for (int i = 0; i < this.m_capacity; i++)
 			{
-				stringBuilder.Append(this.Get(this.m_capacity - i - 1) ? '1' : '0');
+				bdr.Append(this.Get(this.m_capacity - i - 1) ? '1' : '0');
 			}
-			stringBuilder.Append(']');
-			return stringBuilder.ToString();
+			bdr.Append(']');
+			return bdr.ToString();
 		}
 
 		private readonly int m_capacity;

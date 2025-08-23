@@ -155,25 +155,25 @@ namespace DNA.Drawing.UI
 						this._pulseDir = !this._pulseDir;
 					}
 				}
-				float num = (float)(1.0 + (double)this.PulseSize * this._currenPulseTime.TotalSeconds / this._pulseTime.TotalSeconds) * (this.ScaleOnScreenResize ? Screen.Adjuster.ScaleFactor.Y : 1f);
-				Vector2 vector = new Vector2(this.Size.X / 2f, this.Size.Y / 2f);
+				float factor = (float)(1.0 + (double)this.PulseSize * this._currenPulseTime.TotalSeconds / this._pulseTime.TotalSeconds) * (this.ScaleOnScreenResize ? Screen.Adjuster.ScaleFactor.Y : 1f);
+				Vector2 org = new Vector2(this.Size.X / 2f, this.Size.Y / 2f);
 				if (this.OutlineWidth > 0)
 				{
-					spriteBatch.DrawOutlinedText(this.Font, this._textToDraw, base.Location + vector, this.GetForColor(selected), this.OutlineColor, this.OutlineWidth, num, 0f, vector);
+					spriteBatch.DrawOutlinedText(this.Font, this._textToDraw, base.Location + org, this.GetForColor(selected), this.OutlineColor, this.OutlineWidth, factor, 0f, org);
 					return;
 				}
-				spriteBatch.DrawString(this.Font, this._textToDraw, base.Location + vector, this.GetForColor(selected), 0f, vector, num, SpriteEffects.None, 1f);
+				spriteBatch.DrawString(this.Font, this._textToDraw, base.Location + org, this.GetForColor(selected), 0f, org, factor, SpriteEffects.None, 1f);
 				return;
 			}
 			else
 			{
-				float num2 = (this.ScaleOnScreenResize ? Screen.Adjuster.ScaleFactor.Y : 1f);
+				float factor2 = (this.ScaleOnScreenResize ? Screen.Adjuster.ScaleFactor.Y : 1f);
 				if (this.OutlineWidth > 0)
 				{
-					spriteBatch.DrawOutlinedText(this.Font, this._textToDraw, base.Location, this.GetForColor(selected), this.OutlineColor, (int)Math.Ceiling((double)((float)this.OutlineWidth * num2)), num2, 0f, new Vector2(0f, 0f));
+					spriteBatch.DrawOutlinedText(this.Font, this._textToDraw, base.Location, this.GetForColor(selected), this.OutlineColor, (int)Math.Ceiling((double)((float)this.OutlineWidth * factor2)), factor2, 0f, new Vector2(0f, 0f));
 					return;
 				}
-				spriteBatch.DrawString(this.Font, this._textToDraw, base.Location, this.GetForColor(selected), 0f, new Vector2(0f, 0f), num2, SpriteEffects.None, 0f);
+				spriteBatch.DrawString(this.Font, this._textToDraw, base.Location, this.GetForColor(selected), 0f, new Vector2(0f, 0f), factor2, SpriteEffects.None, 0f);
 				return;
 			}
 		}

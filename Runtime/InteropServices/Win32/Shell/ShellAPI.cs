@@ -19,12 +19,12 @@ namespace DNA.Runtime.InteropServices.Win32.Shell
 
 		public static string PathRelativePathTo(string fromPath, bool isFromDirectory, string toPath, bool isToDirectory)
 		{
-			StringBuilder stringBuilder = new StringBuilder(260, 260);
-			if (!ShellAPI._PathRelativePathTo(stringBuilder, fromPath, isFromDirectory ? FileAttributes.Directory : FileAttributes.Normal, toPath, isToDirectory ? FileAttributes.Directory : FileAttributes.Normal))
+			StringBuilder result = new StringBuilder(260, 260);
+			if (!ShellAPI._PathRelativePathTo(result, fromPath, isFromDirectory ? FileAttributes.Directory : FileAttributes.Normal, toPath, isToDirectory ? FileAttributes.Directory : FileAttributes.Normal))
 			{
 				throw new Exception("PathRelativePathTo error");
 			}
-			return stringBuilder.ToString();
+			return result.ToString();
 		}
 	}
 }

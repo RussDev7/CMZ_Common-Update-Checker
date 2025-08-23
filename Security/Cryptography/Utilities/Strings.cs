@@ -11,22 +11,22 @@ namespace DNA.Security.Cryptography.Utilities
 
 		public static string FromByteArray(byte[] bs)
 		{
-			char[] array = new char[bs.Length];
-			for (int i = 0; i < array.Length; i++)
+			char[] cs = new char[bs.Length];
+			for (int i = 0; i < cs.Length; i++)
 			{
-				array[i] = Convert.ToChar(bs[i]);
+				cs[i] = Convert.ToChar(bs[i]);
 			}
-			return new string(array);
+			return new string(cs);
 		}
 
 		public static byte[] ToByteArray(string s)
 		{
-			byte[] array = new byte[s.Length];
-			for (int i = 0; i < array.Length; i++)
+			byte[] bs = new byte[s.Length];
+			for (int i = 0; i < bs.Length; i++)
 			{
-				array[i] = Convert.ToByte(s[i]);
+				bs[i] = Convert.ToByte(s[i]);
 			}
-			return array;
+			return bs;
 		}
 
 		public static string FromUtf8ByteArray(byte[] bytes)

@@ -87,28 +87,28 @@ namespace DNA.Drawing
 		{
 			get
 			{
-				Vector3 vector = this._a - this._b;
-				Vector3 vector2 = this._c - this._b;
-				return Vector3.Cross(vector, vector2).Length();
+				Vector3 ab = this._a - this._b;
+				Vector3 bc = this._c - this._b;
+				return Vector3.Cross(ab, bc).Length();
 			}
 		}
 
 		public BoundingBox GetBoundingBox()
 		{
-			Vector3 vector = new Vector3(Math.Min(Math.Min(this._a.X, this._b.X), this._c.X), Math.Min(Math.Min(this._a.Y, this._b.Y), this._c.Y), Math.Min(Math.Min(this._a.Z, this._b.Z), this._c.Z));
-			Vector3 vector2 = new Vector3(Math.Max(Math.Max(this._a.X, this._b.X), this._c.X), Math.Max(Math.Max(this._a.Y, this._b.Y), this._c.Y), Math.Max(Math.Max(this._a.Z, this._b.Z), this._c.Z));
-			return new BoundingBox(vector, vector2);
+			Vector3 min = new Vector3(Math.Min(Math.Min(this._a.X, this._b.X), this._c.X), Math.Min(Math.Min(this._a.Y, this._b.Y), this._c.Y), Math.Min(Math.Min(this._a.Z, this._b.Z), this._c.Z));
+			Vector3 max = new Vector3(Math.Max(Math.Max(this._a.X, this._b.X), this._c.X), Math.Max(Math.Max(this._a.Y, this._b.Y), this._c.Y), Math.Max(Math.Max(this._a.Z, this._b.Z), this._c.Z));
+			return new BoundingBox(min, max);
 		}
 
 		public BoundingSphere GetBoundingSphere()
 		{
-			BoundingBox boundingBox = this.GetBoundingBox();
-			Vector3 vector = boundingBox.Min + (boundingBox.Max - boundingBox.Min) / 2f;
-			float num = (this._a - vector).LengthSquared();
-			float num2 = (this._b - vector).LengthSquared();
-			float num3 = (this._c - vector).LengthSquared();
-			float num4 = (float)Math.Sqrt((double)Math.Max(Math.Max(num, num2), num3));
-			return new BoundingSphere(vector, num4);
+			BoundingBox box = this.GetBoundingBox();
+			Vector3 center = box.Min + (box.Max - box.Min) / 2f;
+			float da = (this._a - center).LengthSquared();
+			float db = (this._b - center).LengthSquared();
+			float dc = (this._c - center).LengthSquared();
+			float radius = (float)Math.Sqrt((double)Math.Max(Math.Max(da, db), dc));
+			return new BoundingSphere(center, radius);
 		}
 
 		public static Triangle3D Transform(Triangle3D triangle, Matrix matrix)
@@ -137,17 +137,17 @@ namespace DNA.Drawing
 
 		public Vector3 BarycentricCoordinate(Vector3 point)
 		{
-			Vector3 vector = default(Vector3);
-			Vector3 vector2 = this._b - this._a;
-			Vector3 vector3 = this._c - this._a;
-			Vector3 vector4 = point - this._a;
-			Vector3 vector5 = Vector3.Cross(vector2, vector4);
-			Vector3 vector6 = Vector3.Cross(vector3, vector4);
-			float num = 1f / Vector3.Cross(vector2, vector3).Length();
-			vector.Y = vector6.Length() * num;
-			vector.Z = vector5.Length() * num;
-			vector.X = 1f - vector.Y - vector.Z;
-			return vector;
+			Vector3 baryOut = default(Vector3);
+			Vector3 u = this._b - this._a;
+			Vector3 v = this._c - this._a;
+			Vector3 w = point - this._a;
+			Vector3 a = Vector3.Cross(u, w);
+			Vector3 b = Vector3.Cross(v, w);
+			float denom = 1f / Vector3.Cross(u, v).Length();
+			baryOut.Y = b.Length() * denom;
+			baryOut.Z = a.Length() * denom;
+			baryOut.X = 1f - baryOut.Y - baryOut.Z;
+			return baryOut;
 		}
 
 		public Plane GetPlane()
@@ -157,41 +157,41 @@ namespace DNA.Drawing
 
 		public float? Intersects(Ray ray)
 		{
-			Vector3 vector = this._b - this._a;
-			Vector3 vector2 = this._c - this._a;
-			Vector3 vector3 = Vector3.Cross(vector, vector2);
-			Vector3 direction = ray.Direction;
-			Vector3 vector4 = ray.Position - this._a;
-			float num = -Vector3.Dot(vector3, vector4);
-			float num2 = Vector3.Dot(vector3, direction);
-			if (num2 == 0f)
+			Vector3 u = this._b - this._a;
+			Vector3 v = this._c - this._a;
+			Vector3 i = Vector3.Cross(u, v);
+			Vector3 dir = ray.Direction;
+			Vector3 w0 = ray.Position - this._a;
+			float a = -Vector3.Dot(i, w0);
+			float b = Vector3.Dot(i, dir);
+			if (b == 0f)
 			{
 				return null;
 			}
-			float num3 = num / num2;
-			if (num3 < 0f)
+			float t = a / b;
+			if (t < 0f)
 			{
 				return null;
 			}
-			Vector3 vector5 = ray.Position + num3 * direction;
-			float num4 = Vector3.Dot(vector, vector);
-			float num5 = Vector3.Dot(vector, vector2);
-			float num6 = Vector3.Dot(vector2, vector2);
-			Vector3 vector6 = vector5 - this._a;
-			float num7 = Vector3.Dot(vector6, vector);
-			float num8 = Vector3.Dot(vector6, vector2);
-			float num9 = num5 * num5 - num4 * num6;
-			float num10 = (num5 * num8 - num6 * num7) / num9;
-			if ((double)num10 < 0.0 || (double)num10 > 1.0)
+			Vector3 I = ray.Position + t * dir;
+			float uu = Vector3.Dot(u, u);
+			float uv = Vector3.Dot(u, v);
+			float vv = Vector3.Dot(v, v);
+			Vector3 w = I - this._a;
+			float wu = Vector3.Dot(w, u);
+			float wv = Vector3.Dot(w, v);
+			float D = uv * uv - uu * vv;
+			float sI = (uv * wv - vv * wu) / D;
+			if ((double)sI < 0.0 || (double)sI > 1.0)
 			{
 				return null;
 			}
-			float num11 = (num5 * num7 - num4 * num8) / num9;
-			if ((double)num11 < 0.0 || (double)(num10 + num11) > 1.0)
+			float tI = (uv * wu - uu * wv) / D;
+			if ((double)tI < 0.0 || (double)(sI + tI) > 1.0)
 			{
 				return null;
 			}
-			return new float?(num3);
+			return new float?(t);
 		}
 
 		public Triangle3D[] SliceHorizontal(float yValue, int precisionDigits)
@@ -200,90 +200,90 @@ namespace DNA.Drawing
 			LineF3D ab = this.AB;
 			LineF3D ac = this.AC;
 			LineF3D bc = this.BC;
-			float num;
-			bool flag;
-			if (ab.Intersects(plane, out num, out flag, precisionDigits))
+			float t;
+			bool parallel;
+			if (ab.Intersects(plane, out t, out parallel, precisionDigits))
 			{
-				if (flag)
+				if (parallel)
 				{
 					return new Triangle3D[] { this };
 				}
-				if (num == 0f)
+				if (t == 0f)
 				{
-					float num2;
-					if (!bc.Intersects(plane, out num2, out flag, precisionDigits))
+					float t2;
+					if (!bc.Intersects(plane, out t2, out parallel, precisionDigits))
 					{
 						return new Triangle3D[] { this };
 					}
-					if (num2 == 0f || num2 == 1f)
+					if (t2 == 0f || t2 == 1f)
 					{
 						return new Triangle3D[] { this };
 					}
-					Vector3 vector = bc.GetValue(num2);
-					vector.Y = yValue;
+					Vector3 newPoint2 = bc.GetValue(t2);
+					newPoint2.Y = yValue;
 					return new Triangle3D[]
 					{
-						new Triangle3D(this._a, this._b, vector),
-						new Triangle3D(this._a, vector, this._c)
+						new Triangle3D(this._a, this._b, newPoint2),
+						new Triangle3D(this._a, newPoint2, this._c)
 					};
 				}
-				else if (num == 1f)
+				else if (t == 1f)
 				{
-					float num2;
-					if (!ac.Intersects(plane, out num2, out flag, precisionDigits))
+					float t2;
+					if (!ac.Intersects(plane, out t2, out parallel, precisionDigits))
 					{
 						return new Triangle3D[] { this };
 					}
-					Vector3 vector = ac.GetValue(num2);
-					vector.Y = yValue;
-					if (num2 == 0f || num2 == 1f)
+					Vector3 newPoint2 = ac.GetValue(t2);
+					newPoint2.Y = yValue;
+					if (t2 == 0f || t2 == 1f)
 					{
 						return new Triangle3D[]
 						{
-							new Triangle3D(ac.GetValue(0f), this._b, vector)
+							new Triangle3D(ac.GetValue(0f), this._b, newPoint2)
 						};
 					}
 					return new Triangle3D[]
 					{
-						new Triangle3D(this._b, this._c, vector),
-						new Triangle3D(this._b, vector, this._a)
+						new Triangle3D(this._b, this._c, newPoint2),
+						new Triangle3D(this._b, newPoint2, this._a)
 					};
 				}
 				else
 				{
-					Vector3 vector2 = ab.GetValue(num);
-					vector2.Y = yValue;
-					float num2;
-					if (ac.Intersects(plane, out num2, out flag, precisionDigits))
+					Vector3 newPoint3 = ab.GetValue(t);
+					newPoint3.Y = yValue;
+					float t2;
+					if (ac.Intersects(plane, out t2, out parallel, precisionDigits))
 					{
-						if (num2 == 1f)
+						if (t2 == 1f)
 						{
 							return new Triangle3D[]
 							{
-								new Triangle3D(vector2, this._b, this._c),
-								new Triangle3D(vector2, this._c, this._a)
+								new Triangle3D(newPoint3, this._b, this._c),
+								new Triangle3D(newPoint3, this._c, this._a)
 							};
 						}
-						Vector3 vector = ac.GetValue(num2);
-						vector.Y = yValue;
+						Vector3 newPoint2 = ac.GetValue(t2);
+						newPoint2.Y = yValue;
 						return new Triangle3D[]
 						{
-							new Triangle3D(vector, this._a, vector2),
-							new Triangle3D(vector2, this._b, this._c),
-							new Triangle3D(vector, vector2, this._c)
+							new Triangle3D(newPoint2, this._a, newPoint3),
+							new Triangle3D(newPoint3, this._b, this._c),
+							new Triangle3D(newPoint2, newPoint3, this._c)
 						};
 					}
 					else
 					{
-						if (bc.Intersects(plane, out num2, out flag, precisionDigits))
+						if (bc.Intersects(plane, out t2, out parallel, precisionDigits))
 						{
-							Vector3 vector = bc.GetValue(num2);
-							vector.Y = yValue;
+							Vector3 newPoint2 = bc.GetValue(t2);
+							newPoint2.Y = yValue;
 							return new Triangle3D[]
 							{
-								new Triangle3D(vector2, this._b, vector),
-								new Triangle3D(this._a, vector2, vector),
-								new Triangle3D(this._a, vector, this._c)
+								new Triangle3D(newPoint3, this._b, newPoint2),
+								new Triangle3D(this._a, newPoint3, newPoint2),
+								new Triangle3D(this._a, newPoint2, this._c)
 							};
 						}
 						throw new Exception("Slice Error");
@@ -292,26 +292,26 @@ namespace DNA.Drawing
 			}
 			else
 			{
-				if (!bc.Intersects(plane, out num, out flag, precisionDigits))
+				if (!bc.Intersects(plane, out t, out parallel, precisionDigits))
 				{
 					return new Triangle3D[] { this };
 				}
-				if (num == 1f)
+				if (t == 1f)
 				{
 					return new Triangle3D[] { this };
 				}
-				Vector3 vector2 = bc.GetValue(num);
-				vector2.Y = yValue;
-				float num2;
-				if (ac.Intersects(plane, out num2, out flag, precisionDigits))
+				Vector3 newPoint3 = bc.GetValue(t);
+				newPoint3.Y = yValue;
+				float t2;
+				if (ac.Intersects(plane, out t2, out parallel, precisionDigits))
 				{
-					Vector3 vector = ac.GetValue(num2);
-					vector.Y = yValue;
+					Vector3 newPoint2 = ac.GetValue(t2);
+					newPoint2.Y = yValue;
 					return new Triangle3D[]
 					{
-						new Triangle3D(vector, this._a, vector2),
-						new Triangle3D(vector2, this._b, this._a),
-						new Triangle3D(vector, vector2, this._c)
+						new Triangle3D(newPoint2, this._a, newPoint3),
+						new Triangle3D(newPoint3, this._b, this._a),
+						new Triangle3D(newPoint2, newPoint3, this._c)
 					};
 				}
 				throw new Exception("Slice Error");
@@ -324,90 +324,90 @@ namespace DNA.Drawing
 			LineF3D ab = this.AB;
 			LineF3D ac = this.AC;
 			LineF3D bc = this.BC;
-			float num;
-			bool flag;
-			if (ab.Intersects(plane, out num, out flag, precisionDigits))
+			float t;
+			bool parallel;
+			if (ab.Intersects(plane, out t, out parallel, precisionDigits))
 			{
-				if (flag)
+				if (parallel)
 				{
 					return new Triangle3D[] { this };
 				}
-				if (num == 0f)
+				if (t == 0f)
 				{
-					float num2;
-					if (!bc.Intersects(plane, out num2, out flag, precisionDigits))
+					float t2;
+					if (!bc.Intersects(plane, out t2, out parallel, precisionDigits))
 					{
 						return new Triangle3D[] { this };
 					}
-					if (num2 == 0f || num2 == 1f)
+					if (t2 == 0f || t2 == 1f)
 					{
 						return new Triangle3D[] { this };
 					}
-					Vector3 vector = bc.GetValue(num2);
-					vector.X = xValue;
+					Vector3 newPoint2 = bc.GetValue(t2);
+					newPoint2.X = xValue;
 					return new Triangle3D[]
 					{
-						new Triangle3D(this._a, this._b, vector),
-						new Triangle3D(this._a, vector, this._c)
+						new Triangle3D(this._a, this._b, newPoint2),
+						new Triangle3D(this._a, newPoint2, this._c)
 					};
 				}
-				else if (num == 1f)
+				else if (t == 1f)
 				{
-					float num2;
-					if (!ac.Intersects(plane, out num2, out flag, precisionDigits))
+					float t2;
+					if (!ac.Intersects(plane, out t2, out parallel, precisionDigits))
 					{
 						return new Triangle3D[] { this };
 					}
-					Vector3 vector = ac.GetValue(num2);
-					vector.X = xValue;
-					if (num2 == 0f || num2 == 1f)
+					Vector3 newPoint2 = ac.GetValue(t2);
+					newPoint2.X = xValue;
+					if (t2 == 0f || t2 == 1f)
 					{
 						return new Triangle3D[]
 						{
-							new Triangle3D(ac.GetValue(0f), this._b, vector)
+							new Triangle3D(ac.GetValue(0f), this._b, newPoint2)
 						};
 					}
 					return new Triangle3D[]
 					{
-						new Triangle3D(this._b, this._c, vector),
-						new Triangle3D(this._b, vector, this._a)
+						new Triangle3D(this._b, this._c, newPoint2),
+						new Triangle3D(this._b, newPoint2, this._a)
 					};
 				}
 				else
 				{
-					Vector3 vector2 = ab.GetValue(num);
-					vector2.X = xValue;
-					float num2;
-					if (ac.Intersects(plane, out num2, out flag, precisionDigits))
+					Vector3 newPoint3 = ab.GetValue(t);
+					newPoint3.X = xValue;
+					float t2;
+					if (ac.Intersects(plane, out t2, out parallel, precisionDigits))
 					{
-						if (num2 == 1f)
+						if (t2 == 1f)
 						{
 							return new Triangle3D[]
 							{
-								new Triangle3D(vector2, this._b, this._c),
-								new Triangle3D(vector2, this._c, this._a)
+								new Triangle3D(newPoint3, this._b, this._c),
+								new Triangle3D(newPoint3, this._c, this._a)
 							};
 						}
-						Vector3 vector = ac.GetValue(num2);
-						vector.X = xValue;
+						Vector3 newPoint2 = ac.GetValue(t2);
+						newPoint2.X = xValue;
 						return new Triangle3D[]
 						{
-							new Triangle3D(vector, this._a, vector2),
-							new Triangle3D(vector2, this._b, this._c),
-							new Triangle3D(vector, vector2, this._c)
+							new Triangle3D(newPoint2, this._a, newPoint3),
+							new Triangle3D(newPoint3, this._b, this._c),
+							new Triangle3D(newPoint2, newPoint3, this._c)
 						};
 					}
 					else
 					{
-						if (bc.Intersects(plane, out num2, out flag, precisionDigits))
+						if (bc.Intersects(plane, out t2, out parallel, precisionDigits))
 						{
-							Vector3 vector = bc.GetValue(num2);
-							vector.X = xValue;
+							Vector3 newPoint2 = bc.GetValue(t2);
+							newPoint2.X = xValue;
 							return new Triangle3D[]
 							{
-								new Triangle3D(vector2, this._b, vector),
-								new Triangle3D(this._a, vector2, vector),
-								new Triangle3D(this._a, vector, this._c)
+								new Triangle3D(newPoint3, this._b, newPoint2),
+								new Triangle3D(this._a, newPoint3, newPoint2),
+								new Triangle3D(this._a, newPoint2, this._c)
 							};
 						}
 						throw new Exception("Slice Error");
@@ -416,26 +416,26 @@ namespace DNA.Drawing
 			}
 			else
 			{
-				if (!bc.Intersects(plane, out num, out flag, precisionDigits))
+				if (!bc.Intersects(plane, out t, out parallel, precisionDigits))
 				{
 					return new Triangle3D[] { this };
 				}
-				if (num == 1f)
+				if (t == 1f)
 				{
 					return new Triangle3D[] { this };
 				}
-				Vector3 vector2 = bc.GetValue(num);
-				vector2.X = xValue;
-				float num2;
-				if (ac.Intersects(plane, out num2, out flag, precisionDigits))
+				Vector3 newPoint3 = bc.GetValue(t);
+				newPoint3.X = xValue;
+				float t2;
+				if (ac.Intersects(plane, out t2, out parallel, precisionDigits))
 				{
-					Vector3 vector = ac.GetValue(num2);
-					vector.X = xValue;
+					Vector3 newPoint2 = ac.GetValue(t2);
+					newPoint2.X = xValue;
 					return new Triangle3D[]
 					{
-						new Triangle3D(vector, this._a, vector2),
-						new Triangle3D(vector2, this._b, this._a),
-						new Triangle3D(vector, vector2, this._c)
+						new Triangle3D(newPoint2, this._a, newPoint3),
+						new Triangle3D(newPoint3, this._b, this._a),
+						new Triangle3D(newPoint2, newPoint3, this._c)
 					};
 				}
 				throw new Exception("Slice Error");
@@ -450,137 +450,137 @@ namespace DNA.Drawing
 			LineF3D ab = this.AB;
 			LineF3D ac = this.AC;
 			LineF3D bc = this.BC;
-			float num;
-			bool flag;
-			if (ab.Intersects(plane, out num, out flag, precisionDigits))
+			float t;
+			bool parallel;
+			if (ab.Intersects(plane, out t, out parallel, precisionDigits))
 			{
-				if (flag)
+				if (parallel)
 				{
 					return new Triangle3D[] { this };
 				}
-				if (num == 0f)
+				if (t == 0f)
 				{
-					float num2;
-					if (!bc.Intersects(plane, out num2, out flag, precisionDigits))
+					float t2;
+					if (!bc.Intersects(plane, out t2, out parallel, precisionDigits))
 					{
 						return new Triangle3D[] { this };
 					}
-					if (flag)
+					if (parallel)
 					{
 						throw new PrecisionException();
 					}
-					if (num2 == 0f || num2 == 1f)
+					if (t2 == 0f || t2 == 1f)
 					{
 						return new Triangle3D[] { this };
 					}
-					Vector3 vector = bc.GetValue(num2);
+					Vector3 newPoint2 = bc.GetValue(t2);
 					return new Triangle3D[]
 					{
-						new Triangle3D(this._a, this._b, vector),
-						new Triangle3D(this._a, vector, this._c)
+						new Triangle3D(this._a, this._b, newPoint2),
+						new Triangle3D(this._a, newPoint2, this._c)
 					};
 				}
-				else if (num == 1f)
+				else if (t == 1f)
 				{
-					float num2;
-					if (!ac.Intersects(plane, out num2, out flag, precisionDigits))
+					float t2;
+					if (!ac.Intersects(plane, out t2, out parallel, precisionDigits))
 					{
 						return new Triangle3D[] { this };
 					}
-					if (flag)
+					if (parallel)
 					{
 						throw new PrecisionException();
 					}
-					Vector3 vector = ac.GetValue(num2);
-					if (num2 == 0f || num2 == 1f)
+					Vector3 newPoint2 = ac.GetValue(t2);
+					if (t2 == 0f || t2 == 1f)
 					{
 						return new Triangle3D[]
 						{
-							new Triangle3D(ac.GetValue(0f), this._b, vector)
+							new Triangle3D(ac.GetValue(0f), this._b, newPoint2)
 						};
 					}
 					return new Triangle3D[]
 					{
-						new Triangle3D(this._b, this._c, vector),
-						new Triangle3D(this._b, vector, this._a)
+						new Triangle3D(this._b, this._c, newPoint2),
+						new Triangle3D(this._b, newPoint2, this._a)
 					};
 				}
 				else
 				{
-					Vector3 vector2 = ab.GetValue(num);
-					float num2;
-					if (ac.Intersects(plane, out num2, out flag, precisionDigits))
+					Vector3 newPoint3 = ab.GetValue(t);
+					float t2;
+					if (ac.Intersects(plane, out t2, out parallel, precisionDigits))
 					{
-						if (num2 <= 0f || flag)
+						if (t2 <= 0f || parallel)
 						{
 							throw new PrecisionException();
 						}
-						if (num2 == 1f)
+						if (t2 == 1f)
 						{
 							return new Triangle3D[]
 							{
-								new Triangle3D(vector2, this._b, this._c),
-								new Triangle3D(vector2, this._c, this._a)
+								new Triangle3D(newPoint3, this._b, this._c),
+								new Triangle3D(newPoint3, this._c, this._a)
 							};
 						}
-						Vector3 vector = ac.GetValue(num2);
+						Vector3 newPoint2 = ac.GetValue(t2);
 						return new Triangle3D[]
 						{
-							new Triangle3D(vector, this._a, vector2),
-							new Triangle3D(vector2, this._b, this._c),
-							new Triangle3D(vector, vector2, this._c)
+							new Triangle3D(newPoint2, this._a, newPoint3),
+							new Triangle3D(newPoint3, this._b, this._c),
+							new Triangle3D(newPoint2, newPoint3, this._c)
 						};
 					}
 					else
 					{
-						if (!bc.Intersects(plane, out num2, out flag, precisionDigits))
+						if (!bc.Intersects(plane, out t2, out parallel, precisionDigits))
 						{
 							throw new PrecisionException();
 						}
-						if (num2 <= 0f || num2 >= 1f || flag)
+						if (t2 <= 0f || t2 >= 1f || parallel)
 						{
 							throw new PrecisionException();
 						}
-						Vector3 vector = bc.GetValue(num2);
+						Vector3 newPoint2 = bc.GetValue(t2);
 						return new Triangle3D[]
 						{
-							new Triangle3D(vector2, this._b, vector),
-							new Triangle3D(this._a, vector2, vector),
-							new Triangle3D(this._a, vector, this._c)
+							new Triangle3D(newPoint3, this._b, newPoint2),
+							new Triangle3D(this._a, newPoint3, newPoint2),
+							new Triangle3D(this._a, newPoint2, this._c)
 						};
 					}
 				}
 			}
 			else
 			{
-				if (!bc.Intersects(plane, out num, out flag, precisionDigits))
+				if (!bc.Intersects(plane, out t, out parallel, precisionDigits))
 				{
 					return new Triangle3D[] { this };
 				}
-				if (num == 0f || flag)
+				if (t == 0f || parallel)
 				{
 					throw new PrecisionException();
 				}
-				if (num == 1f)
+				if (t == 1f)
 				{
 					return new Triangle3D[] { this };
 				}
-				Vector3 vector2 = bc.GetValue(num);
-				float num2;
-				if (!ac.Intersects(plane, out num2, out flag, precisionDigits))
+				Vector3 newPoint3 = bc.GetValue(t);
+				float t2;
+				if (!ac.Intersects(plane, out t2, out parallel, precisionDigits))
 				{
 					throw new PrecisionException();
 				}
-				if (num2 <= 0f || num2 >= 1f || flag)
+				if (t2 <= 0f || t2 >= 1f || parallel)
 				{
 					throw new PrecisionException();
 				}
-				Vector3 vector = ac.GetValue(num2);
+				Vector3 newPoint2 = ac.GetValue(t2);
 				return new Triangle3D[]
 				{
-					new Triangle3D(vector, this._a, vector2),
-					new Triangle3D(vector2, this._a, this._b),
-					new Triangle3D(vector, vector2, this._c)
+					new Triangle3D(newPoint2, this._a, newPoint3),
+					new Triangle3D(newPoint3, this._a, this._b),
+					new Triangle3D(newPoint2, newPoint3, this._c)
 				};
 			}
 		}

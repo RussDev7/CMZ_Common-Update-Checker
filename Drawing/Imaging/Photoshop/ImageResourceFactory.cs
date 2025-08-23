@@ -7,54 +7,54 @@ namespace DNA.Drawing.Imaging.Photoshop
 		public static ImageResource CreateImageResource(PsdBinaryReader reader)
 		{
 			new string(reader.ReadChars(4));
-			ushort num = reader.ReadUInt16();
-			string text = reader.ReadPascalString();
-			int num2 = (int)reader.ReadUInt32();
-			long num3 = reader.BaseStream.Position + (long)num2;
-			ResourceID resourceID = (ResourceID)num;
-			ResourceID resourceID2 = resourceID;
-			ImageResource imageResource;
-			if (resourceID2 <= ResourceID.ThumbnailBgr)
+			ushort resourceIdInt = reader.ReadUInt16();
+			string name = reader.ReadPascalString();
+			int resourceDataLength = (int)reader.ReadUInt32();
+			long endPosition = reader.BaseStream.Position + (long)resourceDataLength;
+			ResourceID resourceId = (ResourceID)resourceIdInt;
+			ResourceID resourceID = resourceId;
+			ImageResource resource;
+			if (resourceID <= ResourceID.ThumbnailBgr)
 			{
-				switch (resourceID2)
+				switch (resourceID)
 				{
 				case ResourceID.ResolutionInfo:
-					imageResource = new ResolutionInfo(reader, text);
+					resource = new ResolutionInfo(reader, name);
 					goto IL_00B4;
 				case ResourceID.AlphaChannelNames:
-					imageResource = new AlphaChannelNames(reader, text, num2);
+					resource = new AlphaChannelNames(reader, name, resourceDataLength);
 					goto IL_00B4;
 				default:
-					if (resourceID2 != ResourceID.ThumbnailBgr)
+					if (resourceID != ResourceID.ThumbnailBgr)
 					{
 						goto IL_00A8;
 					}
 					break;
 				}
 			}
-			else if (resourceID2 != ResourceID.ThumbnailRgb)
+			else if (resourceID != ResourceID.ThumbnailRgb)
 			{
-				if (resourceID2 != ResourceID.VersionInfo)
+				if (resourceID != ResourceID.VersionInfo)
 				{
 					goto IL_00A8;
 				}
-				imageResource = new VersionInfo(reader, text);
+				resource = new VersionInfo(reader, name);
 				goto IL_00B4;
 			}
-			imageResource = new Thumbnail(reader, resourceID, text, num2);
+			resource = new Thumbnail(reader, resourceId, name, resourceDataLength);
 			goto IL_00B4;
 			IL_00A8:
-			imageResource = new RawImageResource(reader, text, resourceID, num2);
+			resource = new RawImageResource(reader, name, resourceId, resourceDataLength);
 			IL_00B4:
 			if (reader.BaseStream.Position % 2L == 1L)
 			{
 				reader.ReadByte();
 			}
-			if (reader.BaseStream.Position < num3)
+			if (reader.BaseStream.Position < endPosition)
 			{
-				reader.BaseStream.Position = num3;
+				reader.BaseStream.Position = endPosition;
 			}
-			return imageResource;
+			return resource;
 		}
 	}
 }

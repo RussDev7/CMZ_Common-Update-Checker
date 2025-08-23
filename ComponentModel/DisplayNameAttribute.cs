@@ -15,13 +15,13 @@ namespace DNA.ComponentModel
 
 		public static string GetDisplayName(Type t)
 		{
-			object[] customAttributes = t.GetCustomAttributes(typeof(DisplayNameAttribute), false);
-			if (customAttributes.Length == 0)
+			object[] attribs = t.GetCustomAttributes(typeof(DisplayNameAttribute), false);
+			if (attribs.Length == 0)
 			{
 				throw new ArgumentException("Class " + t.Name + " Does not have a Display Name");
 			}
-			DisplayNameAttribute displayNameAttribute = (DisplayNameAttribute)customAttributes[0];
-			return displayNameAttribute.DisplayName;
+			DisplayNameAttribute dna = (DisplayNameAttribute)attribs[0];
+			return dna.DisplayName;
 		}
 
 		public DisplayNameAttribute(string displayName)

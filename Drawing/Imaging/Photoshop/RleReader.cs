@@ -16,44 +16,44 @@ namespace DNA.Drawing.Imaging.Photoshop
 			{
 				throw new ArgumentOutOfRangeException();
 			}
-			fixed (byte* ptr = &buffer[0])
+			fixed (byte* ptrBuffer = &buffer[0])
 			{
-				int i = count;
-				int num = offset;
-				while (i > 0)
+				int bytesLeft = count;
+				int bufferIdx = offset;
+				while (bytesLeft > 0)
 				{
-					sbyte b = (sbyte)this.stream.ReadByte();
-					if (b > 0)
+					sbyte rawPacketLength = (sbyte)this.stream.ReadByte();
+					if (rawPacketLength > 0)
 					{
-						int num2 = (int)(b + 1);
-						if (i < num2)
+						int readLength = (int)(rawPacketLength + 1);
+						if (bytesLeft < readLength)
 						{
 							throw new RleException("Raw packet overruns the decode window.");
 						}
-						this.stream.Read(buffer, num, num2);
-						num += num2;
-						i -= num2;
+						this.stream.Read(buffer, bufferIdx, readLength);
+						bufferIdx += readLength;
+						bytesLeft -= readLength;
 					}
-					else if (b > -128)
+					else if (rawPacketLength > -128)
 					{
-						int num3 = (int)(1 - b);
-						byte b2 = (byte)this.stream.ReadByte();
-						if (num3 > i)
+						int runLength = (int)(1 - rawPacketLength);
+						byte byteValue = (byte)this.stream.ReadByte();
+						if (runLength > bytesLeft)
 						{
 							throw new RleException("RLE packet overruns the decode window.");
 						}
-						byte* ptr2 = ptr + num;
-						byte* ptr3 = ptr2 + num3;
-						while (ptr2 < ptr3)
+						byte* ptr = ptrBuffer + bufferIdx;
+						byte* ptrEnd = ptr + runLength;
+						while (ptr < ptrEnd)
 						{
-							*ptr2 = b2;
-							ptr2++;
+							*ptr = byteValue;
+							ptr++;
 						}
-						num += num3;
-						i -= num3;
+						bufferIdx += runLength;
+						bytesLeft -= runLength;
 					}
 				}
-				return count - i;
+				return count - bytesLeft;
 			}
 		}
 

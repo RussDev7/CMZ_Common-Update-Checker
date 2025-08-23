@@ -77,12 +77,12 @@ namespace DNA.Security.Cryptography.Asn1.X509
 
 		public override Asn1Object ToAsn1Object()
 		{
-			Asn1EncodableVector asn1EncodableVector = new Asn1EncodableVector(new Asn1Encodable[] { this.objectID });
+			Asn1EncodableVector v = new Asn1EncodableVector(new Asn1Encodable[] { this.objectID });
 			if (this.parameters != null)
 			{
-				asn1EncodableVector.Add(new Asn1Encodable[] { this.parameters });
+				v.Add(new Asn1Encodable[] { this.parameters });
 			}
-			return new DerSequence(asn1EncodableVector);
+			return new DerSequence(v);
 		}
 
 		private readonly DerObjectIdentifier objectID;

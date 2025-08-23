@@ -24,11 +24,11 @@ namespace DNA.Security.Cryptography.Checksums
 
 		public void Update(int bval)
 		{
-			uint num = this.checksum & 65535U;
-			uint num2 = this.checksum >> 16;
-			num = (num + (uint)(bval & 255)) % Adler32.BASE;
-			num2 = (num + num2) % Adler32.BASE;
-			this.checksum = (num2 << 16) + num;
+			uint s = this.checksum & 65535U;
+			uint s2 = this.checksum >> 16;
+			s = (s + (uint)(bval & 255)) % Adler32.BASE;
+			s2 = (s + s2) % Adler32.BASE;
+			this.checksum = (s2 << 16) + s;
 		}
 
 		public void Update(byte[] buffer)
@@ -46,25 +46,25 @@ namespace DNA.Security.Cryptography.Checksums
 			{
 				throw new ArgumentOutOfRangeException();
 			}
-			uint num = this.checksum & 65535U;
-			uint num2 = this.checksum >> 16;
+			uint s = this.checksum & 65535U;
+			uint s2 = this.checksum >> 16;
 			while (len > 0)
 			{
-				int num3 = 3800;
-				if (num3 > len)
+				int i = 3800;
+				if (i > len)
 				{
-					num3 = len;
+					i = len;
 				}
-				len -= num3;
-				while (--num3 >= 0)
+				len -= i;
+				while (--i >= 0)
 				{
-					num += (uint)(buf[off++] & byte.MaxValue);
-					num2 += num;
+					s += (uint)(buf[off++] & byte.MaxValue);
+					s2 += s;
 				}
-				num %= Adler32.BASE;
-				num2 %= Adler32.BASE;
+				s %= Adler32.BASE;
+				s2 %= Adler32.BASE;
 			}
-			this.checksum = (num2 << 16) | num;
+			this.checksum = (s2 << 16) | s;
 		}
 
 		private static readonly uint BASE = 65521U;

@@ -33,30 +33,30 @@ namespace DNA
 
 		public void UpdateScores(IList<T> newScores, T currentStats)
 		{
-			List<T> list = new List<T>();
-			list.AddRange(newScores);
+			List<T> scores = new List<T>();
+			scores.AddRange(newScores);
 			currentStats.DateRecorded = DateTime.UtcNow;
-			list.Add(currentStats);
-			Dictionary<string, int> dictionary = new Dictionary<string, int>();
+			scores.Add(currentStats);
+			Dictionary<string, int> index = new Dictionary<string, int>();
 			for (int i = 0; i < this._scores.Count; i++)
 			{
-				dictionary[this._scores[i].GamerTag] = i;
+				index[this._scores[i].GamerTag] = i;
 			}
-			for (int j = 0; j < list.Count; j++)
+			for (int j = 0; j < scores.Count; j++)
 			{
-				T t = list[j];
-				int num;
-				if (dictionary.TryGetValue(t.GamerTag, out num))
+				T newStat = scores[j];
+				int id;
+				if (index.TryGetValue(newStat.GamerTag, out id))
 				{
-					if (this._scores[num].DateRecorded < t.DateRecorded)
+					if (this._scores[id].DateRecorded < newStat.DateRecorded)
 					{
-						this._scores[num] = t;
+						this._scores[id] = newStat;
 					}
 				}
 				else
 				{
-					this._scores.Add(t);
-					dictionary[t.GamerTag] = this._scores.Count - 1;
+					this._scores.Add(newStat);
+					index[newStat.GamerTag] = this._scores.Count - 1;
 				}
 			}
 			this._scores.Sort(this.CompareScores);
@@ -78,13 +78,13 @@ namespace DNA
 
 		public void Load(BinaryReader reader)
 		{
-			int num = reader.ReadInt32();
+			int count = reader.ReadInt32();
 			this._scores.Clear();
-			for (int i = 0; i < num; i++)
+			for (int i = 0; i < count; i++)
 			{
-				T t = new T();
-				t.Load(reader);
-				this._scores.Add(t);
+				T stats = new T();
+				stats.Load(reader);
+				this._scores.Add(stats);
 			}
 		}
 

@@ -20,8 +20,8 @@ namespace DNA.Net.GamerServices
 			{
 				if (this._awaitingResponse[i].WaitingID == id)
 				{
-					HostDiscovery.WaitingForResponse waitingForResponse = this._awaitingResponse[i];
-					waitingForResponse.Callback = null;
+					HostDiscovery.WaitingForResponse result = this._awaitingResponse[i];
+					result.Callback = null;
 					this._awaitingResponse.RemoveAt(i);
 					return;
 				}
@@ -56,9 +56,9 @@ namespace DNA.Net.GamerServices
 				{
 					if (this._awaitingResponse[i].WaitingID == rid)
 					{
-						HostDiscovery.WaitingForResponse waitingForResponse = this._awaitingResponse[i];
+						HostDiscovery.WaitingForResponse result = this._awaitingResponse[i];
 						this._awaitingResponse.RemoveAt(i);
-						return waitingForResponse;
+						return result;
 					}
 				}
 			}
@@ -70,11 +70,11 @@ namespace DNA.Net.GamerServices
 			int i = 0;
 			while (i < this._awaitingResponse.Count)
 			{
-				HostDiscovery.WaitingForResponse waitingForResponse = this._awaitingResponse[i];
-				if (waitingForResponse != null && waitingForResponse.Timer.Elapsed.TotalSeconds > (double)this.Timeout)
+				HostDiscovery.WaitingForResponse w = this._awaitingResponse[i];
+				if (w != null && w.Timer.Elapsed.TotalSeconds > (double)this.Timeout)
 				{
 					this._awaitingResponse.RemoveAt(i);
-					waitingForResponse.Callback(HostDiscovery.ResultCode.TimedOut, null, waitingForResponse.Context);
+					w.Callback(HostDiscovery.ResultCode.TimedOut, null, w.Context);
 				}
 				else
 				{

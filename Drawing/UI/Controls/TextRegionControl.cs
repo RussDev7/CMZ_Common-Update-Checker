@@ -30,31 +30,31 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void ProcessText(string text, StringBuilder builder)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			StringBuilder stringBuilder2 = new StringBuilder();
-			float num = (float)this._size.Width;
+			StringBuilder sb = new StringBuilder();
+			StringBuilder sb2 = new StringBuilder();
+			float sizeOfLine = (float)this._size.Width;
 			foreach (char c in text)
 			{
-				stringBuilder.Append(c);
+				sb.Append(c);
 				if (char.IsSeparator(c))
 				{
-					if (this.Font.MeasureString(stringBuilder).X > num)
+					if (this.Font.MeasureString(sb).X > sizeOfLine)
 					{
-						builder.Append(stringBuilder2);
+						builder.Append(sb2);
 						builder.Append('\n');
-						stringBuilder.Remove(0, stringBuilder2.Length);
+						sb.Remove(0, sb2.Length);
 					}
-					stringBuilder2.Length = 0;
-					stringBuilder2.Append(stringBuilder);
+					sb2.Length = 0;
+					sb2.Append(sb);
 				}
 			}
-			if (this.Font.MeasureString(stringBuilder).X > num)
+			if (this.Font.MeasureString(sb).X > sizeOfLine)
 			{
-				builder.Append(stringBuilder2);
+				builder.Append(sb2);
 				builder.Append('\n');
-				stringBuilder.Remove(0, stringBuilder2.Length);
+				sb.Remove(0, sb2.Length);
 			}
-			builder.Append(stringBuilder);
+			builder.Append(sb);
 		}
 
 		private Size _size;

@@ -15,45 +15,45 @@ namespace DNA.Audio.SignalProcessing.Processors
 		{
 			this.CarrierBuffer = new float[this._windowLength];
 			this.CarrierBuffer = carrier.GetData(0);
-			float[] array = new float[this._windowLength];
+			float[] carrierSampleBuffer = new float[this._windowLength];
 			this._loopedCarrierBuffer = new float[4096, 2];
-			VocoderProcessor.ReadLooped(this.CarrierBuffer, array, 0, this._windowLength);
-			VocoderProcessor.ToComplexArray(array, this._loopedCarrierBuffer, this._windowLength);
+			VocoderProcessor.ReadLooped(this.CarrierBuffer, carrierSampleBuffer, 0, this._windowLength);
+			VocoderProcessor.ToComplexArray(carrierSampleBuffer, this._loopedCarrierBuffer, this._windowLength);
 			this._fft1.DoFFT(this._loopedCarrierBuffer, this._windowLength, 1);
 			this.NormalizeFFT(this._loopedCarrierBuffer, this._windowLength);
 		}
 
 		private static int ReadBuffer(float[] buffer, int sourcePos, float[] dest, int destPos, int length)
 		{
-			int num = buffer.Length - sourcePos;
-			if (num > length)
+			int remaining = buffer.Length - sourcePos;
+			if (remaining > length)
 			{
-				num = length;
+				remaining = length;
 			}
-			int num2 = length - num;
-			for (int i = 0; i < num; i++)
+			int pad = length - remaining;
+			for (int i = 0; i < remaining; i++)
 			{
 				dest[i + destPos] = buffer[i + sourcePos];
 			}
-			for (int j = 0; j < num2; j++)
+			for (int j = 0; j < pad; j++)
 			{
 				dest[j + destPos] = 0f;
 			}
-			return num;
+			return remaining;
 		}
 
 		private static void ReadLooped(float[] buffer, float[] dest, int dpos, int length)
 		{
-			int num = 0;
+			int spos = 0;
 			while (length > 0)
 			{
-				if (num >= buffer.Length)
+				if (spos >= buffer.Length)
 				{
-					num = 0;
+					spos = 0;
 				}
-				dest[dpos] = buffer[num];
+				dest[dpos] = buffer[spos];
 				dpos++;
-				num++;
+				spos++;
 				length--;
 			}
 		}
@@ -94,82 +94,82 @@ namespace DNA.Audio.SignalProcessing.Processors
 
 		private void DoVocode(float[] modulatorBuffer)
 		{
-			int num = modulatorBuffer.Length;
-			int num2 = (num - this._windowOverlap) / (this._windowLength - this._windowOverlap);
-			int num3 = 0;
-			int num4 = 0;
-			int num5 = 0;
+			int modulator_length = modulatorBuffer.Length;
+			int num = (modulator_length - this._windowOverlap) / (this._windowLength - this._windowOverlap);
+			int frame_no = 0;
+			int modulatorReadBufferPos = 0;
+			int modulatorWriteBufferPos = 0;
 			do
 			{
-				int num6 = VocoderProcessor.ReadBuffer(modulatorBuffer, num4, this._modulatorBuffer, this._windowOverlap, this._windowLength - this._windowOverlap);
-				num4 += num6;
+				int bytesRead = VocoderProcessor.ReadBuffer(modulatorBuffer, modulatorReadBufferPos, this._modulatorBuffer, this._windowOverlap, this._windowLength - this._windowOverlap);
+				modulatorReadBufferPos += bytesRead;
 				this.VocodeWindow(this._modulatorBuffer, this._loopedCarrierBuffer, this._outputBuffer);
 				VocoderProcessor.ComplexToSample(this._outputBuffer, this._outputNew, this._windowLength);
 				for (int i = 0; i < this._windowOverlap; i++)
 				{
 					this._outputNew[i] = this._outputNew[i] * ((float)i / (float)this._windowOverlap) + this._outputOld[this._windowLength - this._windowOverlap + i] * ((float)(this._windowOverlap - i) / (float)this._windowOverlap);
 				}
-				int num7 = VocoderProcessor.WriteBuffer(modulatorBuffer, num5, this._outputNew, 0, this._windowLength - this._windowOverlap);
-				num5 += num7;
+				int bytesWritten = VocoderProcessor.WriteBuffer(modulatorBuffer, modulatorWriteBufferPos, this._outputNew, 0, this._windowLength - this._windowOverlap);
+				modulatorWriteBufferPos += bytesWritten;
 				for (int i = 0; i < this._windowOverlap; i++)
 				{
 					this._modulatorBuffer[i] = this._modulatorBuffer[this._windowLength - this._windowOverlap + i];
 				}
-				float[] outputOld = this._outputOld;
+				float[] output_temp = this._outputOld;
 				this._outputOld = this._outputNew;
-				this._outputNew = outputOld;
-				num3++;
+				this._outputNew = output_temp;
+				frame_no++;
 			}
-			while (num4 < modulatorBuffer.Length);
+			while (modulatorReadBufferPos < modulatorBuffer.Length);
 		}
 
 		private void VocodeWindow(float[] modulator, float[,] carrier, float[,] output)
 		{
-			int num = this._windowLength / (this._bandCount * 2);
-			int num2 = this._windowLength / 2 - num * (this._bandCount - 1);
+			int band_length = this._windowLength / (this._bandCount * 2);
+			int extra_band_length = this._windowLength / 2 - band_length * (this._bandCount - 1);
 			this.RealFFTMag(modulator, this._windowLength);
-			for (int i = 0; i < this._bandCount; i++)
+			for (int band_no = 0; band_no < this._bandCount; band_no++)
 			{
-				int num3 = ((i == this._bandCount - 1) ? num2 : num);
-				float num4 = 0f;
-				float num5 = 0f;
-				int j = 0;
-				int num6 = i * num;
-				int num7 = this._windowLength - num6 - 1;
-				while (j < num3)
+				int i = ((band_no == this._bandCount - 1) ? extra_band_length : band_length);
+				float j = 0f;
+				float c = 0f;
+				int k = 0;
+				int l = band_no * band_length;
+				int m = this._windowLength - l - 1;
+				while (k < i)
 				{
 					if (this._Normalize)
 					{
-						float num8 = carrier[num6, 0] * carrier[num6, 0] + carrier[num6, 1] * carrier[num6, 1];
-						float num9 = carrier[num7, 0] * carrier[num7, 0] + carrier[num7, 1] * carrier[num7, 1];
-						num5 += (float)(Math.Sqrt((double)num8) + Math.Sqrt((double)num9));
+						float c2 = carrier[l, 0] * carrier[l, 0] + carrier[l, 1] * carrier[l, 1];
+						float c3 = carrier[m, 0] * carrier[m, 0] + carrier[m, 1] * carrier[m, 1];
+						c += (float)(Math.Sqrt((double)c2) + Math.Sqrt((double)c3));
 					}
-					num4 += modulator[num6];
-					j++;
-					num6++;
-					num7--;
+					j += modulator[l];
+					k++;
+					l++;
+					m--;
 				}
 				if (!this._Normalize)
 				{
-					num5 = 1f;
+					c = 1f;
 				}
-				if (num5 == 0f)
+				if (c == 0f)
 				{
-					num5 = 0.0001f;
+					c = 0.0001f;
 				}
-				float num10 = num4 / num5;
-				j = 0;
-				num6 = i * num;
-				num7 = this._windowLength - num6 - 1;
-				while (j < num3)
+				float mc = j / c;
+				k = 0;
+				l = band_no * band_length;
+				m = this._windowLength - l - 1;
+				while (k < i)
 				{
-					output[num6, 0] = carrier[num6, 0] * num10;
-					output[num6, 1] = carrier[num6, 1] * num10;
-					output[num7, 0] = carrier[num7, 0] * num10;
-					output[num7, 1] = carrier[num7, 1] * num10;
-					j++;
-					num6++;
-					num7--;
+					output[l, 0] = carrier[l, 0] * mc;
+					output[l, 1] = carrier[l, 1] * mc;
+					output[m, 0] = carrier[m, 0] * mc;
+					output[m, 1] = carrier[m, 1] * mc;
+					k++;
+					l++;
+					m--;
 				}
 			}
 			this._fft1.DoFFT(output, this._windowLength, -1);
@@ -177,28 +177,28 @@ namespace DNA.Audio.SignalProcessing.Processors
 
 		private void RealFFTMag(float[] data, int windowlength)
 		{
-			float[,] array = new float[windowlength / 2, 2];
+			float[,] x = new float[windowlength / 2, 2];
 			for (int i = 0; i < windowlength; i += 2)
 			{
-				array[i >> 1, 0] = data[i];
-				array[i >> 1, 1] = data[i + 1];
+				x[i >> 1, 0] = data[i];
+				x[i >> 1, 1] = data[i + 1];
 			}
-			this._fft2.DoFFT(array, windowlength / 2, 1);
-			data[0] = (array[0, 0] + array[0, 1]) / (float)windowlength;
+			this._fft2.DoFFT(x, windowlength / 2, 1);
+			data[0] = (x[0, 0] + x[0, 1]) / (float)windowlength;
 			for (int i = 1; i < windowlength / 2; i++)
 			{
-				double num = 6.283185307179586 * (double)i / (double)windowlength;
-				double num2 = Math.Cos(num);
-				double num3 = Math.Sin(num);
-				double num4 = (double)((array[i, 1] + array[windowlength / 2 - i, 1]) / 2f);
-				double num5 = (double)((array[i, 0] - array[windowlength / 2 - i, 0]) / 2f);
-				double num6 = (double)((array[i, 0] + array[windowlength / 2 - i, 0]) / 2f) + num2 * num4 - num3 * num5;
-				double num7 = (double)((array[i, 1] - array[windowlength / 2 - i, 1]) / 2f) - num3 * num4 - num2 * num5;
-				num6 /= (double)(windowlength / 2);
-				num7 /= (double)(windowlength / 2);
-				data[i] = (float)Math.Sqrt(num6 * num6 + num7 * num7);
+				double arg = 6.283185307179586 * (double)i / (double)windowlength;
+				double c = Math.Cos(arg);
+				double s = Math.Sin(arg);
+				double ti = (double)((x[i, 1] + x[windowlength / 2 - i, 1]) / 2f);
+				double tr = (double)((x[i, 0] - x[windowlength / 2 - i, 0]) / 2f);
+				double xr = (double)((x[i, 0] + x[windowlength / 2 - i, 0]) / 2f) + c * ti - s * tr;
+				double xi = (double)((x[i, 1] - x[windowlength / 2 - i, 1]) / 2f) - s * ti - c * tr;
+				xr /= (double)(windowlength / 2);
+				xi /= (double)(windowlength / 2);
+				data[i] = (float)Math.Sqrt(xr * xr + xi * xi);
 			}
-			data[windowlength / 2] = (array[0, 0] - array[0, 1]) / (float)windowlength;
+			data[windowlength / 2] = (x[0, 0] - x[0, 1]) / (float)windowlength;
 		}
 
 		private void NormalizeFFT(float[,] x, int n)
@@ -253,78 +253,78 @@ namespace DNA.Audio.SignalProcessing.Processors
 		{
 			private static int ilog2(int n)
 			{
-				int num = -1;
+				int i = -1;
 				while (n != 0)
 				{
-					num++;
+					i++;
 					n >>= 1;
 				}
-				return num;
+				return i;
 			}
 
 			private static int BitReverse(int k, int nu)
 			{
-				int num = 0;
+				int outv = 0;
 				for (int i = 0; i < nu; i++)
 				{
-					num <<= 1;
-					num |= k & 1;
+					outv <<= 1;
+					outv |= k & 1;
 					k >>= 1;
 				}
-				return num;
+				return outv;
 			}
 
 			private void CreateArrays(int n)
 			{
-				int num = VocoderProcessor.FFT.ilog2(n);
+				int nu = VocoderProcessor.FFT.ilog2(n);
 				this._sinTable = new float[n];
 				this._cosTable = new float[n];
 				this._revTable = new int[n];
 				for (int i = 0; i < n; i++)
 				{
-					double num2 = 6.283185307179586 * (double)i / (double)n;
-					this._cosTable[i] = (float)Math.Cos(num2);
-					this._sinTable[i] = (float)Math.Sin(num2);
-					this._revTable[i] = VocoderProcessor.FFT.BitReverse(i, num);
+					double arg = 6.283185307179586 * (double)i / (double)n;
+					this._cosTable[i] = (float)Math.Cos(arg);
+					this._sinTable[i] = (float)Math.Sin(arg);
+					this._revTable[i] = VocoderProcessor.FFT.BitReverse(i, nu);
 				}
 			}
 
 			public FFT(int windowSize)
 			{
-				int num = VocoderProcessor.FFT.ilog2(windowSize);
+				int nu = VocoderProcessor.FFT.ilog2(windowSize);
 				this._sinTable = new float[windowSize];
 				this._cosTable = new float[windowSize];
 				this._revTable = new int[windowSize];
 				for (int i = 0; i < windowSize; i++)
 				{
-					double num2 = 6.283185307179586 * (double)i / (double)windowSize;
-					this._cosTable[i] = (float)Math.Cos(num2);
-					this._sinTable[i] = (float)Math.Sin(num2);
-					this._revTable[i] = VocoderProcessor.FFT.BitReverse(i, num);
+					double arg = 6.283185307179586 * (double)i / (double)windowSize;
+					this._cosTable[i] = (float)Math.Cos(arg);
+					this._sinTable[i] = (float)Math.Sin(arg);
+					this._revTable[i] = VocoderProcessor.FFT.BitReverse(i, nu);
 				}
 			}
 
 			public void DoFFT(float[,] data, int windowSize, int sign)
 			{
-				int num = VocoderProcessor.FFT.ilog2(windowSize);
-				int num2 = windowSize;
-				int num3 = num;
-				for (int i = 0; i < num; i++)
+				int nu = VocoderProcessor.FFT.ilog2(windowSize);
+				int dual_space = windowSize;
+				int nu2 = nu;
+				for (int i = 0; i < nu; i++)
 				{
-					num2 /= 2;
-					num3--;
-					for (int j = 0; j < windowSize; j += num2)
+					dual_space /= 2;
+					nu2--;
+					for (int j = 0; j < windowSize; j += dual_space)
 					{
 						int k = 0;
-						while (k < num2)
+						while (k < dual_space)
 						{
-							int num4 = this._revTable[j >> num3];
-							float num5 = data[j + num2, 0] * this._cosTable[num4] + data[j + num2, 1] * this._sinTable[num4] * (float)sign;
-							float num6 = data[j + num2, 1] * this._cosTable[num4] - data[j + num2, 0] * this._sinTable[num4] * (float)sign;
-							data[j + num2, 0] = data[j, 0] - num5;
-							data[j + num2, 1] = data[j, 1] - num6;
-							data[j, 0] += num5;
-							data[j, 1] += num6;
+							int p = this._revTable[j >> nu2];
+							float treal = data[j + dual_space, 0] * this._cosTable[p] + data[j + dual_space, 1] * this._sinTable[p] * (float)sign;
+							float timag = data[j + dual_space, 1] * this._cosTable[p] - data[j + dual_space, 0] * this._sinTable[p] * (float)sign;
+							data[j + dual_space, 0] = data[j, 0] - treal;
+							data[j + dual_space, 1] = data[j, 1] - timag;
+							data[j, 0] += treal;
+							data[j, 1] += timag;
 							k++;
 							j++;
 						}
@@ -335,12 +335,12 @@ namespace DNA.Audio.SignalProcessing.Processors
 					int k = this._revTable[j];
 					if (k > j)
 					{
-						float num7 = data[j, 0];
-						float num8 = data[j, 1];
+						float treal2 = data[j, 0];
+						float timag2 = data[j, 1];
 						data[j, 0] = data[k, 0];
 						data[j, 1] = data[k, 1];
-						data[k, 0] = num7;
-						data[k, 1] = num8;
+						data[k, 0] = treal2;
+						data[k, 1] = timag2;
 					}
 				}
 			}

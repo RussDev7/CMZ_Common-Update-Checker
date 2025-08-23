@@ -51,22 +51,22 @@ namespace DNA
 		public EulerAngle(Quaternion q)
 		{
 			Vector3 zero = Vector3.Zero;
-			float num = (float)Math.Atan2((double)(2f * q.Y * q.W - 2f * q.X * q.Z), 1.0 - 2.0 * Math.Pow((double)q.Y, 2.0) - 2.0 * Math.Pow((double)q.Z, 2.0));
-			float num2 = (float)Math.Asin((double)(2f * q.X * q.Y + 2f * q.Z * q.W));
-			float num3 = (float)Math.Atan2((double)(2f * q.X * q.W - 2f * q.Y * q.Z), 1.0 - 2.0 * Math.Pow((double)q.X, 2.0) - 2.0 * Math.Pow((double)q.Z, 2.0));
+			float yaw = (float)Math.Atan2((double)(2f * q.Y * q.W - 2f * q.X * q.Z), 1.0 - 2.0 * Math.Pow((double)q.Y, 2.0) - 2.0 * Math.Pow((double)q.Z, 2.0));
+			float roll = (float)Math.Asin((double)(2f * q.X * q.Y + 2f * q.Z * q.W));
+			float pitch = (float)Math.Atan2((double)(2f * q.X * q.W - 2f * q.Y * q.Z), 1.0 - 2.0 * Math.Pow((double)q.X, 2.0) - 2.0 * Math.Pow((double)q.Z, 2.0));
 			if ((double)(q.X * q.Y + q.Z * q.W) == 0.5)
 			{
-				num = (float)(2.0 * Math.Atan2((double)q.X, (double)q.W));
-				num3 = 0f;
+				yaw = (float)(2.0 * Math.Atan2((double)q.X, (double)q.W));
+				pitch = 0f;
 			}
 			else if ((double)(q.X * q.Y + q.Z * q.W) == -0.5)
 			{
-				num = (float)(-2.0 * Math.Atan2((double)q.X, (double)q.W));
-				num3 = 0f;
+				yaw = (float)(-2.0 * Math.Atan2((double)q.X, (double)q.W));
+				pitch = 0f;
 			}
-			this._yaw = Angle.FromRadians(num);
-			this._pitch = Angle.FromRadians(num3);
-			this._roll = Angle.FromRadians(num2);
+			this._yaw = Angle.FromRadians(yaw);
+			this._pitch = Angle.FromRadians(pitch);
+			this._roll = Angle.FromRadians(roll);
 		}
 
 		public override bool Equals(object obj)

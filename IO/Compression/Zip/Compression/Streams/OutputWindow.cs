@@ -30,45 +30,45 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 			{
 				throw new InvalidOperationException("Window full");
 			}
-			int num = (this.windowEnd - dist) & OutputWindow.WINDOW_MASK;
-			int num2 = OutputWindow.WINDOW_SIZE - len;
-			if (num > num2 || this.windowEnd >= num2)
+			int rep_start = (this.windowEnd - dist) & OutputWindow.WINDOW_MASK;
+			int border = OutputWindow.WINDOW_SIZE - len;
+			if (rep_start > border || this.windowEnd >= border)
 			{
-				this.SlowRepeat(num, len, dist);
+				this.SlowRepeat(rep_start, len, dist);
 				return;
 			}
 			if (len <= dist)
 			{
-				Array.Copy(this.window, num, this.window, this.windowEnd, len);
+				Array.Copy(this.window, rep_start, this.window, this.windowEnd, len);
 				this.windowEnd += len;
 				return;
 			}
 			while (len-- > 0)
 			{
-				this.window[this.windowEnd++] = this.window[num++];
+				this.window[this.windowEnd++] = this.window[rep_start++];
 			}
 		}
 
 		public int CopyStored(StreamManipulator input, int len)
 		{
 			len = Math.Min(Math.Min(len, OutputWindow.WINDOW_SIZE - this.windowFilled), input.AvailableBytes);
-			int num = OutputWindow.WINDOW_SIZE - this.windowEnd;
-			int num2;
-			if (len > num)
+			int tailLen = OutputWindow.WINDOW_SIZE - this.windowEnd;
+			int copied;
+			if (len > tailLen)
 			{
-				num2 = input.CopyBytes(this.window, this.windowEnd, num);
-				if (num2 == num)
+				copied = input.CopyBytes(this.window, this.windowEnd, tailLen);
+				if (copied == tailLen)
 				{
-					num2 += input.CopyBytes(this.window, 0, len - num);
+					copied += input.CopyBytes(this.window, 0, len - tailLen);
 				}
 			}
 			else
 			{
-				num2 = input.CopyBytes(this.window, this.windowEnd, len);
+				copied = input.CopyBytes(this.window, this.windowEnd, len);
 			}
-			this.windowEnd = (this.windowEnd + num2) & OutputWindow.WINDOW_MASK;
-			this.windowFilled += num2;
-			return num2;
+			this.windowEnd = (this.windowEnd + copied) & OutputWindow.WINDOW_MASK;
+			this.windowFilled += copied;
+			return copied;
 		}
 
 		public void CopyDict(byte[] dict, int offset, int len)
@@ -98,30 +98,30 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 
 		public int CopyOutput(byte[] output, int offset, int len)
 		{
-			int num = this.windowEnd;
+			int copy_end = this.windowEnd;
 			if (len > this.windowFilled)
 			{
 				len = this.windowFilled;
 			}
 			else
 			{
-				num = (this.windowEnd - this.windowFilled + len) & OutputWindow.WINDOW_MASK;
+				copy_end = (this.windowEnd - this.windowFilled + len) & OutputWindow.WINDOW_MASK;
 			}
-			int num2 = len;
-			int num3 = len - num;
-			if (num3 > 0)
+			int copied = len;
+			int tailLen = len - copy_end;
+			if (tailLen > 0)
 			{
-				Array.Copy(this.window, OutputWindow.WINDOW_SIZE - num3, output, offset, num3);
-				offset += num3;
-				len = num;
+				Array.Copy(this.window, OutputWindow.WINDOW_SIZE - tailLen, output, offset, tailLen);
+				offset += tailLen;
+				len = copy_end;
 			}
-			Array.Copy(this.window, num - len, output, offset, len);
-			this.windowFilled -= num2;
+			Array.Copy(this.window, copy_end - len, output, offset, len);
+			this.windowFilled -= copied;
 			if (this.windowFilled < 0)
 			{
 				throw new InvalidOperationException();
 			}
-			return num2;
+			return copied;
 		}
 
 		public void Reset()

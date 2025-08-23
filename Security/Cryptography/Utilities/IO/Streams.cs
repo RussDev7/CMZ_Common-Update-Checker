@@ -11,17 +11,17 @@ namespace DNA.Security.Cryptography.Utilities.IO
 
 		public static void Drain(Stream inStr)
 		{
-			byte[] array = new byte[512];
-			while (inStr.Read(array, 0, array.Length) > 0)
+			byte[] bs = new byte[512];
+			while (inStr.Read(bs, 0, bs.Length) > 0)
 			{
 			}
 		}
 
 		public static byte[] ReadAll(Stream inStr)
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			Streams.PipeAll(inStr, memoryStream);
-			return memoryStream.ToArray();
+			MemoryStream buf = new MemoryStream();
+			Streams.PipeAll(inStr, buf);
+			return buf.ToArray();
 		}
 
 		public static int ReadFully(Stream inStr, byte[] buf)
@@ -31,26 +31,26 @@ namespace DNA.Security.Cryptography.Utilities.IO
 
 		public static int ReadFully(Stream inStr, byte[] buf, int off, int len)
 		{
-			int i;
-			int num;
-			for (i = 0; i < len; i += num)
+			int totalRead;
+			int numRead;
+			for (totalRead = 0; totalRead < len; totalRead += numRead)
 			{
-				num = inStr.Read(buf, off + i, len - i);
-				if (num < 1)
+				numRead = inStr.Read(buf, off + totalRead, len - totalRead);
+				if (numRead < 1)
 				{
 					break;
 				}
 			}
-			return i;
+			return totalRead;
 		}
 
 		public static void PipeAll(Stream inStr, Stream outStr)
 		{
-			byte[] array = new byte[512];
-			int num;
-			while ((num = inStr.Read(array, 0, array.Length)) > 0)
+			byte[] bs = new byte[512];
+			int numRead;
+			while ((numRead = inStr.Read(bs, 0, bs.Length)) > 0)
 			{
-				outStr.Write(array, 0, num);
+				outStr.Write(bs, 0, numRead);
 			}
 		}
 

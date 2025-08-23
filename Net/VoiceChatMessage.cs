@@ -12,9 +12,9 @@ namespace DNA.Net
 
 		public static void Send(LocalNetworkGamer from, byte[] _audioBuffer)
 		{
-			VoiceChatMessage sendInstance = Message.GetSendInstance<VoiceChatMessage>();
-			sendInstance.AudioBuffer = _audioBuffer;
-			sendInstance.DoSend(from);
+			VoiceChatMessage Instance = Message.GetSendInstance<VoiceChatMessage>();
+			Instance.AudioBuffer = _audioBuffer;
+			Instance.DoSend(from);
 		}
 
 		protected override SendDataOptions SendDataOptions
@@ -27,12 +27,12 @@ namespace DNA.Net
 
 		protected override void RecieveData(BinaryReader reader)
 		{
-			int num = reader.ReadInt32();
-			if (this.AudioBuffer.Length != num)
+			int samples = reader.ReadInt32();
+			if (this.AudioBuffer.Length != samples)
 			{
-				this.AudioBuffer = new byte[num];
+				this.AudioBuffer = new byte[samples];
 			}
-			this.AudioBuffer = reader.ReadBytes(num);
+			this.AudioBuffer = reader.ReadBytes(samples);
 		}
 
 		protected override void SendData(BinaryWriter writer)

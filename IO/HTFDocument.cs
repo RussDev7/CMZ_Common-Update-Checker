@@ -33,9 +33,9 @@ namespace DNA.IO
 
 		public HTFDocument(string fileName)
 		{
-			using (FileStream fileStream = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+			using (FileStream stream = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				this.Load(fileStream);
+				this.Load(stream);
 			}
 		}
 
@@ -51,24 +51,24 @@ namespace DNA.IO
 
 		public void Load(string path)
 		{
-			using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+			using (FileStream stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				this._root = new HTFElement(fileStream);
+				this._root = new HTFElement(stream);
 			}
 		}
 
 		public void Save(string filename)
 		{
-			using (FileStream fileStream = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.None))
+			using (FileStream stream = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.None))
 			{
-				this.Save(fileStream);
+				this.Save(stream);
 			}
 		}
 
 		public void Save(Stream stream)
 		{
-			StreamWriter streamWriter = new StreamWriter(stream);
-			this.Save(streamWriter);
+			StreamWriter writer = new StreamWriter(stream);
+			this.Save(writer);
 		}
 
 		public void Save(StreamWriter writer)
@@ -79,22 +79,22 @@ namespace DNA.IO
 
 		public override string ToString()
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			StreamWriter streamWriter = new StreamWriter(memoryStream);
-			this.Save(streamWriter);
-			memoryStream.Position = 0L;
-			StreamReader streamReader = new StreamReader(memoryStream);
-			return streamReader.ReadToEnd();
+			MemoryStream stream = new MemoryStream();
+			StreamWriter writer = new StreamWriter(stream);
+			this.Save(writer);
+			stream.Position = 0L;
+			StreamReader reader = new StreamReader(stream);
+			return reader.ReadToEnd();
 		}
 
 		public void LoadFromString(string data)
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			StreamWriter streamWriter = new StreamWriter(memoryStream);
-			streamWriter.Write(data);
-			streamWriter.Flush();
-			memoryStream.Position = 0L;
-			this.Load(memoryStream);
+			MemoryStream stream = new MemoryStream();
+			StreamWriter writer = new StreamWriter(stream);
+			writer.Write(data);
+			writer.Flush();
+			stream.Position = 0L;
+			this.Load(stream);
 		}
 
 		private HTFElement _root;

@@ -23,26 +23,26 @@ namespace DNA.Drawing
 			writer.Write(base.Count);
 			for (int i = 0; i < base.Count; i++)
 			{
-				Bone bone = base[i];
-				writer.Write(bone.Name);
-				writer.Write((bone.Parent == null) ? (-1) : bone.Parent.Index);
-				writer.Write(bone.Transform);
+				Bone b = base[i];
+				writer.Write(b.Name);
+				writer.Write((b.Parent == null) ? (-1) : b.Parent.Index);
+				writer.Write(b.Transform);
 			}
 		}
 
 		public static Skeleton Load(BinaryReader reader)
 		{
-			int num = reader.ReadInt32();
-			string[] array = new string[num];
-			int[] array2 = new int[num];
-			Matrix[] array3 = new Matrix[num];
-			for (int i = 0; i < num; i++)
+			int boneCount = reader.ReadInt32();
+			string[] boneNames = new string[boneCount];
+			int[] heirachy = new int[boneCount];
+			Matrix[] xforms = new Matrix[boneCount];
+			for (int i = 0; i < boneCount; i++)
 			{
-				array[i] = reader.ReadString();
-				array2[i] = reader.ReadInt32();
-				array3[i] = reader.ReadMatrix();
+				boneNames[i] = reader.ReadString();
+				heirachy[i] = reader.ReadInt32();
+				xforms[i] = reader.ReadMatrix();
 			}
-			return Bone.BuildSkeleton(array3, array2, array);
+			return Bone.BuildSkeleton(xforms, heirachy, boneNames);
 		}
 
 		public Skeleton(IList<Bone> bones)
@@ -74,12 +74,12 @@ namespace DNA.Drawing
 
 		public IList<Bone> BonesFromNames(IList<string> boneNames)
 		{
-			Bone[] array = new Bone[boneNames.Count];
+			Bone[] bones = new Bone[boneNames.Count];
 			for (int i = 0; i < boneNames.Count; i++)
 			{
-				array[i] = this.boneLookup[boneNames[i]];
+				bones[i] = this.boneLookup[boneNames[i]];
 			}
-			return array;
+			return bones;
 		}
 
 		public void CopyTransformsFrom(Matrix[] sourceBoneTransforms)
@@ -92,8 +92,8 @@ namespace DNA.Drawing
 
 		public void CopyTransformsTo(Matrix[] destinationBoneTransforms)
 		{
-			int num = this._bones.Length;
-			for (int i = 0; i < num; i++)
+			int count = this._bones.Length;
+			for (int i = 0; i < count; i++)
 			{
 				this._bones[i].GetTransform(out destinationBoneTransforms[i]);
 			}

@@ -61,13 +61,13 @@ namespace DNA.Drawing
 				{
 					device.Clear(ClearOptions.DepthBuffer, Color.Red, 1f, 0);
 				}
-				int width = device.Viewport.Width;
-				int height = device.Viewport.Height;
-				int num = this.BackgroundImage.Width * height / this.BackgroundImage.Height;
-				int num2 = num - width;
-				int num3 = num2 / 2;
+				int screenWidth = device.Viewport.Width;
+				int screenHeight = device.Viewport.Height;
+				int newWidth = this.BackgroundImage.Width * screenHeight / this.BackgroundImage.Height;
+				int dif = newWidth - screenWidth;
+				int offset = dif / 2;
 				spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Opaque, SamplerState.AnisotropicClamp, DepthStencilState.None, RasterizerState.CullNone);
-				spriteBatch.Draw(this.BackgroundImage, new Rectangle(-num3, 0, num, height), new Rectangle?(new Rectangle(0, 0, this.BackgroundImage.Width, this.BackgroundImage.Height)), Color.White);
+				spriteBatch.Draw(this.BackgroundImage, new Rectangle(-offset, 0, newWidth, screenHeight), new Rectangle?(new Rectangle(0, 0, this.BackgroundImage.Width, this.BackgroundImage.Height)), Color.White);
 				spriteBatch.End();
 			}
 			else if (this.BackgroundColor != null)

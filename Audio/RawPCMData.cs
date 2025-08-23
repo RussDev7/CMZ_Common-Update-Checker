@@ -77,18 +77,18 @@ namespace DNA.Audio
 			int bitsPerSample2 = this.BitsPerSample;
 			if (bitsPerSample2 == 16)
 			{
-				for (int i = 0; i < this.Channels; i++)
+				for (int channel = 0; channel < this.Channels; channel++)
 				{
-					int num = 2;
-					int num2 = this.Channels * num;
-					float[] data2 = data.GetData(i);
-					int num3 = num * i;
-					foreach (float num4 in data2)
+					int sampleBytes = 2;
+					int sampleSize = this.Channels * sampleBytes;
+					float[] internalData = data.GetData(channel);
+					int byteIndex = sampleBytes * channel;
+					foreach (float fval in internalData)
 					{
-						short num5 = (short)(num4 * 32768f);
-						this._channelData[num3] = (byte)(num5 & 255);
-						this._channelData[num3 + 1] = (byte)(num5 >> 8);
-						num3 += num2;
+						short samp = (short)(fval * 32768f);
+						this._channelData[byteIndex] = (byte)(samp & 255);
+						this._channelData[byteIndex + 1] = (byte)(samp >> 8);
+						byteIndex += sampleSize;
 					}
 				}
 				return;
@@ -104,18 +104,18 @@ namespace DNA.Audio
 		public static RawPCMData LoadWav(string path)
 		{
 			RawPCMData rawPCMData;
-			using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+			using (FileStream stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				rawPCMData = RawPCMData.LoadWav(fileStream);
+				rawPCMData = RawPCMData.LoadWav(stream);
 			}
 			return rawPCMData;
 		}
 
 		public static RawPCMData LoadWav(Stream stream)
 		{
-			RawPCMData rawPCMData = new RawPCMData();
-			rawPCMData.LoadWavInternal(stream);
-			return rawPCMData;
+			RawPCMData data = new RawPCMData();
+			data.LoadWavInternal(stream);
+			return data;
 		}
 
 		private int LoadWav(BinaryReader reader)
@@ -125,26 +125,26 @@ namespace DNA.Audio
 			{
 				throw new Exception("Not a valid Wav File");
 			}
-			int num = reader.ReadInt32();
-			long position = reader.BaseStream.Position;
+			int size = reader.ReadInt32();
+			long posstart = reader.BaseStream.Position;
 			if (reader.ReadUInt32() != 1163280727U)
 			{
 				throw new Exception("Not a valid Wav File");
 			}
-			long num2 = position + (long)num;
+			long end = posstart + (long)size;
 			new List<List<float>>();
-			while (reader.BaseStream.Position < num2)
+			while (reader.BaseStream.Position < end)
 			{
-				uint num3 = reader.ReadUInt32();
-				int num4 = reader.ReadInt32();
-				long position2 = reader.BaseStream.Position;
-				long num5 = position2 + (long)num4;
-				uint num6 = num3;
-				if (num6 != 544501094U)
+				uint chunkId = reader.ReadUInt32();
+				int chunkSize = reader.ReadInt32();
+				long startPos = reader.BaseStream.Position;
+				long endPos = startPos + (long)chunkSize;
+				uint num = chunkId;
+				if (num != 544501094U)
 				{
-					if (num6 != 1635017060U)
+					if (num != 1635017060U)
 					{
-						if (num6 == 1953393779U)
+						if (num == 1953393779U)
 						{
 							throw new Exception("Silence Chunks not Supported");
 						}
@@ -155,26 +155,26 @@ namespace DNA.Audio
 						{
 							throw new Exception("Mutiple Wav Chunks Not Supported");
 						}
-						this._channelData = reader.ReadBytes(num4);
+						this._channelData = reader.ReadBytes(chunkSize);
 						int bitsPerSample = this.BitsPerSample;
 					}
 				}
 				else
 				{
-					RawPCMData.WavCompression wavCompression = (RawPCMData.WavCompression)reader.ReadUInt16();
+					RawPCMData.WavCompression compression = (RawPCMData.WavCompression)reader.ReadUInt16();
 					reader.ReadUInt16();
 					this.SampleRate = reader.ReadInt32();
 					reader.ReadInt32();
 					reader.ReadUInt16();
 					this.BitsPerSample = (int)reader.ReadUInt16();
-					if (wavCompression != RawPCMData.WavCompression.PCM)
+					if (compression != RawPCMData.WavCompression.PCM)
 					{
-						throw new Exception("Unsupported Wav Compression " + wavCompression.ToString());
+						throw new Exception("Unsupported Wav Compression " + compression.ToString());
 					}
 				}
-				if (reader.BaseStream.Position < num5)
+				if (reader.BaseStream.Position < endPos)
 				{
-					reader.BaseStream.Position = num5;
+					reader.BaseStream.Position = endPos;
 				}
 			}
 			return this.BitsPerSample;
@@ -182,47 +182,47 @@ namespace DNA.Audio
 
 		public void SaveWav(string path)
 		{
-			using (FileStream fileStream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.None))
+			using (FileStream stream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.None))
 			{
-				this.SaveWav(fileStream);
+				this.SaveWav(stream);
 			}
 		}
 
 		public void SaveWav(Stream stream)
 		{
-			BinaryWriter binaryWriter = new BinaryWriter(stream);
-			this.SaveWav(binaryWriter);
+			BinaryWriter writer = new BinaryWriter(stream);
+			this.SaveWav(writer);
 		}
 
 		public void SaveWav(BinaryWriter writer)
 		{
 			writer.Write(1179011410U);
-			int num = this.BitsPerSample * this.Channels >> 3;
-			int num2 = num * this.Samples;
-			writer.Write(36 + num2);
+			int blockAlign = this.BitsPerSample * this.Channels >> 3;
+			int dataSize = blockAlign * this.Samples;
+			writer.Write(36 + dataSize);
 			writer.Write(1163280727U);
 			writer.Write(544501094U);
 			writer.Write(16);
 			writer.Write(1);
 			writer.Write((short)this.Channels);
 			writer.Write(this.SampleRate);
-			writer.Write(this.SampleRate * num);
-			writer.Write((short)num);
+			writer.Write(this.SampleRate * blockAlign);
+			writer.Write((short)blockAlign);
 			writer.Write((short)this.BitsPerSample);
 			writer.Write(1635017060U);
-			writer.Write(num2);
+			writer.Write(dataSize);
 			int samples = this.Samples;
 			int channels = this.Channels;
-			byte[] array;
+			byte[] swapBuffer;
 			if (this.BitsPerSample == 16)
 			{
-				array = new byte[this._channelData.Length];
+				swapBuffer = new byte[this._channelData.Length];
 			}
 			else
 			{
-				array = this._channelData;
+				swapBuffer = this._channelData;
 			}
-			writer.Write(array);
+			writer.Write(swapBuffer);
 		}
 
 		private byte[] _channelData = new byte[0];

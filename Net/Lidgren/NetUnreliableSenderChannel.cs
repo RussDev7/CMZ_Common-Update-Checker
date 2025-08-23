@@ -38,9 +38,9 @@ namespace DNA.Net.Lidgren
 
 		internal override NetSendResult Enqueue(NetOutgoingMessage message)
 		{
-			int num = this.m_queuedSends.Count + 1;
-			int num2 = this.m_windowSize - (this.m_sendStart + 1024 - this.m_windowStart) % 1024;
-			if (num > num2)
+			int queueLen = this.m_queuedSends.Count + 1;
+			int left = this.m_windowSize - (this.m_sendStart + 1024 - this.m_windowStart) % 1024;
+			if (queueLen > left)
 			{
 				return NetSendResult.Dropped;
 			}
@@ -57,10 +57,10 @@ namespace DNA.Net.Lidgren
 			}
 			while (this.m_queuedSends.Count > 0 && num > 0)
 			{
-				NetOutgoingMessage netOutgoingMessage;
-				if (this.m_queuedSends.TryDequeue(out netOutgoingMessage))
+				NetOutgoingMessage om;
+				if (this.m_queuedSends.TryDequeue(out om))
 				{
-					this.ExecuteSend(now, netOutgoingMessage);
+					this.ExecuteSend(now, om);
 				}
 				num--;
 			}
@@ -68,9 +68,9 @@ namespace DNA.Net.Lidgren
 
 		private void ExecuteSend(float now, NetOutgoingMessage message)
 		{
-			int sendStart = this.m_sendStart;
+			int seqNr = this.m_sendStart;
 			this.m_sendStart = (this.m_sendStart + 1) % 1024;
-			this.m_connection.QueueSendMessage(message, sendStart);
+			this.m_connection.QueueSendMessage(message, seqNr);
 			Interlocked.Decrement(ref message.m_recyclingCount);
 			if (message.m_recyclingCount <= 0)
 			{
@@ -80,12 +80,12 @@ namespace DNA.Net.Lidgren
 
 		internal override void ReceiveAcknowledge(float now, int seqNr)
 		{
-			int num = NetUtility.RelativeSequenceNumber(seqNr, this.m_windowStart);
-			if (num < 0)
+			int relate = NetUtility.RelativeSequenceNumber(seqNr, this.m_windowStart);
+			if (relate < 0)
 			{
 				return;
 			}
-			if (num == 0)
+			if (relate == 0)
 			{
 				this.m_receivedAcks[this.m_windowStart] = false;
 				this.m_windowStart = (this.m_windowStart + 1) % 1024;

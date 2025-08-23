@@ -8,78 +8,78 @@ namespace DNA.Audio
 	{
 		public static void ShortTimeFourierTransform(float[] fftBuffer, int fftFrameSize, int sign)
 		{
-			int num = fftFrameSize << 1;
+			int fftFrameSize2 = fftFrameSize << 1;
 			for (int i = 2; i < 2 * fftFrameSize - 2; i += 2)
 			{
-				int j = 2;
-				int k = 0;
-				while (j < num)
+				int bitm = 2;
+				int j = 0;
+				while (bitm < fftFrameSize2)
 				{
-					if ((i & j) != 0)
+					if ((i & bitm) != 0)
 					{
-						k++;
+						j++;
 					}
-					k <<= 1;
 					j <<= 1;
+					bitm <<= 1;
 				}
-				if (i < k)
+				if (i < j)
 				{
-					float num2 = fftBuffer[i];
-					fftBuffer[i] = fftBuffer[k];
-					fftBuffer[k] = num2;
-					num2 = fftBuffer[i + 1];
-					fftBuffer[i + 1] = fftBuffer[k + 1];
-					fftBuffer[k + 1] = num2;
+					float temp = fftBuffer[i];
+					fftBuffer[i] = fftBuffer[j];
+					fftBuffer[j] = temp;
+					temp = fftBuffer[i + 1];
+					fftBuffer[i + 1] = fftBuffer[j + 1];
+					fftBuffer[j + 1] = temp;
 				}
 			}
-			int num3 = (int)(Math.Log((double)fftFrameSize) / Math.Log(2.0) + 0.5);
-			int l = 0;
-			int num4 = 2;
-			while (l < num3)
+			int max = (int)(Math.Log((double)fftFrameSize) / Math.Log(2.0) + 0.5);
+			int k = 0;
+			int le = 2;
+			while (k < max)
 			{
-				num4 <<= 1;
-				int num5 = num4 >> 1;
-				float num6 = 1f;
-				float num7 = 0f;
-				float num8 = (float)(3.141592653589793 / (double)(num5 >> 1));
-				float num9 = (float)Math.Cos((double)num8);
-				float num10 = (float)sign * (float)Math.Sin((double)num8);
-				for (int k = 0; k < num5; k += 2)
+				le <<= 1;
+				int le2 = le >> 1;
+				float ur = 1f;
+				float ui = 0f;
+				float arg = (float)(3.141592653589793 / (double)(le2 >> 1));
+				float wr = (float)Math.Cos((double)arg);
+				float wi = (float)sign * (float)Math.Sin((double)arg);
+				for (int j = 0; j < le2; j += 2)
 				{
-					float num12;
-					for (int i = k; i < num; i += num4)
+					float tr;
+					for (int i = j; i < fftFrameSize2; i += le)
 					{
-						int num11 = i + num5;
-						num12 = fftBuffer[num11] * num6 - fftBuffer[num11 + 1] * num7;
-						float num13 = fftBuffer[num11] * num7 + fftBuffer[num11 + 1] * num6;
-						fftBuffer[num11] = fftBuffer[i] - num12;
-						fftBuffer[num11 + 1] = fftBuffer[i + 1] - num13;
-						fftBuffer[i] += num12;
-						fftBuffer[i + 1] += num13;
+						int index = i + le2;
+						tr = fftBuffer[index] * ur - fftBuffer[index + 1] * ui;
+						float ti = fftBuffer[index] * ui + fftBuffer[index + 1] * ur;
+						fftBuffer[index] = fftBuffer[i] - tr;
+						fftBuffer[index + 1] = fftBuffer[i + 1] - ti;
+						fftBuffer[i] += tr;
+						fftBuffer[i + 1] += ti;
 					}
-					num12 = num6 * num9 - num7 * num10;
-					num7 = num6 * num10 + num7 * num9;
-					num6 = num12;
+					tr = ur * wr - ui * wi;
+					ui = ur * wi + ui * wr;
+					ur = tr;
 				}
-				l++;
+				k++;
 			}
 		}
 
 		public static Microphone GetMic(SignedInGamer gamer)
 		{
-			foreach (Microphone microphone in Microphone.All)
+			foreach (Microphone mic in Microphone.All)
 			{
-				if (gamer.IsHeadset(microphone))
+				if (gamer.IsHeadset(mic))
 				{
 					try
 					{
-						MicrophoneState state = microphone.State;
+						MicrophoneState state = mic.State;
 					}
 					catch (NoMicrophoneConnectedException)
 					{
 						return null;
 					}
-					return microphone;
+					return mic;
 				}
 			}
 			return null;

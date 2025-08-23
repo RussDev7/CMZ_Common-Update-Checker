@@ -47,19 +47,19 @@ namespace DNA.Audio
 			int bitsPerSample = data.BitsPerSample;
 			if (bitsPerSample == 16)
 			{
-				int num = 2 * this.Channels;
-				byte[] channelData = data.ChannelData;
-				for (int i = 0; i < data.Channels; i++)
+				int sampleSize = 2 * this.Channels;
+				byte[] inputData = data.ChannelData;
+				for (int channnel = 0; channnel < data.Channels; channnel++)
 				{
-					float[] array = this._channelData[i];
-					int num2 = 0;
-					for (int j = i * 2; j < data.ChannelData.Length; j += num)
+					float[] internalData = this._channelData[channnel];
+					int writePos = 0;
+					for (int readPos = channnel * 2; readPos < data.ChannelData.Length; readPos += sampleSize)
 					{
-						short num3 = (short)channelData[j];
-						short num4 = (short)(channelData[j + 1] << 8);
-						short num5 = num3 | num4;
-						float num6 = (float)num5 * 3.0517578E-05f;
-						array[num2++] = num6;
+						short low = (short)inputData[readPos];
+						short high = (short)(inputData[readPos + 1] << 8);
+						short sample = low | high;
+						float fval = (float)sample * 3.0517578E-05f;
+						internalData[writePos++] = fval;
 					}
 				}
 				return;
@@ -88,19 +88,19 @@ namespace DNA.Audio
 			{
 				return;
 			}
-			float[][] array = ArrayTools.AllocSquareJaggedArray<float>(1, this.Samples);
+			float[][] newData = ArrayTools.AllocSquareJaggedArray<float>(1, this.Samples);
 			int samples = this.Samples;
 			int channels = this.Channels;
 			for (int i = 0; i < samples; i++)
 			{
-				array[0][i] = 0f;
+				newData[0][i] = 0f;
 				for (int j = 0; j < this.Channels; j++)
 				{
-					array[0][i] += this._channelData[j][i];
+					newData[0][i] += this._channelData[j][i];
 				}
-				array[0][i] /= (float)channels;
+				newData[0][i] /= (float)channels;
 			}
-			this._channelData = array;
+			this._channelData = newData;
 		}
 
 		public void AdjustVolume(float modifier)
@@ -117,59 +117,59 @@ namespace DNA.Audio
 
 		public void TrimEndSilence(float threshold)
 		{
-			int num = 0;
-			int length = this._channelData.GetLength(1);
+			int lastSample = 0;
+			int samples = this._channelData.GetLength(1);
 			for (int i = 0; i < this.Channels; i++)
 			{
-				for (int j = length - 1; j > num; j--)
+				for (int j = samples - 1; j > lastSample; j--)
 				{
 					if (Math.Abs(this._channelData[i][j]) > threshold)
 					{
-						num = j;
+						lastSample = j;
 						break;
 					}
 				}
 			}
-			if (num == 0)
+			if (lastSample == 0)
 			{
 				return;
 			}
-			float[][] array = ArrayTools.AllocSquareJaggedArray<float>(this.Channels, num);
+			float[][] newData = ArrayTools.AllocSquareJaggedArray<float>(this.Channels, lastSample);
 			for (int k = 0; k < this.Channels; k++)
 			{
-				for (int l = 0; l < num; l++)
+				for (int l = 0; l < lastSample; l++)
 				{
-					array[k][l] = this._channelData[k][l];
+					newData[k][l] = this._channelData[k][l];
 				}
 			}
-			this._channelData = array;
+			this._channelData = newData;
 		}
 
 		public void TrimBeginSilence(float threshold)
 		{
-			int num = this.Samples;
+			int firstSample = this.Samples;
 			this._channelData.GetLength(1);
 			for (int i = 0; i < this.Channels; i++)
 			{
-				for (int j = 0; j < num; j++)
+				for (int j = 0; j < firstSample; j++)
 				{
 					if (Math.Abs(this._channelData[i][j]) > threshold)
 					{
-						num = j;
+						firstSample = j;
 						break;
 					}
 				}
 			}
-			int num2 = this.Samples - num;
-			float[][] array = ArrayTools.AllocSquareJaggedArray<float>(this.Channels, num2);
+			int newSamples = this.Samples - firstSample;
+			float[][] newData = ArrayTools.AllocSquareJaggedArray<float>(this.Channels, newSamples);
 			for (int k = 0; k < this.Channels; k++)
 			{
-				for (int l = 0; l < num2; l++)
+				for (int l = 0; l < newSamples; l++)
 				{
-					array[k][l] = this._channelData[k][l + num];
+					newData[k][l] = this._channelData[k][l + firstSample];
 				}
 			}
-			this._channelData = array;
+			this._channelData = newData;
 		}
 
 		public void AdjustSpeed(float modifier)
@@ -181,46 +181,46 @@ namespace DNA.Audio
 		{
 			float num = 1f / (float)newSampleRate;
 			float num2 = 1f / (float)this.SampleRate;
-			int samples = this.Samples;
-			int num3 = (int)((long)this.Samples * (long)newSampleRate / (long)this.SampleRate);
-			float[][] array = ArrayTools.AllocSquareJaggedArray<float>(this.Channels, num3);
-			for (int i = 0; i < this.Channels; i++)
+			int oldSamples = this.Samples;
+			int newSamples = (int)((long)this.Samples * (long)newSampleRate / (long)this.SampleRate);
+			float[][] newData = ArrayTools.AllocSquareJaggedArray<float>(this.Channels, newSamples);
+			for (int chan = 0; chan < this.Channels; chan++)
 			{
-				for (int j = 0; j < num3; j++)
+				for (int i = 0; i < newSamples; i++)
 				{
-					int num4 = (int)Math.Floor((double)((float)j * (float)(samples - 1) / (float)num3));
-					array[i][j] = this._channelData[i][num4];
+					int sindx = (int)Math.Floor((double)((float)i * (float)(oldSamples - 1) / (float)newSamples));
+					newData[chan][i] = this._channelData[chan][sindx];
 				}
 			}
-			this._channelData = array;
+			this._channelData = newData;
 			this.SampleRate = newSampleRate;
 		}
 
 		public float GetAverageAmplitude(int sampleStart, int sampleEnd)
 		{
-			float num = 0f;
+			float acc = 0f;
 			for (int i = 0; i < this.Channels; i++)
 			{
 				for (int j = sampleStart; j <= sampleEnd; j++)
 				{
-					num += Math.Abs(this._channelData[i][j]);
+					acc += Math.Abs(this._channelData[i][j]);
 				}
 			}
-			return num / (float)(sampleEnd - sampleStart + 1);
+			return acc / (float)(sampleEnd - sampleStart + 1);
 		}
 
 		public float GetMaxAmplitude(int sampleStart, int sampleEnd)
 		{
-			float num = float.MinValue;
+			float max = float.MinValue;
 			for (int i = 0; i < this.Channels; i++)
 			{
 				for (int j = sampleStart; j <= sampleEnd; j++)
 				{
-					float num2 = Math.Abs(this._channelData[i][j]);
-					num = Math.Max(num, num2);
+					float val = Math.Abs(this._channelData[i][j]);
+					max = Math.Max(max, val);
 				}
 			}
-			return num;
+			return max;
 		}
 
 		public float GetMaxAmplitude()
@@ -230,51 +230,51 @@ namespace DNA.Audio
 
 		public void Normalize()
 		{
-			float num = this.GetMaxAmplitude();
-			if (num == 0f)
+			float max = this.GetMaxAmplitude();
+			if (max == 0f)
 			{
-				num = 1f;
+				max = 1f;
 			}
-			this.AdjustVolume(1f / num);
+			this.AdjustVolume(1f / max);
 		}
 
 		private void LoadWavInternal(Stream stream)
 		{
-			RawPCMData rawPCMData = RawPCMData.LoadWav(stream);
-			this.Convert(rawPCMData);
+			RawPCMData raw = RawPCMData.LoadWav(stream);
+			this.Convert(raw);
 		}
 
 		public static RealPCMData LoadWav(string path)
 		{
 			RealPCMData realPCMData;
-			using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+			using (FileStream stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				realPCMData = RealPCMData.LoadWav(fileStream);
+				realPCMData = RealPCMData.LoadWav(stream);
 			}
 			return realPCMData;
 		}
 
 		public static RealPCMData LoadWav(Stream stream)
 		{
-			RealPCMData realPCMData = new RealPCMData();
-			realPCMData.LoadWavInternal(stream);
-			return realPCMData;
+			RealPCMData data = new RealPCMData();
+			data.LoadWavInternal(stream);
+			return data;
 		}
 
 		public void SaveWav(string path, int BitsPerSample)
 		{
-			using (FileStream fileStream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.None))
+			using (FileStream stream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.None))
 			{
-				this.SaveWav(fileStream, BitsPerSample);
+				this.SaveWav(stream, BitsPerSample);
 			}
 		}
 
 		public void SaveWav(Stream stream, int BitsPerSample)
 		{
 			new BinaryWriter(stream);
-			RawPCMData rawPCMData = new RawPCMData();
-			rawPCMData.Convert(this, BitsPerSample);
-			rawPCMData.SaveWav(stream);
+			RawPCMData raw = new RawPCMData();
+			raw.Convert(this, BitsPerSample);
+			raw.SaveWav(stream);
 		}
 
 		private float[][] _channelData = new float[][] { new float[0] };

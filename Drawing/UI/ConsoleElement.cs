@@ -42,11 +42,11 @@ namespace DNA.Drawing.UI
 
 		public void Write(string value)
 		{
-			string[] array = value.Split(new char[] { '\n' });
-			for (int i = 0; i < array.Length; i++)
+			string[] strs = value.Split(new char[] { '\n' });
+			for (int i = 0; i < strs.Length; i++)
 			{
-				this._currentMessage.Append(array[i]);
-				if (i < array.Length - 1)
+				this._currentMessage.Append(strs[i]);
+				if (i < strs.Length - 1)
 				{
 					this.WriteLine();
 				}
@@ -103,23 +103,23 @@ namespace DNA.Drawing.UI
 				}
 				this._messages.CopyTo(this.messages, 0);
 			}
-			int lineSpacing = this._font.LineSpacing;
-			Vector2 vector = new Vector2(base.Location.X, base.Location.Y + this.Size.Y - (float)lineSpacing);
+			int height = this._font.LineSpacing;
+			Vector2 pos = new Vector2(base.Location.X, base.Location.Y + this.Size.Y - (float)height);
 			spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.AnisotropicClamp, DepthStencilState.DepthRead, RasterizerState.CullNone);
 			for (int i = this.messages.Length - 1; i >= 0; i--)
 			{
-				ConsoleElement.Message message = this.messages[i];
-				message.Update(gameTime);
+				ConsoleElement.Message j = this.messages[i];
+				j.Update(gameTime);
 				if (this.ShowAll)
 				{
-					spriteBatch.DrawOutlinedText(this._font, message.Text, vector, base.Color, Color.Black, 1);
+					spriteBatch.DrawOutlinedText(this._font, j.Text, pos, base.Color, Color.Black, 1);
 				}
-				else if (message.Visibility > 0f)
+				else if (j.Visibility > 0f)
 				{
-					spriteBatch.DrawOutlinedText(this._font, message.Text, vector, Color.Lerp(Color.Transparent, base.Color, message.Visibility), Color.Lerp(Color.Transparent, Color.Black, message.Visibility), 1);
+					spriteBatch.DrawOutlinedText(this._font, j.Text, pos, Color.Lerp(Color.Transparent, base.Color, j.Visibility), Color.Lerp(Color.Transparent, Color.Black, j.Visibility), 1);
 				}
-				vector.Y -= (float)lineSpacing;
-				if (vector.Y < base.Location.Y)
+				pos.Y -= (float)height;
+				if (pos.Y < base.Location.Y)
 				{
 					break;
 				}

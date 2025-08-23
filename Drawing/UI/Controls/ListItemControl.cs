@@ -34,31 +34,31 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			Rectangle screenBounds = base.ScreenBounds;
+			Rectangle dest = base.ScreenBounds;
 			if (base.CaptureInput || this.Selected)
 			{
-				spriteBatch.Draw(UIControl.DummyTexture, screenBounds, this.ButtonPressedColor * 0.75f);
+				spriteBatch.Draw(UIControl.DummyTexture, dest, this.ButtonPressedColor * 0.75f);
 				if (this._font != null && this.Text != null)
 				{
-					spriteBatch.DrawString(this._font, this.Text, new Vector2((float)(screenBounds.X + 5), (float)(screenBounds.Y + 5)), this.TextPressedColor);
+					spriteBatch.DrawString(this._font, this.Text, new Vector2((float)(dest.X + 5), (float)(dest.Y + 5)), this.TextPressedColor);
 					return;
 				}
 			}
 			else if (base.Hovering)
 			{
-				spriteBatch.Draw(UIControl.DummyTexture, screenBounds, this.ButtonHoverColor * 0.75f);
+				spriteBatch.Draw(UIControl.DummyTexture, dest, this.ButtonHoverColor * 0.75f);
 				if (this._font != null && this.Text != null)
 				{
-					spriteBatch.DrawString(this._font, this.Text, new Vector2((float)(screenBounds.X + 5), (float)(screenBounds.Y + 5)), this.TextHoverColor);
+					spriteBatch.DrawString(this._font, this.Text, new Vector2((float)(dest.X + 5), (float)(dest.Y + 5)), this.TextHoverColor);
 					return;
 				}
 			}
 			else
 			{
-				spriteBatch.Draw(UIControl.DummyTexture, screenBounds, this.ButtonColor * 0.75f);
+				spriteBatch.Draw(UIControl.DummyTexture, dest, this.ButtonColor * 0.75f);
 				if (this._font != null && this.Text != null)
 				{
-					spriteBatch.DrawString(this._font, this.Text, new Vector2((float)(screenBounds.X + 5), (float)(screenBounds.Y + 5)), this.TextColor);
+					spriteBatch.DrawString(this._font, this.Text, new Vector2((float)(dest.X + 5), (float)(dest.Y + 5)), this.TextColor);
 				}
 			}
 		}

@@ -42,17 +42,17 @@ namespace DNA.Security.Cryptography.Crypto.Prng
 		{
 			lock (this)
 			{
-				int num = 0;
+				int stateOff = 0;
 				this.GenerateState();
-				int num2 = start + len;
-				for (int i = start; i < num2; i++)
+				int end = start + len;
+				for (int i = start; i < end; i++)
 				{
-					if (num == this.state.Length)
+					if (stateOff == this.state.Length)
 					{
 						this.GenerateState();
-						num = 0;
+						stateOff = 0;
 					}
-					bytes[i] = this.state[num++];
+					bytes[i] = this.state[stateOff++];
 				}
 			}
 		}
@@ -82,11 +82,11 @@ namespace DNA.Security.Cryptography.Crypto.Prng
 
 		private void DigestAddCounter(long seedVal)
 		{
-			ulong num = (ulong)seedVal;
-			for (int num2 = 0; num2 != 8; num2++)
+			ulong seed = (ulong)seedVal;
+			for (int i = 0; i != 8; i++)
 			{
-				this.digest.Update((byte)num);
-				num >>= 8;
+				this.digest.Update((byte)seed);
+				seed >>= 8;
 			}
 		}
 

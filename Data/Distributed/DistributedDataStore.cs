@@ -23,17 +23,17 @@ namespace DNA.Data.Distributed
 
 		public void Commit(Stream stream, string user)
 		{
-			BinaryWriter binaryWriter = new BinaryWriter(stream);
-			binaryWriter.Write(this._records.Count);
-			MemoryStream memoryStream = new MemoryStream();
-			foreach (KeyValuePair<Guid, DistributedRecord> keyValuePair in this._records)
+			BinaryWriter writer = new BinaryWriter(stream);
+			writer.Write(this._records.Count);
+			MemoryStream tempStream = new MemoryStream();
+			foreach (KeyValuePair<Guid, DistributedRecord> pair in this._records)
 			{
-				memoryStream.Position = 0L;
-				DistributedRecord value = keyValuePair.Value;
-				binaryWriter.Write(value.RecordTypeID);
-				value.Serialize(memoryStream, user);
-				byte[] buffer = memoryStream.GetBuffer();
-				binaryWriter.Write(buffer, 0, (int)memoryStream.Position);
+				tempStream.Position = 0L;
+				DistributedRecord record = pair.Value;
+				writer.Write(record.RecordTypeID);
+				record.Serialize(tempStream, user);
+				byte[] buffer = tempStream.GetBuffer();
+				writer.Write(buffer, 0, (int)tempStream.Position);
 			}
 		}
 

@@ -19,8 +19,8 @@ namespace DNA.Security.Cryptography.Crypto
 
 		public override bool Equals(object obj)
 		{
-			AsymmetricKeyParameter asymmetricKeyParameter = obj as AsymmetricKeyParameter;
-			return asymmetricKeyParameter != null && this.Equals(asymmetricKeyParameter);
+			AsymmetricKeyParameter other = obj as AsymmetricKeyParameter;
+			return other != null && this.Equals(other);
 		}
 
 		protected bool Equals(AsymmetricKeyParameter other)

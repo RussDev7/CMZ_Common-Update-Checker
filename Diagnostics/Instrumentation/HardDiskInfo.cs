@@ -79,17 +79,17 @@ namespace DNA.Diagnostics.Instrumentation
 
 		private static string FlipAndCodeBytes(string str)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			int length = str.Length;
-			for (int i = 0; i < length; i += 4)
+			StringBuilder sb = new StringBuilder();
+			int strlen = str.Length;
+			for (int i = 0; i < strlen; i += 4)
 			{
 				for (int j = 2; j >= 0; j -= 2)
 				{
-					int num = 0;
+					int sum = 0;
 					for (int k = 0; k < 2; k++)
 					{
-						num <<= 4;
-						if (i + k + j >= length)
+						sum <<= 4;
+						if (i + k + j >= strlen)
 						{
 							break;
 						}
@@ -102,55 +102,55 @@ namespace DNA.Diagnostics.Instrumentation
 						switch (c2)
 						{
 						case '0':
-							num = num;
+							sum = sum;
 							break;
 						case '1':
-							num++;
+							sum++;
 							break;
 						case '2':
-							num += 2;
+							sum += 2;
 							break;
 						case '3':
-							num += 3;
+							sum += 3;
 							break;
 						case '4':
-							num += 4;
+							sum += 4;
 							break;
 						case '5':
-							num += 5;
+							sum += 5;
 							break;
 						case '6':
-							num += 6;
+							sum += 6;
 							break;
 						case '7':
-							num += 7;
+							sum += 7;
 							break;
 						case '8':
-							num += 8;
+							sum += 8;
 							break;
 						case '9':
-							num += 9;
+							sum += 9;
 							break;
 						default:
 							switch (c2)
 							{
 							case 'a':
-								num += 10;
+								sum += 10;
 								break;
 							case 'b':
-								num += 11;
+								sum += 11;
 								break;
 							case 'c':
-								num += 12;
+								sum += 12;
 								break;
 							case 'd':
-								num += 13;
+								sum += 13;
 								break;
 							case 'e':
-								num += 14;
+								sum += 14;
 								break;
 							case 'f':
-								num += 15;
+								sum += 15;
 								break;
 							default:
 								return str;
@@ -158,14 +158,14 @@ namespace DNA.Diagnostics.Instrumentation
 							break;
 						}
 					}
-					if (num != 0)
+					if (sum != 0)
 					{
-						stringBuilder.Append((char)num);
+						sb.Append((char)sum);
 					}
 				}
 			}
-			string text = stringBuilder.ToString();
-			return text.Trim();
+			string result = sb.ToString();
+			return result.Trim();
 		}
 
 		public HardDiskInfo(string model, string type, string serial, ulong size)
@@ -178,108 +178,108 @@ namespace DNA.Diagnostics.Instrumentation
 
 		public static HardDiskInfo GetPhysicalDriveInfo(string physicalDriveName)
 		{
-			int num = Marshal.SizeOf(typeof(HardDiskInfo.StoragePropertyQuery));
-			GlobalBuffer globalBuffer = new GlobalBuffer(num);
-			GlobalBuffer globalBuffer2 = new GlobalBuffer(10000);
-			IntPtr intPtr = Win32API.CreateFile(physicalDriveName, Win32FileAccess.Default, Win32FileShare.ShareRead | Win32FileShare.ShareWrite, null, CreationDisposition.OpenExisting, Win32FileFlags.None, IntPtr.Zero);
+			int size = Marshal.SizeOf(typeof(HardDiskInfo.StoragePropertyQuery));
+			GlobalBuffer inbuffer = new GlobalBuffer(size);
+			GlobalBuffer outbuffer = new GlobalBuffer(10000);
+			IntPtr hPhysicalDriveIOCTL = Win32API.CreateFile(physicalDriveName, Win32FileAccess.Default, Win32FileShare.ShareRead | Win32FileShare.ShareWrite, null, CreationDisposition.OpenExisting, Win32FileFlags.None, IntPtr.Zero);
 			Marshal.StructureToPtr(new HardDiskInfo.StoragePropertyQuery
 			{
 				PropertyId = HardDiskInfo.StoragePropertyID.DeviceProperty,
 				QueryType = HardDiskInfo.StorageQueryType.StandardQuery
-			}, globalBuffer.Pointer, true);
-			uint num2 = Win32API.DeviceIoControl(intPtr, IOControlCode.StorageQueryProperty, globalBuffer.Pointer, globalBuffer.Size, globalBuffer2.Pointer, globalBuffer2.Size, null);
-			HardDiskInfo.StorageDeviceDescriptor storageDeviceDescriptor = (HardDiskInfo.StorageDeviceDescriptor)Marshal.PtrToStructure(globalBuffer2.Pointer, typeof(HardDiskInfo.StorageDeviceDescriptor));
-			byte[] array = new byte[num2];
-			Marshal.Copy(globalBuffer2.Pointer, array, 0, (int)num2);
-			if (storageDeviceDescriptor.VendorIdOffset > 0U)
+			}, inbuffer.Pointer, true);
+			uint cbBytesReturned = Win32API.DeviceIoControl(hPhysicalDriveIOCTL, IOControlCode.StorageQueryProperty, inbuffer.Pointer, inbuffer.Size, outbuffer.Pointer, outbuffer.Size, null);
+			HardDiskInfo.StorageDeviceDescriptor descrip = (HardDiskInfo.StorageDeviceDescriptor)Marshal.PtrToStructure(outbuffer.Pointer, typeof(HardDiskInfo.StorageDeviceDescriptor));
+			byte[] moutbuffer = new byte[cbBytesReturned];
+			Marshal.Copy(outbuffer.Pointer, moutbuffer, 0, (int)cbBytesReturned);
+			if (descrip.VendorIdOffset > 0U)
 			{
-				Marshal.PtrToStringAnsi(new IntPtr((long)globalBuffer2.Pointer + (long)((ulong)storageDeviceDescriptor.VendorIdOffset)));
+				Marshal.PtrToStringAnsi(new IntPtr((long)outbuffer.Pointer + (long)((ulong)descrip.VendorIdOffset)));
 			}
-			string text = "";
-			if (storageDeviceDescriptor.ProductIdOffset > 0U)
+			string productID = "";
+			if (descrip.ProductIdOffset > 0U)
 			{
-				text = Marshal.PtrToStringAnsi(new IntPtr((long)globalBuffer2.Pointer + (long)((ulong)storageDeviceDescriptor.ProductIdOffset)));
+				productID = Marshal.PtrToStringAnsi(new IntPtr((long)outbuffer.Pointer + (long)((ulong)descrip.ProductIdOffset)));
 			}
-			if (storageDeviceDescriptor.ProductRevisionOffset > 0U)
+			if (descrip.ProductRevisionOffset > 0U)
 			{
-				Marshal.PtrToStringAnsi(new IntPtr((long)globalBuffer2.Pointer + (long)((ulong)storageDeviceDescriptor.ProductRevisionOffset)));
+				Marshal.PtrToStringAnsi(new IntPtr((long)outbuffer.Pointer + (long)((ulong)descrip.ProductRevisionOffset)));
 			}
-			string text2 = "";
-			if (storageDeviceDescriptor.SerialNumberOffset > 0U)
+			string serial = "";
+			if (descrip.SerialNumberOffset > 0U)
 			{
-				text2 = Marshal.PtrToStringAnsi(new IntPtr((long)globalBuffer2.Pointer + (long)((ulong)storageDeviceDescriptor.SerialNumberOffset)));
+				serial = Marshal.PtrToStringAnsi(new IntPtr((long)outbuffer.Pointer + (long)((ulong)descrip.SerialNumberOffset)));
 			}
-			text2 = HardDiskInfo.FlipAndCodeBytes(text2);
-			Win32API.CloseHandle(intPtr);
-			return new HardDiskInfo(text, HardDiskInfo.GetInterfaceString(storageDeviceDescriptor.BusType), text2, 0UL);
+			serial = HardDiskInfo.FlipAndCodeBytes(serial);
+			Win32API.CloseHandle(hPhysicalDriveIOCTL);
+			return new HardDiskInfo(productID, HardDiskInfo.GetInterfaceString(descrip.BusType), serial, 0UL);
 		}
 
 		public static HardDiskInfo FromManagmentObject(ManagementObject wmi_HD)
 		{
-			HardDiskInfo hardDiskInfo = null;
-			string text = "Unknown";
+			HardDiskInfo hdinfo = null;
+			string busType = "Unknown";
 			try
 			{
 				object obj = wmi_HD["DeviceID"];
 				wmi_HD["DeviceID"].ToString();
-				hardDiskInfo = HardDiskInfo.GetPhysicalDriveInfo(wmi_HD["DeviceID"].ToString());
-				text = hardDiskInfo._busType;
+				hdinfo = HardDiskInfo.GetPhysicalDriveInfo(wmi_HD["DeviceID"].ToString());
+				busType = hdinfo._busType;
 			}
 			catch
 			{
 				try
 				{
-					text = wmi_HD["InterfaceType"].ToString();
+					busType = wmi_HD["InterfaceType"].ToString();
 				}
 				catch
 				{
 				}
 			}
-			string text2 = "";
+			string serial = "";
 			try
 			{
-				object obj2 = wmi_HD["SerialNumber"];
-				if (obj2 != null)
+				object serialObj = wmi_HD["SerialNumber"];
+				if (serialObj != null)
 				{
-					text2 = obj2.ToString();
+					serial = serialObj.ToString();
 				}
 			}
 			catch
 			{
-				if (hardDiskInfo != null)
+				if (hdinfo != null)
 				{
-					text2 = hardDiskInfo.SerialNumber;
+					serial = hdinfo.SerialNumber;
 				}
 			}
-			string text3 = "";
+			string model = "";
 			try
 			{
-				object obj3 = wmi_HD["Model"];
-				if (obj3 != null)
+				object modelObj = wmi_HD["Model"];
+				if (modelObj != null)
 				{
-					text3 = obj3.ToString();
+					model = modelObj.ToString();
 				}
 			}
 			catch
 			{
-				if (hardDiskInfo != null)
+				if (hdinfo != null)
 				{
-					text3 = hardDiskInfo.Model;
+					model = hdinfo.Model;
 				}
 			}
-			ulong num = 0UL;
+			ulong size = 0UL;
 			try
 			{
-				num = (ulong)wmi_HD["Size"];
+				size = (ulong)wmi_HD["Size"];
 			}
 			catch
 			{
-				if (hardDiskInfo != null)
+				if (hdinfo != null)
 				{
-					num = hardDiskInfo.Size;
+					size = hdinfo.Size;
 				}
 			}
-			return new HardDiskInfo(text3, text, text2, num);
+			return new HardDiskInfo(model, busType, serial, size);
 		}
 
 		public override string ToString()

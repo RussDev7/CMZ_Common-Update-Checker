@@ -222,10 +222,10 @@ namespace DNA.IO.Storage
 
 		public static void EnsureCreated(StorageContainer container, string path)
 		{
-			string directoryName = Path.GetDirectoryName(path);
-			if (!string.IsNullOrEmpty(directoryName))
+			string basePath = Path.GetDirectoryName(path);
+			if (!string.IsNullOrEmpty(basePath))
 			{
-				MUSaveDevice.EnsureCreated(container, directoryName);
+				MUSaveDevice.EnsureCreated(container, basePath);
 			}
 			if (!container.DirectoryExists(path))
 			{
@@ -243,13 +243,13 @@ namespace DNA.IO.Storage
 
 		public void Update(GameTime gameTime)
 		{
-			bool flag = (this.PromptForReselect || this.DeviceDisconnected != null) && this.storageDevice != null;
-			bool flag2 = this.deviceWasConnected && this.storageDevice != null;
-			if (flag)
+			bool needDeviceCheck = (this.PromptForReselect || this.DeviceDisconnected != null) && this.storageDevice != null;
+			bool deviceIsConnected = this.deviceWasConnected && this.storageDevice != null;
+			if (needDeviceCheck)
 			{
-				flag2 = this.storageDevice.IsConnected;
+				deviceIsConnected = this.storageDevice.IsConnected;
 			}
-			if (!flag2 && this.deviceWasConnected)
+			if (!deviceIsConnected && this.deviceWasConnected)
 			{
 				this.PrepareEventArgs(this.eventArgs);
 				if (this.DeviceDisconnected != null)
@@ -265,7 +265,7 @@ namespace DNA.IO.Storage
 					this.state = SaveDevicePromptState.None;
 				}
 			}
-			else if (!flag2)
+			else if (!deviceIsConnected)
 			{
 				try
 				{
@@ -280,29 +280,29 @@ namespace DNA.IO.Storage
 				{
 				}
 			}
-			this.deviceWasConnected = flag2;
+			this.deviceWasConnected = deviceIsConnected;
 		}
 
 		private void StorageDeviceSelectorCallback(IAsyncResult result)
 		{
-			SuccessCallback successCallback = (SuccessCallback)result.AsyncState;
+			SuccessCallback callback = (SuccessCallback)result.AsyncState;
 			this.storageDevice = StorageDevice.EndShowSelector(result);
 			if (this.storageDevice != null && this.storageDevice.IsConnected)
 			{
 				try
 				{
 					this._currentContainer = this.OpenContainer(this._containerName);
-					if (successCallback != null)
+					if (callback != null)
 					{
-						successCallback(true);
+						callback(true);
 					}
 					return;
 				}
 				catch
 				{
-					if (successCallback != null)
+					if (callback != null)
 					{
-						successCallback(false);
+						callback(false);
 					}
 					return;
 				}
@@ -319,13 +319,13 @@ namespace DNA.IO.Storage
 
 		private void ReselectPromptCallback(IAsyncResult result)
 		{
-			int? num = Guide.EndShowMessageBox(result);
-			this.state = ((num != null && num.Value == 0) ? SaveDevicePromptState.ShowSelector : SaveDevicePromptState.None);
+			int? choice = Guide.EndShowMessageBox(result);
+			this.state = ((choice != null && choice.Value == 0) ? SaveDevicePromptState.ShowSelector : SaveDevicePromptState.None);
 			this.promptEventArgs.ShowDeviceSelector = this.state == SaveDevicePromptState.ShowSelector;
-			SuccessCallback successCallback = (SuccessCallback)result.AsyncState;
-			if (this.state == SaveDevicePromptState.None && successCallback != null)
+			SuccessCallback callback = (SuccessCallback)result.AsyncState;
+			if (this.state == SaveDevicePromptState.None && callback != null)
 			{
-				successCallback(false);
+				callback(false);
 			}
 		}
 

@@ -7,39 +7,39 @@ namespace DNA.Text
 	{
 		private static char Base32IndexToChar(int index)
 		{
-			char c;
+			char rchar;
 			if (index < 10)
 			{
-				c = (char)(48 + index);
+				rchar = (char)(48 + index);
 			}
 			else
 			{
-				c = (char)(65 + (index - 10));
+				rchar = (char)(65 + (index - 10));
 			}
-			char c2 = c;
-			switch (c2)
+			char c = rchar;
+			switch (c)
 			{
 			case '0':
-				c = 'W';
+				rchar = 'W';
 				break;
 			case '1':
-				c = 'X';
+				rchar = 'X';
 				break;
 			default:
-				if (c2 != 'I')
+				if (c != 'I')
 				{
-					if (c2 == 'O')
+					if (c == 'O')
 					{
-						c = 'Y';
+						rchar = 'Y';
 					}
 				}
 				else
 				{
-					c = 'Z';
+					rchar = 'Z';
 				}
 				break;
 			}
-			return c;
+			return rchar;
 		}
 
 		private static int Base32CharToIndex(char rchar)
@@ -59,10 +59,10 @@ namespace DNA.Text
 				rchar = 'I';
 				break;
 			}
-			int num;
+			int currentNum;
 			if (rchar >= '0' && rchar <= '9')
 			{
-				num = (int)(rchar - '0');
+				currentNum = (int)(rchar - '0');
 			}
 			else
 			{
@@ -70,64 +70,64 @@ namespace DNA.Text
 				{
 					throw new FormatException("charactor is out of Base32 Range");
 				}
-				num = (int)(rchar - 'A' + '\n');
+				currentNum = (int)(rchar - 'A' + '\n');
 			}
-			return num;
+			return currentNum;
 		}
 
 		public static string ToBase32String(byte[] bytes)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			int i = 0;
-			int j = 0;
-			int num = 0;
-			while (j < bytes.Length)
+			StringBuilder sb = new StringBuilder();
+			int bits = 0;
+			int currentByteIndex = 0;
+			int currentByte = 0;
+			while (currentByteIndex < bytes.Length)
 			{
-				if (i <= 8 && j < bytes.Length)
+				if (bits <= 8 && currentByteIndex < bytes.Length)
 				{
-					byte b = bytes[j];
-					j++;
-					num |= (int)b << i;
-					i += 8;
+					byte newByte = bytes[currentByteIndex];
+					currentByteIndex++;
+					currentByte |= (int)newByte << bits;
+					bits += 8;
 				}
-				char c = TextConverter.Base32IndexToChar(num & 31);
-				stringBuilder.Append(c);
-				num >>= 5;
-				i -= 5;
+				char rchar = TextConverter.Base32IndexToChar(currentByte & 31);
+				sb.Append(rchar);
+				currentByte >>= 5;
+				bits -= 5;
 			}
-			while (i > 0)
+			while (bits > 0)
 			{
-				char c2 = TextConverter.Base32IndexToChar(num & 31);
-				stringBuilder.Append(c2);
-				num >>= 5;
-				i -= 5;
+				char rchar2 = TextConverter.Base32IndexToChar(currentByte & 31);
+				sb.Append(rchar2);
+				currentByte >>= 5;
+				bits -= 5;
 			}
-			return stringBuilder.ToString();
+			return sb.ToString();
 		}
 
 		public static byte[] FromBase32String(string str)
 		{
 			str = str.ToUpper();
-			int num = str.Length * 5 / 8;
-			byte[] array = new byte[num];
-			int i = 0;
-			int j = 0;
-			int num2 = 0;
-			int num3 = 0;
-			while (j < str.Length)
+			int numBytes = str.Length * 5 / 8;
+			byte[] bytes = new byte[numBytes];
+			int bitCount = 0;
+			int currentCharIndex = 0;
+			int data = 0;
+			int outIndex = 0;
+			while (currentCharIndex < str.Length)
 			{
-				while (i < 8)
+				while (bitCount < 8)
 				{
-					int num4 = TextConverter.Base32CharToIndex(str[j++]);
-					num2 |= num4 << i;
-					i += 5;
+					int currentNum = TextConverter.Base32CharToIndex(str[currentCharIndex++]);
+					data |= currentNum << bitCount;
+					bitCount += 5;
 				}
-				byte b = (byte)(num2 & 255);
-				num2 >>= 8;
-				i -= 8;
-				array[num3++] = b;
+				byte databyte = (byte)(data & 255);
+				data >>= 8;
+				bitCount -= 8;
+				bytes[outIndex++] = databyte;
 			}
-			return array;
+			return bytes;
 		}
 	}
 }

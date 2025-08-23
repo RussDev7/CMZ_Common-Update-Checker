@@ -26,15 +26,15 @@ namespace DNA.Security.Cryptography.Asn1
 				derOut.WriteEncoded(160, this.tagNo, new byte[0]);
 				return;
 			}
-			byte[] derEncoded = this.obj.GetDerEncoded();
+			byte[] bytes = this.obj.GetDerEncoded();
 			if (this.explicitly)
 			{
-				derOut.WriteEncoded(160, this.tagNo, derEncoded);
+				derOut.WriteEncoded(160, this.tagNo, bytes);
 				return;
 			}
-			int num = (int)((derEncoded[0] & 32) | 128);
-			derOut.WriteTag(num, this.tagNo);
-			derOut.Write(derEncoded, 1, derEncoded.Length - 1);
+			int flags = (int)((bytes[0] & 32) | 128);
+			derOut.WriteTag(flags, this.tagNo);
+			derOut.Write(bytes, 1, bytes.Length - 1);
 		}
 	}
 }

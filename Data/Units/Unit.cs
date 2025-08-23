@@ -25,13 +25,13 @@ namespace DNA.Data.Units
 
 		public static void RegisterUnit(Unit unit)
 		{
-			foreach (string text in unit.Abbrevations)
+			foreach (string abbr in unit.Abbrevations)
 			{
-				if (Unit._lookupTable.ContainsKey(text))
+				if (Unit._lookupTable.ContainsKey(abbr))
 				{
 					throw new ArgumentException("Unit Already Registered");
 				}
-				Unit._lookupTable[text] = unit;
+				Unit._lookupTable[abbr] = unit;
 			}
 		}
 

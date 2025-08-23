@@ -42,52 +42,52 @@ namespace DNA.Security.Cryptography.Crypto.Engines
 
 		public BigInteger ConvertInput(byte[] inBuf, int inOff, int inLen)
 		{
-			int num = (this.bitSize + 7) / 8;
-			if (inLen > num)
+			int maxLength = (this.bitSize + 7) / 8;
+			if (inLen > maxLength)
 			{
 				throw new DataLengthException("input too large for RSA cipher.");
 			}
-			BigInteger bigInteger = new BigInteger(1, inBuf, inOff, inLen);
-			if (bigInteger.CompareTo(this.key.Modulus) >= 0)
+			BigInteger input = new BigInteger(1, inBuf, inOff, inLen);
+			if (input.CompareTo(this.key.Modulus) >= 0)
 			{
 				throw new DataLengthException("input too large for RSA cipher.");
 			}
-			return bigInteger;
+			return input;
 		}
 
 		public byte[] ConvertOutput(BigInteger result)
 		{
-			byte[] array = result.ToByteArrayUnsigned();
+			byte[] output = result.ToByteArrayUnsigned();
 			if (this.forEncryption)
 			{
-				int outputBlockSize = this.GetOutputBlockSize();
-				if (array.Length < outputBlockSize)
+				int outSize = this.GetOutputBlockSize();
+				if (output.Length < outSize)
 				{
-					byte[] array2 = new byte[outputBlockSize];
-					array.CopyTo(array2, array2.Length - array.Length);
-					array = array2;
+					byte[] tmp = new byte[outSize];
+					output.CopyTo(tmp, tmp.Length - output.Length);
+					output = tmp;
 				}
 			}
-			return array;
+			return output;
 		}
 
 		public BigInteger ProcessBlock(BigInteger input)
 		{
 			if (this.key is RsaPrivateCrtKeyParameters)
 			{
-				RsaPrivateCrtKeyParameters rsaPrivateCrtKeyParameters = (RsaPrivateCrtKeyParameters)this.key;
-				BigInteger p = rsaPrivateCrtKeyParameters.P;
-				BigInteger q = rsaPrivateCrtKeyParameters.Q;
-				BigInteger dp = rsaPrivateCrtKeyParameters.DP;
-				BigInteger dq = rsaPrivateCrtKeyParameters.DQ;
-				BigInteger qinv = rsaPrivateCrtKeyParameters.QInv;
-				BigInteger bigInteger = input.Remainder(p).ModPow(dp, p);
-				BigInteger bigInteger2 = input.Remainder(q).ModPow(dq, q);
-				BigInteger bigInteger3 = bigInteger.Subtract(bigInteger2);
-				bigInteger3 = bigInteger3.Multiply(qinv);
-				bigInteger3 = bigInteger3.Mod(p);
-				BigInteger bigInteger4 = bigInteger3.Multiply(q);
-				return bigInteger4.Add(bigInteger2);
+				RsaPrivateCrtKeyParameters crtKey = (RsaPrivateCrtKeyParameters)this.key;
+				BigInteger p = crtKey.P;
+				BigInteger q = crtKey.Q;
+				BigInteger dP = crtKey.DP;
+				BigInteger dQ = crtKey.DQ;
+				BigInteger qInv = crtKey.QInv;
+				BigInteger mP = input.Remainder(p).ModPow(dP, p);
+				BigInteger mQ = input.Remainder(q).ModPow(dQ, q);
+				BigInteger h = mP.Subtract(mQ);
+				h = h.Multiply(qInv);
+				h = h.Mod(p);
+				BigInteger i = h.Multiply(q);
+				return i.Add(mQ);
 			}
 			return input.ModPow(this.key.Exponent, this.key.Modulus);
 		}

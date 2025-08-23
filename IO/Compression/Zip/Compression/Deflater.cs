@@ -138,41 +138,41 @@ namespace DNA.IO.Compression.Zip.Compression
 
 		public int Deflate(byte[] output, int offset, int length)
 		{
-			int num = length;
+			int origLength = length;
 			if (this.state == Deflater.CLOSED_STATE)
 			{
 				throw new InvalidOperationException("Deflater closed");
 			}
 			if (this.state < Deflater.BUSY_STATE)
 			{
-				int num2 = Deflater.Deflated + 112 << 8;
-				int num3 = this.level - 1 >> 1;
-				if (num3 < 0 || num3 > 3)
+				int header = Deflater.Deflated + 112 << 8;
+				int level_flags = this.level - 1 >> 1;
+				if (level_flags < 0 || level_flags > 3)
 				{
-					num3 = 3;
+					level_flags = 3;
 				}
-				num2 |= num3 << 6;
+				header |= level_flags << 6;
 				if ((this.state & Deflater.IS_SETDICT) != 0)
 				{
-					num2 |= 32;
+					header |= 32;
 				}
-				num2 += 31 - num2 % 31;
-				this.pending.WriteShortMSB(num2);
+				header += 31 - header % 31;
+				this.pending.WriteShortMSB(header);
 				if ((this.state & Deflater.IS_SETDICT) != 0)
 				{
-					int adler = this.engine.Adler;
+					int chksum = this.engine.Adler;
 					this.engine.ResetAdler();
-					this.pending.WriteShortMSB(adler >> 16);
-					this.pending.WriteShortMSB(adler & 65535);
+					this.pending.WriteShortMSB(chksum >> 16);
+					this.pending.WriteShortMSB(chksum & 65535);
 				}
 				this.state = Deflater.BUSY_STATE | (this.state & (Deflater.IS_FLUSHING | Deflater.IS_FINISHING));
 			}
 			for (;;)
 			{
-				int num4 = this.pending.Flush(output, offset, length);
-				offset += num4;
-				this.totalOut += (long)num4;
-				length -= num4;
+				int count = this.pending.Flush(output, offset, length);
+				offset += count;
+				this.totalOut += (long)count;
+				length -= count;
 				if (length == 0 || this.state == Deflater.FINISHED_STATE)
 				{
 					goto IL_021C;
@@ -187,7 +187,7 @@ namespace DNA.IO.Compression.Zip.Compression
 					{
 						if (this.level != Deflater.NoCompression)
 						{
-							for (int i = 8 + (-this.pending.BitCount & 7); i > 0; i -= 10)
+							for (int neededbits = 8 + (-this.pending.BitCount & 7); neededbits > 0; neededbits -= 10)
 							{
 								this.pending.WriteBits(2, 10);
 							}
@@ -199,17 +199,17 @@ namespace DNA.IO.Compression.Zip.Compression
 						this.pending.AlignToByte();
 						if (!this.noZlibHeaderOrFooter)
 						{
-							int adler2 = this.engine.Adler;
-							this.pending.WriteShortMSB(adler2 >> 16);
-							this.pending.WriteShortMSB(adler2 & 65535);
+							int adler = this.engine.Adler;
+							this.pending.WriteShortMSB(adler >> 16);
+							this.pending.WriteShortMSB(adler & 65535);
 						}
 						this.state = Deflater.FINISHED_STATE;
 					}
 				}
 			}
-			return num - length;
+			return origLength - length;
 			IL_021C:
-			return num - length;
+			return origLength - length;
 		}
 
 		public void SetDictionary(byte[] dict)

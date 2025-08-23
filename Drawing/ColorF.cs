@@ -75,28 +75,28 @@ namespace DNA.Drawing
 
 		public ColorF Brighten(float factor)
 		{
-			float num = this.Red * factor;
-			float num2 = this.Green * factor;
-			float num3 = this.Blue * factor;
-			return ColorF.FromARGB(this.Alpha, num, num2, num3);
+			float r = this.Red * factor;
+			float g = this.Green * factor;
+			float b = this.Blue * factor;
+			return ColorF.FromARGB(this.Alpha, r, g, b);
 		}
 
 		public ColorF Saturate(float factor)
 		{
-			Angle angle;
-			float num;
-			float num2;
-			this.GetHSV(out angle, out num, out num2);
-			num *= factor;
-			return ColorF.FromAHSV(this.Alpha, angle, num, num2);
+			Angle hue;
+			float s;
+			float v;
+			this.GetHSV(out hue, out s, out v);
+			s *= factor;
+			return ColorF.FromAHSV(this.Alpha, hue, s, v);
 		}
 
 		public ColorF AdjustBrightness(float factor)
 		{
-			float num = this.Red * factor;
-			float num2 = this.Green * factor;
-			float num3 = this.Blue * factor;
-			return ColorF.FromARGB(this.Alpha, num, num2, num3);
+			float r = this.Red * factor;
+			float g = this.Green * factor;
+			float b = this.Blue * factor;
+			return ColorF.FromARGB(this.Alpha, r, g, b);
 		}
 
 		private static float ColVal(float n1, float n2, float hue)
@@ -124,25 +124,25 @@ namespace DNA.Drawing
 		public static ColorF FromAHSL(float alpha, Angle hue, float sat, float brt)
 		{
 			hue.Normalize();
-			float num = ((brt <= 0.5f) ? (brt * (1f + sat)) : (brt + sat - brt * sat));
-			float num2 = 2f * brt - num;
-			float num3;
-			float num4;
-			float num5;
+			float m2 = ((brt <= 0.5f) ? (brt * (1f + sat)) : (brt + sat - brt * sat));
+			float m3 = 2f * brt - m2;
+			float blue;
+			float green;
+			float red;
 			if (sat == 0f)
 			{
-				num3 = brt;
-				num4 = brt;
-				num5 = brt;
+				blue = brt;
+				green = brt;
+				red = brt;
 			}
 			else
 			{
-				float num6 = hue.Degrees;
-				num5 = ColorF.ColVal(num2, num, num6 + 120f);
-				num4 = ColorF.ColVal(num2, num, num6);
-				num3 = ColorF.ColVal(num2, num, num6 - 120f);
+				float hueDegrees = hue.Degrees;
+				red = ColorF.ColVal(m3, m2, hueDegrees + 120f);
+				green = ColorF.ColVal(m3, m2, hueDegrees);
+				blue = ColorF.ColVal(m3, m2, hueDegrees - 120f);
 			}
-			return ColorF.FromARGB(alpha, num5, num4, num3);
+			return ColorF.FromARGB(alpha, red, green, blue);
 		}
 
 		public static ColorF FromHSV(Angle hue, float sat, float brt)
@@ -152,62 +152,62 @@ namespace DNA.Drawing
 
 		public static ColorF FromAHSV(float alpha, Angle h, float sat, float brt)
 		{
-			float num;
-			float num2;
-			float num3;
+			float blue;
+			float green;
+			float red;
 			if (sat == 0f)
 			{
-				num = brt;
-				num2 = brt;
-				num3 = brt;
+				blue = brt;
+				green = brt;
+				red = brt;
 			}
 			else
 			{
 				h.Normalize();
-				float num4 = h.Degrees;
-				num4 /= 60f;
-				int num5 = (int)Math.Floor((double)num4);
-				float num6 = num4 - (float)num5;
-				float num7 = brt * (1f - sat);
-				float num8 = brt * (1f - sat * num6);
-				float num9 = brt * (1f - sat * (1f - num6));
-				switch (num5)
+				float hue = h.Degrees;
+				hue /= 60f;
+				int i = (int)Math.Floor((double)hue);
+				float f = hue - (float)i;
+				float p = brt * (1f - sat);
+				float q = brt * (1f - sat * f);
+				float t = brt * (1f - sat * (1f - f));
+				switch (i)
 				{
 				case 0:
-					num3 = brt;
-					num2 = num9;
-					num = num7;
+					red = brt;
+					green = t;
+					blue = p;
 					break;
 				case 1:
-					num3 = num8;
-					num2 = brt;
-					num = num7;
+					red = q;
+					green = brt;
+					blue = p;
 					break;
 				case 2:
-					num3 = num7;
-					num2 = brt;
-					num = num9;
+					red = p;
+					green = brt;
+					blue = t;
 					break;
 				case 3:
-					num3 = num7;
-					num2 = num8;
-					num = brt;
+					red = p;
+					green = q;
+					blue = brt;
 					break;
 				case 4:
-					num3 = num9;
-					num2 = num7;
-					num = brt;
+					red = t;
+					green = p;
+					blue = brt;
 					break;
 				case 5:
-					num3 = brt;
-					num2 = num7;
-					num = num8;
+					red = brt;
+					green = p;
+					blue = q;
 					break;
 				default:
 					throw new Exception("Hue Out of Range");
 				}
 			}
-			return ColorF.FromARGB(alpha, num3, num2, num);
+			return ColorF.FromARGB(alpha, red, green, blue);
 		}
 
 		public static ColorF FromVector3(Vector3 vector)
@@ -245,11 +245,11 @@ namespace DNA.Drawing
 
 		public void GetHSL(out Angle h, out float s, out float l)
 		{
-			float num = MathTools.Max(this.Red, this.Green, this.Blue);
-			float num2 = MathTools.Min(this.Red, this.Green, this.Blue);
-			l = (num + num2) / 2f;
-			float num3 = num - num2;
-			if (num3 == 0f)
+			float max = MathTools.Max(this.Red, this.Green, this.Blue);
+			float min = MathTools.Min(this.Red, this.Green, this.Blue);
+			l = (max + min) / 2f;
+			float delta = max - min;
+			if (delta == 0f)
 			{
 				s = 0f;
 				h = Angle.FromDegrees(0f);
@@ -257,72 +257,72 @@ namespace DNA.Drawing
 			}
 			if (l < 0.5f)
 			{
-				s = num3 / (num + num2);
+				s = delta / (max + min);
 			}
 			else
 			{
-				s = num3 / (2f - (num + num2));
+				s = delta / (2f - (max + min));
 			}
-			float num4;
-			if (this.Red == num)
+			float hdegs;
+			if (this.Red == max)
 			{
-				num4 = (this.Green - this.Blue) / num3;
+				hdegs = (this.Green - this.Blue) / delta;
 			}
-			else if (this.Green == num)
+			else if (this.Green == max)
 			{
-				num4 = 2f + (this.Blue - this.Red) / num3;
+				hdegs = 2f + (this.Blue - this.Red) / delta;
 			}
-			else if (this.Blue == num)
+			else if (this.Blue == max)
 			{
-				num4 = 4f + (this.Red - this.Green) / num3;
+				hdegs = 4f + (this.Red - this.Green) / delta;
 			}
 			else
 			{
-				num4 = 0f;
+				hdegs = 0f;
 			}
-			num4 *= 60f;
-			if (num4 < 0f)
+			hdegs *= 60f;
+			if (hdegs < 0f)
 			{
-				num4 += 360f;
+				hdegs += 360f;
 			}
-			h = Angle.FromDegrees(num4);
+			h = Angle.FromDegrees(hdegs);
 		}
 
 		public void GetHSV(out Angle h, out float s, out float v)
 		{
-			float red = this.Red;
-			float green = this.Green;
-			float blue = this.Blue;
-			float num = MathTools.Max(red, green, blue);
-			float num2 = MathTools.Min(red, green, blue);
-			v = num;
-			float num3 = num - num2;
-			if (num == 0f || num3 == 0f)
+			float r = this.Red;
+			float g = this.Green;
+			float b = this.Blue;
+			float max = MathTools.Max(r, g, b);
+			float min = MathTools.Min(r, g, b);
+			v = max;
+			float delta = max - min;
+			if (max == 0f || delta == 0f)
 			{
 				h = Angle.FromDegrees(0f);
 				s = 0f;
 				return;
 			}
-			s = num3 / num;
-			float num4;
-			if (red == num)
+			s = delta / max;
+			float hdegs;
+			if (r == max)
 			{
-				num4 = (green - blue) / num3;
+				hdegs = (g - b) / delta;
 			}
-			else if (green == num)
+			else if (g == max)
 			{
-				num4 = 2f + (blue - red) / num3;
+				hdegs = 2f + (b - r) / delta;
 			}
 			else
 			{
-				num4 = 4f + (red - green) / num3;
+				hdegs = 4f + (r - g) / delta;
 			}
-			num4 *= 60f;
-			if (num4 < 0f)
+			hdegs *= 60f;
+			if (hdegs < 0f)
 			{
-				num4 += 360f;
+				hdegs += 360f;
 			}
-			h = Angle.FromDegrees(num4);
+			h = Angle.FromDegrees(hdegs);
 		}
 
 		public void GetCMY(out float c, out float m, out float y)
@@ -357,8 +357,8 @@ namespace DNA.Drawing
 
 		public Color GetColor()
 		{
-			Color color = new Color(this.Red, this.Green, this.Blue, this.Alpha);
-			return color;
+			Color c = new Color(this.Red, this.Green, this.Blue, this.Alpha);
+			return c;
 		}
 
 		public static ColorF Lerp(ColorF a, ColorF b, float factor)
@@ -414,12 +414,12 @@ namespace DNA.Drawing
 
 		public static ColorF Parse(string strval)
 		{
-			string[] array = strval.Split(new char[] { ',' });
-			float num = float.Parse(array[0]);
-			float num2 = float.Parse(array[1]);
-			float num3 = float.Parse(array[2]);
-			float num4 = float.Parse(array[3]);
-			return ColorF.FromARGB(num4, num, num2, num3);
+			string[] split = strval.Split(new char[] { ',' });
+			float r = float.Parse(split[0]);
+			float g = float.Parse(split[1]);
+			float b = float.Parse(split[2]);
+			float a = float.Parse(split[3]);
+			return ColorF.FromARGB(a, r, g, b);
 		}
 
 		public override bool Equals(object obj)

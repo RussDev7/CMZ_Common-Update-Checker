@@ -21,8 +21,8 @@ namespace DNA.Security.Cryptography.Crypto.Encodings
 
 		static Pkcs1Encoding()
 		{
-			string environmentVariable = Platform.GetEnvironmentVariable("DNA.Security.Cryptography.Pkcs1.Strict");
-			Pkcs1Encoding.strictLengthEnabled = new bool[] { environmentVariable == null || environmentVariable.Equals("true") };
+			string strictProperty = Platform.GetEnvironmentVariable("DNA.Security.Cryptography.Pkcs1.Strict");
+			Pkcs1Encoding.strictLengthEnabled = new bool[] { strictProperty == null || strictProperty.Equals("true") };
 		}
 
 		public Pkcs1Encoding(IAsymmetricBlockCipher cipher)
@@ -46,41 +46,41 @@ namespace DNA.Security.Cryptography.Crypto.Encodings
 
 		public void Init(bool forEncryption, ICipherParameters parameters)
 		{
-			AsymmetricKeyParameter asymmetricKeyParameter;
+			AsymmetricKeyParameter kParam;
 			if (parameters is ParametersWithRandom)
 			{
-				ParametersWithRandom parametersWithRandom = (ParametersWithRandom)parameters;
-				this.random = parametersWithRandom.Random;
-				asymmetricKeyParameter = (AsymmetricKeyParameter)parametersWithRandom.Parameters;
+				ParametersWithRandom rParam = (ParametersWithRandom)parameters;
+				this.random = rParam.Random;
+				kParam = (AsymmetricKeyParameter)rParam.Parameters;
 			}
 			else
 			{
 				this.random = new SecureRandom();
-				asymmetricKeyParameter = (AsymmetricKeyParameter)parameters;
+				kParam = (AsymmetricKeyParameter)parameters;
 			}
 			this.engine.Init(forEncryption, parameters);
-			this.forPrivateKey = asymmetricKeyParameter.IsPrivate;
+			this.forPrivateKey = kParam.IsPrivate;
 			this.forEncryption = forEncryption;
 		}
 
 		public int GetInputBlockSize()
 		{
-			int inputBlockSize = this.engine.GetInputBlockSize();
+			int baseBlockSize = this.engine.GetInputBlockSize();
 			if (!this.forEncryption)
 			{
-				return inputBlockSize;
+				return baseBlockSize;
 			}
-			return inputBlockSize - 10;
+			return baseBlockSize - 10;
 		}
 
 		public int GetOutputBlockSize()
 		{
-			int outputBlockSize = this.engine.GetOutputBlockSize();
+			int baseBlockSize = this.engine.GetOutputBlockSize();
 			if (!this.forEncryption)
 			{
-				return outputBlockSize - 10;
+				return baseBlockSize - 10;
 			}
-			return outputBlockSize;
+			return baseBlockSize;
 		}
 
 		public byte[] ProcessBlock(byte[] input, int inOff, int length)
@@ -98,69 +98,69 @@ namespace DNA.Security.Cryptography.Crypto.Encodings
 			{
 				throw new ArgumentException("input data too large", "inLen");
 			}
-			byte[] array = new byte[this.engine.GetInputBlockSize()];
+			byte[] block = new byte[this.engine.GetInputBlockSize()];
 			if (this.forPrivateKey)
 			{
-				array[0] = 1;
-				for (int num = 1; num != array.Length - inLen - 1; num++)
+				block[0] = 1;
+				for (int i = 1; i != block.Length - inLen - 1; i++)
 				{
-					array[num] = byte.MaxValue;
+					block[i] = byte.MaxValue;
 				}
 			}
 			else
 			{
-				this.random.NextBytes(array);
-				array[0] = 2;
-				for (int num2 = 1; num2 != array.Length - inLen - 1; num2++)
+				this.random.NextBytes(block);
+				block[0] = 2;
+				for (int j = 1; j != block.Length - inLen - 1; j++)
 				{
-					while (array[num2] == 0)
+					while (block[j] == 0)
 					{
-						array[num2] = (byte)this.random.NextInt();
+						block[j] = (byte)this.random.NextInt();
 					}
 				}
 			}
-			array[array.Length - inLen - 1] = 0;
-			Array.Copy(input, inOff, array, array.Length - inLen, inLen);
-			return this.engine.ProcessBlock(array, 0, array.Length);
+			block[block.Length - inLen - 1] = 0;
+			Array.Copy(input, inOff, block, block.Length - inLen, inLen);
+			return this.engine.ProcessBlock(block, 0, block.Length);
 		}
 
 		private byte[] DecodeBlock(byte[] input, int inOff, int inLen)
 		{
-			byte[] array = this.engine.ProcessBlock(input, inOff, inLen);
-			if (array.Length < this.GetOutputBlockSize())
+			byte[] block = this.engine.ProcessBlock(input, inOff, inLen);
+			if (block.Length < this.GetOutputBlockSize())
 			{
 				throw new InvalidCipherTextException("block truncated");
 			}
-			byte b = array[0];
-			if (b != 1 && b != 2)
+			byte type = block[0];
+			if (type != 1 && type != 2)
 			{
 				throw new InvalidCipherTextException("unknown block type");
 			}
-			if (this.useStrictLength && array.Length != this.engine.GetOutputBlockSize())
+			if (this.useStrictLength && block.Length != this.engine.GetOutputBlockSize())
 			{
 				throw new InvalidCipherTextException("block incorrect size");
 			}
-			int num;
-			for (num = 1; num != array.Length; num++)
+			int start;
+			for (start = 1; start != block.Length; start++)
 			{
-				byte b2 = array[num];
-				if (b2 == 0)
+				byte pad = block[start];
+				if (pad == 0)
 				{
 					break;
 				}
-				if (b == 1 && b2 != 255)
+				if (type == 1 && pad != 255)
 				{
 					throw new InvalidCipherTextException("block padding incorrect");
 				}
 			}
-			num++;
-			if (num >= array.Length || num < 10)
+			start++;
+			if (start >= block.Length || start < 10)
 			{
 				throw new InvalidCipherTextException("no data in block");
 			}
-			byte[] array2 = new byte[array.Length - num];
-			Array.Copy(array, num, array2, 0, array2.Length);
-			return array2;
+			byte[] result = new byte[block.Length - start];
+			Array.Copy(block, start, result, 0, result.Length);
+			return result;
 		}
 
 		public const string StrictLengthEnabledProperty = "DNA.Security.Cryptography.Pkcs1.Strict";

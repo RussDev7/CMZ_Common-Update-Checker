@@ -77,9 +77,9 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				asn1EncodableVector = new Asn1StreamParser(inStream).ReadVector();
 			}
-			catch (IOException ex)
+			catch (IOException e)
 			{
-				throw new InvalidOperationException(ex.Message, ex);
+				throw new InvalidOperationException(e.Message, e);
 			}
 			return asn1EncodableVector;
 		}
@@ -88,12 +88,12 @@ namespace DNA.Security.Cryptography.Asn1
 		{
 			if (this._indefiniteLength)
 			{
-				Asn1EncodableVector asn1EncodableVector = this.rLoadVector(this._contentStream);
-				if (asn1EncodableVector.Count != 1)
+				Asn1EncodableVector v = this.rLoadVector(this._contentStream);
+				if (v.Count != 1)
 				{
-					return new BerTaggedObject(false, this._tagNumber, BerSequence.FromVector(asn1EncodableVector));
+					return new BerTaggedObject(false, this._tagNumber, BerSequence.FromVector(v));
 				}
-				return new BerTaggedObject(true, this._tagNumber, asn1EncodableVector[0]);
+				return new BerTaggedObject(true, this._tagNumber, v[0]);
 			}
 			else
 			{
@@ -102,21 +102,21 @@ namespace DNA.Security.Cryptography.Asn1
 					Asn1Object asn1Object;
 					try
 					{
-						DefiniteLengthInputStream definiteLengthInputStream = (DefiniteLengthInputStream)this._contentStream;
-						asn1Object = new DerTaggedObject(false, this._tagNumber, new DerOctetString(definiteLengthInputStream.ToArray()));
+						DefiniteLengthInputStream defIn = (DefiniteLengthInputStream)this._contentStream;
+						asn1Object = new DerTaggedObject(false, this._tagNumber, new DerOctetString(defIn.ToArray()));
 					}
-					catch (IOException ex)
+					catch (IOException e)
 					{
-						throw new InvalidOperationException(ex.Message, ex);
+						throw new InvalidOperationException(e.Message, e);
 					}
 					return asn1Object;
 				}
-				Asn1EncodableVector asn1EncodableVector2 = this.rLoadVector(this._contentStream);
-				if (asn1EncodableVector2.Count != 1)
+				Asn1EncodableVector v2 = this.rLoadVector(this._contentStream);
+				if (v2.Count != 1)
 				{
-					return new DerTaggedObject(false, this._tagNumber, DerSequence.FromVector(asn1EncodableVector2));
+					return new DerTaggedObject(false, this._tagNumber, DerSequence.FromVector(v2));
 				}
-				return new DerTaggedObject(true, this._tagNumber, asn1EncodableVector2[0]);
+				return new DerTaggedObject(true, this._tagNumber, v2[0]);
 			}
 		}
 

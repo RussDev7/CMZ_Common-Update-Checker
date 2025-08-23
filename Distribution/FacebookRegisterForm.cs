@@ -48,14 +48,14 @@ namespace DNA.Distribution
 
 		private void okButton_Click(object sender, EventArgs e)
 		{
-			string text;
-			if (this._services.RegisterFacebook(this._fbID, this._accessToken, this._email, this.username, this.password, out text))
+			string reason;
+			if (this._services.RegisterFacebook(this._fbID, this._accessToken, this._email, this.username, this.password, out reason))
 			{
 				base.DialogResult = DialogResult.OK;
 				base.Close();
 				return;
 			}
-			if (text == "invalid user")
+			if (reason == "invalid user")
 			{
 				this.PasswordTextBox.Text = "";
 				MessageBox.Show(this, CommonResources.Invalid_username_or_password_, CommonResources.Invalid_Login, MessageBoxButtons.OK);

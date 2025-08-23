@@ -16,9 +16,9 @@ namespace DNA.Security.Cryptography.Utilities.Encoders
 
 		public static byte[] Encode(byte[] data, int off, int length)
 		{
-			MemoryStream memoryStream = new MemoryStream(length * 2);
-			Hex.encoder.Encode(data, off, length, memoryStream);
-			return memoryStream.ToArray();
+			MemoryStream bOut = new MemoryStream(length * 2);
+			Hex.encoder.Encode(data, off, length, bOut);
+			return bOut.ToArray();
 		}
 
 		public static int Encode(byte[] data, Stream outStream)
@@ -33,16 +33,16 @@ namespace DNA.Security.Cryptography.Utilities.Encoders
 
 		public static byte[] Decode(byte[] data)
 		{
-			MemoryStream memoryStream = new MemoryStream((data.Length + 1) / 2);
-			Hex.encoder.Decode(data, 0, data.Length, memoryStream);
-			return memoryStream.ToArray();
+			MemoryStream bOut = new MemoryStream((data.Length + 1) / 2);
+			Hex.encoder.Decode(data, 0, data.Length, bOut);
+			return bOut.ToArray();
 		}
 
 		public static byte[] Decode(string data)
 		{
-			MemoryStream memoryStream = new MemoryStream((data.Length + 1) / 2);
-			Hex.encoder.DecodeString(data, memoryStream);
-			return memoryStream.ToArray();
+			MemoryStream bOut = new MemoryStream((data.Length + 1) / 2);
+			Hex.encoder.DecodeString(data, bOut);
+			return bOut.ToArray();
 		}
 
 		public static int Decode(string data, Stream outStream)

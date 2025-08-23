@@ -19,8 +19,8 @@ namespace DNA.Audio.SignalProcessing
 			this.ConvertFrom(data, this._internalDataBuffer);
 			for (int i = 0; i < base.Count; i++)
 			{
-				SignalProcessor<InternalDataType> signalProcessor = base[i];
-				if (signalProcessor.Active && !signalProcessor.ProcessBlock(this._internalDataBuffer))
+				SignalProcessor<InternalDataType> processor = base[i];
+				if (processor.Active && !processor.ProcessBlock(this._internalDataBuffer))
 				{
 					return false;
 				}

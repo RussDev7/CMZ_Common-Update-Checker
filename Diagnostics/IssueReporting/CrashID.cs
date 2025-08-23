@@ -13,17 +13,17 @@ namespace DNA.Diagnostics.IssueReporting
 
 		public static CrashID Parse(string idText)
 		{
-			MD5HashProvider md5HashProvider = new MD5HashProvider();
-			return new CrashID(md5HashProvider.Parse(idText));
+			MD5HashProvider hasher = new MD5HashProvider();
+			return new CrashID(hasher.Parse(idText));
 		}
 
 		public static CrashID FromInfo(string type, string message, string stackTrace)
 		{
-			MD5HashProvider md5HashProvider = new MD5HashProvider();
-			UTF8Encoding utf8Encoding = new UTF8Encoding();
-			string text = type + message + stackTrace;
-			byte[] bytes = utf8Encoding.GetBytes(text);
-			return new CrashID(md5HashProvider.CreateHash(bytes));
+			MD5HashProvider hasher = new MD5HashProvider();
+			UTF8Encoding encoding = new UTF8Encoding();
+			string errorString = type + message + stackTrace;
+			byte[] data = encoding.GetBytes(errorString);
+			return new CrashID(hasher.CreateHash(data));
 		}
 
 		public override string ToString()

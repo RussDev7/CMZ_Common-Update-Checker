@@ -29,24 +29,24 @@ namespace DNA.Drawing.Imaging.Photoshop
 		public AlphaChannelNames(PsdBinaryReader reader, string name, int resourceDataLength)
 			: base(name)
 		{
-			long num = reader.BaseStream.Position + (long)resourceDataLength;
-			while (reader.BaseStream.Position < num)
+			long endPosition = reader.BaseStream.Position + (long)resourceDataLength;
+			while (reader.BaseStream.Position < endPosition)
 			{
-				byte b = reader.ReadByte();
-				string text = new string(reader.ReadChars((int)b));
-				if (text.Length > 0)
+				byte stringLength = reader.ReadByte();
+				string channelName = new string(reader.ReadChars((int)stringLength));
+				if (channelName.Length > 0)
 				{
-					this.channelNames.Add(text);
+					this.channelNames.Add(channelName);
 				}
 			}
 		}
 
 		protected override void WriteData(PsdBinaryWriter writer)
 		{
-			foreach (string text in this.channelNames)
+			foreach (string channelName in this.channelNames)
 			{
-				writer.Write((byte)text.Length);
-				writer.Write(text.ToCharArray());
+				writer.Write((byte)channelName.Length);
+				writer.Write(channelName.ToCharArray());
 			}
 		}
 

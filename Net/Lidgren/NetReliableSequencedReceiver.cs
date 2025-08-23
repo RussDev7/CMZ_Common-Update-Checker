@@ -17,24 +17,24 @@ namespace DNA.Net.Lidgren
 
 		internal override void ReceiveMessage(NetIncomingMessage message)
 		{
-			int sequenceNumber = message.m_sequenceNumber;
-			int num = NetUtility.RelativeSequenceNumber(sequenceNumber, this.m_windowStart);
-			this.m_connection.QueueAck(message.m_receivedMessageType, sequenceNumber);
-			if (num == 0)
+			int nr = message.m_sequenceNumber;
+			int relate = NetUtility.RelativeSequenceNumber(nr, this.m_windowStart);
+			this.m_connection.QueueAck(message.m_receivedMessageType, nr);
+			if (relate == 0)
 			{
 				this.AdvanceWindow();
 				this.m_peer.ReleaseMessage(message);
 				return;
 			}
-			if (num < 0)
+			if (relate < 0)
 			{
 				return;
 			}
-			if (num > this.m_windowSize)
+			if (relate > this.m_windowSize)
 			{
 				return;
 			}
-			this.m_windowStart = (this.m_windowStart + num) % 1024;
+			this.m_windowStart = (this.m_windowStart + relate) % 1024;
 			this.m_peer.ReleaseMessage(message);
 		}
 

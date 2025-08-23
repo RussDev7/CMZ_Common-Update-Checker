@@ -61,31 +61,31 @@ namespace DNA.Drawing
 
 		private void SetBlurEffectParameters(float dx, float dy)
 		{
-			EffectParameter effectParameter = base.Parameters["SampleWeights"];
-			EffectParameter effectParameter2 = base.Parameters["SampleOffsets"];
-			int count = effectParameter.Elements.Count;
-			float[] array = new float[count];
-			Vector2[] array2 = new Vector2[count];
-			array[0] = DistortSkinnedEffect.ComputeGaussian(0f);
-			array2[0] = new Vector2(0f);
-			float num = array[0];
-			for (int i = 0; i < count / 2; i++)
+			EffectParameter weightsParameter = base.Parameters["SampleWeights"];
+			EffectParameter offsetsParameter = base.Parameters["SampleOffsets"];
+			int sampleCount = weightsParameter.Elements.Count;
+			float[] sampleWeights = new float[sampleCount];
+			Vector2[] sampleOffsets = new Vector2[sampleCount];
+			sampleWeights[0] = DistortSkinnedEffect.ComputeGaussian(0f);
+			sampleOffsets[0] = new Vector2(0f);
+			float totalWeights = sampleWeights[0];
+			for (int i = 0; i < sampleCount / 2; i++)
 			{
-				float num2 = DistortSkinnedEffect.ComputeGaussian((float)(i + 1));
-				array[i * 2 + 1] = num2;
-				array[i * 2 + 2] = num2;
-				num += num2 * 2f;
-				float num3 = (float)(i * 2) + 1.5f;
-				Vector2 vector = new Vector2(dx, dy) * num3;
-				array2[i * 2 + 1] = vector;
-				array2[i * 2 + 2] = -vector;
+				float weight = DistortSkinnedEffect.ComputeGaussian((float)(i + 1));
+				sampleWeights[i * 2 + 1] = weight;
+				sampleWeights[i * 2 + 2] = weight;
+				totalWeights += weight * 2f;
+				float sampleOffset = (float)(i * 2) + 1.5f;
+				Vector2 delta = new Vector2(dx, dy) * sampleOffset;
+				sampleOffsets[i * 2 + 1] = delta;
+				sampleOffsets[i * 2 + 2] = -delta;
 			}
-			for (int j = 0; j < array.Length; j++)
+			for (int j = 0; j < sampleWeights.Length; j++)
 			{
-				array[j] /= num;
+				sampleWeights[j] /= totalWeights;
 			}
-			effectParameter.SetValue(array);
-			effectParameter2.SetValue(array2);
+			weightsParameter.SetValue(sampleWeights);
+			offsetsParameter.SetValue(sampleOffsets);
 		}
 
 		private static float ComputeGaussian(float n)
@@ -112,24 +112,24 @@ namespace DNA.Drawing
 			{
 				throw new ArgumentOutOfRangeException("count");
 			}
-			Matrix[] valueMatrixArray = this.bonesParam.GetValueMatrixArray(count);
-			for (int i = 0; i < valueMatrixArray.Length; i++)
+			Matrix[] bones = this.bonesParam.GetValueMatrixArray(count);
+			for (int i = 0; i < bones.Length; i++)
 			{
-				valueMatrixArray[i].M44 = 1f;
+				bones[i].M44 = 1f;
 			}
-			return valueMatrixArray;
+			return bones;
 		}
 
 		public DistortSkinnedEffect(Game game)
 			: base(game.Content.Load<Effect>("DistortSkinnedEffect"))
 		{
 			this.CacheEffectParameters(null);
-			Matrix[] array = new Matrix[72];
+			Matrix[] identityBones = new Matrix[72];
 			for (int i = 0; i < 72; i++)
 			{
-				array[i] = Matrix.Identity;
+				identityBones[i] = Matrix.Identity;
 			}
-			this.SetBoneTransforms(array);
+			this.SetBoneTransforms(identityBones);
 		}
 
 		protected DistortSkinnedEffect(DistortSkinnedEffect cloneSource)
@@ -155,26 +155,26 @@ namespace DNA.Drawing
 			this.shaderIndexParam = base.Parameters["ShaderIndex"];
 			this.distortTechnique = base.Techniques["Distort"];
 			this.distortBlurTechnique = base.Techniques["DistortBlur"];
-			PresentationParameters presentationParameters = base.GraphicsDevice.PresentationParameters;
-			int backBufferWidth = presentationParameters.BackBufferWidth;
-			int backBufferHeight = presentationParameters.BackBufferHeight;
-			SurfaceFormat backBufferFormat = presentationParameters.BackBufferFormat;
-			DepthFormat depthStencilFormat = presentationParameters.DepthStencilFormat;
-			this.SetBlurEffectParameters(1f / (float)backBufferWidth, 1f / (float)backBufferHeight);
+			PresentationParameters pp = base.GraphicsDevice.PresentationParameters;
+			int width = pp.BackBufferWidth;
+			int height = pp.BackBufferHeight;
+			SurfaceFormat backBufferFormat = pp.BackBufferFormat;
+			DepthFormat depthStencilFormat = pp.DepthStencilFormat;
+			this.SetBlurEffectParameters(1f / (float)width, 1f / (float)height);
 		}
 
 		protected override void OnApply()
 		{
-			int num = 0;
+			int shaderIndex = 0;
 			if (this.weightsPerVertex == 2)
 			{
-				num++;
+				shaderIndex++;
 			}
 			else if (this.weightsPerVertex == 4)
 			{
-				num += 2;
+				shaderIndex += 2;
 			}
-			this.shaderIndexParam.SetValue(num);
+			this.shaderIndexParam.SetValue(shaderIndex);
 			this.distortionScaleParam.SetValue(this._distortionScale);
 			base.CurrentTechnique = (this.Blur ? this.distortBlurTechnique : this.distortTechnique);
 			base.OnApply();

@@ -25,9 +25,9 @@ namespace DNA.Security.Cryptography
 
 		public Hash EndHash()
 		{
-			byte[] array = new byte[this._hashAlg.GetDigestSize()];
-			this._hashAlg.DoFinal(array, 0);
-			return this.CreateHash(array);
+			byte[] hash = new byte[this._hashAlg.GetDigestSize()];
+			this._hashAlg.DoFinal(hash, 0);
+			return this.CreateHash(hash);
 		}
 
 		private IDigest _hashAlg;

@@ -37,13 +37,13 @@ namespace DNA.IO.Compression.Zip.Compression
 				IL_013B:
 				while (this.ptr < this.blnum)
 				{
-					int num = input.PeekBits(3);
-					if (num < 0)
+					int len = input.PeekBits(3);
+					if (len < 0)
 					{
 						return false;
 					}
 					input.DropBits(3);
-					this.blLens[InflaterDynHeader.BL_ORDER[this.ptr]] = (byte)num;
+					this.blLens[InflaterDynHeader.BL_ORDER[this.ptr]] = (byte)len;
 					this.ptr++;
 				}
 				this.blTree = new InflaterHuffmanTree(this.blLens);
@@ -75,19 +75,19 @@ namespace DNA.IO.Compression.Zip.Compression
 				this.repSymbol = symbol - 16;
 				this.mode = 5;
 				IL_01EE:
-				int num2 = InflaterDynHeader.repBits[this.repSymbol];
-				int num3 = input.PeekBits(num2);
-				if (num3 < 0)
+				int bits = InflaterDynHeader.repBits[this.repSymbol];
+				int count = input.PeekBits(bits);
+				if (count < 0)
 				{
 					return false;
 				}
-				input.DropBits(num2);
-				num3 += InflaterDynHeader.repMin[this.repSymbol];
-				if (this.ptr + num3 > this.num)
+				input.DropBits(bits);
+				count += InflaterDynHeader.repMin[this.repSymbol];
+				if (this.ptr + count > this.num)
 				{
 					goto Block_12;
 				}
-				while (num3-- > 0)
+				while (count-- > 0)
 				{
 					this.litdistLens[this.ptr++] = this.lastLen;
 				}
@@ -131,16 +131,16 @@ namespace DNA.IO.Compression.Zip.Compression
 
 		public InflaterHuffmanTree BuildLitLenTree()
 		{
-			byte[] array = new byte[this.lnum];
-			Array.Copy(this.litdistLens, 0, array, 0, this.lnum);
-			return new InflaterHuffmanTree(array);
+			byte[] litlenLens = new byte[this.lnum];
+			Array.Copy(this.litdistLens, 0, litlenLens, 0, this.lnum);
+			return new InflaterHuffmanTree(litlenLens);
 		}
 
 		public InflaterHuffmanTree BuildDistTree()
 		{
-			byte[] array = new byte[this.dnum];
-			Array.Copy(this.litdistLens, this.lnum, array, 0, this.dnum);
-			return new InflaterHuffmanTree(array);
+			byte[] distLens = new byte[this.dnum];
+			Array.Copy(this.litdistLens, this.lnum, distLens, 0, this.dnum);
+			return new InflaterHuffmanTree(distLens);
 		}
 
 		private const int LNUM = 0;

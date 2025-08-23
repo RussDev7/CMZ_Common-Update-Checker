@@ -9,39 +9,39 @@ namespace DNA.Drawing.Collision
 	{
 		public float? CollidesWith(LineF3D line)
 		{
-			Triangle3D triangle3D;
-			return this.CollidesWith(line, out triangle3D);
+			Triangle3D triangle;
+			return this.CollidesWith(line, out triangle);
 		}
 
 		public float? CollidesWith(Ray ray)
 		{
-			Triangle3D triangle3D;
-			return this.CollidesWith(ray, out triangle3D);
+			Triangle3D triangle;
+			return this.CollidesWith(ray, out triangle);
 		}
 
 		public float? CollidesWith(Ray ray, out Triangle3D triangle)
 		{
-			CollisionMap.RayQueryResult? rayQueryResult = this.CollidesWith(ray, 0f, float.MaxValue);
-			if (rayQueryResult == null)
+			CollisionMap.RayQueryResult? result = this.CollidesWith(ray, 0f, float.MaxValue);
+			if (result == null)
 			{
 				triangle = default(Triangle3D);
 				return null;
 			}
-			triangle = rayQueryResult.Value.Triangle;
-			return new float?(rayQueryResult.Value.T);
+			triangle = result.Value.Triangle;
+			return new float?(result.Value.T);
 		}
 
 		public float? CollidesWith(LineF3D line, out Triangle3D triangle)
 		{
 			Ray ray = new Ray(line.Start, line.End - line.Start);
-			CollisionMap.RayQueryResult? rayQueryResult = this.CollidesWith(ray, 0f, 1f);
-			if (rayQueryResult == null)
+			CollisionMap.RayQueryResult? result = this.CollidesWith(ray, 0f, 1f);
+			if (result == null)
 			{
 				triangle = default(Triangle3D);
 				return null;
 			}
-			triangle = rayQueryResult.Value.Triangle;
-			return new float?(rayQueryResult.Value.T);
+			triangle = result.Value.Triangle;
+			return new float?(result.Value.T);
 		}
 
 		protected abstract CollisionMap.RayQueryResult? CollidesWith(Ray ray, float min, float max);

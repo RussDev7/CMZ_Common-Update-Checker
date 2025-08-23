@@ -25,7 +25,7 @@ namespace DNA.Distribution
 
 		private void InitializeComponent()
 		{
-			ComponentResourceManager componentResourceManager = new ComponentResourceManager(typeof(LauncherControl));
+			ComponentResourceManager resources = new ComponentResourceManager(typeof(LauncherControl));
 			this.webBrowser1 = new WebBrowser();
 			this.userNameBox = new TextBox();
 			this.passworrdBox = new TextBox();
@@ -38,42 +38,42 @@ namespace DNA.Distribution
 			this.facebookLoginButton = new Button();
 			base.SuspendLayout();
 			this.webBrowser1.AllowWebBrowserDrop = false;
-			componentResourceManager.ApplyResources(this.webBrowser1, "webBrowser1");
+			resources.ApplyResources(this.webBrowser1, "webBrowser1");
 			this.webBrowser1.IsWebBrowserContextMenuEnabled = false;
 			this.webBrowser1.MinimumSize = new Size(20, 20);
 			this.webBrowser1.Name = "webBrowser1";
 			this.webBrowser1.Url = new Uri("", UriKind.Relative);
-			componentResourceManager.ApplyResources(this.userNameBox, "userNameBox");
+			resources.ApplyResources(this.userNameBox, "userNameBox");
 			this.userNameBox.Name = "userNameBox";
-			componentResourceManager.ApplyResources(this.passworrdBox, "passworrdBox");
+			resources.ApplyResources(this.passworrdBox, "passworrdBox");
 			this.passworrdBox.Name = "passworrdBox";
-			componentResourceManager.ApplyResources(this.rememberPassBox, "rememberPassBox");
+			resources.ApplyResources(this.rememberPassBox, "rememberPassBox");
 			this.rememberPassBox.Name = "rememberPassBox";
 			this.rememberPassBox.UseVisualStyleBackColor = true;
-			componentResourceManager.ApplyResources(this.label1, "label1");
+			resources.ApplyResources(this.label1, "label1");
 			this.label1.Name = "label1";
-			componentResourceManager.ApplyResources(this.label2, "label2");
+			resources.ApplyResources(this.label2, "label2");
 			this.label2.Name = "label2";
-			componentResourceManager.ApplyResources(this.optionsButton, "optionsButton");
+			resources.ApplyResources(this.optionsButton, "optionsButton");
 			this.optionsButton.Name = "optionsButton";
 			this.optionsButton.UseVisualStyleBackColor = true;
 			this.optionsButton.Click += this.optionsButton_Click;
-			componentResourceManager.ApplyResources(this.loginButton, "loginButton");
+			resources.ApplyResources(this.loginButton, "loginButton");
 			this.loginButton.Name = "loginButton";
 			this.loginButton.UseVisualStyleBackColor = true;
 			this.loginButton.Click += this.loginButton_Click;
-			componentResourceManager.ApplyResources(this.NeedAccountLabel, "NeedAccountLabel");
+			resources.ApplyResources(this.NeedAccountLabel, "NeedAccountLabel");
 			this.NeedAccountLabel.Name = "NeedAccountLabel";
 			this.NeedAccountLabel.TabStop = true;
 			this.NeedAccountLabel.LinkClicked += this.NeedAccountLabel_LinkClicked;
-			componentResourceManager.ApplyResources(this.facebookLoginButton, "facebookLoginButton");
+			resources.ApplyResources(this.facebookLoginButton, "facebookLoginButton");
 			this.facebookLoginButton.BackColor = Color.CornflowerBlue;
 			this.facebookLoginButton.ForeColor = Color.White;
 			this.facebookLoginButton.Image = CommonDialogResources.loginwithfacebook;
 			this.facebookLoginButton.Name = "facebookLoginButton";
 			this.facebookLoginButton.UseVisualStyleBackColor = false;
 			this.facebookLoginButton.Click += this.facebookLoginButton_Click;
-			componentResourceManager.ApplyResources(this, "$this");
+			resources.ApplyResources(this, "$this");
 			base.AutoScaleMode = AutoScaleMode.Font;
 			base.Controls.Add(this.facebookLoginButton);
 			base.Controls.Add(this.NeedAccountLabel);
@@ -139,24 +139,24 @@ namespace DNA.Distribution
 
 		private void LoadSettings()
 		{
-			RegistryKey registryKey = Registry.CurrentUser.OpenSubKey(this._keyLoc + this.Services.ProductID.ToString(), false);
-			if (registryKey != null)
+			RegistryKey key = Registry.CurrentUser.OpenSubKey(this._keyLoc + this.Services.ProductID.ToString(), false);
+			if (key != null)
 			{
-				bool flag = bool.Parse((string)registryKey.GetValue("SavePassword", "false"));
-				this.rememberPassBox.Checked = flag;
-				string text = (string)registryKey.GetValue("Username", "");
-				this.userNameBox.Text = text;
-				if (flag)
+				bool savePassword = bool.Parse((string)key.GetValue("SavePassword", "false"));
+				this.rememberPassBox.Checked = savePassword;
+				string username = (string)key.GetValue("Username", "");
+				this.userNameBox.Text = username;
+				if (savePassword)
 				{
 					try
 					{
-						string text2 = (string)registryKey.GetValue("Password", "");
-						if (!string.IsNullOrEmpty(text2))
+						string encodedpassword = (string)key.GetValue("Password", "");
+						if (!string.IsNullOrEmpty(encodedpassword))
 						{
-							MD5HashProvider md5HashProvider = new MD5HashProvider();
-							byte[] data = md5HashProvider.Compute(Encoding.UTF8.GetBytes(text + "DDNA12345" + this.Services.ProductID.ToString())).Data;
-							string text3 = SecurityTools.DecryptString(data, TextConverter.FromBase32String(text2));
-							this.passworrdBox.Text = text3;
+							MD5HashProvider hasher = new MD5HashProvider();
+							byte[] encoderKey = hasher.Compute(Encoding.UTF8.GetBytes(username + "DDNA12345" + this.Services.ProductID.ToString())).Data;
+							string password = SecurityTools.DecryptString(encoderKey, TextConverter.FromBase32String(encodedpassword));
+							this.passworrdBox.Text = password;
 						}
 					}
 					catch
@@ -169,32 +169,32 @@ namespace DNA.Distribution
 
 		private void SaveSettings()
 		{
-			RegistryKey registryKey = Registry.CurrentUser.OpenSubKey(this._keyLoc + this.Services.ProductID.ToString(), true);
-			if (registryKey == null)
+			RegistryKey key = Registry.CurrentUser.OpenSubKey(this._keyLoc + this.Services.ProductID.ToString(), true);
+			if (key == null)
 			{
-				registryKey = Registry.CurrentUser.CreateSubKey(this._keyLoc + this.Services.ProductID.ToString());
+				key = Registry.CurrentUser.CreateSubKey(this._keyLoc + this.Services.ProductID.ToString());
 			}
-			registryKey.SetValue("SavePassword", this.rememberPassBox.Checked);
-			registryKey.SetValue("Username", this.userNameBox.Text);
+			key.SetValue("SavePassword", this.rememberPassBox.Checked);
+			key.SetValue("Username", this.userNameBox.Text);
 			if (this.rememberPassBox.Checked)
 			{
-				MD5HashProvider md5HashProvider = new MD5HashProvider();
-				byte[] data = md5HashProvider.Compute(Encoding.UTF8.GetBytes(this.userNameBox.Text + "DDNA12345" + this.Services.ProductID.ToString())).Data;
-				byte[] array = SecurityTools.EncryptString(data, this.passworrdBox.Text);
-				string text = TextConverter.ToBase32String(array);
-				registryKey.SetValue("Password", text);
+				MD5HashProvider hasher = new MD5HashProvider();
+				byte[] encoderKey = hasher.Compute(Encoding.UTF8.GetBytes(this.userNameBox.Text + "DDNA12345" + this.Services.ProductID.ToString())).Data;
+				byte[] passData = SecurityTools.EncryptString(encoderKey, this.passworrdBox.Text);
+				string encodedpassword = TextConverter.ToBase32String(passData);
+				key.SetValue("Password", encodedpassword);
 			}
 			else
 			{
 				try
 				{
-					registryKey.DeleteValue("Password");
+					key.DeleteValue("Password");
 				}
 				catch
 				{
 				}
 			}
-			registryKey.Close();
+			key.Close();
 		}
 
 		protected override void OnLoad(EventArgs e)
@@ -237,16 +237,16 @@ namespace DNA.Distribution
 
 		public void RegisterFacebook(string facebookID, string accessToken, string email)
 		{
-			string text;
-			this.Services.RegisterFacebook(facebookID, accessToken, email, this.Username, this.Password, out text);
+			string reason;
+			this.Services.RegisterFacebook(facebookID, accessToken, email, this.Username, this.Password, out reason);
 		}
 
 		public void ValidateLicenseFacebook(string facebookID, string accessToken, string email, string facebookUsername, Uri logoutURL, string facebookName)
 		{
 			Cursor.Current = Cursors.WaitCursor;
-			string text;
-			string text2;
-			if (this.Services.ValidateLicenseFacebook(facebookID, accessToken, out text, out text2))
+			string username;
+			string reason;
+			if (this.Services.ValidateLicenseFacebook(facebookID, accessToken, out username, out reason))
 			{
 				this._trialMode = false;
 				if (this.CheckHardware())
@@ -266,17 +266,17 @@ namespace DNA.Distribution
 					base.ParentForm.Close();
 				}
 			}
-			else if (text2 == "terms not accepted")
+			else if (reason == "terms not accepted")
 			{
-				AcceptTOSForm acceptTOSForm = new AcceptTOSForm();
-				DialogResult dialogResult = acceptTOSForm.ShowDialog();
-				if (dialogResult == DialogResult.Yes)
+				AcceptTOSForm tosForm = new AcceptTOSForm();
+				DialogResult result = tosForm.ShowDialog();
+				if (result == DialogResult.Yes)
 				{
 					this.Services.AcceptTermsFacebook(facebookID);
 					this.ValidateLicenseFacebook(facebookID, accessToken, email, facebookUsername, logoutURL, facebookName);
 				}
 			}
-			else if (text2 == "invalid license")
+			else if (reason == "invalid license")
 			{
 				if (this.CheckHardware())
 				{
@@ -296,16 +296,16 @@ namespace DNA.Distribution
 					base.ParentForm.Close();
 				}
 			}
-			else if (text2 == "not registered")
+			else if (reason == "not registered")
 			{
-				FacebookRegisterForm facebookRegisterForm = new FacebookRegisterForm(facebookUsername, facebookID, accessToken, email, facebookName, logoutURL, this.Services);
-				DialogResult dialogResult2 = facebookRegisterForm.ShowDialog(this);
-				if (dialogResult2 == DialogResult.OK)
+				FacebookRegisterForm fbForm = new FacebookRegisterForm(facebookUsername, facebookID, accessToken, email, facebookName, logoutURL, this.Services);
+				DialogResult result2 = fbForm.ShowDialog(this);
+				if (result2 == DialogResult.OK)
 				{
 					this.ValidateLicenseFacebook(facebookID, accessToken, email, facebookUsername, logoutURL, facebookName);
 				}
 			}
-			else if (text2 == "invalid access token")
+			else if (reason == "invalid access token")
 			{
 				this.passworrdBox.Text = "";
 				MessageBox.Show(CommonResources.LauncherControl_ValidateLicenseFacebook_There_was_a_problem_authenticating_your_facebook_account_, CommonResources.Error, MessageBoxButtons.OK);
@@ -322,8 +322,8 @@ namespace DNA.Distribution
 		{
 			Cursor.Current = Cursors.WaitCursor;
 			this.userNameBox.Text = this.userNameBox.Text.Trim();
-			string text;
-			if (this.Services.ValidateLicense(this.userNameBox.Text, this.passworrdBox.Text, out text))
+			string reason;
+			if (this.Services.ValidateLicense(this.userNameBox.Text, this.passworrdBox.Text, out reason))
 			{
 				this.SaveSettings();
 				if (this.CheckHardware())
@@ -344,17 +344,17 @@ namespace DNA.Distribution
 					base.ParentForm.Close();
 				}
 			}
-			else if (text == "terms not accepted")
+			else if (reason == "terms not accepted")
 			{
-				AcceptTOSForm acceptTOSForm = new AcceptTOSForm();
-				DialogResult dialogResult = acceptTOSForm.ShowDialog();
-				if (dialogResult == DialogResult.Yes)
+				AcceptTOSForm tosForm = new AcceptTOSForm();
+				DialogResult result = tosForm.ShowDialog();
+				if (result == DialogResult.Yes)
 				{
 					this.Services.AcceptTerms(this.userNameBox.Text, this.passworrdBox.Text);
 					this.loginButton_Click(sender, e);
 				}
 			}
-			else if (text == "invalid license")
+			else if (reason == "invalid license")
 			{
 				this.SaveSettings();
 				if (this.CheckHardware())
@@ -375,17 +375,17 @@ namespace DNA.Distribution
 					base.ParentForm.Close();
 				}
 			}
-			else if (text == "invalid user")
+			else if (reason == "invalid user")
 			{
 				this.passworrdBox.Text = "";
-				InvalidLoginForm invalidLoginForm = new InvalidLoginForm();
-				DialogResult dialogResult2 = invalidLoginForm.ShowDialog(this);
-				if (dialogResult2 == DialogResult.Yes)
+				InvalidLoginForm form = new InvalidLoginForm();
+				DialogResult result2 = form.ShowDialog(this);
+				if (result2 == DialogResult.Yes)
 				{
 					Process.Start("https://www.digitaldnagames.com/Account/Register.aspx");
 				}
 			}
-			else if (text == "not verified")
+			else if (reason == "not verified")
 			{
 				this.passworrdBox.Text = "";
 				Process.Start("https://www.digitaldnagames.com/Account/VerifyEmail.aspx");

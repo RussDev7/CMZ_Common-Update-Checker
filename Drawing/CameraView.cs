@@ -11,8 +11,8 @@ namespace DNA.Drawing
 		{
 			if (e is ParticleEmitter)
 			{
-				ParticleEmitter particleEmitter = (ParticleEmitter)e;
-				if (particleEmitter.IsDistortionEffect)
+				ParticleEmitter emitter = (ParticleEmitter)e;
+				if (emitter.IsDistortionEffect)
 				{
 					return false;
 				}
@@ -70,12 +70,12 @@ namespace DNA.Drawing
 
 		private bool FilterEntities(Entity e)
 		{
-			bool flag = true;
+			bool result = true;
 			if (this._filter != null)
 			{
-				flag = this._filter(e);
+				result = this._filter(e);
 			}
-			return flag && this.FilterEntity(e);
+			return result && this.FilterEntity(e);
 		}
 
 		protected virtual bool FilterEntity(Entity e)

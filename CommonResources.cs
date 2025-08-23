@@ -24,8 +24,8 @@ namespace DNA
 			{
 				if (object.ReferenceEquals(CommonResources.resourceMan, null))
 				{
-					ResourceManager resourceManager = new ResourceManager("DNA.CommonResources", typeof(CommonResources).Assembly);
-					CommonResources.resourceMan = resourceManager;
+					ResourceManager temp = new ResourceManager("DNA.CommonResources", typeof(CommonResources).Assembly);
+					CommonResources.resourceMan = temp;
 				}
 				return CommonResources.resourceMan;
 			}

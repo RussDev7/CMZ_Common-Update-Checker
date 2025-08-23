@@ -32,48 +32,48 @@ namespace DNA.Runtime.Serialization.Formatters.HTF
 			this._nextID = 0;
 			this._objectLookup = new Dictionary<object, int>();
 			this._objectIDLookup = new Dictionary<int, object>();
-			HTFDocument htfdocument = new HTFDocument();
-			htfdocument.Root.Children.Add(new HTFElement("DocType", "HTFGraph"));
-			htfdocument.Root.Children.Add(new HTFElement("Version", HTFFormatter.Version.ToString()));
-			HTFElement htfelement = new HTFElement();
-			htfelement.ID = "Graph";
-			htfdocument.Root.Children.Add(htfelement);
-			this.Serialize(htfelement, graph);
-			return htfdocument;
+			HTFDocument doc = new HTFDocument();
+			doc.Root.Children.Add(new HTFElement("DocType", "HTFGraph"));
+			doc.Root.Children.Add(new HTFElement("Version", HTFFormatter.Version.ToString()));
+			HTFElement childrenElement = new HTFElement();
+			childrenElement.ID = "Graph";
+			doc.Root.Children.Add(childrenElement);
+			this.Serialize(childrenElement, graph);
+			return doc;
 		}
 
 		public void Serialize(Stream serializationStream, object graph)
 		{
-			HTFDocument htfdocument = this.Serialize(graph);
-			htfdocument.Save(serializationStream);
+			HTFDocument doc = this.Serialize(graph);
+			doc.Save(serializationStream);
 		}
 
 		private void SerializeArray(HTFElement parentElement, Array graph)
 		{
 			parentElement.Value = "Array";
-			Type type = graph.GetType();
-			int arrayRank = type.GetArrayRank();
-			Type elementType = type.GetElementType();
-			string text;
-			string text2;
-			this.Binder.BindToName(elementType, out text, out text2);
-			parentElement.Children.Add(new HTFElement("ElementTypeAssembly", text));
-			parentElement.Children.Add(new HTFElement("ElementTypeName", text2));
-			HTFElement htfelement = new HTFElement();
-			htfelement.ID = "Lengths";
-			parentElement.Children.Add(htfelement);
-			int[] array = new int[arrayRank];
-			for (int i = 0; i < arrayRank; i++)
+			Type graphType = graph.GetType();
+			int rank = graphType.GetArrayRank();
+			Type elementType = graphType.GetElementType();
+			string elementAssemblyName;
+			string typeName;
+			this.Binder.BindToName(elementType, out elementAssemblyName, out typeName);
+			parentElement.Children.Add(new HTFElement("ElementTypeAssembly", elementAssemblyName));
+			parentElement.Children.Add(new HTFElement("ElementTypeName", typeName));
+			HTFElement lengthsElement = new HTFElement();
+			lengthsElement.ID = "Lengths";
+			parentElement.Children.Add(lengthsElement);
+			int[] lengths = new int[rank];
+			for (int i = 0; i < rank; i++)
 			{
 				int length = graph.GetLength(i);
-				array[i] = length;
-				htfelement.Children.Add(new HTFElement(length.ToString()));
+				lengths[i] = length;
+				lengthsElement.Children.Add(new HTFElement(length.ToString()));
 			}
-			int[] array2 = new int[arrayRank];
-			HTFElement htfelement2 = new HTFElement();
-			htfelement2.ID = "Values";
-			parentElement.Children.Add(htfelement2);
-			this.SerializeArrayRank(htfelement2, graph, array, array2, 0);
+			int[] indices = new int[rank];
+			HTFElement valuesElement = new HTFElement();
+			valuesElement.ID = "Values";
+			parentElement.Children.Add(valuesElement);
+			this.SerializeArrayRank(valuesElement, graph, lengths, indices, 0);
 		}
 
 		private void SerializeArrayRank(HTFElement element, Array graph, int[] lengths, int[] indices, int rank)
@@ -83,79 +83,79 @@ namespace DNA.Runtime.Serialization.Formatters.HTF
 				for (int i = 0; i < lengths[rank]; i++)
 				{
 					indices[rank] = i;
-					HTFElement htfelement = new HTFElement();
-					element.Children.Add(htfelement);
-					this.Serialize(htfelement, graph.GetValue(indices));
+					HTFElement valueElement = new HTFElement();
+					element.Children.Add(valueElement);
+					this.Serialize(valueElement, graph.GetValue(indices));
 				}
 				return;
 			}
 			for (int j = 0; j < lengths[rank]; j++)
 			{
-				HTFElement htfelement2 = new HTFElement();
-				element.Children.Add(htfelement2);
+				HTFElement rankElement = new HTFElement();
+				element.Children.Add(rankElement);
 				indices[rank] = j;
-				this.SerializeArrayRank(htfelement2, graph, lengths, indices, rank + 1);
+				this.SerializeArrayRank(rankElement, graph, lengths, indices, rank + 1);
 			}
 		}
 
 		private void SerializeObject(HTFElement element, object graph)
 		{
 			element.Value = "Class";
-			Type type = graph.GetType();
-			this.SerializeObjectData(element, graph, type);
+			Type graphType = graph.GetType();
+			this.SerializeObjectData(element, graph, graphType);
 		}
 
 		private void SerializeObjectData(HTFElement element, object graph, Type graphType)
 		{
-			string text;
-			string text2;
-			this.Binder.BindToName(graphType, out text, out text2);
-			element.Children.Add(new HTFElement("TypeAssembly", text));
-			element.Children.Add(new HTFElement("TypeName", text2));
+			string typeAssembly;
+			string typeName;
+			this.Binder.BindToName(graphType, out typeAssembly, out typeName);
+			element.Children.Add(new HTFElement("TypeAssembly", typeAssembly));
+			element.Children.Add(new HTFElement("TypeName", typeName));
 			if (graph is ISerializable)
 			{
-				ISerializable serializable = (ISerializable)graph;
-				SerializationInfo serializationInfo = new SerializationInfo(graphType, new HTFFormatter.FormatConverter());
-				serializable.GetObjectData(serializationInfo, this.Context);
-				SerializationInfoEnumerator enumerator = serializationInfo.GetEnumerator();
-				HTFElement htfelement = new HTFElement("ClassData");
-				element.Children.Add(htfelement);
+				ISerializable iserial = (ISerializable)graph;
+				SerializationInfo seriaInfo = new SerializationInfo(graphType, new HTFFormatter.FormatConverter());
+				iserial.GetObjectData(seriaInfo, this.Context);
+				SerializationInfoEnumerator enumerator = seriaInfo.GetEnumerator();
+				HTFElement fieldsElement = new HTFElement("ClassData");
+				element.Children.Add(fieldsElement);
 				while (enumerator.MoveNext())
 				{
-					HTFElement htfelement2 = new HTFElement();
-					htfelement2.ID = enumerator.Name;
-					htfelement.Children.Add(htfelement2);
-					this.Serialize(htfelement2, enumerator.Value);
+					HTFElement fieldElement = new HTFElement();
+					fieldElement.ID = enumerator.Name;
+					fieldsElement.Children.Add(fieldElement);
+					this.Serialize(fieldElement, enumerator.Value);
 				}
 				return;
 			}
-			HTFElement htfelement3 = new HTFElement("Fields");
-			Type type = graphType;
+			HTFElement fieldsElement2 = new HTFElement("Fields");
+			Type currentType = graphType;
 			do
 			{
-				HTFElement htfelement4 = new HTFElement(type.FullName);
-				FieldInfo[] fields = type.GetFields(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-				bool flag = false;
-				foreach (FieldInfo fieldInfo in fields)
+				HTFElement typeElement = new HTFElement(currentType.FullName);
+				FieldInfo[] fields = currentType.GetFields(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+				bool saveField = false;
+				foreach (FieldInfo field in fields)
 				{
-					if (fieldInfo.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0)
+					if (field.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0)
 					{
-						HTFElement htfelement5 = new HTFElement();
-						htfelement5.ID = fieldInfo.Name;
-						htfelement4.Children.Add(htfelement5);
-						object value = fieldInfo.GetValue(graph);
-						this.Serialize(htfelement5, value);
-						flag = true;
+						HTFElement fieldElement2 = new HTFElement();
+						fieldElement2.ID = field.Name;
+						typeElement.Children.Add(fieldElement2);
+						object data = field.GetValue(graph);
+						this.Serialize(fieldElement2, data);
+						saveField = true;
 					}
 				}
-				if (flag)
+				if (saveField)
 				{
-					htfelement3.Children.Add(htfelement4);
+					fieldsElement2.Children.Add(typeElement);
 				}
-				type = type.BaseType;
+				currentType = currentType.BaseType;
 			}
-			while (type != typeof(object));
-			element.Children.Add(htfelement3);
+			while (currentType != typeof(object));
+			element.Children.Add(fieldsElement2);
 		}
 
 		public void Serialize(HTFElement element, object graph)
@@ -165,26 +165,26 @@ namespace DNA.Runtime.Serialization.Formatters.HTF
 				element.Value = "Null";
 				return;
 			}
-			Type type = graph.GetType();
-			string text;
-			if (HTFFormatter.PrimitiveLookup.TryGetValue(type, out text))
+			Type graphType = graph.GetType();
+			string primitiveName;
+			if (HTFFormatter.PrimitiveLookup.TryGetValue(graphType, out primitiveName))
 			{
-				element.Value = text;
+				element.Value = primitiveName;
 				element.Children.Add(new HTFElement(graph.ToString()));
 				return;
 			}
-			int num;
-			if (!type.IsValueType && this._objectLookup.TryGetValue(graph, out num))
+			int id;
+			if (!graphType.IsValueType && this._objectLookup.TryGetValue(graph, out id))
 			{
 				element.Value = "Reference";
-				element.Children.Add(new HTFElement(num.ToString()));
+				element.Children.Add(new HTFElement(id.ToString()));
 				return;
 			}
-			if (!type.IsValueType)
+			if (!graphType.IsValueType)
 			{
 				this._objectLookup[graph] = this._nextID++;
 			}
-			if (type.IsArray)
+			if (graphType.IsArray)
 			{
 				this.SerializeArray(element, (Array)graph);
 				return;
@@ -205,19 +205,19 @@ namespace DNA.Runtime.Serialization.Formatters.HTF
 			{
 				throw new FileLoadException("Not a HTF Graph Format Error");
 			}
-			int num = int.Parse(element.Children[1].Value);
-			if (num > HTFFormatter.Version)
+			int version = int.Parse(element.Children[1].Value);
+			if (version > HTFFormatter.Version)
 			{
-				throw new FileLoadException("This reader cannot read this version " + num.ToString());
+				throw new FileLoadException("This reader cannot read this version " + version.ToString());
 			}
 			return this.DeserializeFrom(element.Children[2]);
 		}
 
 		public object Deserialize(Stream serializationStream)
 		{
-			HTFDocument htfdocument = new HTFDocument();
-			htfdocument.Load(serializationStream);
-			return this.Deserialize(htfdocument.Root);
+			HTFDocument doc = new HTFDocument();
+			doc.Load(serializationStream);
+			return this.Deserialize(doc.Root);
 		}
 
 		private object DeserializeFrom(HTFElement element)
@@ -248,191 +248,191 @@ namespace DNA.Runtime.Serialization.Formatters.HTF
 		private static object DeserializePrimitive(HTFElement element)
 		{
 			HTFElement htfelement = element.Children[0];
-			string value = element.Value;
-			string value2 = element.Children[0].Value;
+			string typeString = element.Value;
+			string data = element.Children[0].Value;
 			string text;
-			switch (text = value)
+			switch (text = typeString)
 			{
 			case "bool":
-				return bool.Parse(value2);
+				return bool.Parse(data);
 			case "byte":
-				return byte.Parse(value2);
+				return byte.Parse(data);
 			case "sbyte":
-				return sbyte.Parse(value2);
+				return sbyte.Parse(data);
 			case "short":
-				return short.Parse(value2);
+				return short.Parse(data);
 			case "ushort":
-				return ushort.Parse(value2);
+				return ushort.Parse(data);
 			case "int":
-				return int.Parse(value2);
+				return int.Parse(data);
 			case "uint":
-				return uint.Parse(value2);
+				return uint.Parse(data);
 			case "long":
-				return long.Parse(value2);
+				return long.Parse(data);
 			case "ulong":
-				return ulong.Parse(value2);
+				return ulong.Parse(data);
 			case "char":
-				return char.Parse(value2);
+				return char.Parse(data);
 			case "double":
-				return double.Parse(value2);
+				return double.Parse(data);
 			case "float":
-				return float.Parse(value2);
+				return float.Parse(data);
 			case "string":
-				return value2;
+				return data;
 			}
-			throw new FileLoadException("Unknown Primitive Type: " + value);
+			throw new FileLoadException("Unknown Primitive Type: " + typeString);
 		}
 
 		private object DeserializeReference(HTFElement element)
 		{
-			string value = element.Children[0].Value;
-			int num = int.Parse(value);
-			return this._objectIDLookup[num];
+			string idString = element.Children[0].Value;
+			int id = int.Parse(idString);
+			return this._objectIDLookup[id];
 		}
 
 		private object DeserializeClass(HTFElement element)
 		{
-			string value = element.Children[0].Value;
-			string value2 = element.Children[1].Value;
-			Type type = this.Binder.BindToType(value, value2);
-			object obj = null;
-			if (type.ImplementsInterface(typeof(ISerializable)))
+			string typeAssemblyName = element.Children[0].Value;
+			string typeName = element.Children[1].Value;
+			Type graphType = this.Binder.BindToType(typeAssemblyName, typeName);
+			object graph = null;
+			if (graphType.ImplementsInterface(typeof(ISerializable)))
 			{
-				ConstructorInfo constructor = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[]
+				ConstructorInfo constructor = graphType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[]
 				{
 					typeof(SerializationInfo),
 					typeof(StreamingContext)
 				}, null);
-				SerializationInfo serializationInfo = new SerializationInfo(type, new HTFFormatter.FormatConverter());
-				HTFElement htfelement = element.Children[2];
-				int num = 0;
-				if (!type.IsValueType)
+				SerializationInfo seriaInfo = new SerializationInfo(graphType, new HTFFormatter.FormatConverter());
+				HTFElement fieldsElement = element.Children[2];
+				int oldID = 0;
+				if (!graphType.IsValueType)
 				{
-					num = this._nextID++;
+					oldID = this._nextID++;
 				}
-				foreach (HTFElement htfelement2 in htfelement.Children)
+				foreach (HTFElement fieldElement in fieldsElement.Children)
 				{
-					object obj2 = this.DeserializeFrom(htfelement2);
-					serializationInfo.AddValue(htfelement2.ID, obj2, obj2.GetType());
+					object fieldValue = this.DeserializeFrom(fieldElement);
+					seriaInfo.AddValue(fieldElement.ID, fieldValue, fieldValue.GetType());
 				}
-				obj = constructor.Invoke(new object[] { serializationInfo, this.Context });
-				if (!type.IsValueType)
+				graph = constructor.Invoke(new object[] { seriaInfo, this.Context });
+				if (!graphType.IsValueType)
 				{
-					this._objectIDLookup[num] = obj;
+					this._objectIDLookup[oldID] = graph;
 				}
 			}
 			else
 			{
-				bool flag = false;
+				bool initalized = false;
 				try
 				{
-					obj = Activator.CreateInstance(type);
-					flag = true;
+					graph = Activator.CreateInstance(graphType);
+					initalized = true;
 				}
 				catch
 				{
-					obj = FormatterServices.GetSafeUninitializedObject(type);
+					graph = FormatterServices.GetSafeUninitializedObject(graphType);
 				}
-				if (!type.IsValueType)
+				if (!graphType.IsValueType)
 				{
-					this._objectIDLookup[this._nextID++] = obj;
+					this._objectIDLookup[this._nextID++] = graph;
 				}
-				bool flag2 = this.DeserializeClassData(element, obj, type);
-				if (flag2 && !flag)
+				bool lazy = this.DeserializeClassData(element, graph, graphType);
+				if (lazy && !initalized)
 				{
 					throw new FileLoadException("Cannot Default Values to a class without a default constructor");
 				}
 			}
-			if (obj is IDeserializationCallback)
+			if (graph is IDeserializationCallback)
 			{
-				IDeserializationCallback deserializationCallback = (IDeserializationCallback)obj;
-				deserializationCallback.OnDeserialization(null);
+				IDeserializationCallback idc = (IDeserializationCallback)graph;
+				idc.OnDeserialization(null);
 			}
-			return obj;
+			return graph;
 		}
 
 		private bool DeserializeClassData(HTFElement element, object graph, Type graphType)
 		{
-			bool flag = false;
-			HTFElement htfelement = element.Children[2];
-			if (htfelement.Value != "Fields")
+			bool lazy = false;
+			HTFElement fieldsElement = element.Children[2];
+			if (fieldsElement.Value != "Fields")
 			{
 				throw new FileLoadException("HTF Graph Format Error");
 			}
 			Dictionary<string, List<FieldInfo>> fields = this.GetFields(graphType);
-			foreach (HTFElement htfelement2 in htfelement.Children)
+			foreach (HTFElement typeElement in fieldsElement.Children)
 			{
-				foreach (HTFElement htfelement3 in htfelement2.Children)
+				foreach (HTFElement fieldElement in typeElement.Children)
 				{
-					string id = htfelement3.ID;
-					bool flag2 = false;
-					List<FieldInfo> list;
-					if (fields.TryGetValue(id, out list))
+					string fieldName = fieldElement.ID;
+					bool found = false;
+					List<FieldInfo> localFields;
+					if (fields.TryGetValue(fieldName, out localFields))
 					{
-						object obj = this.DeserializeFrom(htfelement3);
-						for (int i = 0; i < list.Count; i++)
+						object value = this.DeserializeFrom(fieldElement);
+						for (int i = 0; i < localFields.Count; i++)
 						{
-							if (list[i].FieldType == obj.GetType())
+							if (localFields[i].FieldType == value.GetType())
 							{
-								list[i].SetValue(graph, obj);
-								list.RemoveAt(i);
-								flag2 = true;
+								localFields[i].SetValue(graph, value);
+								localFields.RemoveAt(i);
+								found = true;
 								break;
 							}
 						}
 					}
-					if (!flag2)
+					if (!found)
 					{
-						flag = true;
+						lazy = true;
 					}
 				}
 			}
-			return flag;
+			return lazy;
 		}
 
 		private Dictionary<string, List<FieldInfo>> GetFields(Type graphType)
 		{
-			Dictionary<string, List<FieldInfo>> dictionary = new Dictionary<string, List<FieldInfo>>();
-			Type type = graphType;
+			Dictionary<string, List<FieldInfo>> result = new Dictionary<string, List<FieldInfo>>();
+			Type currentType = graphType;
 			do
 			{
-				FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-				foreach (FieldInfo fieldInfo in fields)
+				FieldInfo[] fields = currentType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+				foreach (FieldInfo field in fields)
 				{
-					if (fieldInfo.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0)
+					if (field.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0)
 					{
-						List<FieldInfo> list;
-						if (!dictionary.TryGetValue(fieldInfo.Name, out list))
+						List<FieldInfo> fieldList;
+						if (!result.TryGetValue(field.Name, out fieldList))
 						{
-							list = new List<FieldInfo>();
-							dictionary[fieldInfo.Name] = list;
+							fieldList = new List<FieldInfo>();
+							result[field.Name] = fieldList;
 						}
-						list.Add(fieldInfo);
+						fieldList.Add(field);
 					}
 				}
-				type = type.BaseType;
+				currentType = currentType.BaseType;
 			}
-			while (type != typeof(object));
-			return dictionary;
+			while (currentType != typeof(object));
+			return result;
 		}
 
 		private Array DeserializeArray(HTFElement element)
 		{
-			string value = element.Children[0].Value;
-			string value2 = element.Children[1].Value;
-			Type type = this.Binder.BindToType(value, value2);
-			HTFElement htfelement = element.Children[2];
-			int count = htfelement.Children.Count;
-			int[] array = new int[count];
-			for (int i = 0; i < count; i++)
+			string elementTypeAssembly = element.Children[0].Value;
+			string elementTypeName = element.Children[1].Value;
+			Type elementType = this.Binder.BindToType(elementTypeAssembly, elementTypeName);
+			HTFElement rankElement = element.Children[2];
+			int rank = rankElement.Children.Count;
+			int[] lengths = new int[rank];
+			for (int i = 0; i < rank; i++)
 			{
-				array[i] = int.Parse(htfelement.Children[i].Value);
+				lengths[i] = int.Parse(rankElement.Children[i].Value);
 			}
-			HTFElement htfelement2 = element.Children[3];
-			Array array2 = Array.CreateInstance(type, array);
-			this._objectIDLookup[this._nextID++] = array2;
-			this.DeserializeArrayRank(htfelement2, array2, array, new int[count], 0);
-			return array2;
+			HTFElement valuesElement = element.Children[3];
+			Array graph = Array.CreateInstance(elementType, lengths);
+			this._objectIDLookup[this._nextID++] = graph;
+			this.DeserializeArrayRank(valuesElement, graph, lengths, new int[rank], 0);
+			return graph;
 		}
 
 		private void DeserializeArrayRank(HTFElement element, Array array, int[] lengths, int[] indicies, int rank)
@@ -441,18 +441,18 @@ namespace DNA.Runtime.Serialization.Formatters.HTF
 			{
 				for (int i = 0; i < lengths[rank]; i++)
 				{
-					HTFElement htfelement = element.Children[i];
+					HTFElement childElement = element.Children[i];
 					indicies[rank] = i;
-					object obj = this.DeserializeFrom(htfelement);
-					array.SetValue(obj, indicies);
+					object data = this.DeserializeFrom(childElement);
+					array.SetValue(data, indicies);
 				}
 				return;
 			}
 			for (int j = 0; j < lengths[rank]; j++)
 			{
-				HTFElement htfelement2 = element.Children[j];
+				HTFElement childElement2 = element.Children[j];
 				indicies[rank] = j;
-				this.DeserializeArrayRank(htfelement2, array, lengths, indicies, rank + 1);
+				this.DeserializeArrayRank(childElement2, array, lengths, indicies, rank + 1);
 			}
 		}
 

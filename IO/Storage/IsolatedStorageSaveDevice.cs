@@ -110,36 +110,36 @@ namespace DNA.IO.Storage
 
 		protected override string[] DeviceGetFileNames(string pattern)
 		{
-			string[] fileNames = this._currentContainer.GetFileNames(pattern);
-			return IsolatedStorageSaveDevice.FilterAndAppend(pattern, fileNames);
+			string[] paths = this._currentContainer.GetFileNames(pattern);
+			return IsolatedStorageSaveDevice.FilterAndAppend(pattern, paths);
 		}
 
 		private static string[] FilterAndAppend(string pattern, string[] paths)
 		{
-			string directoryName = Path.GetDirectoryName(pattern);
+			string dir = Path.GetDirectoryName(pattern);
 			string fileName = Path.GetFileName(pattern);
-			Regex regex = null;
+			Regex search = null;
 			if (!string.IsNullOrEmpty(fileName))
 			{
-				regex = PathTools.FilePatternToRegex(fileName);
+				search = PathTools.FilePatternToRegex(fileName);
 			}
-			List<string> list = new List<string>();
+			List<string> results = new List<string>();
 			for (int i = 0; i < paths.Length; i++)
 			{
-				paths[i] = Path.Combine(directoryName, paths[i]);
-				string fileName2 = Path.GetFileName(paths[i]);
-				if (regex == null || regex.IsMatch(fileName2))
+				paths[i] = Path.Combine(dir, paths[i]);
+				string file = Path.GetFileName(paths[i]);
+				if (search == null || search.IsMatch(file))
 				{
-					list.Add(Path.Combine(directoryName, fileName2));
+					results.Add(Path.Combine(dir, file));
 				}
 			}
-			return list.ToArray();
+			return results.ToArray();
 		}
 
 		protected override string[] DeviceGetDirectoryNames(string pattern)
 		{
-			string[] directoryNames = this._currentContainer.GetDirectoryNames(pattern);
-			return IsolatedStorageSaveDevice.FilterAndAppend(pattern, directoryNames);
+			string[] paths = this._currentContainer.GetDirectoryNames(pattern);
+			return IsolatedStorageSaveDevice.FilterAndAppend(pattern, paths);
 		}
 
 		protected override void DeviceCreateDirectory(string path)

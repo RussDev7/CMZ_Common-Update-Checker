@@ -59,11 +59,11 @@ namespace DNA.Drawing.UI.Controls
 
 		public void Write(string value)
 		{
-			string[] array = value.Split(new char[] { '\n' });
-			for (int i = 0; i < array.Length; i++)
+			string[] strs = value.Split(new char[] { '\n' });
+			for (int i = 0; i < strs.Length; i++)
 			{
-				this._currentMessage.Append(array[i]);
-				if (i < array.Length - 1)
+				this._currentMessage.Append(strs[i]);
+				if (i < strs.Length - 1)
 				{
 					this.WriteLine();
 				}
@@ -109,34 +109,34 @@ namespace DNA.Drawing.UI.Controls
 				this._messages.CopyTo(this.messages, 0);
 			}
 			int lineSpacing = this._font.LineSpacing;
-			Vector2 vector = new Vector2((float)base.ScreenPosition.X, (float)base.ScreenBounds.Bottom);
-			StringBuilder stringBuilder = new StringBuilder();
+			Vector2 pos = new Vector2((float)base.ScreenPosition.X, (float)base.ScreenBounds.Bottom);
+			StringBuilder outputMessage = new StringBuilder();
 			for (int i = this.messages.Length - 1; i >= 0; i--)
 			{
-				ConsoleControl.Message message = this.messages[i];
-				message.Update(gameTime);
-				DrawingTools.SplitText(message.Text, stringBuilder, this._font, this.Size.Width);
-				Vector2 vector2 = this._font.MeasureString(stringBuilder);
-				if (vector.Y - vector2.Y < (float)base.ScreenBounds.Top)
+				ConsoleControl.Message j = this.messages[i];
+				j.Update(gameTime);
+				DrawingTools.SplitText(j.Text, outputMessage, this._font, this.Size.Width);
+				Vector2 textSize = this._font.MeasureString(outputMessage);
+				if (pos.Y - textSize.Y < (float)base.ScreenBounds.Top)
 				{
-					if (vector2.Y <= (float)this._font.LineSpacing)
+					if (textSize.Y <= (float)this._font.LineSpacing)
 					{
 						return;
 					}
-					while (vector.Y - vector2.Y < (float)base.ScreenBounds.Top)
+					while (pos.Y - textSize.Y < (float)base.ScreenBounds.Top)
 					{
-						int num = stringBuilder.IndexOf('\n');
-						if (num == -1)
+						int index = outputMessage.IndexOf('\n');
+						if (index == -1)
 						{
 							throw new Exception("Don't know how this can happen");
 						}
-						stringBuilder.Remove(0, num + 1);
-						vector2 = this._font.MeasureString(stringBuilder);
+						outputMessage.Remove(0, index + 1);
+						textSize = this._font.MeasureString(outputMessage);
 					}
 				}
-				vector.Y -= vector2.Y;
-				spriteBatch.DrawString(this._font, stringBuilder, vector, Color.Black);
-				if (vector.Y < (float)base.ScreenPosition.Y)
+				pos.Y -= textSize.Y;
+				spriteBatch.DrawString(this._font, outputMessage, pos, Color.Black);
+				if (pos.Y < (float)base.ScreenPosition.Y)
 				{
 					return;
 				}

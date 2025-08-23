@@ -8,19 +8,19 @@ namespace DNA.Audio.SignalProcessing.Processors
 		{
 			data.CopyTo(this._buffer);
 			data.SetZero();
-			for (int i = 0; i < data.Channels; i++)
+			for (int channel = 0; channel < data.Channels; channel++)
 			{
-				FrequencyPair[] data2 = data.GetData(i);
-				FrequencyPair[] data3 = this._buffer.GetData(i);
-				for (int j = 0; j < data2.Length; j++)
+				FrequencyPair[] freqDest = data.GetData(channel);
+				FrequencyPair[] freqSource = this._buffer.GetData(channel);
+				for (int i = 0; i < freqDest.Length; i++)
 				{
-					int num = (int)((float)j * this.Pitch);
-					if (num < data2.Length)
+					int index = (int)((float)i * this.Pitch);
+					if (index < freqDest.Length)
 					{
-						FrequencyPair[] array = data2;
-						int num2 = num;
-						array[num2].Magnitude = array[num2].Magnitude + data3[j].Magnitude;
-						data2[num].Value.Hertz = data3[j].Value.Hertz * this.Pitch;
+						FrequencyPair[] array = freqDest;
+						int num = index;
+						array[num].Magnitude = array[num].Magnitude + freqSource[i].Magnitude;
+						freqDest[index].Value.Hertz = freqSource[i].Value.Hertz * this.Pitch;
 					}
 				}
 			}

@@ -88,33 +88,33 @@ namespace DNA.Drawing.UI
 
 		protected override bool OnPlayerInput(InputManager input, GameController controller, KeyboardInput chatpad, GameTime gameTime)
 		{
-			bool flag = false;
-			bool flag2 = false;
-			bool flag3 = false;
-			float num = (float)(this.viewPort.Bounds.Height / 3);
-			float num2 = (float)this.viewPort.Bounds.Bottom - num;
-			float num3 = num;
-			float num4 = (float)this.viewPort.Bounds.Bottom - num * 0.2f;
-			float num5 = num * 0.2f;
-			if (controller.CurrentState.ThumbSticks.Left.Y < -0.25f || controller.CurrentState.DPad.Down == ButtonState.Pressed || controller.CurrentState.Triggers.Right > 0.25f || input.Keyboard.IsKeyDown(Keys.Down) || (!flag && (float)input.Mouse.Position.Y > num2 && !this.hitTestTrue && input.Mouse.Position.X < this.viewPort.Bounds.Center.X) || (!flag && input.Mouse.Position.Y > this.destRect.Bottom && input.Mouse.Position.X < this.viewPort.Bounds.Center.X))
+			bool isXbox = false;
+			bool selectup = false;
+			bool selectdown = false;
+			float sectionHeight = (float)(this.viewPort.Bounds.Height / 3);
+			float mouseDownPos = (float)this.viewPort.Bounds.Bottom - sectionHeight;
+			float mouseUpPos = sectionHeight;
+			float mouseAccelDownPos = (float)this.viewPort.Bounds.Bottom - sectionHeight * 0.2f;
+			float mouseAccelUpPos = sectionHeight * 0.2f;
+			if (controller.CurrentState.ThumbSticks.Left.Y < -0.25f || controller.CurrentState.DPad.Down == ButtonState.Pressed || controller.CurrentState.Triggers.Right > 0.25f || input.Keyboard.IsKeyDown(Keys.Down) || (!isXbox && (float)input.Mouse.Position.Y > mouseDownPos && !this.hitTestTrue && input.Mouse.Position.X < this.viewPort.Bounds.Center.X) || (!isXbox && input.Mouse.Position.Y > this.destRect.Bottom && input.Mouse.Position.X < this.viewPort.Bounds.Center.X))
 			{
-				flag3 = true;
+				selectdown = true;
 				if (!this.lastselectdown)
 				{
 					this.accelerateDelayTimer.Reset();
 					this.accelerateTimer.Reset();
 				}
 			}
-			if (controller.CurrentState.ThumbSticks.Left.Y > 0.25f || controller.CurrentState.DPad.Up == ButtonState.Pressed || controller.CurrentState.Triggers.Left > 0.25f || input.Keyboard.IsKeyDown(Keys.Up) || (!flag && (float)input.Mouse.Position.Y < num3 && !this.hitTestTrue))
+			if (controller.CurrentState.ThumbSticks.Left.Y > 0.25f || controller.CurrentState.DPad.Up == ButtonState.Pressed || controller.CurrentState.Triggers.Left > 0.25f || input.Keyboard.IsKeyDown(Keys.Up) || (!isXbox && (float)input.Mouse.Position.Y < mouseUpPos && !this.hitTestTrue))
 			{
-				flag2 = true;
+				selectup = true;
 				if (!this.lastselectup)
 				{
 					this.accelerateDelayTimer.Reset();
 					this.accelerateTimer.Reset();
 				}
 			}
-			if (Math.Abs(controller.CurrentState.ThumbSticks.Left.Y) > 0.8f || (!flag && (float)input.Mouse.Position.Y < num5) || (!flag && (float)input.Mouse.Position.Y > num4))
+			if (Math.Abs(controller.CurrentState.ThumbSticks.Left.Y) > 0.8f || (!isXbox && (float)input.Mouse.Position.Y < mouseAccelUpPos) || (!isXbox && (float)input.Mouse.Position.Y > mouseAccelDownPos))
 			{
 				this.accelerateDelayTimer.Update(gameTime.ElapsedGameTime);
 			}
@@ -122,31 +122,31 @@ namespace DNA.Drawing.UI
 			{
 				this.accelerateTimer.Update(gameTime.ElapsedGameTime);
 			}
-			float num6 = this.accelerateTimer.PercentComplete * (float)this.scrollRate.TotalSeconds / 2f;
-			float num7 = Math.Abs(controller.CurrentState.ThumbSticks.Left.Y);
-			float num8;
-			if (!flag && (float)input.Mouse.Position.Y < num3 && !this.hitTestTrue)
+			float scrolltimerTime = this.accelerateTimer.PercentComplete * (float)this.scrollRate.TotalSeconds / 2f;
+			float absofStick = Math.Abs(controller.CurrentState.ThumbSticks.Left.Y);
+			float mouseValue;
+			if (!isXbox && (float)input.Mouse.Position.Y < mouseUpPos && !this.hitTestTrue)
 			{
-				num8 = (num3 - (float)input.Mouse.Position.Y) / num;
+				mouseValue = (mouseUpPos - (float)input.Mouse.Position.Y) / sectionHeight;
 			}
-			else if (!flag && (float)input.Mouse.Position.Y > num2 && !this.hitTestTrue)
+			else if (!isXbox && (float)input.Mouse.Position.Y > mouseDownPos && !this.hitTestTrue)
 			{
-				num8 = ((float)input.Mouse.Position.Y - num2) / num;
+				mouseValue = ((float)input.Mouse.Position.Y - mouseDownPos) / sectionHeight;
 			}
 			else
 			{
-				num8 = 0f;
+				mouseValue = 0f;
 			}
-			float num9 = Math.Max(num7, num8);
-			if (num9 > 0f)
+			float maxOfStickandMouse = Math.Max(absofStick, mouseValue);
+			if (maxOfStickandMouse > 0f)
 			{
-				this.scrollTimer.MaxTime = TimeSpan.FromSeconds(this.scrollRate.TotalSeconds / (double)num9 - (double)num6);
+				this.scrollTimer.MaxTime = TimeSpan.FromSeconds(this.scrollRate.TotalSeconds / (double)maxOfStickandMouse - (double)scrolltimerTime);
 			}
 			else
 			{
 				this.scrollTimer.MaxTime = TimeSpan.FromSeconds(0.1);
 			}
-			if ((controller.CurrentState.ThumbSticks.Left.Y < -0.25f && controller.LastState.ThumbSticks.Left.Y > -0.25f) || (controller.PressedDPad.Down || (controller.CurrentState.Triggers.Right > 0.25f && controller.LastState.Triggers.Right < 0.25f)) || (input.Keyboard.WasKeyPressed(Keys.Down) || (!flag && (float)input.Mouse.Position.Y > num2 && (float)input.Mouse.LastPosition.Y <= num2 && !this.hitTestTrue)) || input.Mouse.DeltaWheel < 0)
+			if ((controller.CurrentState.ThumbSticks.Left.Y < -0.25f && controller.LastState.ThumbSticks.Left.Y > -0.25f) || (controller.PressedDPad.Down || (controller.CurrentState.Triggers.Right > 0.25f && controller.LastState.Triggers.Right < 0.25f)) || (input.Keyboard.WasKeyPressed(Keys.Down) || (!isXbox && (float)input.Mouse.Position.Y > mouseDownPos && (float)input.Mouse.LastPosition.Y <= mouseDownPos && !this.hitTestTrue)) || input.Mouse.DeltaWheel < 0)
 			{
 				if (this._middleIndex < this._menuItems.Count - 1 && this.SelectSound != null && input.Mouse.DeltaWheel < 0)
 				{
@@ -154,7 +154,7 @@ namespace DNA.Drawing.UI
 				}
 				this._middleIndex++;
 			}
-			if ((controller.CurrentState.ThumbSticks.Left.Y > 0.25f && controller.LastState.ThumbSticks.Left.Y < 0.25f) || (controller.PressedDPad.Up || (controller.CurrentState.Triggers.Left > 0.25f && controller.LastState.Triggers.Left < 0.25f)) || (input.Keyboard.WasKeyPressed(Keys.Up) || (!flag && (float)input.Mouse.Position.Y < num3 && (float)input.Mouse.LastPosition.Y >= num3 && !this.hitTestTrue)) || input.Mouse.DeltaWheel > 0)
+			if ((controller.CurrentState.ThumbSticks.Left.Y > 0.25f && controller.LastState.ThumbSticks.Left.Y < 0.25f) || (controller.PressedDPad.Up || (controller.CurrentState.Triggers.Left > 0.25f && controller.LastState.Triggers.Left < 0.25f)) || (input.Keyboard.WasKeyPressed(Keys.Up) || (!isXbox && (float)input.Mouse.Position.Y < mouseUpPos && (float)input.Mouse.LastPosition.Y >= mouseUpPos && !this.hitTestTrue)) || input.Mouse.DeltaWheel > 0)
 			{
 				if (this._middleIndex > 0 && this.SelectSound != null && input.Mouse.DeltaWheel > 0)
 				{
@@ -162,7 +162,7 @@ namespace DNA.Drawing.UI
 				}
 				this._middleIndex--;
 			}
-			if (flag3)
+			if (selectdown)
 			{
 				this.holdTimer.Update(gameTime.ElapsedGameTime);
 				if (this.holdTimer.Expired)
@@ -186,7 +186,7 @@ namespace DNA.Drawing.UI
 					}
 				}
 			}
-			else if (flag2)
+			else if (selectup)
 			{
 				this.holdTimer.Update(gameTime.ElapsedGameTime);
 				if (this.holdTimer.Expired)
@@ -248,23 +248,23 @@ namespace DNA.Drawing.UI
 				this.Back();
 			}
 			base.OnPlayerInput(input, controller, chatpad, gameTime);
-			if ((!flag3 && this.lastselectdown) || (!flag2 && this.lastselectup))
+			if ((!selectdown && this.lastselectdown) || (!selectup && this.lastselectup))
 			{
 				this.holdTimer.Reset();
 			}
-			this.lastselectdown = flag3;
-			this.lastselectup = flag2;
-			int num10 = this.HitTest(input.Mouse.Position);
-			if (num10 >= 0)
+			this.lastselectdown = selectdown;
+			this.lastselectup = selectup;
+			int hoverItem = this.HitTest(input.Mouse.Position);
+			if (hoverItem >= 0)
 			{
 				this.hitTestTrue = true;
-				if (this._selectedIndex != num10)
+				if (this._selectedIndex != hoverItem)
 				{
-					if (this.SelectSound != null && !flag3 && !flag2)
+					if (this.SelectSound != null && !selectdown && !selectup)
 					{
 						SoundManager.Instance.PlayInstance(this.SelectSound);
 					}
-					this._selectedIndex = num10;
+					this._selectedIndex = hoverItem;
 				}
 			}
 			else
@@ -284,76 +284,76 @@ namespace DNA.Drawing.UI
 
 		private void _drawPreviousItems(int middleIndex, float startYPos, GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			int i = middleIndex - 1;
-			if (i < 0 || i >= this._menuItems.Count)
+			int itemIndex = middleIndex - 1;
+			if (itemIndex < 0 || itemIndex >= this._menuItems.Count)
 			{
 				return;
 			}
-			float num = startYPos;
-			while (i >= 0)
+			float ypos = startYPos;
+			while (itemIndex >= 0)
 			{
-				LongListScreen.MenuItem menuItem = this._menuItems[i];
-				if (i == this._selectedIndex)
+				LongListScreen.MenuItem item = this._menuItems[itemIndex];
+				if (itemIndex == this._selectedIndex)
 				{
-					menuItem.Selected = true;
+					item.Selected = true;
 				}
 				else
 				{
-					menuItem.Selected = false;
+					item.Selected = false;
 				}
-				Vector2 vector = menuItem.Measure();
-				num -= vector.Y;
-				if (num + vector.Y < (float)this.destRect.Top)
+				Vector2 itemSize = item.Measure();
+				ypos -= itemSize.Y;
+				if (ypos + itemSize.Y < (float)this.destRect.Top)
 				{
 					IL_00CF:
-					while (i >= 0)
+					while (itemIndex >= 0)
 					{
-						this._setItemLocation(i, Rectangle.Empty);
-						i--;
+						this._setItemLocation(itemIndex, Rectangle.Empty);
+						itemIndex--;
 					}
 					return;
 				}
-				this._setItemLocation(i, new Rectangle(this.destRect.Left, (int)num, (int)vector.X, (int)vector.Y));
-				menuItem.Draw(device, spriteBatch, gameTime, new Vector2((float)this.destRect.Left, num));
-				i--;
+				this._setItemLocation(itemIndex, new Rectangle(this.destRect.Left, (int)ypos, (int)itemSize.X, (int)itemSize.Y));
+				item.Draw(device, spriteBatch, gameTime, new Vector2((float)this.destRect.Left, ypos));
+				itemIndex--;
 			}
 			goto IL_00CF;
 		}
 
 		private void _drawPostItems(int middleIndex, float startYPos, GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			int i = middleIndex + 1;
-			if (i < 0 || i >= this._menuItems.Count)
+			int itemIndex = middleIndex + 1;
+			if (itemIndex < 0 || itemIndex >= this._menuItems.Count)
 			{
 				return;
 			}
-			float num = startYPos;
-			while (i < this._menuItems.Count)
+			float ypos = startYPos;
+			while (itemIndex < this._menuItems.Count)
 			{
-				LongListScreen.MenuItem menuItem = this._menuItems[i];
-				if (i == this._selectedIndex)
+				LongListScreen.MenuItem item = this._menuItems[itemIndex];
+				if (itemIndex == this._selectedIndex)
 				{
-					menuItem.Selected = true;
+					item.Selected = true;
 				}
 				else
 				{
-					menuItem.Selected = false;
+					item.Selected = false;
 				}
-				Vector2 vector = menuItem.Measure();
-				if (num > (float)this.viewPort.Bounds.Bottom)
+				Vector2 itemSize = item.Measure();
+				if (ypos > (float)this.viewPort.Bounds.Bottom)
 				{
 					IL_00DA:
-					while (i < this._menuItems.Count)
+					while (itemIndex < this._menuItems.Count)
 					{
-						this._setItemLocation(i, Rectangle.Empty);
-						i++;
+						this._setItemLocation(itemIndex, Rectangle.Empty);
+						itemIndex++;
 					}
 					return;
 				}
-				this._setItemLocation(i, new Rectangle(this.destRect.Left, (int)num, (int)vector.X, (int)vector.Y));
-				menuItem.Draw(device, spriteBatch, gameTime, new Vector2((float)this.destRect.Left, num));
-				i++;
-				num += vector.Y;
+				this._setItemLocation(itemIndex, new Rectangle(this.destRect.Left, (int)ypos, (int)itemSize.X, (int)itemSize.Y));
+				item.Draw(device, spriteBatch, gameTime, new Vector2((float)this.destRect.Left, ypos));
+				itemIndex++;
+				ypos += itemSize.Y;
 			}
 			goto IL_00DA;
 		}
@@ -364,10 +364,10 @@ namespace DNA.Drawing.UI
 			{
 				return;
 			}
-			LongListScreen.MenuItem menuItem = this._menuItems[middleIndex];
-			Vector2 vector = menuItem.Measure();
-			menuItem.Draw(device, spriteBatch, gameTime, new Vector2((float)this.destRect.Left, startYPos));
-			this._setItemLocation(middleIndex, new Rectangle(this.destRect.Left, (int)startYPos, (int)vector.X, (int)vector.Y));
+			LongListScreen.MenuItem item = this._menuItems[middleIndex];
+			Vector2 selectedItemSize = item.Measure();
+			item.Draw(device, spriteBatch, gameTime, new Vector2((float)this.destRect.Left, startYPos));
+			this._setItemLocation(middleIndex, new Rectangle(this.destRect.Left, (int)startYPos, (int)selectedItemSize.X, (int)selectedItemSize.Y));
 		}
 
 		private void _setItemLocation(int index, Rectangle location)
@@ -393,21 +393,21 @@ namespace DNA.Drawing.UI
 			{
 				return;
 			}
-			LongListScreen.MenuItem menuItem = this._menuItems[middleIndex];
+			LongListScreen.MenuItem item = this._menuItems[middleIndex];
 			if (middleIndex == this._selectedIndex)
 			{
-				menuItem.Selected = true;
+				item.Selected = true;
 			}
 			else
 			{
-				menuItem.Selected = false;
+				item.Selected = false;
 			}
-			Vector2 vector = menuItem.Measure();
-			float num = (float)this.destRect.Center.Y - vector.Y / 2f;
+			Vector2 selectedItemSize = item.Measure();
+			float startYPos = (float)this.destRect.Center.Y - selectedItemSize.Y / 2f;
 			spriteBatch.Begin();
-			this._drawSelectedItem(middleIndex, num, device, spriteBatch, gameTime);
-			this._drawPreviousItems(middleIndex, num, device, spriteBatch, gameTime);
-			this._drawPostItems(middleIndex, num + vector.Y, device, spriteBatch, gameTime);
+			this._drawSelectedItem(middleIndex, startYPos, device, spriteBatch, gameTime);
+			this._drawPreviousItems(middleIndex, startYPos, device, spriteBatch, gameTime);
+			this._drawPostItems(middleIndex, startYPos + selectedItemSize.Y, device, spriteBatch, gameTime);
 			spriteBatch.End();
 			base.OnDraw(device, spriteBatch, gameTime);
 		}

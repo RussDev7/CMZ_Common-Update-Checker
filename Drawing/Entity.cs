@@ -14,9 +14,9 @@ namespace DNA.Drawing
 			this.OnApplyEffect(effect);
 			if (applyToChildren)
 			{
-				foreach (Entity entity in base.Children)
+				foreach (Entity e in base.Children)
 				{
-					entity.ApplyEffect(effect, applyToChildren);
+					e.ApplyEffect(effect, applyToChildren);
 				}
 			}
 		}
@@ -232,30 +232,30 @@ namespace DNA.Drawing
 		{
 			for (int i = 0; i < base.Children.Count; i++)
 			{
-				Entity entity = base.Children[i];
-				if (entity.Visible && filter(entity))
+				Entity e = base.Children[i];
+				if (e.Visible && filter(e))
 				{
-					if (entity is Light)
+					if (e is Light)
 					{
-						lights.Add((Light)entity);
+						lights.Add((Light)e);
 					}
 					else if (this.AlphaSort)
 					{
 						if (this.AlphaSort)
 						{
-							toSort.Add(entity);
+							toSort.Add(e);
 						}
 						else
 						{
-							toDraw.Add(entity);
+							toDraw.Add(e);
 						}
-						entity.GetDrawList(lights, toSort, toDraw, filter);
+						e.GetDrawList(lights, toSort, toDraw, filter);
 					}
 					else
 					{
-						toDraw.Add(entity);
+						toDraw.Add(e);
 					}
-					entity.GetDrawList(lights, toSort, toDraw, filter);
+					e.GetDrawList(lights, toSort, toDraw, filter);
 				}
 			}
 		}
@@ -264,11 +264,11 @@ namespace DNA.Drawing
 		{
 			for (int i = 0; i < collidees.Count; i++)
 			{
-				Entity entity = collidees[i];
+				Entity collidee = collidees[i];
 				Plane plane;
-				if (this.CollidesAgainist(entity) && this.ResolveCollsion(entity, out plane, dt))
+				if (this.CollidesAgainist(collidee) && this.ResolveCollsion(collidee, out plane, dt))
 				{
-					this.OnCollisionWith(entity, plane);
+					this.OnCollisionWith(collidee, plane);
 				}
 			}
 		}
@@ -306,10 +306,10 @@ namespace DNA.Drawing
 			this._ltwDirty = true;
 			for (int i = 0; i < base.Children.Count; i++)
 			{
-				Entity entity = base.Children[i];
-				if (!entity._ltwDirty)
+				Entity child = base.Children[i];
+				if (!child._ltwDirty)
 				{
-					entity.DirtyLTW();
+					child.DirtyLTW();
 				}
 			}
 		}
@@ -440,11 +440,11 @@ namespace DNA.Drawing
 		{
 			get
 			{
-				for (Entity entity = this; entity != null; entity = entity.Parent)
+				for (Entity scene = this; scene != null; scene = scene.Parent)
 				{
-					if (entity is Scene || entity == null)
+					if (scene is Scene || scene == null)
 					{
-						return (Scene)entity;
+						return (Scene)scene;
 					}
 				}
 				return null;
@@ -454,21 +454,21 @@ namespace DNA.Drawing
 		public void AdoptChild(Entity child)
 		{
 			Vector3 worldPosition = this.WorldPosition;
-			Matrix localToWorld = child.LocalToWorld;
-			Matrix worldToLocal = this.WorldToLocal;
-			Matrix matrix = localToWorld * worldToLocal;
+			Matrix childToWorld = child.LocalToWorld;
+			Matrix worldToParent = this.WorldToLocal;
+			Matrix childToParent = childToWorld * worldToParent;
 			if (child.Parent != null)
 			{
 				child.RemoveFromParent();
 			}
 			base.Children.Add(child);
-			Vector3 vector;
-			Quaternion quaternion;
-			Vector3 vector2;
-			matrix.Decompose(out vector, out quaternion, out vector2);
-			child.LocalPosition = vector2;
-			child.LocalRotation = quaternion;
-			child.LocalScale = vector;
+			Vector3 scale;
+			Quaternion rot;
+			Vector3 trans;
+			childToParent.Decompose(out scale, out rot, out trans);
+			child.LocalPosition = trans;
+			child.LocalRotation = rot;
+			child.LocalScale = scale;
 			Vector3 worldPosition2 = this.WorldPosition;
 		}
 
@@ -487,21 +487,21 @@ namespace DNA.Drawing
 
 		public void InjectActions(IList<State> actions)
 		{
-			Queue<State> queue = new Queue<State>();
+			Queue<State> newActionQueue = new Queue<State>();
 			for (int i = 0; i < actions.Count; i++)
 			{
-				queue.Enqueue(actions[i]);
+				newActionQueue.Enqueue(actions[i]);
 			}
 			if (this._currentAction != null)
 			{
-				queue.Enqueue(this._currentAction);
+				newActionQueue.Enqueue(this._currentAction);
 				this._currentAction = null;
 			}
-			foreach (State state in this._actionQueue)
+			foreach (State a in this._actionQueue)
 			{
-				queue.Enqueue(state);
+				newActionQueue.Enqueue(a);
 			}
-			this._actionQueue = queue;
+			this._actionQueue = newActionQueue;
 		}
 
 		private void NextAction()

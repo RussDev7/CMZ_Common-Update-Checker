@@ -53,16 +53,16 @@ namespace DNA.Drawing.UI
 
 		public MenuItemElement AddMenuItem(string text, object tag)
 		{
-			MenuItemElement menuItemElement = new MenuItemElement(text, tag);
-			this.MenuItems.Add(menuItemElement);
-			return menuItemElement;
+			MenuItemElement element = new MenuItemElement(text, tag);
+			this.MenuItems.Add(element);
+			return element;
 		}
 
 		public MenuItemElement AddMenuItem(string text, string description, object tag)
 		{
-			MenuItemElement menuItemElement = new MenuItemElement(text, description, tag);
-			this.MenuItems.Add(menuItemElement);
-			return menuItemElement;
+			MenuItemElement element = new MenuItemElement(text, description, tag);
+			this.MenuItems.Add(element);
+			return element;
 		}
 
 		public MenuScreen(SpriteFont font, bool drawBehind)
@@ -81,35 +81,35 @@ namespace DNA.Drawing.UI
 
 		protected override bool OnPlayerInput(InputManager input, GameController controller, KeyboardInput chatpad, GameTime gameTime)
 		{
-			int num = this.HitTest(input.Mouse.Position);
+			int hoverItem = this.HitTest(input.Mouse.Position);
 			if (!this._mouseActive)
 			{
-				num = -1;
+				hoverItem = -1;
 			}
 			if (input.Mouse.DeltaPosition != Vector2.Zero)
 			{
 				this._mouseActive = true;
 			}
-			if (num >= 0)
+			if (hoverItem >= 0)
 			{
-				if (this._menuItems[num].Visible)
+				if (this._menuItems[hoverItem].Visible)
 				{
-					if (this._selectedIndex != num)
+					if (this._selectedIndex != hoverItem)
 					{
 						if (this.SelectSound != null)
 						{
 							SoundManager.Instance.PlayInstance(this.SelectSound);
 						}
-						this._selectedIndex = num;
+						this._selectedIndex = hoverItem;
 					}
 				}
 				else
 				{
-					num = -1;
+					hoverItem = -1;
 				}
 			}
-			float num2 = 0.25f;
-			if (controller.PressedDPad.Down || controller.PressedButtons.RightShoulder || (controller.CurrentState.ThumbSticks.Left.Y < -num2 && controller.LastState.ThumbSticks.Left.Y > -num2) || (controller.CurrentState.ThumbSticks.Right.Y < -num2 && controller.LastState.ThumbSticks.Right.Y > -num2) || input.Keyboard.WasKeyPressed(Keys.Down))
+			float deadZone = 0.25f;
+			if (controller.PressedDPad.Down || controller.PressedButtons.RightShoulder || (controller.CurrentState.ThumbSticks.Left.Y < -deadZone && controller.LastState.ThumbSticks.Left.Y > -deadZone) || (controller.CurrentState.ThumbSticks.Right.Y < -deadZone && controller.LastState.ThumbSticks.Right.Y > -deadZone) || input.Keyboard.WasKeyPressed(Keys.Down))
 			{
 				if (this.SelectSound != null)
 				{
@@ -117,7 +117,7 @@ namespace DNA.Drawing.UI
 				}
 				this.SelectNext();
 			}
-			if (controller.PressedDPad.Up || controller.PressedButtons.LeftShoulder || (controller.CurrentState.ThumbSticks.Left.Y > num2 && controller.LastState.ThumbSticks.Left.Y < num2) || (controller.CurrentState.ThumbSticks.Right.Y > num2 && controller.LastState.ThumbSticks.Right.Y < num2) || input.Keyboard.WasKeyPressed(Keys.Up))
+			if (controller.PressedDPad.Up || controller.PressedButtons.LeftShoulder || (controller.CurrentState.ThumbSticks.Left.Y > deadZone && controller.LastState.ThumbSticks.Left.Y < deadZone) || (controller.CurrentState.ThumbSticks.Right.Y > deadZone && controller.LastState.ThumbSticks.Right.Y < deadZone) || input.Keyboard.WasKeyPressed(Keys.Up))
 			{
 				if (this.SelectSound != null)
 				{
@@ -133,7 +133,7 @@ namespace DNA.Drawing.UI
 				}
 				base.PopMe();
 			}
-			if (controller.PressedButtons.A || controller.PressedButtons.Start || input.Keyboard.WasKeyPressed(Keys.Enter) || (input.Mouse.LeftButtonPressed && num >= 0))
+			if (controller.PressedButtons.A || controller.PressedButtons.Start || input.Keyboard.WasKeyPressed(Keys.Enter) || (input.Mouse.LeftButtonPressed && hoverItem >= 0))
 			{
 				if (this.ClickSound != null)
 				{
@@ -158,11 +158,11 @@ namespace DNA.Drawing.UI
 		{
 			if (this._selectedIndex >= 0)
 			{
-				MenuItemElement menuItemElement = this._menuItems[this._selectedIndex];
-				this.OnMenuItemSelected(menuItemElement);
+				MenuItemElement selectedControl = this._menuItems[this._selectedIndex];
+				this.OnMenuItemSelected(selectedControl);
 				if (this.MenuItemSelected != null)
 				{
-					this.MenuItemSelected(this, new SelectedMenuItemArgs(menuItemElement));
+					this.MenuItemSelected(this, new SelectedMenuItemArgs(selectedControl));
 				}
 			}
 		}
@@ -184,7 +184,7 @@ namespace DNA.Drawing.UI
 				this._selectedIndex = -1;
 				return;
 			}
-			int selectedIndex = this._selectedIndex;
+			int startIndex = this._selectedIndex;
 			for (;;)
 			{
 				this._selectedIndex++;
@@ -192,7 +192,7 @@ namespace DNA.Drawing.UI
 				{
 					this._selectedIndex = 0;
 				}
-				if (this._selectedIndex == selectedIndex && !this._menuItems[this._selectedIndex].Visible)
+				if (this._selectedIndex == startIndex && !this._menuItems[this._selectedIndex].Visible)
 				{
 					break;
 				}
@@ -211,7 +211,7 @@ namespace DNA.Drawing.UI
 				this._selectedIndex = -1;
 				return;
 			}
-			int selectedIndex = this._selectedIndex;
+			int startIndex = this._selectedIndex;
 			for (;;)
 			{
 				this._selectedIndex--;
@@ -219,7 +219,7 @@ namespace DNA.Drawing.UI
 				{
 					this._selectedIndex = this._menuItems.Count - 1;
 				}
-				if (this._selectedIndex == selectedIndex && !this._menuItems[this._selectedIndex].Visible)
+				if (this._selectedIndex == startIndex && !this._menuItems[this._selectedIndex].Visible)
 				{
 					break;
 				}
@@ -233,8 +233,8 @@ namespace DNA.Drawing.UI
 
 		private Vector2 MeasureItem(MenuItemElement item)
 		{
-			SpriteFont spriteFont = ((item.Font == null) ? this.Font : item.Font);
-			return spriteFont.MeasureString(item.Text) * Screen.Adjuster.ScaleFactor.Y;
+			SpriteFont font = ((item.Font == null) ? this.Font : item.Font);
+			return font.MeasureString(item.Text) * Screen.Adjuster.ScaleFactor.Y;
 		}
 
 		protected override void OnUpdate(DNAGame game, GameTime gameTime)
@@ -277,65 +277,65 @@ namespace DNA.Drawing.UI
 				this._selectedIndex %= this._menuItems.Count;
 			}
 			spriteBatch.Begin();
-			float num = 0f;
-			float num2 = 0f;
+			float totalHeight = 0f;
+			float spacing = 0f;
 			if (this.LineSpacing != null)
 			{
-				num2 = (float)this.LineSpacing.Value * Screen.Adjuster.ScaleFactor.Y;
+				spacing = (float)this.LineSpacing.Value * Screen.Adjuster.ScaleFactor.Y;
 			}
 			for (int i = 0; i < this._menuItems.Count; i++)
 			{
 				if (this._menuItems[i].Visible)
 				{
-					num += this.MeasureItem(this._menuItems[i]).Y + num2;
+					totalHeight += this.MeasureItem(this._menuItems[i]).Y + spacing;
 				}
 			}
-			num -= num2;
-			Rectangle rectangle = Screen.Adjuster.ScreenRect;
+			totalHeight -= spacing;
+			Rectangle drawArea = Screen.Adjuster.ScreenRect;
 			if (this.DrawArea != null)
 			{
-				rectangle = this.DrawArea.Value;
+				drawArea = this.DrawArea.Value;
 			}
-			float num3 = (float)rectangle.Height;
-			float num4 = (float)rectangle.Width;
-			float num5 = (num3 - num) / 2f + (float)rectangle.Y;
+			float screenHeight = (float)drawArea.Height;
+			float screenWidth = (float)drawArea.Width;
+			float yloc = (screenHeight - totalHeight) / 2f + (float)drawArea.Y;
 			if (this.VerticalAlignment == MenuScreen.VerticalAlignmentTypes.Top)
 			{
-				num5 = (float)rectangle.Top;
+				yloc = (float)drawArea.Top;
 			}
 			else if (this.VerticalAlignment == MenuScreen.VerticalAlignmentTypes.Bottom)
 			{
-				num5 = (float)rectangle.Bottom - num;
+				yloc = (float)drawArea.Bottom - totalHeight;
 			}
 			for (int j = 0; j < this._menuItems.Count; j++)
 			{
-				MenuItemElement menuItemElement = this._menuItems[j];
-				if (menuItemElement.Visible)
+				MenuItemElement item = this._menuItems[j];
+				if (item.Visible)
 				{
-					SpriteFont spriteFont = ((menuItemElement.Font == null) ? this.Font : menuItemElement.Font);
-					Color color = ((menuItemElement.TextColor != null) ? menuItemElement.TextColor.Value : this.TextColor);
-					Color color2 = ((menuItemElement.OutlineColor != null) ? menuItemElement.OutlineColor.Value : this.OutlineColor);
-					int num6 = ((menuItemElement.OnlineWidth != null) ? menuItemElement.OnlineWidth.Value : this.OutlineWidth);
-					Vector2 vector = this.MeasureItem(menuItemElement);
-					Vector2 vector2 = new Vector2((float)rectangle.Left, num5);
+					SpriteFont font = ((item.Font == null) ? this.Font : item.Font);
+					Color textColor = ((item.TextColor != null) ? item.TextColor.Value : this.TextColor);
+					Color outlneColor = ((item.OutlineColor != null) ? item.OutlineColor.Value : this.OutlineColor);
+					int outlineWidth = ((item.OnlineWidth != null) ? item.OnlineWidth.Value : this.OutlineWidth);
+					Vector2 size = this.MeasureItem(item);
+					Vector2 loc = new Vector2((float)drawArea.Left, yloc);
 					if (this.HorizontalAlignment == MenuScreen.HorizontalAlignmentTypes.Center)
 					{
-						vector2.X = (float)rectangle.X + (num4 - vector.X) / 2f;
+						loc.X = (float)drawArea.X + (screenWidth - size.X) / 2f;
 					}
 					else if (this.HorizontalAlignment == MenuScreen.HorizontalAlignmentTypes.Right)
 					{
-						vector2.X = (float)rectangle.Right - vector.X;
+						loc.X = (float)drawArea.Right - size.X;
 					}
-					num5 += vector.Y + num2;
-					Color color3 = color;
+					yloc += size.Y + spacing;
+					Color color = textColor;
 					if (j == this._selectedIndex)
 					{
-						Color color4 = ((menuItemElement.SelectedColor != null) ? menuItemElement.SelectedColor.Value : this.SelectedColor);
-						float num7 = (this._flashDir ? this._flashTimer.PercentComplete : (1f - this._flashTimer.PercentComplete));
-						color3 = Color.Lerp(color, color4, num7);
+						Color seletedColor = ((item.SelectedColor != null) ? item.SelectedColor.Value : this.SelectedColor);
+						float blender = (this._flashDir ? this._flashTimer.PercentComplete : (1f - this._flashTimer.PercentComplete));
+						color = Color.Lerp(textColor, seletedColor, blender);
 					}
-					this._itemLocations[j] = new Rectangle((int)vector2.X, (int)vector2.Y, (int)vector.X, (int)vector.Y);
-					spriteBatch.DrawOutlinedText(spriteFont, menuItemElement.Text, vector2, color3, color2, (int)Math.Ceiling((double)((float)num6 * Screen.Adjuster.ScaleFactor.Y)), Screen.Adjuster.ScaleFactor.Y, 0f, Vector2.Zero);
+					this._itemLocations[j] = new Rectangle((int)loc.X, (int)loc.Y, (int)size.X, (int)size.Y);
+					spriteBatch.DrawOutlinedText(font, item.Text, loc, color, outlneColor, (int)Math.Ceiling((double)((float)outlineWidth * Screen.Adjuster.ScaleFactor.Y)), Screen.Adjuster.ScaleFactor.Y, 0f, Vector2.Zero);
 				}
 			}
 			spriteBatch.End();

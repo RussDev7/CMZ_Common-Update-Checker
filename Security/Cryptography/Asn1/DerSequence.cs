@@ -28,9 +28,9 @@ namespace DNA.Security.Cryptography.Asn1
 		public DerSequence(params Asn1Encodable[] v)
 			: base(v.Length)
 		{
-			foreach (Asn1Encodable asn1Encodable in v)
+			foreach (Asn1Encodable ae in v)
 			{
-				base.AddObject(asn1Encodable);
+				base.AddObject(ae);
 			}
 		}
 
@@ -39,23 +39,23 @@ namespace DNA.Security.Cryptography.Asn1
 		{
 			foreach (object obj in v)
 			{
-				Asn1Encodable asn1Encodable = (Asn1Encodable)obj;
-				base.AddObject(asn1Encodable);
+				Asn1Encodable ae = (Asn1Encodable)obj;
+				base.AddObject(ae);
 			}
 		}
 
 		internal override void Encode(DerOutputStream derOut)
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			DerOutputStream derOutputStream = new DerOutputStream(memoryStream);
-			foreach (object obj in this)
+			MemoryStream bOut = new MemoryStream();
+			DerOutputStream dOut = new DerOutputStream(bOut);
+			foreach (object obj2 in this)
 			{
-				Asn1Encodable asn1Encodable = (Asn1Encodable)obj;
-				derOutputStream.WriteObject(asn1Encodable);
+				Asn1Encodable obj = (Asn1Encodable)obj2;
+				dOut.WriteObject(obj);
 			}
-			derOutputStream.Close();
-			byte[] array = memoryStream.ToArray();
-			derOut.WriteEncoded(48, array);
+			dOut.Close();
+			byte[] bytes = bOut.ToArray();
+			derOut.WriteEncoded(48, bytes);
 		}
 
 		public static readonly DerSequence Empty = new DerSequence();

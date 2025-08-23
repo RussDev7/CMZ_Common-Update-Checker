@@ -20,16 +20,16 @@ namespace DNA.Drawing.UI
 
 		public CreditsScreenItem AddCreditsItem(string name)
 		{
-			CreditsScreenItem creditsScreenItem = new CreditsScreenItem(name);
-			this.Items.Add(creditsScreenItem);
+			CreditsScreenItem item = new CreditsScreenItem(name);
+			this.Items.Add(item);
 			this.totalLength += this._normalFont.MeasureString(name).Y;
-			return creditsScreenItem;
+			return item;
 		}
 
 		public CreditsScreenItem AddCreditsItem(string name, ItemTypes itemType)
 		{
-			CreditsScreenItem creditsScreenItem = new CreditsScreenItem(name, itemType);
-			this.Items.Add(creditsScreenItem);
+			CreditsScreenItem item = new CreditsScreenItem(name, itemType);
+			this.Items.Add(item);
 			if (itemType == ItemTypes.Title)
 			{
 				this.totalLength += this._titleFont.MeasureString(name).Y;
@@ -42,7 +42,7 @@ namespace DNA.Drawing.UI
 			{
 				this.totalLength += this._normalFont.MeasureString(name).Y;
 			}
-			return creditsScreenItem;
+			return item;
 		}
 
 		protected override bool OnPlayerInput(InputManager input, GameController controller, KeyboardInput chatpad, GameTime gameTime)
@@ -51,8 +51,8 @@ namespace DNA.Drawing.UI
 			{
 				base.PopMe();
 			}
-			float num = ((input.Mouse.DeltaWheel != 0) ? ((float)(-(float)input.Mouse.DeltaWheel * 100)) : (controller.CurrentState.ThumbSticks.Left.Y * 200f));
-			this.scrollRate = 40f + num;
+			float scrollrateValue = ((input.Mouse.DeltaWheel != 0) ? ((float)(-(float)input.Mouse.DeltaWheel * 100)) : (controller.CurrentState.ThumbSticks.Left.Y * 200f));
+			this.scrollRate = 40f + scrollrateValue;
 			return base.OnPlayerInput(input, controller, chatpad, gameTime);
 		}
 
@@ -80,39 +80,39 @@ namespace DNA.Drawing.UI
 
 		public override void Draw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			Rectangle titleSafeArea = device.Viewport.TitleSafeArea;
-			Vector2 vector = new Vector2(0f, this._topItemDrawLocation);
+			Rectangle titleSafe = device.Viewport.TitleSafeArea;
+			Vector2 drawLoc = new Vector2(0f, this._topItemDrawLocation);
 			spriteBatch.Begin();
 			for (int i = 0; i < this.Items.Count; i++)
 			{
-				SpriteFont spriteFont;
+				SpriteFont currentFont;
 				if (this.Items[i].ItemType == ItemTypes.Title)
 				{
-					spriteFont = this._titleFont;
+					currentFont = this._titleFont;
 				}
 				else if (this.Items[i].ItemType == ItemTypes.Header)
 				{
-					spriteFont = this._headerFont;
+					currentFont = this._headerFont;
 				}
 				else
 				{
-					spriteFont = this._normalFont;
+					currentFont = this._normalFont;
 				}
-				Vector2 vector2 = spriteFont.MeasureString(this.Items[i].Name);
-				if (vector.Y > -50f && vector.Y < 720f)
+				Vector2 strSize = currentFont.MeasureString(this.Items[i].Name);
+				if (drawLoc.Y > -50f && drawLoc.Y < 720f)
 				{
-					Color color = ((this.Items[i].TextColor != null) ? this.Items[i].TextColor.Value : this.TextColor);
+					Color itemColor = ((this.Items[i].TextColor != null) ? this.Items[i].TextColor.Value : this.TextColor);
 					if (this.LeftAligned)
 					{
-						vector.X = (float)titleSafeArea.Left;
+						drawLoc.X = (float)titleSafe.Left;
 					}
 					else
 					{
-						vector.X = (float)titleSafeArea.Center.X - vector2.X / 2f;
+						drawLoc.X = (float)titleSafe.Center.X - strSize.X / 2f;
 					}
-					spriteBatch.DrawOutlinedText(spriteFont, this.Items[i].Name, vector, color, Color.Black, 1);
+					spriteBatch.DrawOutlinedText(currentFont, this.Items[i].Name, drawLoc, itemColor, Color.Black, 1);
 				}
-				vector.Y += vector2.Y;
+				drawLoc.Y += strSize.Y;
 			}
 			spriteBatch.End();
 			base.Draw(device, spriteBatch, gameTime);

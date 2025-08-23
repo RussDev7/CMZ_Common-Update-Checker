@@ -18,15 +18,15 @@ namespace DNA.Diagnostics.IssueReporting
 		{
 			DateTime.UtcNow - this._startTime;
 			Cursor.Show();
-			EmailBugForm emailBugForm = new EmailBugForm();
-			emailBugForm.CrashInfo = this.GetErrorString(e);
-			if (emailBugForm.ShowDialog() == DialogResult.OK)
+			EmailBugForm form = new EmailBugForm();
+			form.CrashInfo = this.GetErrorString(e);
+			if (form.ShowDialog() == DialogResult.OK)
 			{
 				MailTools.SendDefaultMailClientEmail(new MailMessage
 				{
 					To = { "bugs@digitaldnagames.com" },
 					Subject = this._gameName + " Crash",
-					Body = emailBugForm.CrashInfo.Replace("\n", Environment.NewLine),
+					Body = form.CrashInfo.Replace("\n", Environment.NewLine),
 					IsBodyHtml = false
 				});
 			}
@@ -35,29 +35,29 @@ namespace DNA.Diagnostics.IssueReporting
 
 		private string GetErrorString(Exception e)
 		{
-			TimeSpan timeSpan = DateTime.UtcNow - this._startTime;
-			string text = "Crash Info:";
+			TimeSpan _runTime = DateTime.UtcNow - this._startTime;
+			string result = "Crash Info:";
 			string name = e.GetType().Name;
-			object obj = text;
-			text = string.Concat(new object[] { obj, this._gameName, ", Version ", this._version, "\n" });
-			string text2 = text;
-			text = string.Concat(new string[]
+			object obj = result;
+			result = string.Concat(new object[] { obj, this._gameName, ", Version ", this._version, "\n" });
+			string text = result;
+			result = string.Concat(new string[]
 			{
-				text2,
+				text,
 				this._startTime.ToString("MM/dd/yy HH:mm"),
 				" ",
-				timeSpan.ToString(),
+				_runTime.ToString(),
 				"\n\n"
 			});
-			text = text + e.Message + "\n\n";
-			text = text + e.GetType().Name + "\n\n";
-			string[] array = e.StackTrace.Split(new char[] { '\n' });
-			foreach (string text3 in array)
+			result = result + e.Message + "\n\n";
+			result = result + e.GetType().Name + "\n\n";
+			string[] lines = e.StackTrace.Split(new char[] { '\n' });
+			foreach (string line in lines)
 			{
-				string text4 = text3.Trim();
-				text = text + text4 + "\n";
+				string tline = line.Trim();
+				result = result + tline + "\n";
 			}
-			return text;
+			return result;
 		}
 
 		private string _gameName;

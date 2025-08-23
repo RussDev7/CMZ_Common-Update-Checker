@@ -22,35 +22,35 @@ namespace DNA.Net.Lidgren
 		internal int Encode(byte[] intoBuffer, int ptr, int sequenceNumber)
 		{
 			intoBuffer[ptr++] = (byte)this.m_messageType;
-			byte b = (byte)((sequenceNumber << 1) | ((this.m_fragmentGroup == 0) ? 0 : 1));
-			intoBuffer[ptr++] = b;
+			byte low = (byte)((sequenceNumber << 1) | ((this.m_fragmentGroup == 0) ? 0 : 1));
+			intoBuffer[ptr++] = low;
 			intoBuffer[ptr++] = (byte)(sequenceNumber >> 7);
 			if (this.m_fragmentGroup == 0)
 			{
 				intoBuffer[ptr++] = (byte)this.m_bitLength;
 				intoBuffer[ptr++] = (byte)(this.m_bitLength >> 8);
-				int num = NetUtility.BytesToHoldBits(this.m_bitLength);
-				if (num > 0)
+				int byteLen = NetUtility.BytesToHoldBits(this.m_bitLength);
+				if (byteLen > 0)
 				{
-					Buffer.BlockCopy(this.m_data, 0, intoBuffer, ptr, num);
-					ptr += num;
+					Buffer.BlockCopy(this.m_data, 0, intoBuffer, ptr, byteLen);
+					ptr += byteLen;
 				}
 			}
 			else
 			{
-				int num2 = ptr;
+				int wasPtr = ptr;
 				intoBuffer[ptr++] = (byte)this.m_bitLength;
 				intoBuffer[ptr++] = (byte)(this.m_bitLength >> 8);
 				ptr = NetFragmentationHelper.WriteHeader(intoBuffer, ptr, this.m_fragmentGroup, this.m_fragmentGroupTotalBits, this.m_fragmentChunkByteSize, this.m_fragmentChunkNumber);
-				int num3 = ptr - num2 - 2;
-				int num4 = this.m_bitLength + num3 * 8;
-				intoBuffer[num2] = (byte)num4;
-				intoBuffer[num2 + 1] = (byte)(num4 >> 8);
-				int num5 = NetUtility.BytesToHoldBits(this.m_bitLength);
-				if (num5 > 0)
+				int hdrLen = ptr - wasPtr - 2;
+				int realBitLength = this.m_bitLength + hdrLen * 8;
+				intoBuffer[wasPtr] = (byte)realBitLength;
+				intoBuffer[wasPtr + 1] = (byte)(realBitLength >> 8);
+				int byteLen2 = NetUtility.BytesToHoldBits(this.m_bitLength);
+				if (byteLen2 > 0)
 				{
-					Buffer.BlockCopy(this.m_data, this.m_fragmentChunkNumber * this.m_fragmentChunkByteSize, intoBuffer, ptr, num5);
-					ptr += num5;
+					Buffer.BlockCopy(this.m_data, this.m_fragmentChunkNumber * this.m_fragmentChunkByteSize, intoBuffer, ptr, byteLen2);
+					ptr += byteLen2;
 				}
 			}
 			return ptr;
@@ -58,12 +58,12 @@ namespace DNA.Net.Lidgren
 
 		internal int GetEncodedSize()
 		{
-			int num = 5;
+			int retval = 5;
 			if (this.m_fragmentGroup != 0)
 			{
-				num += NetFragmentationHelper.GetFragmentationHeaderSize(this.m_fragmentGroup, this.m_fragmentGroupTotalBits / 8, this.m_fragmentChunkByteSize, this.m_fragmentChunkNumber);
+				retval += NetFragmentationHelper.GetFragmentationHeaderSize(this.m_fragmentGroup, this.m_fragmentGroupTotalBits / 8, this.m_fragmentChunkByteSize, this.m_fragmentChunkNumber);
 			}
-			return num + base.LengthBytes;
+			return retval + base.LengthBytes;
 		}
 
 		public bool Encrypt(INetEncryption encryption)

@@ -7,20 +7,20 @@ namespace DNA.Security.Cryptography.Asn1
 	{
 		public byte[] GetEncoded()
 		{
-			MemoryStream memoryStream = new MemoryStream();
-			Asn1OutputStream asn1OutputStream = new Asn1OutputStream(memoryStream);
-			asn1OutputStream.WriteObject(this);
-			return memoryStream.ToArray();
+			MemoryStream bOut = new MemoryStream();
+			Asn1OutputStream aOut = new Asn1OutputStream(bOut);
+			aOut.WriteObject(this);
+			return bOut.ToArray();
 		}
 
 		public byte[] GetEncoded(string encoding)
 		{
 			if (encoding.Equals("DER"))
 			{
-				MemoryStream memoryStream = new MemoryStream();
-				DerOutputStream derOutputStream = new DerOutputStream(memoryStream);
-				derOutputStream.WriteObject(this);
-				return memoryStream.ToArray();
+				MemoryStream bOut = new MemoryStream();
+				DerOutputStream dOut = new DerOutputStream(bOut);
+				dOut.WriteObject(this);
+				return bOut.ToArray();
 			}
 			return this.GetEncoded();
 		}
@@ -50,14 +50,14 @@ namespace DNA.Security.Cryptography.Asn1
 			{
 				return true;
 			}
-			IAsn1Convertible asn1Convertible = obj as IAsn1Convertible;
-			if (asn1Convertible == null)
+			IAsn1Convertible other = obj as IAsn1Convertible;
+			if (other == null)
 			{
 				return false;
 			}
-			Asn1Object asn1Object = this.ToAsn1Object();
-			Asn1Object asn1Object2 = asn1Convertible.ToAsn1Object();
-			return asn1Object == asn1Object2 || asn1Object.CallAsn1Equals(asn1Object2);
+			Asn1Object o = this.ToAsn1Object();
+			Asn1Object o2 = other.ToAsn1Object();
+			return o == o2 || o.CallAsn1Equals(o2);
 		}
 
 		public abstract Asn1Object ToAsn1Object();

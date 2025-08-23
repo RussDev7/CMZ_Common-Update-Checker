@@ -39,21 +39,21 @@ namespace DNA.Avatars
 
 		public AnimationPlayer GetAnimation(string name, bool male)
 		{
-			AvatarAnimationManager.AvatarAnimationSet avatarAnimationSet = this._clips[name];
-			AnimationPlayer animationPlayer = new AnimationPlayer(avatarAnimationSet.GetClip(male));
-			animationPlayer.Name = name;
-			animationPlayer.Looping = avatarAnimationSet.Looping;
-			animationPlayer.SetInfluncedBones(avatarAnimationSet.InfluencedBones);
-			return animationPlayer;
+			AvatarAnimationManager.AvatarAnimationSet set = this._clips[name];
+			AnimationPlayer player = new AnimationPlayer(set.GetClip(male));
+			player.Name = name;
+			player.Looping = set.Looping;
+			player.SetInfluncedBones(set.InfluencedBones);
+			return player;
 		}
 
 		public void GetAnimation(AnimationPlayer player, string name, bool male)
 		{
-			AvatarAnimationManager.AvatarAnimationSet avatarAnimationSet = this._clips[name];
-			player.SetClip(avatarAnimationSet.GetClip(male));
+			AvatarAnimationManager.AvatarAnimationSet set = this._clips[name];
+			player.SetClip(set.GetClip(male));
 			player.Name = name;
-			player.Looping = avatarAnimationSet.Looping;
-			player.SetInfluncedBones(avatarAnimationSet.InfluencedBones);
+			player.Looping = set.Looping;
+			player.SetInfluncedBones(set.InfluencedBones);
 		}
 
 		private AvatarAnimationManager()

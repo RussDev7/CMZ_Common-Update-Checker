@@ -36,8 +36,8 @@ namespace DNA.Net.Lidgren
 				throw new NetException("This message has already been sent! Use NetPeer.SendMessage() to send to multiple recipients efficiently");
 			}
 			msg.m_isSent = true;
-			int num = 5 + msg.LengthBytes;
-			if (num <= recipient.m_currentMTU)
+			int len = 5 + msg.LengthBytes;
+			if (len <= recipient.m_currentMTU)
 			{
 				Interlocked.Increment(ref msg.m_recyclingCount);
 				return recipient.EnqueueMessage(msg, method, sequenceChannel);
@@ -53,17 +53,17 @@ namespace DNA.Net.Lidgren
 		internal int GetMTU(IList<NetConnection> recipients)
 		{
 			int count = recipients.Count;
-			int num = int.MaxValue;
+			int mtu = int.MaxValue;
 			for (int i = 0; i < count; i++)
 			{
-				NetConnection netConnection = recipients[i];
-				int currentMTU = netConnection.m_currentMTU;
-				if (currentMTU < num)
+				NetConnection conn = recipients[i];
+				int cmtu = conn.m_currentMTU;
+				if (cmtu < mtu)
 				{
-					num = currentMTU;
+					mtu = cmtu;
 				}
 			}
-			return num;
+			return mtu;
 		}
 
 		public void SendMessage(NetOutgoingMessage msg, List<NetConnection> recipients, NetDeliveryMethod method, int sequenceChannel)
@@ -89,23 +89,23 @@ namespace DNA.Net.Lidgren
 			}
 			int mtu = this.GetMTU(recipients);
 			msg.m_isSent = true;
-			int encodedSize = msg.GetEncodedSize();
-			if (encodedSize <= mtu)
+			int len = msg.GetEncodedSize();
+			if (len <= mtu)
 			{
 				Interlocked.Add(ref msg.m_recyclingCount, recipients.Count);
 				using (List<NetConnection>.Enumerator enumerator = recipients.GetEnumerator())
 				{
 					while (enumerator.MoveNext())
 					{
-						NetConnection netConnection = enumerator.Current;
-						if (netConnection == null)
+						NetConnection conn = enumerator.Current;
+						if (conn == null)
 						{
 							Interlocked.Decrement(ref msg.m_recyclingCount);
 						}
 						else
 						{
-							NetSendResult netSendResult = netConnection.EnqueueMessage(msg, method, sequenceChannel);
-							if (netSendResult != NetSendResult.Queued && netSendResult != NetSendResult.Sent)
+							NetSendResult res = conn.EnqueueMessage(msg, method, sequenceChannel);
+							if (res != NetSendResult.Queued && res != NetSendResult.Sent)
 							{
 								Interlocked.Decrement(ref msg.m_recyclingCount);
 							}
@@ -135,15 +135,15 @@ namespace DNA.Net.Lidgren
 			{
 				throw new NetException("Unconnected messages too long! Must be shorter than NetConfiguration.MaximumTransmissionUnit (currently " + this.m_configuration.MaximumTransmissionUnit + ")");
 			}
-			IPAddress ipaddress = NetUtility.Resolve(host);
-			if (ipaddress == null)
+			IPAddress adr = NetUtility.Resolve(host);
+			if (adr == null)
 			{
 				throw new NetException("Failed to resolve " + host);
 			}
 			msg.m_messageType = NetMessageType.Unconnected;
 			msg.m_isSent = true;
 			Interlocked.Increment(ref msg.m_recyclingCount);
-			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(ipaddress, port), msg));
+			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(adr, port), msg));
 		}
 
 		public void SendUnconnectedMessage(NetOutgoingMessage msg, IPEndPoint recipient)
@@ -195,9 +195,9 @@ namespace DNA.Net.Lidgren
 			msg.m_messageType = NetMessageType.Unconnected;
 			msg.m_isSent = true;
 			Interlocked.Add(ref msg.m_recyclingCount, recipients.Count);
-			foreach (IPEndPoint ipendPoint in recipients)
+			foreach (IPEndPoint ep in recipients)
 			{
-				this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(ipendPoint, msg));
+				this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(ep, msg));
 			}
 		}
 
@@ -217,13 +217,13 @@ namespace DNA.Net.Lidgren
 			{
 				return;
 			}
-			NetIncomingMessage netIncomingMessage = this.CreateIncomingMessage(NetIncomingMessageType.UnconnectedData, msg.LengthBytes);
-			netIncomingMessage.m_isFragment = false;
-			netIncomingMessage.m_receiveTime = NetTime.Now;
-			netIncomingMessage.m_senderConnection = null;
-			netIncomingMessage.m_senderEndPoint = this.m_socket.LocalEndPoint as IPEndPoint;
-			netIncomingMessage.m_bitLength = msg.LengthBits;
-			this.ReleaseMessage(netIncomingMessage);
+			NetIncomingMessage om = this.CreateIncomingMessage(NetIncomingMessageType.UnconnectedData, msg.LengthBytes);
+			om.m_isFragment = false;
+			om.m_receiveTime = NetTime.Now;
+			om.m_senderConnection = null;
+			om.m_senderEndPoint = this.m_socket.LocalEndPoint as IPEndPoint;
+			om.m_bitLength = msg.LengthBits;
+			this.ReleaseMessage(om);
 		}
 
 		public Socket Socket
@@ -274,9 +274,9 @@ namespace DNA.Net.Lidgren
 			}
 			if (this.m_receiveCallbacks != null)
 			{
-				foreach (NetTuple<SynchronizationContext, SendOrPostCallback> netTuple in this.m_receiveCallbacks)
+				foreach (NetTuple<SynchronizationContext, SendOrPostCallback> tuple in this.m_receiveCallbacks)
 				{
-					netTuple.Item1.Post(netTuple.Item2, this);
+					tuple.Item1.Post(tuple.Item2, this);
 				}
 			}
 		}
@@ -296,35 +296,35 @@ namespace DNA.Net.Lidgren
 					this.m_releasedIncomingMessages.Clear();
 					this.m_unsentUnconnectedMessages.Clear();
 					this.m_handshakes.Clear();
-					IPEndPoint ipendPoint = new IPEndPoint(this.m_configuration.LocalAddress, this.m_configuration.Port);
-					EndPoint endPoint = ipendPoint;
+					IPEndPoint iep = new IPEndPoint(this.m_configuration.LocalAddress, this.m_configuration.Port);
+					EndPoint ep = iep;
 					this.m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 					this.m_socket.ReceiveBufferSize = this.m_configuration.ReceiveBufferSize;
 					this.m_socket.SendBufferSize = this.m_configuration.SendBufferSize;
 					this.m_socket.Blocking = false;
-					this.m_socket.Bind(endPoint);
+					this.m_socket.Bind(ep);
 					try
 					{
-						uint num = 2550136844U;
-						this.m_socket.IOControl((int)num, new byte[] { Convert.ToByte(false) }, null);
+						uint SIO_UDP_CONNRESET = 2550136844U;
+						this.m_socket.IOControl((int)SIO_UDP_CONNRESET, new byte[] { Convert.ToByte(false) }, null);
 					}
 					catch
 					{
 					}
-					IPEndPoint ipendPoint2 = this.m_socket.LocalEndPoint as IPEndPoint;
-					this.m_listenPort = ipendPoint2.Port;
+					IPEndPoint boundEp = this.m_socket.LocalEndPoint as IPEndPoint;
+					this.m_listenPort = boundEp.Port;
 					this.m_receiveBuffer = new byte[this.m_configuration.ReceiveBufferSize];
 					this.m_sendBuffer = new byte[this.m_configuration.SendBufferSize];
 					this.m_readHelperMessage = new NetIncomingMessage(NetIncomingMessageType.Error);
 					this.m_readHelperMessage.m_data = this.m_receiveBuffer;
-					byte[] array = new byte[8];
-					NetRandom.Instance.NextBytes(array);
+					byte[] macBytes = new byte[8];
+					NetRandom.Instance.NextBytes(macBytes);
 					try
 					{
-						PhysicalAddress macAddress = NetUtility.GetMacAddress();
-						if (macAddress != null)
+						PhysicalAddress pa = NetUtility.GetMacAddress();
+						if (pa != null)
 						{
-							array = macAddress.GetAddressBytes();
+							macBytes = pa.GetAddressBytes();
 						}
 						else
 						{
@@ -334,11 +334,11 @@ namespace DNA.Net.Lidgren
 					catch (NotSupportedException)
 					{
 					}
-					byte[] bytes = BitConverter.GetBytes(ipendPoint2.GetHashCode());
-					byte[] array2 = new byte[bytes.Length + array.Length];
-					Array.Copy(bytes, 0, array2, 0, bytes.Length);
-					Array.Copy(array, 0, array2, bytes.Length, array.Length);
-					this.m_uniqueIdentifier = BitConverter.ToInt64(SHA1.Create().ComputeHash(array2), 0);
+					byte[] epBytes = BitConverter.GetBytes(boundEp.GetHashCode());
+					byte[] combined = new byte[epBytes.Length + macBytes.Length];
+					Array.Copy(epBytes, 0, combined, 0, epBytes.Length);
+					Array.Copy(macBytes, 0, combined, epBytes.Length, macBytes.Length);
+					this.m_uniqueIdentifier = BitConverter.ToInt64(SHA1.Create().ComputeHash(combined), 0);
 					this.m_status = NetPeerStatus.Running;
 				}
 			}
@@ -366,25 +366,25 @@ namespace DNA.Net.Lidgren
 			List<NetConnection> list = new List<NetConnection>(this.m_handshakes.Count + this.m_connections.Count);
 			lock (this.m_connections)
 			{
-				foreach (NetConnection netConnection in this.m_connections)
+				foreach (NetConnection conn in this.m_connections)
 				{
-					if (netConnection != null)
+					if (conn != null)
 					{
-						list.Add(netConnection);
+						list.Add(conn);
 					}
 				}
 				lock (this.m_handshakes)
 				{
-					foreach (NetConnection netConnection2 in this.m_handshakes.Values)
+					foreach (NetConnection hs in this.m_handshakes.Values)
 					{
-						if (netConnection2 != null)
+						if (hs != null)
 						{
-							list.Add(netConnection2);
+							list.Add(hs);
 						}
 					}
-					foreach (NetConnection netConnection3 in list)
+					foreach (NetConnection conn2 in list)
 					{
-						netConnection3.Shutdown(this.m_shutdownReason);
+						conn2.Shutdown(this.m_shutdownReason);
 					}
 				}
 			}
@@ -429,25 +429,25 @@ namespace DNA.Net.Lidgren
 
 		private void Heartbeat()
 		{
-			double num = NetTime.Now;
-			float num2 = (float)num;
-			double num3 = num - this.m_lastHeartbeat;
-			int num4 = 1250 - this.m_connections.Count;
-			if (num4 < 250)
+			double dnow = NetTime.Now;
+			float now = (float)dnow;
+			double delta = dnow - this.m_lastHeartbeat;
+			int maxCHBpS = 1250 - this.m_connections.Count;
+			if (maxCHBpS < 250)
 			{
-				num4 = 250;
+				maxCHBpS = 250;
 			}
-			if (num3 > 1.0 / (double)num4 || num3 < 0.0)
+			if (delta > 1.0 / (double)maxCHBpS || delta < 0.0)
 			{
 				this.m_frameCounter += 1U;
-				this.m_lastHeartbeat = num;
+				this.m_lastHeartbeat = dnow;
 				if (this.m_frameCounter % 3U == 0U)
 				{
-					foreach (KeyValuePair<IPEndPoint, NetConnection> keyValuePair in this.m_handshakes)
+					foreach (KeyValuePair<IPEndPoint, NetConnection> kvp in this.m_handshakes)
 					{
-						NetConnection value = keyValuePair.Value;
-						value.UnconnectedHeartbeat(num2);
-						if (value.m_status == NetConnectionStatus.Connected || value.m_status == NetConnectionStatus.Disconnected)
+						NetConnection conn = kvp.Value;
+						conn.UnconnectedHeartbeat(now);
+						if (conn.m_status == NetConnectionStatus.Connected || conn.m_status == NetConnectionStatus.Disconnected)
 						{
 							break;
 						}
@@ -459,29 +459,29 @@ namespace DNA.Net.Lidgren
 				}
 				lock (this.m_connections)
 				{
-					foreach (NetConnection netConnection in this.m_connections)
+					foreach (NetConnection conn2 in this.m_connections)
 					{
-						netConnection.Heartbeat(num2, this.m_frameCounter);
-						if (netConnection.m_status == NetConnectionStatus.Disconnected)
+						conn2.Heartbeat(now, this.m_frameCounter);
+						if (conn2.m_status == NetConnectionStatus.Disconnected)
 						{
-							this.m_connections.Remove(netConnection);
-							this.m_connectionLookup.Remove(netConnection.RemoteEndPoint);
+							this.m_connections.Remove(conn2);
+							this.m_connectionLookup.Remove(conn2.RemoteEndPoint);
 							break;
 						}
 					}
 				}
 				this.m_executeFlushSendQueue = false;
-				NetTuple<IPEndPoint, NetOutgoingMessage> netTuple;
-				while (this.m_unsentUnconnectedMessages.TryDequeue(out netTuple))
+				NetTuple<IPEndPoint, NetOutgoingMessage> unsent;
+				while (this.m_unsentUnconnectedMessages.TryDequeue(out unsent))
 				{
-					NetOutgoingMessage item = netTuple.Item2;
-					int num5 = item.Encode(this.m_sendBuffer, 0, 0);
-					bool flag2;
-					this.SendPacket(num5, netTuple.Item1, 1, out flag2);
-					Interlocked.Decrement(ref item.m_recyclingCount);
-					if (item.m_recyclingCount <= 0)
+					NetOutgoingMessage om = unsent.Item2;
+					int len = om.Encode(this.m_sendBuffer, 0, 0);
+					bool connReset;
+					this.SendPacket(len, unsent.Item1, 1, out connReset);
+					Interlocked.Decrement(ref om.m_recyclingCount);
+					if (om.m_recyclingCount <= 0)
 					{
-						this.Recycle(item);
+						this.Recycle(om);
 					}
 				}
 			}
@@ -493,43 +493,43 @@ namespace DNA.Net.Lidgren
 			{
 				return;
 			}
-			num = NetTime.Now;
-			num2 = (float)num;
-			int num6;
-			int num8;
-			int num11;
+			dnow = NetTime.Now;
+			now = (float)dnow;
+			int bytesReceived;
+			int ptr;
+			int payloadByteLength;
 			for (;;)
 			{
-				num6 = 0;
+				bytesReceived = 0;
 				try
 				{
-					num6 = this.m_socket.ReceiveFrom(this.m_receiveBuffer, 0, this.m_receiveBuffer.Length, SocketFlags.None, ref this.m_senderRemote);
+					bytesReceived = this.m_socket.ReceiveFrom(this.m_receiveBuffer, 0, this.m_receiveBuffer.Length, SocketFlags.None, ref this.m_senderRemote);
 				}
-				catch (SocketException ex)
+				catch (SocketException sx)
 				{
-					if (ex.SocketErrorCode == SocketError.ConnectionReset)
+					if (sx.SocketErrorCode == SocketError.ConnectionReset)
 					{
 						this.LogWarning("ConnectionReset");
 						break;
 					}
-					this.LogWarning(ex.ToString());
+					this.LogWarning(sx.ToString());
 					break;
 				}
-				if (num6 < 5)
+				if (bytesReceived < 5)
 				{
 					break;
 				}
-				IPEndPoint ipendPoint = (IPEndPoint)this.m_senderRemote;
-				if (this.m_upnp != null && num2 < this.m_upnp.m_discoveryResponseDeadline)
+				IPEndPoint ipsender = (IPEndPoint)this.m_senderRemote;
+				if (this.m_upnp != null && now < this.m_upnp.m_discoveryResponseDeadline)
 				{
 					try
 					{
-						string text = Encoding.ASCII.GetString(this.m_receiveBuffer, 0, num6);
-						if (text.Contains("upnp:rootdevice") || text.Contains("UPnP/1.0"))
+						string resp = Encoding.ASCII.GetString(this.m_receiveBuffer, 0, bytesReceived);
+						if (resp.Contains("upnp:rootdevice") || resp.Contains("UPnP/1.0"))
 						{
-							text = text.Substring(text.ToLower().IndexOf("location:") + 9);
-							text = text.Substring(0, text.IndexOf("\r")).Trim();
-							this.m_upnp.ExtractServiceUrl(text);
+							resp = resp.Substring(resp.ToLower().IndexOf("location:") + 9);
+							resp = resp.Substring(0, resp.IndexOf("\r")).Trim();
+							this.m_upnp.ExtractServiceUrl(resp);
 							break;
 						}
 					}
@@ -537,76 +537,76 @@ namespace DNA.Net.Lidgren
 					{
 					}
 				}
-				NetConnection netConnection2 = null;
-				this.m_connectionLookup.TryGetValue(ipendPoint, out netConnection2);
-				int num7 = 0;
-				num8 = 0;
-				while (num6 - num8 >= 5)
+				NetConnection sender = null;
+				this.m_connectionLookup.TryGetValue(ipsender, out sender);
+				int numMessages = 0;
+				ptr = 0;
+				while (bytesReceived - ptr >= 5)
 				{
-					num7++;
-					NetMessageType netMessageType = (NetMessageType)this.m_receiveBuffer[num8++];
-					byte b = this.m_receiveBuffer[num8++];
-					byte b2 = this.m_receiveBuffer[num8++];
-					bool flag3 = (b & 1) == 1;
-					ushort num9 = (ushort)((b >> 1) | ((int)b2 << 7));
-					ushort num10 = (ushort)((int)this.m_receiveBuffer[num8++] | ((int)this.m_receiveBuffer[num8++] << 8));
-					num11 = NetUtility.BytesToHoldBits((int)num10);
-					if (num6 - num8 < num11)
+					numMessages++;
+					NetMessageType tp = (NetMessageType)this.m_receiveBuffer[ptr++];
+					byte low = this.m_receiveBuffer[ptr++];
+					byte high = this.m_receiveBuffer[ptr++];
+					bool isFragment = (low & 1) == 1;
+					ushort sequenceNumber = (ushort)((low >> 1) | ((int)high << 7));
+					ushort payloadBitLength = (ushort)((int)this.m_receiveBuffer[ptr++] | ((int)this.m_receiveBuffer[ptr++] << 8));
+					payloadByteLength = NetUtility.BytesToHoldBits((int)payloadBitLength);
+					if (bytesReceived - ptr < payloadByteLength)
 					{
 						goto Block_13;
 					}
 					try
 					{
-						if (netMessageType >= NetMessageType.LibraryError)
+						if (tp >= NetMessageType.LibraryError)
 						{
-							if (netConnection2 != null)
+							if (sender != null)
 							{
-								netConnection2.ReceivedLibraryMessage(netMessageType, num8, num11);
+								sender.ReceivedLibraryMessage(tp, ptr, payloadByteLength);
 							}
 							else
 							{
-								this.ReceivedUnconnectedLibraryMessage(num, ipendPoint, netMessageType, num8, num11);
+								this.ReceivedUnconnectedLibraryMessage(dnow, ipsender, tp, ptr, payloadByteLength);
 							}
 						}
 						else
 						{
-							if (netConnection2 == null && !this.m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.UnconnectedData))
+							if (sender == null && !this.m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.UnconnectedData))
 							{
 								return;
 							}
-							NetIncomingMessage netIncomingMessage = this.CreateIncomingMessage(NetIncomingMessageType.Data, num11);
-							netIncomingMessage.m_isFragment = flag3;
-							netIncomingMessage.m_receiveTime = num;
-							netIncomingMessage.m_sequenceNumber = (int)num9;
-							netIncomingMessage.m_receivedMessageType = netMessageType;
-							netIncomingMessage.m_senderConnection = netConnection2;
-							netIncomingMessage.m_senderEndPoint = ipendPoint;
-							netIncomingMessage.m_bitLength = (int)num10;
-							Buffer.BlockCopy(this.m_receiveBuffer, num8, netIncomingMessage.m_data, 0, num11);
-							if (netConnection2 != null)
+							NetIncomingMessage msg = this.CreateIncomingMessage(NetIncomingMessageType.Data, payloadByteLength);
+							msg.m_isFragment = isFragment;
+							msg.m_receiveTime = dnow;
+							msg.m_sequenceNumber = (int)sequenceNumber;
+							msg.m_receivedMessageType = tp;
+							msg.m_senderConnection = sender;
+							msg.m_senderEndPoint = ipsender;
+							msg.m_bitLength = (int)payloadBitLength;
+							Buffer.BlockCopy(this.m_receiveBuffer, ptr, msg.m_data, 0, payloadByteLength);
+							if (sender != null)
 							{
-								if (netMessageType == NetMessageType.Unconnected)
+								if (tp == NetMessageType.Unconnected)
 								{
-									netIncomingMessage.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
-									this.ReleaseMessage(netIncomingMessage);
+									msg.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
+									this.ReleaseMessage(msg);
 								}
 								else
 								{
-									netConnection2.ReceivedMessage(netIncomingMessage);
+									sender.ReceivedMessage(msg);
 								}
 							}
 							else
 							{
-								netIncomingMessage.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
-								this.ReleaseMessage(netIncomingMessage);
+								msg.m_incomingMessageType = NetIncomingMessageType.UnconnectedData;
+								this.ReleaseMessage(msg);
 							}
 						}
 					}
-					catch (Exception ex2)
+					catch (Exception ex)
 					{
-						this.LogError(string.Concat(new object[] { "Packet parsing error: ", ex2.Message, " from ", ipendPoint }));
+						this.LogError(string.Concat(new object[] { "Packet parsing error: ", ex.Message, " from ", ipsender }));
 					}
-					num8 += num11;
+					ptr += payloadByteLength;
 				}
 				if (this.m_socket.Available <= 0)
 				{
@@ -618,9 +618,9 @@ namespace DNA.Net.Lidgren
 			this.LogWarning(string.Concat(new object[]
 			{
 				"Malformed packet; stated payload length ",
-				num11,
+				payloadByteLength,
 				", remaining bytes ",
-				num6 - num8
+				bytesReceived - ptr
 			}));
 		}
 
@@ -633,15 +633,15 @@ namespace DNA.Net.Lidgren
 		{
 			if (this.m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.DiscoveryRequest))
 			{
-				NetIncomingMessage netIncomingMessage = this.CreateIncomingMessage(NetIncomingMessageType.DiscoveryRequest, payloadByteLength);
+				NetIncomingMessage dm = this.CreateIncomingMessage(NetIncomingMessageType.DiscoveryRequest, payloadByteLength);
 				if (payloadByteLength > 0)
 				{
-					Buffer.BlockCopy(this.m_receiveBuffer, ptr, netIncomingMessage.m_data, 0, payloadByteLength);
+					Buffer.BlockCopy(this.m_receiveBuffer, ptr, dm.m_data, 0, payloadByteLength);
 				}
-				netIncomingMessage.m_receiveTime = now;
-				netIncomingMessage.m_bitLength = payloadByteLength * 8;
-				netIncomingMessage.m_senderEndPoint = senderEndPoint;
-				this.ReleaseMessage(netIncomingMessage);
+				dm.m_receiveTime = now;
+				dm.m_bitLength = payloadByteLength * 8;
+				dm.m_senderEndPoint = senderEndPoint;
+				this.ReleaseMessage(dm);
 			}
 		}
 
@@ -649,58 +649,58 @@ namespace DNA.Net.Lidgren
 		{
 			if (this.m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.DiscoveryResponse))
 			{
-				NetIncomingMessage netIncomingMessage = this.CreateIncomingMessage(NetIncomingMessageType.DiscoveryResponse, payloadByteLength);
+				NetIncomingMessage dr = this.CreateIncomingMessage(NetIncomingMessageType.DiscoveryResponse, payloadByteLength);
 				if (payloadByteLength > 0)
 				{
-					Buffer.BlockCopy(this.m_receiveBuffer, ptr, netIncomingMessage.m_data, 0, payloadByteLength);
+					Buffer.BlockCopy(this.m_receiveBuffer, ptr, dr.m_data, 0, payloadByteLength);
 				}
-				netIncomingMessage.m_receiveTime = now;
-				netIncomingMessage.m_bitLength = payloadByteLength * 8;
-				netIncomingMessage.m_senderEndPoint = senderEndPoint;
-				this.ReleaseMessage(netIncomingMessage);
+				dr.m_receiveTime = now;
+				dr.m_bitLength = payloadByteLength * 8;
+				dr.m_senderEndPoint = senderEndPoint;
+				this.ReleaseMessage(dr);
 			}
 		}
 
 		private void ReceivedUnconnectedLibraryMessage(double now, IPEndPoint senderEndPoint, NetMessageType tp, int ptr, int payloadByteLength)
 		{
-			NetConnection netConnection;
-			if (this.m_handshakes.TryGetValue(senderEndPoint, out netConnection))
+			NetConnection shake;
+			if (this.m_handshakes.TryGetValue(senderEndPoint, out shake))
 			{
-				netConnection.ReceivedHandshake(now, tp, ptr, payloadByteLength);
+				shake.ReceivedHandshake(now, tp, ptr, payloadByteLength);
 				return;
 			}
 			switch (tp)
 			{
 			case NetMessageType.Connect:
 			{
-				int num = this.m_handshakes.Count + this.m_connections.Count;
-				if (num >= this.m_configuration.m_maximumConnections)
+				int reservedSlots = this.m_handshakes.Count + this.m_connections.Count;
+				if (reservedSlots >= this.m_configuration.m_maximumConnections)
 				{
-					NetOutgoingMessage netOutgoingMessage = this.CreateMessage("Server full");
-					netOutgoingMessage.m_messageType = NetMessageType.Disconnect;
-					this.SendLibrary(netOutgoingMessage, senderEndPoint);
+					NetOutgoingMessage full = this.CreateMessage("Server full");
+					full.m_messageType = NetMessageType.Disconnect;
+					this.SendLibrary(full, senderEndPoint);
 					return;
 				}
-				NetConnection netConnection2 = new NetConnection(this, senderEndPoint);
-				netConnection2.m_status = NetConnectionStatus.ReceivedInitiation;
-				this.m_handshakes.Add(senderEndPoint, netConnection2);
-				netConnection2.ReceivedHandshake(now, tp, ptr, payloadByteLength);
+				NetConnection conn = new NetConnection(this, senderEndPoint);
+				conn.m_status = NetConnectionStatus.ReceivedInitiation;
+				this.m_handshakes.Add(senderEndPoint, conn);
+				conn.ReceivedHandshake(now, tp, ptr, payloadByteLength);
 				return;
 			}
 			case NetMessageType.ConnectResponse:
 				lock (this.m_handshakes)
 				{
-					foreach (KeyValuePair<IPEndPoint, NetConnection> keyValuePair in this.m_handshakes)
+					foreach (KeyValuePair<IPEndPoint, NetConnection> hs in this.m_handshakes)
 					{
-						if (keyValuePair.Key.Address.Equals(senderEndPoint.Address) && keyValuePair.Value.m_connectionInitiator)
+						if (hs.Key.Address.Equals(senderEndPoint.Address) && hs.Value.m_connectionInitiator)
 						{
-							NetConnection value = keyValuePair.Value;
-							this.m_connectionLookup.Remove(keyValuePair.Key);
-							this.m_handshakes.Remove(keyValuePair.Key);
-							value.MutateEndPoint(senderEndPoint);
-							this.m_connectionLookup.Add(senderEndPoint, value);
-							this.m_handshakes.Add(senderEndPoint, value);
-							value.ReceivedHandshake(now, tp, ptr, payloadByteLength);
+							NetConnection hsconn = hs.Value;
+							this.m_connectionLookup.Remove(hs.Key);
+							this.m_handshakes.Remove(hs.Key);
+							hsconn.MutateEndPoint(senderEndPoint);
+							this.m_connectionLookup.Add(senderEndPoint, hsconn);
+							this.m_handshakes.Add(senderEndPoint, hsconn);
+							hsconn.ReceivedHandshake(now, tp, ptr, payloadByteLength);
 							return;
 						}
 					}
@@ -756,10 +756,10 @@ namespace DNA.Net.Lidgren
 		[Conditional("DEBUG")]
 		internal void VerifyNetworkThread()
 		{
-			Thread currentThread = Thread.CurrentThread;
+			Thread ct = Thread.CurrentThread;
 			if (Thread.CurrentThread != this.m_networkThread)
 			{
-				throw new NetException(string.Concat(new object[] { "Executing on wrong thread! Should be library system thread (is ", currentThread.Name, " mId ", currentThread.ManagedThreadId, ")" }));
+				throw new NetException(string.Concat(new object[] { "Executing on wrong thread! Should be library system thread (is ", ct.Name, " mId ", ct.ManagedThreadId, ")" }));
 			}
 		}
 
@@ -887,8 +887,8 @@ namespace DNA.Net.Lidgren
 			this.m_status = NetPeerStatus.Starting;
 			if (this.m_configuration.NetworkThreadName == "Lidgren network thread")
 			{
-				int num = Interlocked.Increment(ref NetPeer.s_initializedPeersCount);
-				this.m_configuration.NetworkThreadName = "Lidgren network thread " + num.ToString();
+				int pc = Interlocked.Increment(ref NetPeer.s_initializedPeersCount);
+				this.m_configuration.NetworkThreadName = "Lidgren network thread " + pc.ToString();
 			}
 			this.InitializeNetwork();
 			this.m_networkThread = new Thread(new ThreadStart(this.NetworkLoop));
@@ -905,17 +905,17 @@ namespace DNA.Net.Lidgren
 
 		public NetConnection GetConnection(IPEndPoint ep)
 		{
-			NetConnection netConnection;
-			this.m_connectionLookup.TryGetValue(ep, out netConnection);
-			return netConnection;
+			NetConnection retval;
+			this.m_connectionLookup.TryGetValue(ep, out retval);
+			return retval;
 		}
 
 		public NetIncomingMessage WaitMessage(int maxMillis)
 		{
-			NetIncomingMessage netIncomingMessage = this.ReadMessage();
-			if (netIncomingMessage != null)
+			NetIncomingMessage msg = this.ReadMessage();
+			if (msg != null)
 			{
-				return netIncomingMessage;
+				return msg;
 			}
 			if (this.m_messageReceivedEvent != null)
 			{
@@ -926,39 +926,39 @@ namespace DNA.Net.Lidgren
 
 		public NetIncomingMessage ReadMessage()
 		{
-			NetIncomingMessage netIncomingMessage;
-			if (this.m_releasedIncomingMessages.TryDequeue(out netIncomingMessage) && netIncomingMessage.MessageType == NetIncomingMessageType.StatusChanged)
+			NetIncomingMessage retval;
+			if (this.m_releasedIncomingMessages.TryDequeue(out retval) && retval.MessageType == NetIncomingMessageType.StatusChanged)
 			{
-				NetConnectionStatus netConnectionStatus = (NetConnectionStatus)netIncomingMessage.PeekByte();
-				netIncomingMessage.SenderConnection.m_visibleStatus = netConnectionStatus;
+				NetConnectionStatus status = (NetConnectionStatus)retval.PeekByte();
+				retval.SenderConnection.m_visibleStatus = status;
 			}
-			return netIncomingMessage;
+			return retval;
 		}
 
 		public int ReadMessages(IList<NetIncomingMessage> addTo)
 		{
-			int num = this.m_releasedIncomingMessages.TryDrain(addTo);
-			if (num > 0)
+			int added = this.m_releasedIncomingMessages.TryDrain(addTo);
+			if (added > 0)
 			{
-				for (int i = 0; i < num; i++)
+				for (int i = 0; i < added; i++)
 				{
-					int num2 = addTo.Count - num + i;
-					NetIncomingMessage netIncomingMessage = addTo[num2];
-					if (netIncomingMessage.MessageType == NetIncomingMessageType.StatusChanged)
+					int index = addTo.Count - added + i;
+					NetIncomingMessage nim = addTo[index];
+					if (nim.MessageType == NetIncomingMessageType.StatusChanged)
 					{
-						NetConnectionStatus netConnectionStatus = (NetConnectionStatus)netIncomingMessage.PeekByte();
-						netIncomingMessage.SenderConnection.m_visibleStatus = netConnectionStatus;
+						NetConnectionStatus status = (NetConnectionStatus)nim.PeekByte();
+						nim.SenderConnection.m_visibleStatus = status;
 					}
 				}
 			}
-			return num;
+			return added;
 		}
 
 		internal void SendLibrary(NetOutgoingMessage msg, IPEndPoint recipient)
 		{
-			int num = msg.Encode(this.m_sendBuffer, 0, 0);
-			bool flag;
-			this.SendPacket(num, recipient, 1, out flag);
+			int len = msg.Encode(this.m_sendBuffer, 0, 0);
+			bool connReset;
+			this.SendPacket(len, recipient, 1, out connReset);
 		}
 
 		public NetConnection Connect(string host, int port)
@@ -982,7 +982,7 @@ namespace DNA.Net.Lidgren
 			{
 				throw new ArgumentNullException("remoteEndPoint");
 			}
-			NetConnection netConnection2;
+			NetConnection netConnection;
 			lock (this.m_connections)
 			{
 				if (this.m_status == NetPeerStatus.NotRunning)
@@ -993,46 +993,46 @@ namespace DNA.Net.Lidgren
 				{
 					throw new NetException("Already connected to that endpoint!");
 				}
-				NetConnection netConnection;
-				if (this.m_handshakes.TryGetValue(remoteEndPoint, out netConnection))
+				NetConnection hs;
+				if (this.m_handshakes.TryGetValue(remoteEndPoint, out hs))
 				{
-					NetConnectionStatus status = netConnection.m_status;
+					NetConnectionStatus status = hs.m_status;
 					if (status != NetConnectionStatus.InitiatedConnect)
 					{
 						if (status != NetConnectionStatus.RespondedConnect)
 						{
-							this.LogWarning("Weird situation; Connect() already in progress to remote endpoint; but hs status is " + netConnection.m_status);
+							this.LogWarning("Weird situation; Connect() already in progress to remote endpoint; but hs status is " + hs.m_status);
 						}
 						else
 						{
-							netConnection.SendConnectResponse((float)NetTime.Now, false);
+							hs.SendConnectResponse((float)NetTime.Now, false);
 						}
 					}
 					else
 					{
-						netConnection.m_connectRequested = true;
+						hs.m_connectRequested = true;
 					}
-					netConnection2 = netConnection;
+					netConnection = hs;
 				}
 				else
 				{
-					NetConnection netConnection3 = new NetConnection(this, remoteEndPoint);
-					netConnection3.m_status = NetConnectionStatus.InitiatedConnect;
-					netConnection3.m_localHailMessage = hailMessage;
-					netConnection3.m_connectRequested = true;
-					netConnection3.m_connectionInitiator = true;
-					this.m_handshakes.Add(remoteEndPoint, netConnection3);
-					netConnection2 = netConnection3;
+					NetConnection conn = new NetConnection(this, remoteEndPoint);
+					conn.m_status = NetConnectionStatus.InitiatedConnect;
+					conn.m_localHailMessage = hailMessage;
+					conn.m_connectRequested = true;
+					conn.m_connectionInitiator = true;
+					this.m_handshakes.Add(remoteEndPoint, conn);
+					netConnection = conn;
 				}
 			}
-			return netConnection2;
+			return netConnection;
 		}
 
 		internal void RawSend(byte[] arr, int offset, int length, IPEndPoint destination)
 		{
 			Array.Copy(arr, offset, this.m_sendBuffer, 0, length);
-			bool flag;
-			this.SendPacket(length, destination, 1, out flag);
+			bool unused;
+			this.SendPacket(length, destination, 1, out unused);
 		}
 
 		public void Shutdown(string bye)
@@ -1047,84 +1047,84 @@ namespace DNA.Net.Lidgren
 
 		private void SendFragmentedMessage(NetOutgoingMessage msg, IList<NetConnection> recipients, NetDeliveryMethod method, int sequenceChannel)
 		{
-			int num = Interlocked.Increment(ref this.m_lastUsedFragmentGroup);
-			if (num >= 65534)
+			int group = Interlocked.Increment(ref this.m_lastUsedFragmentGroup);
+			if (group >= 65534)
 			{
 				this.m_lastUsedFragmentGroup = 1;
-				num = 1;
+				group = 1;
 			}
-			msg.m_fragmentGroup = num;
-			int lengthBytes = msg.LengthBytes;
+			msg.m_fragmentGroup = group;
+			int totalBytes = msg.LengthBytes;
 			int mtu = this.GetMTU(recipients);
-			int bestChunkSize = NetFragmentationHelper.GetBestChunkSize(num, lengthBytes, mtu);
-			int num2 = lengthBytes / bestChunkSize;
-			if (num2 * bestChunkSize < lengthBytes)
+			int bytesPerChunk = NetFragmentationHelper.GetBestChunkSize(group, totalBytes, mtu);
+			int numChunks = totalBytes / bytesPerChunk;
+			if (numChunks * bytesPerChunk < totalBytes)
 			{
-				num2++;
+				numChunks++;
 			}
-			int num3 = bestChunkSize * 8;
-			int num4 = msg.LengthBits;
-			for (int i = 0; i < num2; i++)
+			int bitsPerChunk = bytesPerChunk * 8;
+			int bitsLeft = msg.LengthBits;
+			for (int i = 0; i < numChunks; i++)
 			{
-				NetOutgoingMessage netOutgoingMessage = this.CreateMessage(mtu);
-				netOutgoingMessage.m_bitLength = ((num4 > num3) ? num3 : num4);
-				netOutgoingMessage.m_data = msg.m_data;
-				netOutgoingMessage.m_fragmentGroup = num;
-				netOutgoingMessage.m_fragmentGroupTotalBits = lengthBytes * 8;
-				netOutgoingMessage.m_fragmentChunkByteSize = bestChunkSize;
-				netOutgoingMessage.m_fragmentChunkNumber = i;
-				Interlocked.Add(ref netOutgoingMessage.m_recyclingCount, recipients.Count);
-				foreach (NetConnection netConnection in recipients)
+				NetOutgoingMessage chunk = this.CreateMessage(mtu);
+				chunk.m_bitLength = ((bitsLeft > bitsPerChunk) ? bitsPerChunk : bitsLeft);
+				chunk.m_data = msg.m_data;
+				chunk.m_fragmentGroup = group;
+				chunk.m_fragmentGroupTotalBits = totalBytes * 8;
+				chunk.m_fragmentChunkByteSize = bytesPerChunk;
+				chunk.m_fragmentChunkNumber = i;
+				Interlocked.Add(ref chunk.m_recyclingCount, recipients.Count);
+				foreach (NetConnection recipient in recipients)
 				{
-					netConnection.EnqueueMessage(netOutgoingMessage, method, sequenceChannel);
+					recipient.EnqueueMessage(chunk, method, sequenceChannel);
 				}
-				num4 -= num3;
+				bitsLeft -= bitsPerChunk;
 			}
 		}
 
 		private void HandleReleasedFragment(NetIncomingMessage im)
 		{
-			int num2;
-			int num3;
-			int num4;
-			int num5;
-			int num = NetFragmentationHelper.ReadHeader(im.m_data, 0, out num2, out num3, out num4, out num5);
-			int num6 = NetUtility.BytesToHoldBits(num3);
-			int num7 = num6 / num4;
-			if (num7 * num4 < num6)
+			int group;
+			int totalBits;
+			int chunkByteSize;
+			int chunkNumber;
+			int ptr = NetFragmentationHelper.ReadHeader(im.m_data, 0, out group, out totalBits, out chunkByteSize, out chunkNumber);
+			int totalBytes = NetUtility.BytesToHoldBits(totalBits);
+			int totalNumChunks = totalBytes / chunkByteSize;
+			if (totalNumChunks * chunkByteSize < totalBytes)
 			{
-				num7++;
+				totalNumChunks++;
 			}
-			if (num5 >= num7)
+			if (chunkNumber >= totalNumChunks)
 			{
-				this.LogWarning(string.Concat(new object[] { "Index out of bounds for chunk ", num5, " (total chunks ", num7, ")" }));
+				this.LogWarning(string.Concat(new object[] { "Index out of bounds for chunk ", chunkNumber, " (total chunks ", totalNumChunks, ")" }));
 				return;
 			}
-			Dictionary<int, ReceivedFragmentGroup> dictionary;
-			if (!this.m_receivedFragmentGroups.TryGetValue(im.SenderConnection, out dictionary))
+			Dictionary<int, ReceivedFragmentGroup> groups;
+			if (!this.m_receivedFragmentGroups.TryGetValue(im.SenderConnection, out groups))
 			{
-				dictionary = new Dictionary<int, ReceivedFragmentGroup>();
-				this.m_receivedFragmentGroups[im.SenderConnection] = dictionary;
+				groups = new Dictionary<int, ReceivedFragmentGroup>();
+				this.m_receivedFragmentGroups[im.SenderConnection] = groups;
 			}
-			ReceivedFragmentGroup receivedFragmentGroup;
-			if (!dictionary.TryGetValue(num2, out receivedFragmentGroup))
+			ReceivedFragmentGroup info;
+			if (!groups.TryGetValue(group, out info))
 			{
-				receivedFragmentGroup = new ReceivedFragmentGroup();
-				receivedFragmentGroup.Data = new byte[num6];
-				receivedFragmentGroup.ReceivedChunks = new NetBitVector(num7);
-				dictionary[num2] = receivedFragmentGroup;
+				info = new ReceivedFragmentGroup();
+				info.Data = new byte[totalBytes];
+				info.ReceivedChunks = new NetBitVector(totalNumChunks);
+				groups[group] = info;
 			}
-			receivedFragmentGroup.ReceivedChunks[num5] = true;
-			receivedFragmentGroup.LastReceived = (float)NetTime.Now;
-			int num8 = num5 * num4;
-			Buffer.BlockCopy(im.m_data, num, receivedFragmentGroup.Data, num8, im.LengthBytes - num);
-			receivedFragmentGroup.ReceivedChunks.Count();
-			if (receivedFragmentGroup.ReceivedChunks.Count() == num7)
+			info.ReceivedChunks[chunkNumber] = true;
+			info.LastReceived = (float)NetTime.Now;
+			int offset = chunkNumber * chunkByteSize;
+			Buffer.BlockCopy(im.m_data, ptr, info.Data, offset, im.LengthBytes - ptr);
+			info.ReceivedChunks.Count();
+			if (info.ReceivedChunks.Count() == totalNumChunks)
 			{
-				im.m_data = receivedFragmentGroup.Data;
-				im.m_bitLength = num3;
+				im.m_data = info.Data;
+				im.m_bitLength = totalBits;
 				im.m_isFragment = false;
-				dictionary.Remove(num2);
+				groups.Remove(group);
 				this.ReleaseMessage(im);
 				return;
 			}
@@ -1133,27 +1133,27 @@ namespace DNA.Net.Lidgren
 
 		public void DiscoverLocalPeers(int serverPort)
 		{
-			NetOutgoingMessage netOutgoingMessage = this.CreateMessage(0);
-			netOutgoingMessage.m_messageType = NetMessageType.Discovery;
-			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(IPAddress.Broadcast, serverPort), netOutgoingMessage));
+			NetOutgoingMessage om = this.CreateMessage(0);
+			om.m_messageType = NetMessageType.Discovery;
+			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(new IPEndPoint(IPAddress.Broadcast, serverPort), om));
 		}
 
 		public bool DiscoverKnownPeer(string host, int serverPort)
 		{
-			IPAddress ipaddress = NetUtility.Resolve(host);
-			if (ipaddress == null)
+			IPAddress address = NetUtility.Resolve(host);
+			if (address == null)
 			{
 				return false;
 			}
-			this.DiscoverKnownPeer(new IPEndPoint(ipaddress, serverPort));
+			this.DiscoverKnownPeer(new IPEndPoint(address, serverPort));
 			return true;
 		}
 
 		public void DiscoverKnownPeer(IPEndPoint endPoint)
 		{
-			NetOutgoingMessage netOutgoingMessage = this.CreateMessage(0);
-			netOutgoingMessage.m_messageType = NetMessageType.Discovery;
-			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(endPoint, netOutgoingMessage));
+			NetOutgoingMessage om = this.CreateMessage(0);
+			om.m_messageType = NetMessageType.Discovery;
+			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(endPoint, om));
 		}
 
 		public void DiscoverKnownPeer(IPEndPoint endPoint, NetOutgoingMessage msg)
@@ -1208,12 +1208,12 @@ namespace DNA.Net.Lidgren
 			{
 				for (int i = 0; i < this.m_storagePool.Count; i++)
 				{
-					byte[] array = this.m_storagePool[i];
-					if (array != null && array.Length >= minimumCapacityInBytes)
+					byte[] retval = this.m_storagePool[i];
+					if (retval != null && retval.Length >= minimumCapacityInBytes)
 					{
 						this.m_storagePool[i] = null;
-						this.m_storagePoolBytes -= array.Length;
-						return array;
+						this.m_storagePoolBytes -= retval.Length;
+						return retval;
 					}
 				}
 			}
@@ -1230,8 +1230,8 @@ namespace DNA.Net.Lidgren
 			lock (this.m_storagePool)
 			{
 				this.m_storagePoolBytes += storage.Length;
-				int count = this.m_storagePool.Count;
-				for (int i = 0; i < count; i++)
+				int cnt = this.m_storagePool.Count;
+				for (int i = 0; i < cnt; i++)
 				{
 					if (this.m_storagePool[i] == null)
 					{
@@ -1251,52 +1251,52 @@ namespace DNA.Net.Lidgren
 		public NetOutgoingMessage CreateMessage(string content)
 		{
 			byte[] bytes = Encoding.UTF8.GetBytes(content);
-			NetOutgoingMessage netOutgoingMessage = this.CreateMessage(2 + bytes.Length);
-			netOutgoingMessage.WriteVariableUInt32((uint)bytes.Length);
-			netOutgoingMessage.Write(bytes);
-			return netOutgoingMessage;
+			NetOutgoingMessage om = this.CreateMessage(2 + bytes.Length);
+			om.WriteVariableUInt32((uint)bytes.Length);
+			om.Write(bytes);
+			return om;
 		}
 
 		public NetOutgoingMessage CreateMessage(int initialCapacity)
 		{
-			NetOutgoingMessage netOutgoingMessage;
-			if (this.m_outgoingMessagesPool == null || !this.m_outgoingMessagesPool.TryDequeue(out netOutgoingMessage))
+			NetOutgoingMessage retval;
+			if (this.m_outgoingMessagesPool == null || !this.m_outgoingMessagesPool.TryDequeue(out retval))
 			{
-				netOutgoingMessage = new NetOutgoingMessage();
+				retval = new NetOutgoingMessage();
 			}
 			byte[] storage = this.GetStorage(initialCapacity);
-			netOutgoingMessage.m_data = storage;
-			return netOutgoingMessage;
+			retval.m_data = storage;
+			return retval;
 		}
 
 		internal NetIncomingMessage CreateIncomingMessage(NetIncomingMessageType tp, byte[] useStorageData)
 		{
-			NetIncomingMessage netIncomingMessage;
-			if (this.m_incomingMessagesPool == null || !this.m_incomingMessagesPool.TryDequeue(out netIncomingMessage))
+			NetIncomingMessage retval;
+			if (this.m_incomingMessagesPool == null || !this.m_incomingMessagesPool.TryDequeue(out retval))
 			{
-				netIncomingMessage = new NetIncomingMessage(tp);
+				retval = new NetIncomingMessage(tp);
 			}
 			else
 			{
-				netIncomingMessage.m_incomingMessageType = tp;
+				retval.m_incomingMessageType = tp;
 			}
-			netIncomingMessage.m_data = useStorageData;
-			return netIncomingMessage;
+			retval.m_data = useStorageData;
+			return retval;
 		}
 
 		internal NetIncomingMessage CreateIncomingMessage(NetIncomingMessageType tp, int minimumByteSize)
 		{
-			NetIncomingMessage netIncomingMessage;
-			if (this.m_incomingMessagesPool == null || !this.m_incomingMessagesPool.TryDequeue(out netIncomingMessage))
+			NetIncomingMessage retval;
+			if (this.m_incomingMessagesPool == null || !this.m_incomingMessagesPool.TryDequeue(out retval))
 			{
-				netIncomingMessage = new NetIncomingMessage(tp);
+				retval = new NetIncomingMessage(tp);
 			}
 			else
 			{
-				netIncomingMessage.m_incomingMessageType = tp;
+				retval.m_incomingMessageType = tp;
 			}
-			netIncomingMessage.m_data = this.GetStorage(minimumByteSize);
-			return netIncomingMessage;
+			retval.m_data = this.GetStorage(minimumByteSize);
+			return retval;
 		}
 
 		public void Recycle(NetIncomingMessage msg)
@@ -1305,9 +1305,9 @@ namespace DNA.Net.Lidgren
 			{
 				return;
 			}
-			byte[] data = msg.m_data;
+			byte[] storage = msg.m_data;
 			msg.m_data = null;
-			this.Recycle(data);
+			this.Recycle(storage);
 			msg.Reset();
 			this.m_incomingMessagesPool.Enqueue(msg);
 		}
@@ -1322,22 +1322,22 @@ namespace DNA.Net.Lidgren
 			{
 				lock (this.m_storagePool)
 				{
-					foreach (NetIncomingMessage netIncomingMessage in toRecycle)
+					foreach (NetIncomingMessage msg in toRecycle)
 					{
-						byte[] data = netIncomingMessage.m_data;
-						netIncomingMessage.m_data = null;
-						this.m_storagePoolBytes += data.Length;
-						int count = this.m_storagePool.Count;
-						for (int i = 0; i < count; i++)
+						byte[] storage = msg.m_data;
+						msg.m_data = null;
+						this.m_storagePoolBytes += storage.Length;
+						int cnt = this.m_storagePool.Count;
+						for (int i = 0; i < cnt; i++)
 						{
 							if (this.m_storagePool[i] == null)
 							{
-								this.m_storagePool[i] = data;
+								this.m_storagePool[i] = storage;
 								return;
 							}
 						}
-						netIncomingMessage.Reset();
-						this.m_storagePool.Add(data);
+						msg.Reset();
+						this.m_storagePool.Add(storage);
 					}
 				}
 			}
@@ -1350,11 +1350,11 @@ namespace DNA.Net.Lidgren
 			{
 				return;
 			}
-			byte[] data = msg.m_data;
+			byte[] storage = msg.m_data;
 			msg.m_data = null;
 			if (msg.m_fragmentGroup == 0)
 			{
-				this.Recycle(data);
+				this.Recycle(storage);
 			}
 			msg.Reset();
 			this.m_outgoingMessagesPool.Enqueue(msg);
@@ -1362,17 +1362,17 @@ namespace DNA.Net.Lidgren
 
 		internal NetIncomingMessage CreateIncomingMessage(NetIncomingMessageType tp, string text)
 		{
-			NetIncomingMessage netIncomingMessage;
+			NetIncomingMessage retval;
 			if (string.IsNullOrEmpty(text))
 			{
-				netIncomingMessage = this.CreateIncomingMessage(tp, 1);
-				netIncomingMessage.Write(string.Empty);
-				return netIncomingMessage;
+				retval = this.CreateIncomingMessage(tp, 1);
+				retval.Write(string.Empty);
+				return retval;
 			}
-			int byteCount = Encoding.UTF8.GetByteCount(text);
-			netIncomingMessage = this.CreateIncomingMessage(tp, byteCount + ((byteCount > 127) ? 2 : 1));
-			netIncomingMessage.Write(text);
-			return netIncomingMessage;
+			int numBytes = Encoding.UTF8.GetByteCount(text);
+			retval = this.CreateIncomingMessage(tp, numBytes + ((numBytes > 127) ? 2 : 1));
+			retval.Write(text);
+			return retval;
 		}
 
 		internal bool SendMTUPacket(int numBytes, IPEndPoint target)
@@ -1380,32 +1380,32 @@ namespace DNA.Net.Lidgren
 			try
 			{
 				this.m_socket.DontFragment = true;
-				int num = this.m_socket.SendTo(this.m_sendBuffer, 0, numBytes, SocketFlags.None, target);
-				if (numBytes != num)
+				int bytesSent = this.m_socket.SendTo(this.m_sendBuffer, 0, numBytes, SocketFlags.None, target);
+				if (numBytes != bytesSent)
 				{
-					this.LogWarning(string.Concat(new object[] { "Failed to send the full ", numBytes, "; only ", num, " bytes sent in packet!" }));
+					this.LogWarning(string.Concat(new object[] { "Failed to send the full ", numBytes, "; only ", bytesSent, " bytes sent in packet!" }));
 				}
 			}
-			catch (SocketException ex)
+			catch (SocketException sx)
 			{
-				if (ex.SocketErrorCode == SocketError.MessageSize)
+				if (sx.SocketErrorCode == SocketError.MessageSize)
 				{
 					return false;
 				}
-				if (ex.SocketErrorCode == SocketError.WouldBlock)
+				if (sx.SocketErrorCode == SocketError.WouldBlock)
 				{
 					this.LogWarning("Socket threw exception; would block - send buffer full? Increase in NetPeerConfiguration");
 					return true;
 				}
-				if (ex.SocketErrorCode == SocketError.ConnectionReset)
+				if (sx.SocketErrorCode == SocketError.ConnectionReset)
 				{
 					return true;
 				}
-				this.LogError(string.Concat(new object[] { "Failed to send packet: (", ex.SocketErrorCode, ") ", ex }));
+				this.LogError(string.Concat(new object[] { "Failed to send packet: (", sx.SocketErrorCode, ") ", sx }));
 			}
-			catch (Exception ex2)
+			catch (Exception ex)
 			{
-				this.LogError("Failed to send packet: " + ex2);
+				this.LogError("Failed to send packet: " + ex);
 			}
 			finally
 			{
@@ -1423,30 +1423,30 @@ namespace DNA.Net.Lidgren
 				{
 					this.m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
 				}
-				int num = this.m_socket.SendTo(this.m_sendBuffer, 0, numBytes, SocketFlags.None, target);
-				if (numBytes != num)
+				int bytesSent = this.m_socket.SendTo(this.m_sendBuffer, 0, numBytes, SocketFlags.None, target);
+				if (numBytes != bytesSent)
 				{
-					this.LogWarning(string.Concat(new object[] { "Failed to send the full ", numBytes, "; only ", num, " bytes sent in packet!" }));
+					this.LogWarning(string.Concat(new object[] { "Failed to send the full ", numBytes, "; only ", bytesSent, " bytes sent in packet!" }));
 				}
 			}
-			catch (SocketException ex)
+			catch (SocketException sx)
 			{
-				if (ex.SocketErrorCode == SocketError.WouldBlock)
+				if (sx.SocketErrorCode == SocketError.WouldBlock)
 				{
 					this.LogWarning("Socket threw exception; would block - send buffer full? Increase in NetPeerConfiguration");
 				}
-				else if (ex.SocketErrorCode == SocketError.ConnectionReset)
+				else if (sx.SocketErrorCode == SocketError.ConnectionReset)
 				{
 					connectionReset = true;
 				}
 				else
 				{
-					this.LogError("Failed to send packet: " + ex);
+					this.LogError("Failed to send packet: " + sx);
 				}
 			}
-			catch (Exception ex2)
+			catch (Exception ex)
 			{
-				this.LogError("Failed to send packet: " + ex2);
+				this.LogError("Failed to send packet: " + ex);
 			}
 			finally
 			{
@@ -1468,62 +1468,62 @@ namespace DNA.Net.Lidgren
 
 		public void Introduce(IPEndPoint hostInternal, IPEndPoint hostExternal, IPEndPoint clientInternal, IPEndPoint clientExternal, string token)
 		{
-			NetOutgoingMessage netOutgoingMessage = this.CreateMessage(10 + token.Length + 1);
-			netOutgoingMessage.m_messageType = NetMessageType.NatIntroduction;
-			netOutgoingMessage.Write(0);
-			netOutgoingMessage.Write(hostInternal);
-			netOutgoingMessage.Write(hostExternal);
-			netOutgoingMessage.Write(token);
-			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(clientExternal, netOutgoingMessage));
-			netOutgoingMessage = this.CreateMessage(10 + token.Length + 1);
-			netOutgoingMessage.m_messageType = NetMessageType.NatIntroduction;
-			netOutgoingMessage.Write(1);
-			netOutgoingMessage.Write(clientInternal);
-			netOutgoingMessage.Write(clientExternal);
-			netOutgoingMessage.Write(token);
-			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(hostExternal, netOutgoingMessage));
+			NetOutgoingMessage msg = this.CreateMessage(10 + token.Length + 1);
+			msg.m_messageType = NetMessageType.NatIntroduction;
+			msg.Write(0);
+			msg.Write(hostInternal);
+			msg.Write(hostExternal);
+			msg.Write(token);
+			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(clientExternal, msg));
+			msg = this.CreateMessage(10 + token.Length + 1);
+			msg.m_messageType = NetMessageType.NatIntroduction;
+			msg.Write(1);
+			msg.Write(clientInternal);
+			msg.Write(clientExternal);
+			msg.Write(token);
+			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(hostExternal, msg));
 		}
 
 		internal void HandleNatIntroduction(int ptr)
 		{
-			NetIncomingMessage netIncomingMessage = this.SetupReadHelperMessage(ptr, 1000);
-			byte b = netIncomingMessage.ReadByte();
-			IPEndPoint ipendPoint = netIncomingMessage.ReadIPEndPoint();
-			IPEndPoint ipendPoint2 = netIncomingMessage.ReadIPEndPoint();
-			string text = netIncomingMessage.ReadString();
-			if (b == 0 && !this.m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.NatIntroductionSuccess))
+			NetIncomingMessage tmp = this.SetupReadHelperMessage(ptr, 1000);
+			byte hostByte = tmp.ReadByte();
+			IPEndPoint remoteInternal = tmp.ReadIPEndPoint();
+			IPEndPoint remoteExternal = tmp.ReadIPEndPoint();
+			string token = tmp.ReadString();
+			if (hostByte == 0 && !this.m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.NatIntroductionSuccess))
 			{
 				return;
 			}
-			NetOutgoingMessage netOutgoingMessage = this.CreateMessage(1);
-			netOutgoingMessage.m_messageType = NetMessageType.NatPunchMessage;
-			netOutgoingMessage.Write(b);
-			netOutgoingMessage.Write(text);
-			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(ipendPoint, netOutgoingMessage));
-			netOutgoingMessage = this.CreateMessage(1);
-			netOutgoingMessage.m_messageType = NetMessageType.NatPunchMessage;
-			netOutgoingMessage.Write(b);
-			netOutgoingMessage.Write(text);
-			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(ipendPoint2, netOutgoingMessage));
+			NetOutgoingMessage punch = this.CreateMessage(1);
+			punch.m_messageType = NetMessageType.NatPunchMessage;
+			punch.Write(hostByte);
+			punch.Write(token);
+			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(remoteInternal, punch));
+			punch = this.CreateMessage(1);
+			punch.m_messageType = NetMessageType.NatPunchMessage;
+			punch.Write(hostByte);
+			punch.Write(token);
+			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(remoteExternal, punch));
 		}
 
 		private void HandleNatPunch(int ptr, IPEndPoint senderEndPoint)
 		{
-			NetIncomingMessage netIncomingMessage = this.SetupReadHelperMessage(ptr, 1000);
-			if (netIncomingMessage.ReadByte() == 0)
+			NetIncomingMessage tmp = this.SetupReadHelperMessage(ptr, 1000);
+			if (tmp.ReadByte() == 0)
 			{
 				return;
 			}
-			string text = netIncomingMessage.ReadString();
-			NetIncomingMessage netIncomingMessage2 = this.CreateIncomingMessage(NetIncomingMessageType.NatIntroductionSuccess, 10);
-			netIncomingMessage2.m_senderEndPoint = senderEndPoint;
-			netIncomingMessage2.Write(text);
-			this.ReleaseMessage(netIncomingMessage2);
-			NetOutgoingMessage netOutgoingMessage = this.CreateMessage(1);
-			netOutgoingMessage.m_messageType = NetMessageType.NatPunchMessage;
-			netOutgoingMessage.Write(0);
-			netOutgoingMessage.Write(text);
-			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(senderEndPoint, netOutgoingMessage));
+			string token = tmp.ReadString();
+			NetIncomingMessage punchSuccess = this.CreateIncomingMessage(NetIncomingMessageType.NatIntroductionSuccess, 10);
+			punchSuccess.m_senderEndPoint = senderEndPoint;
+			punchSuccess.Write(token);
+			this.ReleaseMessage(punchSuccess);
+			NetOutgoingMessage punch = this.CreateMessage(1);
+			punch.m_messageType = NetMessageType.NatPunchMessage;
+			punch.Write(0);
+			punch.Write(token);
+			this.m_unsentUnconnectedMessages.Enqueue(new NetTuple<IPEndPoint, NetOutgoingMessage>(senderEndPoint, punch));
 		}
 
 		[Conditional("DEBUG")]

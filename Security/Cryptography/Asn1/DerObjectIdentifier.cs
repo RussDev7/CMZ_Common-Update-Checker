@@ -95,49 +95,49 @@ namespace DNA.Security.Cryptography.Asn1
 
 		private void WriteField(Stream outputStream, BigInteger fieldValue)
 		{
-			int num = (fieldValue.BitLength + 6) / 7;
-			if (num == 0)
+			int byteCount = (fieldValue.BitLength + 6) / 7;
+			if (byteCount == 0)
 			{
 				outputStream.WriteByte(0);
 				return;
 			}
-			BigInteger bigInteger = fieldValue;
-			byte[] array = new byte[num];
-			for (int i = num - 1; i >= 0; i--)
+			BigInteger tmpValue = fieldValue;
+			byte[] tmp = new byte[byteCount];
+			for (int i = byteCount - 1; i >= 0; i--)
 			{
-				array[i] = (byte)((bigInteger.IntValue & 127) | 128);
-				bigInteger = bigInteger.ShiftRight(7);
+				tmp[i] = (byte)((tmpValue.IntValue & 127) | 128);
+				tmpValue = tmpValue.ShiftRight(7);
 			}
-			byte[] array2 = array;
-			int num2 = num - 1;
-			array2[num2] &= 127;
-			outputStream.Write(array, 0, array.Length);
+			byte[] array = tmp;
+			int num = byteCount - 1;
+			array[num] &= 127;
+			outputStream.Write(tmp, 0, tmp.Length);
 		}
 
 		internal override void Encode(DerOutputStream derOut)
 		{
-			OidTokenizer oidTokenizer = new OidTokenizer(this.identifier);
-			MemoryStream memoryStream = new MemoryStream();
-			DerOutputStream derOutputStream = new DerOutputStream(memoryStream);
-			string text = oidTokenizer.NextToken();
-			int num = int.Parse(text);
-			text = oidTokenizer.NextToken();
-			int num2 = int.Parse(text);
-			this.WriteField(memoryStream, (long)(num * 40 + num2));
-			while (oidTokenizer.HasMoreTokens)
+			OidTokenizer tok = new OidTokenizer(this.identifier);
+			MemoryStream bOut = new MemoryStream();
+			DerOutputStream dOut = new DerOutputStream(bOut);
+			string token = tok.NextToken();
+			int first = int.Parse(token);
+			token = tok.NextToken();
+			int second = int.Parse(token);
+			this.WriteField(bOut, (long)(first * 40 + second));
+			while (tok.HasMoreTokens)
 			{
-				text = oidTokenizer.NextToken();
-				if (text.Length < 18)
+				token = tok.NextToken();
+				if (token.Length < 18)
 				{
-					this.WriteField(memoryStream, long.Parse(text));
+					this.WriteField(bOut, long.Parse(token));
 				}
 				else
 				{
-					this.WriteField(memoryStream, new BigInteger(text));
+					this.WriteField(bOut, new BigInteger(token));
 				}
 			}
-			derOutputStream.Close();
-			derOut.WriteEncoded(6, memoryStream.ToArray());
+			dOut.Close();
+			derOut.WriteEncoded(6, bOut.ToArray());
 		}
 
 		protected override int Asn1GetHashCode()
@@ -147,8 +147,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerObjectIdentifier derObjectIdentifier = asn1Object as DerObjectIdentifier;
-			return derObjectIdentifier != null && this.identifier.Equals(derObjectIdentifier.identifier);
+			DerObjectIdentifier other = asn1Object as DerObjectIdentifier;
+			return other != null && this.identifier.Equals(other.identifier);
 		}
 
 		public override string ToString()
@@ -158,59 +158,59 @@ namespace DNA.Security.Cryptography.Asn1
 
 		private static string MakeOidStringFromBytes(byte[] bytes)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			long num = 0L;
-			BigInteger bigInteger = null;
-			bool flag = true;
-			for (int num2 = 0; num2 != bytes.Length; num2++)
+			StringBuilder objId = new StringBuilder();
+			long value = 0L;
+			BigInteger bigValue = null;
+			bool first = true;
+			for (int i = 0; i != bytes.Length; i++)
 			{
-				int num3 = (int)bytes[num2];
-				if (num < 36028797018963968L)
+				int b = (int)bytes[i];
+				if (value < 36028797018963968L)
 				{
-					num = num * 128L + (long)(num3 & 127);
-					if ((num3 & 128) == 0)
+					value = value * 128L + (long)(b & 127);
+					if ((b & 128) == 0)
 					{
-						if (flag)
+						if (first)
 						{
-							switch ((int)num / 40)
+							switch ((int)value / 40)
 							{
 							case 0:
-								stringBuilder.Append('0');
+								objId.Append('0');
 								break;
 							case 1:
-								stringBuilder.Append('1');
-								num -= 40L;
+								objId.Append('1');
+								value -= 40L;
 								break;
 							default:
-								stringBuilder.Append('2');
-								num -= 80L;
+								objId.Append('2');
+								value -= 80L;
 								break;
 							}
-							flag = false;
+							first = false;
 						}
-						stringBuilder.Append('.');
-						stringBuilder.Append(num);
-						num = 0L;
+						objId.Append('.');
+						objId.Append(value);
+						value = 0L;
 					}
 				}
 				else
 				{
-					if (bigInteger == null)
+					if (bigValue == null)
 					{
-						bigInteger = BigInteger.ValueOf(num);
+						bigValue = BigInteger.ValueOf(value);
 					}
-					bigInteger = bigInteger.ShiftLeft(7);
-					bigInteger = bigInteger.Or(BigInteger.ValueOf((long)(num3 & 127)));
-					if ((num3 & 128) == 0)
+					bigValue = bigValue.ShiftLeft(7);
+					bigValue = bigValue.Or(BigInteger.ValueOf((long)(b & 127)));
+					if ((b & 128) == 0)
 					{
-						stringBuilder.Append('.');
-						stringBuilder.Append(bigInteger);
-						bigInteger = null;
-						num = 0L;
+						objId.Append('.');
+						objId.Append(bigValue);
+						bigValue = null;
+						value = 0L;
 					}
 				}
 			}
-			return stringBuilder.ToString();
+			return objId.ToString();
 		}
 
 		private static readonly Regex OidRegex = new Regex("\\A[0-2](\\.[0-9]+)+\\z");

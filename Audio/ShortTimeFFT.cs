@@ -10,74 +10,74 @@ namespace DNA.Audio
 			this._revTable = new int[frameSize * 2];
 			for (int i = 2; i < 2 * this.FrameSize - 2; i += 2)
 			{
-				int j = 2;
-				int num = 0;
-				while (j < frameSize * 2)
+				int bitm = 2;
+				int j = 0;
+				while (bitm < frameSize * 2)
 				{
-					if ((i & j) != 0)
+					if ((i & bitm) != 0)
 					{
-						num++;
+						j++;
 					}
-					num <<= 1;
 					j <<= 1;
+					bitm <<= 1;
 				}
-				if (i < num)
+				if (i < j)
 				{
-					this._revTable[i] = num;
-					this._revTable[num] = i;
-					this._revTable[i + 1] = num + 1;
-					this._revTable[num + 1] = i + 1;
+					this._revTable[i] = j;
+					this._revTable[j] = i;
+					this._revTable[i + 1] = j + 1;
+					this._revTable[j + 1] = i + 1;
 				}
 			}
 		}
 
 		public void Transform(float[] fftBuffer, int sign)
 		{
-			int frameSize = this.FrameSize;
-			int num = frameSize << 1;
-			for (int i = 2; i < num - 2; i += 2)
+			int fftFrameSize = this.FrameSize;
+			int fftFrameSize2 = fftFrameSize << 1;
+			for (int i = 2; i < fftFrameSize2 - 2; i += 2)
 			{
-				int num2 = this._revTable[i];
-				if (i < num2)
+				int j = this._revTable[i];
+				if (i < j)
 				{
-					float num3 = fftBuffer[i];
-					fftBuffer[i] = fftBuffer[num2];
-					fftBuffer[num2] = num3;
-					num3 = fftBuffer[i + 1];
-					fftBuffer[i + 1] = fftBuffer[num2 + 1];
-					fftBuffer[num2 + 1] = num3;
+					float temp = fftBuffer[i];
+					fftBuffer[i] = fftBuffer[j];
+					fftBuffer[j] = temp;
+					temp = fftBuffer[i + 1];
+					fftBuffer[i + 1] = fftBuffer[j + 1];
+					fftBuffer[j + 1] = temp;
 				}
 			}
-			int num4 = (int)(Math.Log((double)frameSize) / Math.Log(2.0) + 0.5);
-			int j = 0;
-			int num5 = 2;
-			while (j < num4)
+			int max = (int)(Math.Log((double)fftFrameSize) / Math.Log(2.0) + 0.5);
+			int k = 0;
+			int le = 2;
+			while (k < max)
 			{
-				num5 <<= 1;
-				int num6 = num5 >> 1;
-				float num7 = 1f;
-				float num8 = 0f;
-				float num9 = (float)(3.141592653589793 / (double)(num6 >> 1));
-				float num10 = (float)Math.Cos((double)num9);
-				float num11 = (float)sign * (float)Math.Sin((double)num9);
-				for (int k = 0; k < num6; k += 2)
+				le <<= 1;
+				int le2 = le >> 1;
+				float ur = 1f;
+				float ui = 0f;
+				float arg = (float)(3.141592653589793 / (double)(le2 >> 1));
+				float wr = (float)Math.Cos((double)arg);
+				float wi = (float)sign * (float)Math.Sin((double)arg);
+				for (int l = 0; l < le2; l += 2)
 				{
-					float num13;
-					for (int l = k; l < num; l += num5)
+					float tr;
+					for (int m = l; m < fftFrameSize2; m += le)
 					{
-						int num12 = l + num6;
-						num13 = fftBuffer[num12] * num7 - fftBuffer[num12 + 1] * num8;
-						float num14 = fftBuffer[num12] * num8 + fftBuffer[num12 + 1] * num7;
-						fftBuffer[num12] = fftBuffer[l] - num13;
-						fftBuffer[num12 + 1] = fftBuffer[l + 1] - num14;
-						fftBuffer[l] += num13;
-						fftBuffer[l + 1] += num14;
+						int index = m + le2;
+						tr = fftBuffer[index] * ur - fftBuffer[index + 1] * ui;
+						float ti = fftBuffer[index] * ui + fftBuffer[index + 1] * ur;
+						fftBuffer[index] = fftBuffer[m] - tr;
+						fftBuffer[index + 1] = fftBuffer[m + 1] - ti;
+						fftBuffer[m] += tr;
+						fftBuffer[m + 1] += ti;
 					}
-					num13 = num7 * num10 - num8 * num11;
-					num8 = num7 * num11 + num8 * num10;
-					num7 = num13;
+					tr = ur * wr - ui * wi;
+					ui = ur * wi + ui * wr;
+					ur = tr;
 				}
-				j++;
+				k++;
 			}
 		}
 

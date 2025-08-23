@@ -103,8 +103,8 @@ namespace DNA.Drawing.UI
 			{
 				SoundManager.Instance.PlayInstance(this.OpenSound);
 			}
-			float num = (float)this._bgImage.Width;
-			this.GetOptionsLines(num);
+			float w = (float)this._bgImage.Width;
+			this.GetOptionsLines(w);
 			base.OnPushed();
 		}
 
@@ -115,71 +115,71 @@ namespace DNA.Drawing.UI
 				this._optionsLinesCalculated = true;
 				for (int i = 0; i < this._options.Length; i++)
 				{
-					string text = this._options[i];
-					float num = 0f;
-					int num2 = 0;
-					int num3 = 0;
-					if (text != null)
+					string currentOption = this._options[i];
+					float currentCount = 0f;
+					int last = 0;
+					int start = 0;
+					if (currentOption != null)
 					{
-						for (int j = 0; j < text.Length; j++)
+						for (int j = 0; j < currentOption.Length; j++)
 						{
-							if (text[j] == '\n')
+							if (currentOption[j] == '\n')
 							{
-								if (this._font.MeasureString(text.Substring(num3, j - num3 + 1)).X > w - this.OptionsPadding.X * 2f)
+								if (this._font.MeasureString(currentOption.Substring(start, j - start + 1)).X > w - this.OptionsPadding.X * 2f)
 								{
-									this.optionLinesToPrint.Add(text.Substring(num3, num2 - num3));
+									this.optionLinesToPrint.Add(currentOption.Substring(start, last - start));
 									if (this.optionsStartLine.Count < i + 1)
 									{
 										this.optionsStartLine.Add(this.optionLinesToPrint.Count - 1);
 									}
-									this.optionLinesToPrint.Add(text.Substring(num2 + 1, j - num2));
+									this.optionLinesToPrint.Add(currentOption.Substring(last + 1, j - last));
 								}
 								else
 								{
-									this.optionLinesToPrint.Add(text.Substring(num3, j - num3));
+									this.optionLinesToPrint.Add(currentOption.Substring(start, j - start));
 									if (this.optionsStartLine.Count < i + 1)
 									{
 										this.optionsStartLine.Add(this.optionLinesToPrint.Count - 1);
 									}
 								}
-								num3 = j + 1;
-								num = 0f;
-								num2 = j;
+								start = j + 1;
+								currentCount = 0f;
+								last = j;
 							}
-							if (text[j] == ' ')
+							if (currentOption[j] == ' ')
 							{
-								float x = this._font.MeasureString(text.Substring(num2, j - num2)).X;
-								num += x;
-								if (num > w - this.OptionsPadding.X * 2f)
+								float subStringLength = this._font.MeasureString(currentOption.Substring(last, j - last)).X;
+								currentCount += subStringLength;
+								if (currentCount > w - this.OptionsPadding.X * 2f)
 								{
-									this.optionLinesToPrint.Add(text.Substring(num3, num2 - num3 + 1));
+									this.optionLinesToPrint.Add(currentOption.Substring(start, last - start + 1));
 									if (this.optionsStartLine.Count < i + 1)
 									{
 										this.optionsStartLine.Add(this.optionLinesToPrint.Count - 1);
 									}
-									num3 = num2 + 1;
-									num = x;
-									num2 = j + 1;
+									start = last + 1;
+									currentCount = subStringLength;
+									last = j + 1;
 								}
 								else
 								{
-									num2 = j;
+									last = j;
 								}
 							}
-							if (j == text.Length - 1)
+							if (j == currentOption.Length - 1)
 							{
-								if (this._font.MeasureString(text.Substring(num3, j - num3 + 1)).X > w - this.OptionsPadding.X * 2f)
+								if (this._font.MeasureString(currentOption.Substring(start, j - start + 1)).X > w - this.OptionsPadding.X * 2f)
 								{
-									this.optionLinesToPrint.Add(text.Substring(num3, num2 - num3 + 1));
+									this.optionLinesToPrint.Add(currentOption.Substring(start, last - start + 1));
 									if (this.optionsStartLine.Count < i + 1)
 									{
 										this.optionsStartLine.Add(this.optionLinesToPrint.Count - 1);
 									}
-									this.optionLinesToPrint.Add(text.Substring(num2 + 1, j - num2));
+									this.optionLinesToPrint.Add(currentOption.Substring(last + 1, j - last));
 								}
 								else
 								{
-									this.optionLinesToPrint.Add(text.Substring(num3, j - num3 + 1));
+									this.optionLinesToPrint.Add(currentOption.Substring(start, j - start + 1));
 									if (this.optionsStartLine.Count < i + 1)
 									{
 										this.optionsStartLine.Add(this.optionLinesToPrint.Count - 1);
@@ -194,29 +194,29 @@ namespace DNA.Drawing.UI
 
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
-			Rectangle screenRect = Screen.Adjuster.ScreenRect;
-			float num = (float)this._bgImage.Width;
-			float num2 = (float)this._bgImage.Height;
-			Rectangle rectangle = new Rectangle((int)((float)screenRect.Center.X - num / 2f), (int)((float)screenRect.Center.Y - num2 / 2f), (int)num, (int)num2);
+			Rectangle titleSafe = Screen.Adjuster.ScreenRect;
+			float w = (float)this._bgImage.Width;
+			float h = (float)this._bgImage.Height;
+			Rectangle DialogDestination = new Rectangle((int)((float)titleSafe.Center.X - w / 2f), (int)((float)titleSafe.Center.Y - h / 2f), (int)w, (int)h);
 			if (this.DummyTexture == null)
 			{
 				this.DummyTexture = new Texture2D(device, 1, 1);
 				this.DummyTexture.SetData<Color>(new Color[] { Color.White });
 			}
 			spriteBatch.Begin();
-			Rectangle rectangle2 = new Rectangle(0, 0, device.Viewport.Width, device.Viewport.Height);
-			spriteBatch.Draw(this.DummyTexture, rectangle2, new Color(0f, 0f, 0f, 0.5f));
-			spriteBatch.Draw(this._bgImage, rectangle, Color.White);
-			spriteBatch.DrawOutlinedText(this._font, this.Title, new Vector2((float)rectangle.X + this.TitlePadding.X, (float)rectangle.Y + this.TitlePadding.Y), this.TitleColor, Color.Black, 1);
-			float num3 = (float)rectangle.Y + this.DescriptionPadding.Y;
-			float num4 = (float)this._font.LineSpacing;
-			float num5 = (float)rectangle.X + this.DescriptionPadding.X;
-			float num6 = (float)rectangle.Y + this.DescriptionPadding.Y + (float)this._font.LineSpacing;
-			this._descriptionText.Location = new Vector2(num5, num6);
-			this._descriptionText.Size = new Vector2(num - this.DescriptionPadding.X * 2f, num2 - this.DescriptionPadding.Y - (float)this._font.LineSpacing);
+			Rectangle dest = new Rectangle(0, 0, device.Viewport.Width, device.Viewport.Height);
+			spriteBatch.Draw(this.DummyTexture, dest, new Color(0f, 0f, 0f, 0.5f));
+			spriteBatch.Draw(this._bgImage, DialogDestination, Color.White);
+			spriteBatch.DrawOutlinedText(this._font, this.Title, new Vector2((float)DialogDestination.X + this.TitlePadding.X, (float)DialogDestination.Y + this.TitlePadding.Y), this.TitleColor, Color.Black, 1);
+			float lineHeight = (float)DialogDestination.Y + this.DescriptionPadding.Y;
+			float singleLineHeight = (float)this._font.LineSpacing;
+			float xLoc = (float)DialogDestination.X + this.DescriptionPadding.X;
+			float yLoc = (float)DialogDestination.Y + this.DescriptionPadding.Y + (float)this._font.LineSpacing;
+			this._descriptionText.Location = new Vector2(xLoc, yLoc);
+			this._descriptionText.Size = new Vector2(w - this.DescriptionPadding.X * 2f, h - this.DescriptionPadding.Y - (float)this._font.LineSpacing);
 			this._descriptionText.Draw(device, spriteBatch, gameTime, false);
-			this._endOfDescriptionLoc = num6 + num4;
-			num3 = (float)(rectangle.Y + rectangle.Height) - this.OptionsPadding.Y - this._font.MeasureString(this.Title).Y * (float)(this.optionLinesToPrint.Count + 2) - this.ButtonsPadding.Y;
+			this._endOfDescriptionLoc = yLoc + singleLineHeight;
+			lineHeight = (float)(DialogDestination.Y + DialogDestination.Height) - this.OptionsPadding.Y - this._font.MeasureString(this.Title).Y * (float)(this.optionLinesToPrint.Count + 2) - this.ButtonsPadding.Y;
 			for (int i = 0; i < this.optionLinesToPrint.Count; i++)
 			{
 				if (i >= this.optionsStartLine[this.optionCurrentlySelected])
@@ -241,32 +241,32 @@ namespace DNA.Drawing.UI
 						{
 							color = Color.Lerp(this.OptionsSelectedColor, this.OptionsColor, this.flashTimer.PercentComplete);
 						}
-						num3 += this._font.MeasureString(this.Title).Y;
-						spriteBatch.DrawOutlinedText(this._font, this.optionLinesToPrint[i], new Vector2((float)rectangle.X + this.OptionsPadding.X, num3), color, Color.Black, 1);
+						lineHeight += this._font.MeasureString(this.Title).Y;
+						spriteBatch.DrawOutlinedText(this._font, this.optionLinesToPrint[i], new Vector2((float)DialogDestination.X + this.OptionsPadding.X, lineHeight), color, Color.Black, 1);
 					}
 					else
 					{
-						num3 += this._font.MeasureString(this.Title).Y;
-						spriteBatch.DrawOutlinedText(this._font, this.optionLinesToPrint[i], new Vector2((float)rectangle.X + this.OptionsPadding.X, num3), this.OptionsColor, Color.Black, 1);
+						lineHeight += this._font.MeasureString(this.Title).Y;
+						spriteBatch.DrawOutlinedText(this._font, this.optionLinesToPrint[i], new Vector2((float)DialogDestination.X + this.OptionsPadding.X, lineHeight), this.OptionsColor, Color.Black, 1);
 					}
 				}
 				else
 				{
-					num3 += this._font.MeasureString(this.Title).Y;
-					spriteBatch.DrawOutlinedText(this._font, this.optionLinesToPrint[i], new Vector2((float)rectangle.X + this.OptionsPadding.X, num3), this.OptionsColor, Color.Black, 1);
+					lineHeight += this._font.MeasureString(this.Title).Y;
+					spriteBatch.DrawOutlinedText(this._font, this.optionLinesToPrint[i], new Vector2((float)DialogDestination.X + this.OptionsPadding.X, lineHeight), this.OptionsColor, Color.Black, 1);
 				}
 			}
-			num3 = (float)(rectangle.Y + rectangle.Height) - this.ButtonsPadding.Y - this._font.MeasureString(this.Title).Y + 5f;
-			this._button0.LocalPosition = new Point((int)((float)rectangle.X + this.ButtonsPadding.X), (int)num3);
+			lineHeight = (float)(DialogDestination.Y + DialogDestination.Height) - this.ButtonsPadding.Y - this._font.MeasureString(this.Title).Y + 5f;
+			this._button0.LocalPosition = new Point((int)((float)DialogDestination.X + this.ButtonsPadding.X), (int)lineHeight);
 			if (base.Controls.Contains(this._button1))
 			{
-				this._button1.LocalPosition = new Point((int)(this.ButtonsPadding.X + (float)this._button0.LocalBounds.Right), (int)num3);
+				this._button1.LocalPosition = new Point((int)(this.ButtonsPadding.X + (float)this._button0.LocalBounds.Right), (int)lineHeight);
 				if (base.Controls.Contains(this._button2))
 				{
-					this._button2.LocalPosition = new Point((int)(this.ButtonsPadding.X + (float)this._button1.LocalBounds.Right), (int)num3);
+					this._button2.LocalPosition = new Point((int)(this.ButtonsPadding.X + (float)this._button1.LocalBounds.Right), (int)lineHeight);
 					if (base.Controls.Contains(this._button3))
 					{
-						this._button3.LocalPosition = new Point((int)(this.ButtonsPadding.X + (float)this._button2.LocalBounds.Right), (int)num3);
+						this._button3.LocalPosition = new Point((int)(this.ButtonsPadding.X + (float)this._button2.LocalBounds.Right), (int)lineHeight);
 					}
 				}
 			}

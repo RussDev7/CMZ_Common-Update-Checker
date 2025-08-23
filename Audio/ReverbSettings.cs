@@ -120,29 +120,29 @@ namespace DNA.Audio
 
 		public void Blend(ReverbSettings settings, float blender)
 		{
-			float num = 1f - blender;
-			this.ReflectionsGain = this.ReflectionsGain * num + settings.ReflectionsGain * blender;
-			this.ReverbGain = this.ReverbGain * num + settings.ReverbGain * blender;
-			this.DecayTime = this.DecayTime * num + settings.DecayTime * blender;
-			this.ReflectionsDelay = this.ReflectionsDelay * num + settings.ReflectionsDelay * blender;
-			this.ReverbDelay = this.ReverbDelay * num + settings.ReverbDelay * blender;
-			this.RearDelay = this.RearDelay * num + settings.RearDelay * blender;
-			this.RoomSize = this.RoomSize * num + settings.RoomSize * blender;
-			this.Density = this.Density * num + settings.Density * blender;
-			this.LowEQGain = this.LowEQGain * num + settings.LowEQGain * blender;
-			this.LowEQCutoff = this.LowEQCutoff * num + settings.LowEQCutoff * blender;
-			this.HighEQGain = this.HighEQGain * num + settings.HighEQGain * blender;
-			this.HighEQCutoff = this.HighEQCutoff * num + settings.HighEQCutoff * blender;
-			this.PositionLeft = this.PositionLeft * num + settings.PositionLeft * blender;
-			this.PositionRight = this.PositionRight * num + settings.PositionRight * blender;
-			this.PositionLeftMatrix = this.PositionLeftMatrix * num + settings.PositionLeftMatrix * blender;
-			this.PositionRightMatrix = this.PositionRightMatrix * num + settings.PositionRightMatrix * blender;
-			this.EarlyDiffusion = this.EarlyDiffusion * num + settings.EarlyDiffusion * blender;
-			this.LateDiffusion = this.LateDiffusion * num + settings.LateDiffusion * blender;
-			this.RoomFilterMain = this.RoomFilterMain * num + settings.RoomFilterMain * blender;
-			this.RoomFilterFrequency = this.RoomFilterFrequency * num + settings.RoomFilterFrequency * blender;
-			this.RoomFilterHighFrequency = this.RoomFilterHighFrequency * num + settings.RoomFilterHighFrequency * blender;
-			this.WetDryMix = this.WetDryMix * num + settings.WetDryMix * blender;
+			float blenderInv = 1f - blender;
+			this.ReflectionsGain = this.ReflectionsGain * blenderInv + settings.ReflectionsGain * blender;
+			this.ReverbGain = this.ReverbGain * blenderInv + settings.ReverbGain * blender;
+			this.DecayTime = this.DecayTime * blenderInv + settings.DecayTime * blender;
+			this.ReflectionsDelay = this.ReflectionsDelay * blenderInv + settings.ReflectionsDelay * blender;
+			this.ReverbDelay = this.ReverbDelay * blenderInv + settings.ReverbDelay * blender;
+			this.RearDelay = this.RearDelay * blenderInv + settings.RearDelay * blender;
+			this.RoomSize = this.RoomSize * blenderInv + settings.RoomSize * blender;
+			this.Density = this.Density * blenderInv + settings.Density * blender;
+			this.LowEQGain = this.LowEQGain * blenderInv + settings.LowEQGain * blender;
+			this.LowEQCutoff = this.LowEQCutoff * blenderInv + settings.LowEQCutoff * blender;
+			this.HighEQGain = this.HighEQGain * blenderInv + settings.HighEQGain * blender;
+			this.HighEQCutoff = this.HighEQCutoff * blenderInv + settings.HighEQCutoff * blender;
+			this.PositionLeft = this.PositionLeft * blenderInv + settings.PositionLeft * blender;
+			this.PositionRight = this.PositionRight * blenderInv + settings.PositionRight * blender;
+			this.PositionLeftMatrix = this.PositionLeftMatrix * blenderInv + settings.PositionLeftMatrix * blender;
+			this.PositionRightMatrix = this.PositionRightMatrix * blenderInv + settings.PositionRightMatrix * blender;
+			this.EarlyDiffusion = this.EarlyDiffusion * blenderInv + settings.EarlyDiffusion * blender;
+			this.LateDiffusion = this.LateDiffusion * blenderInv + settings.LateDiffusion * blender;
+			this.RoomFilterMain = this.RoomFilterMain * blenderInv + settings.RoomFilterMain * blender;
+			this.RoomFilterFrequency = this.RoomFilterFrequency * blenderInv + settings.RoomFilterFrequency * blender;
+			this.RoomFilterHighFrequency = this.RoomFilterHighFrequency * blenderInv + settings.RoomFilterHighFrequency * blender;
+			this.WetDryMix = this.WetDryMix * blenderInv + settings.WetDryMix * blender;
 		}
 
 		public float ReflectionsGain;

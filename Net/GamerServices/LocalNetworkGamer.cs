@@ -29,7 +29,7 @@ namespace DNA.Net.GamerServices
 
 		public int ReceiveData(byte[] data, out NetworkGamer sender)
 		{
-			int num = 0;
+			int result = 0;
 			sender = null;
 			lock (this._pendingData)
 			{
@@ -39,34 +39,34 @@ namespace DNA.Net.GamerServices
 					{
 						throw new ArgumentException("Data buffer is too small");
 					}
-					LocalNetworkGamer.PendingDataPacket pendingDataPacket = this._pendingData[0];
+					LocalNetworkGamer.PendingDataPacket packet = this._pendingData[0];
 					this._pendingData.RemoveAt(0);
-					pendingDataPacket.Data.CopyTo(data, 0);
-					sender = pendingDataPacket.Sender;
-					num = pendingDataPacket.Data.Length;
-					pendingDataPacket.Release();
+					packet.Data.CopyTo(data, 0);
+					sender = packet.Sender;
+					result = packet.Data.Length;
+					packet.Release();
 				}
 			}
-			return num;
+			return result;
 		}
 
 		public void AppendNewDataPacket(byte[] data, NetworkGamer sender)
 		{
-			LocalNetworkGamer.PendingDataPacket pendingDataPacket = LocalNetworkGamer.PendingDataPacket.Alloc(sender, data);
+			LocalNetworkGamer.PendingDataPacket packet = LocalNetworkGamer.PendingDataPacket.Alloc(sender, data);
 			lock (this._pendingData)
 			{
-				this._pendingData.Add(pendingDataPacket);
+				this._pendingData.Add(packet);
 			}
 		}
 
 		public void AppendNewDataPacket(byte[] data, int offset, int length, NetworkGamer sender)
 		{
-			byte[] array = new byte[length];
-			Buffer.BlockCopy(data, offset, array, 0, length);
-			LocalNetworkGamer.PendingDataPacket pendingDataPacket = LocalNetworkGamer.PendingDataPacket.Alloc(sender, array);
+			byte[] newdata = new byte[length];
+			Buffer.BlockCopy(data, offset, newdata, 0, length);
+			LocalNetworkGamer.PendingDataPacket packet = LocalNetworkGamer.PendingDataPacket.Alloc(sender, newdata);
 			lock (this._pendingData)
 			{
-				this._pendingData.Add(pendingDataPacket);
+				this._pendingData.Add(packet);
 			}
 		}
 
@@ -99,8 +99,8 @@ namespace DNA.Net.GamerServices
 		{
 			if (recipient is LocalNetworkGamer)
 			{
-				LocalNetworkGamer localNetworkGamer = recipient as LocalNetworkGamer;
-				localNetworkGamer.AppendNewDataPacket(data, this);
+				LocalNetworkGamer receiver = recipient as LocalNetworkGamer;
+				receiver.AppendNewDataPacket(data, this);
 				return;
 			}
 			base.Session.SendRemoteData(data, options, recipient);
@@ -135,8 +135,8 @@ namespace DNA.Net.GamerServices
 		{
 			if (recipient is LocalNetworkGamer)
 			{
-				LocalNetworkGamer localNetworkGamer = recipient as LocalNetworkGamer;
-				localNetworkGamer.AppendNewDataPacket(data, offset, count, this);
+				LocalNetworkGamer receiver = recipient as LocalNetworkGamer;
+				receiver.AppendNewDataPacket(data, offset, count, this);
 				return;
 			}
 			base.Session.SendRemoteData(data, offset, count, options, recipient);
@@ -175,23 +175,23 @@ namespace DNA.Net.GamerServices
 		{
 			public static LocalNetworkGamer.PendingDataPacket Alloc(NetworkGamer sender, byte[] data)
 			{
-				LocalNetworkGamer.PendingDataPacket pendingDataPacket = null;
+				LocalNetworkGamer.PendingDataPacket result = null;
 				lock (LocalNetworkGamer.PendingDataPacket._freePackets)
 				{
 					if (LocalNetworkGamer.PendingDataPacket._freePackets.Count > 0)
 					{
-						int num = LocalNetworkGamer.PendingDataPacket._freePackets.Count - 1;
-						pendingDataPacket = LocalNetworkGamer.PendingDataPacket._freePackets[num];
-						LocalNetworkGamer.PendingDataPacket._freePackets.RemoveAt(num);
+						int resultIndex = LocalNetworkGamer.PendingDataPacket._freePackets.Count - 1;
+						result = LocalNetworkGamer.PendingDataPacket._freePackets[resultIndex];
+						LocalNetworkGamer.PendingDataPacket._freePackets.RemoveAt(resultIndex);
 					}
 				}
-				if (pendingDataPacket == null)
+				if (result == null)
 				{
-					pendingDataPacket = new LocalNetworkGamer.PendingDataPacket();
+					result = new LocalNetworkGamer.PendingDataPacket();
 				}
-				pendingDataPacket.Sender = sender;
-				pendingDataPacket.Data = data;
-				return pendingDataPacket;
+				result.Sender = sender;
+				result.Data = data;
+				return result;
 			}
 
 			public void Release()

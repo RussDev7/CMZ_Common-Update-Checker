@@ -89,36 +89,36 @@ namespace DNA.Drawing
 
 		private void AssumeDefaultPose()
 		{
-			Skeleton skeleton = this.Skeleton;
-			for (int i = 0; i < skeleton.Count; i++)
+			Skeleton bones = this.Skeleton;
+			for (int i = 0; i < bones.Count; i++)
 			{
-				skeleton[i].SetTransform(this._defaultPose[i]);
+				bones[i].SetTransform(this._defaultPose[i]);
 			}
 		}
 
 		protected static void ChangeEffectUsedByMesh(ModelMesh mesh, Effect replacementEffect)
 		{
-			Dictionary<Effect, Effect> dictionary = new Dictionary<Effect, Effect>();
-			foreach (Effect effect in mesh.Effects)
+			Dictionary<Effect, Effect> effectMapping = new Dictionary<Effect, Effect>();
+			foreach (Effect oldEffect in mesh.Effects)
 			{
-				if (!dictionary.ContainsKey(effect))
+				if (!effectMapping.ContainsKey(oldEffect))
 				{
-					Effect effect2 = replacementEffect.Clone();
-					dictionary[effect] = effect2;
+					Effect newEffect = replacementEffect.Clone();
+					effectMapping[oldEffect] = newEffect;
 				}
 			}
-			foreach (ModelMeshPart modelMeshPart in mesh.MeshParts)
+			foreach (ModelMeshPart meshPart in mesh.MeshParts)
 			{
-				modelMeshPart.Effect = dictionary[modelMeshPart.Effect];
+				meshPart.Effect = effectMapping[meshPart.Effect];
 			}
 		}
 
 		protected static void ChangeEffectUsedByModel(Model model, Effect replacementEffect)
 		{
 			new Dictionary<Effect, Effect>();
-			foreach (ModelMesh modelMesh in model.Meshes)
+			foreach (ModelMesh mesh in model.Meshes)
 			{
-				ModelEntity.ChangeEffectUsedByMesh(modelMesh, replacementEffect);
+				ModelEntity.ChangeEffectUsedByMesh(mesh, replacementEffect);
 			}
 		}
 
@@ -136,14 +136,14 @@ namespace DNA.Drawing
 		{
 			for (int i = 0; i < this._model.Meshes.Count; i++)
 			{
-				ModelMesh modelMesh = this._model.Meshes[i];
-				for (int j = 0; j < modelMesh.Effects.Count; j++)
+				ModelMesh mesh = this._model.Meshes[i];
+				for (int j = 0; j < mesh.Effects.Count; j++)
 				{
-					if (modelMesh.Effects[j] is BasicEffect)
+					if (mesh.Effects[j] is BasicEffect)
 					{
-						BasicEffect basicEffect = (BasicEffect)modelMesh.Effects[j];
-						basicEffect.EnableDefaultLighting();
-						basicEffect.LightingEnabled = true;
+						BasicEffect effect = (BasicEffect)mesh.Effects[j];
+						effect.EnableDefaultLighting();
+						effect.LightingEnabled = true;
 					}
 				}
 			}
@@ -153,21 +153,21 @@ namespace DNA.Drawing
 		{
 			for (int i = 0; i < this._model.Meshes.Count; i++)
 			{
-				ModelMesh modelMesh = this._model.Meshes[i];
-				for (int j = 0; j < modelMesh.Effects.Count; j++)
+				ModelMesh mesh = this._model.Meshes[i];
+				for (int j = 0; j < mesh.Effects.Count; j++)
 				{
-					if (modelMesh.Effects[j] is BasicEffect)
+					if (mesh.Effects[j] is BasicEffect)
 					{
-						BasicEffect basicEffect = (BasicEffect)modelMesh.Effects[j];
-						basicEffect.AmbientLightColor = ambient;
-						DirectionalLight directionalLight = basicEffect.DirectionalLight0;
-						directionalLight.DiffuseColor = DColor0;
-						directionalLight.SpecularColor = SColor0;
-						directionalLight.Direction = Direction0;
-						directionalLight.Enabled = true;
-						basicEffect.DirectionalLight1.Enabled = false;
-						basicEffect.DirectionalLight2.Enabled = false;
-						basicEffect.LightingEnabled = true;
+						BasicEffect effect = (BasicEffect)mesh.Effects[j];
+						effect.AmbientLightColor = ambient;
+						DirectionalLight d = effect.DirectionalLight0;
+						d.DiffuseColor = DColor0;
+						d.SpecularColor = SColor0;
+						d.Direction = Direction0;
+						d.Enabled = true;
+						effect.DirectionalLight1.Enabled = false;
+						effect.DirectionalLight2.Enabled = false;
+						effect.LightingEnabled = true;
 					}
 				}
 			}
@@ -177,25 +177,25 @@ namespace DNA.Drawing
 		{
 			for (int i = 0; i < this._model.Meshes.Count; i++)
 			{
-				ModelMesh modelMesh = this._model.Meshes[i];
-				for (int j = 0; j < modelMesh.Effects.Count; j++)
+				ModelMesh mesh = this._model.Meshes[i];
+				for (int j = 0; j < mesh.Effects.Count; j++)
 				{
-					if (modelMesh.Effects[j] is BasicEffect)
+					if (mesh.Effects[j] is BasicEffect)
 					{
-						BasicEffect basicEffect = (BasicEffect)modelMesh.Effects[j];
-						basicEffect.AmbientLightColor = ambient;
-						DirectionalLight directionalLight = basicEffect.DirectionalLight0;
-						directionalLight.DiffuseColor = DColor0;
-						directionalLight.SpecularColor = SColor0;
-						directionalLight.Direction = Direction0;
-						directionalLight.Enabled = false;
-						directionalLight = basicEffect.DirectionalLight1;
-						directionalLight.DiffuseColor = DColor1;
-						directionalLight.SpecularColor = SColor1;
-						directionalLight.Direction = Direction1;
-						directionalLight.Enabled = true;
-						basicEffect.DirectionalLight2.Enabled = false;
-						basicEffect.LightingEnabled = true;
+						BasicEffect effect = (BasicEffect)mesh.Effects[j];
+						effect.AmbientLightColor = ambient;
+						DirectionalLight d = effect.DirectionalLight0;
+						d.DiffuseColor = DColor0;
+						d.SpecularColor = SColor0;
+						d.Direction = Direction0;
+						d.Enabled = false;
+						d = effect.DirectionalLight1;
+						d.DiffuseColor = DColor1;
+						d.SpecularColor = SColor1;
+						d.Direction = Direction1;
+						d.Enabled = true;
+						effect.DirectionalLight2.Enabled = false;
+						effect.LightingEnabled = true;
 					}
 				}
 			}
@@ -205,29 +205,29 @@ namespace DNA.Drawing
 		{
 			for (int i = 0; i < this._model.Meshes.Count; i++)
 			{
-				ModelMesh modelMesh = this._model.Meshes[i];
-				for (int j = 0; j < modelMesh.Effects.Count; j++)
+				ModelMesh mesh = this._model.Meshes[i];
+				for (int j = 0; j < mesh.Effects.Count; j++)
 				{
-					if (modelMesh.Effects[j] is BasicEffect)
+					if (mesh.Effects[j] is BasicEffect)
 					{
-						BasicEffect basicEffect = (BasicEffect)modelMesh.Effects[j];
-						basicEffect.AmbientLightColor = ambient;
-						DirectionalLight directionalLight = basicEffect.DirectionalLight0;
-						directionalLight.DiffuseColor = DColor0;
-						directionalLight.SpecularColor = SColor0;
-						directionalLight.Direction = Direction0;
-						directionalLight.Enabled = false;
-						directionalLight = basicEffect.DirectionalLight1;
-						directionalLight.DiffuseColor = DColor1;
-						directionalLight.SpecularColor = SColor1;
-						directionalLight.Direction = Direction1;
-						directionalLight.Enabled = true;
-						directionalLight = basicEffect.DirectionalLight2;
-						directionalLight.DiffuseColor = DColor2;
-						directionalLight.SpecularColor = SColor2;
-						directionalLight.Direction = Direction2;
-						directionalLight.Enabled = true;
-						basicEffect.LightingEnabled = true;
+						BasicEffect effect = (BasicEffect)mesh.Effects[j];
+						effect.AmbientLightColor = ambient;
+						DirectionalLight d = effect.DirectionalLight0;
+						d.DiffuseColor = DColor0;
+						d.SpecularColor = SColor0;
+						d.Direction = Direction0;
+						d.Enabled = false;
+						d = effect.DirectionalLight1;
+						d.DiffuseColor = DColor1;
+						d.SpecularColor = SColor1;
+						d.Direction = Direction1;
+						d.Enabled = true;
+						d = effect.DirectionalLight2;
+						d.DiffuseColor = DColor2;
+						d.SpecularColor = SColor2;
+						d.Direction = Direction2;
+						d.Enabled = true;
+						effect.LightingEnabled = true;
 					}
 				}
 			}
@@ -237,12 +237,12 @@ namespace DNA.Drawing
 		{
 			for (int i = 0; i < this._model.Meshes.Count; i++)
 			{
-				ModelMesh modelMesh = this._model.Meshes[i];
-				for (int j = 0; j < modelMesh.Effects.Count; j++)
+				ModelMesh mesh = this._model.Meshes[i];
+				for (int j = 0; j < mesh.Effects.Count; j++)
 				{
-					AlphaTestEffect alphaTestEffect = (AlphaTestEffect)modelMesh.Effects[j];
-					alphaTestEffect.ReferenceAlpha = referenceAlpha;
-					alphaTestEffect.AlphaFunction = compareFunction;
+					AlphaTestEffect effect = (AlphaTestEffect)mesh.Effects[j];
+					effect.ReferenceAlpha = referenceAlpha;
+					effect.AlphaFunction = compareFunction;
 				}
 			}
 		}
@@ -251,14 +251,14 @@ namespace DNA.Drawing
 		{
 			for (int i = 0; i < this._model.Meshes.Count; i++)
 			{
-				ModelMesh modelMesh = this._model.Meshes[i];
-				for (int j = 0; j < modelMesh.Effects.Count; j++)
+				ModelMesh mesh = this._model.Meshes[i];
+				for (int j = 0; j < mesh.Effects.Count; j++)
 				{
-					if (modelMesh.Effects[j] is BasicEffect)
+					if (mesh.Effects[j] is BasicEffect)
 					{
-						BasicEffect basicEffect = (BasicEffect)modelMesh.Effects[j];
-						basicEffect.PreferPerPixelLighting = true;
-						basicEffect.LightingEnabled = true;
+						BasicEffect effect = (BasicEffect)mesh.Effects[j];
+						effect.PreferPerPixelLighting = true;
+						effect.LightingEnabled = true;
 					}
 				}
 			}
@@ -282,9 +282,9 @@ namespace DNA.Drawing
 			this._skeleton = this.GetSkeleton();
 			this.AllocateBoneTransforms();
 			this.GetDefaultPose(this._defaultPose);
-			Matrix[] array = new Matrix[this.Skeleton.Count];
-			this.GetDefaultPose(array);
-			this._bindPose = new ReadOnlyCollection<Matrix>(array);
+			Matrix[] bindPose = new Matrix[this.Skeleton.Count];
+			this.GetDefaultPose(bindPose);
+			this._bindPose = new ReadOnlyCollection<Matrix>(bindPose);
 			this.Skeleton.CopyAbsoluteBoneTransformsTo(this._worldBoneTransforms, base.LocalToWorld);
 		}
 
@@ -305,8 +305,8 @@ namespace DNA.Drawing
 
 		public AnimationPlayer PlayClip(int channel, string clipName, bool looping, IList<string> influenceBoneNames, TimeSpan blendTime)
 		{
-			AnimationClip animationClip = this._animationData.AnimationClips[clipName];
-			AnimationPlayer animationPlayer = new AnimationPlayer(animationClip, this.Skeleton.BonesFromNames(influenceBoneNames));
+			AnimationClip clip = this._animationData.AnimationClips[clipName];
+			AnimationPlayer animationPlayer = new AnimationPlayer(clip, this.Skeleton.BonesFromNames(influenceBoneNames));
 			animationPlayer.Looping = looping;
 			animationPlayer.Play();
 			this._animations.PlayAnimation(channel, animationPlayer, blendTime);
@@ -315,8 +315,8 @@ namespace DNA.Drawing
 
 		public AnimationPlayer PlayClip(int channel, string clipName, bool looping, IList<Bone> influenceBones, TimeSpan blendTime)
 		{
-			AnimationClip animationClip = this._animationData.AnimationClips[clipName];
-			AnimationPlayer animationPlayer = new AnimationPlayer(animationClip, influenceBones);
+			AnimationClip clip = this._animationData.AnimationClips[clipName];
+			AnimationPlayer animationPlayer = new AnimationPlayer(clip, influenceBones);
 			animationPlayer.Looping = looping;
 			animationPlayer.Play();
 			this._animations.PlayAnimation(channel, animationPlayer, blendTime);
@@ -325,8 +325,8 @@ namespace DNA.Drawing
 
 		public AnimationPlayer PlayClip(int channel, string clipName, bool looping, TimeSpan blendTime)
 		{
-			AnimationClip animationClip = this._animationData.AnimationClips[clipName];
-			AnimationPlayer animationPlayer = new AnimationPlayer(animationClip);
+			AnimationClip clip = this._animationData.AnimationClips[clipName];
+			AnimationPlayer animationPlayer = new AnimationPlayer(clip);
 			animationPlayer.Looping = looping;
 			animationPlayer.Play();
 			this._animations.PlayAnimation(channel, animationPlayer, blendTime);
@@ -342,19 +342,19 @@ namespace DNA.Drawing
 
 		public override BoundingSphere GetLocalBoundingSphere()
 		{
-			BoundingSphere boundingSphere = this._model.Meshes[0].BoundingSphere;
+			BoundingSphere sphere = this._model.Meshes[0].BoundingSphere;
 			for (int i = 1; i < this._model.Meshes.Count; i++)
 			{
-				boundingSphere = BoundingSphere.CreateMerged(boundingSphere, this._model.Meshes[i].BoundingSphere);
+				sphere = BoundingSphere.CreateMerged(sphere, this._model.Meshes[i].BoundingSphere);
 			}
-			return boundingSphere;
+			return sphere;
 		}
 
 		public override BoundingBox GetAABB()
 		{
-			Vector3 vector = new Vector3(this.GetLocalBoundingSphere().Radius);
-			Vector3 worldPosition = base.WorldPosition;
-			return new BoundingBox(worldPosition - vector, worldPosition + vector);
+			Vector3 r = new Vector3(this.GetLocalBoundingSphere().Radius);
+			Vector3 wp = base.WorldPosition;
+			return new BoundingBox(wp - r, wp + r);
 		}
 
 		protected override void OnMoved()
@@ -388,43 +388,43 @@ namespace DNA.Drawing
 		{
 			if (effect is IEffectMatrices)
 			{
-				IEffectMatrices effectMatrices = (IEffectMatrices)effect;
-				effectMatrices.World = world;
-				effectMatrices.View = view;
-				effectMatrices.Projection = projection;
+				IEffectMatrices emat = (IEffectMatrices)effect;
+				emat.World = world;
+				emat.View = view;
+				emat.Projection = projection;
 			}
 			if (effect is IEffectTime)
 			{
-				IEffectTime effectTime = (IEffectTime)effect;
-				effectTime.ElaspedTime = gameTime.ElapsedGameTime;
-				effectTime.TotalTime = gameTime.TotalGameTime;
+				IEffectTime emat2 = (IEffectTime)effect;
+				emat2.ElaspedTime = gameTime.ElapsedGameTime;
+				emat2.TotalTime = gameTime.TotalGameTime;
 			}
 			if (effect is IEffectColor)
 			{
-				IEffectColor effectColor = (IEffectColor)effect;
+				IEffectColor emat3 = (IEffectColor)effect;
 				if (this.EntityColor != null)
 				{
-					effectColor.DiffuseColor = this.EntityColor.Value;
+					emat3.DiffuseColor = this.EntityColor.Value;
 				}
 			}
 			if (effect is BasicEffect)
 			{
-				BasicEffect basicEffect = (BasicEffect)effect;
+				BasicEffect be = (BasicEffect)effect;
 				if (this.EntityColor != null)
 				{
 					Color value = this.EntityColor.Value;
-					basicEffect.DiffuseColor = this._cachedColor;
-					basicEffect.Alpha = this._cachedAlpha;
+					be.DiffuseColor = this._cachedColor;
+					be.Alpha = this._cachedAlpha;
 				}
 			}
 			else if (effect is AlphaTestEffect)
 			{
-				AlphaTestEffect alphaTestEffect = (AlphaTestEffect)effect;
+				AlphaTestEffect be2 = (AlphaTestEffect)effect;
 				if (this.EntityColor != null)
 				{
 					Color value2 = this.EntityColor.Value;
-					alphaTestEffect.DiffuseColor = this._cachedColor;
-					alphaTestEffect.Alpha = this._cachedAlpha;
+					be2.DiffuseColor = this._cachedColor;
+					be2.Alpha = this._cachedAlpha;
 				}
 			}
 			if (this.Technique == null)
@@ -442,28 +442,28 @@ namespace DNA.Drawing
 		{
 			if (this.EntityColor != null && this.EntityColor != null)
 			{
-				Color value = this.EntityColor.Value;
-				this._cachedColor = value.ToVector3();
-				this._cachedAlpha = (float)value.A / 255f;
+				Color col = this.EntityColor.Value;
+				this._cachedColor = col.ToVector3();
+				this._cachedAlpha = (float)col.A / 255f;
 			}
-			int count = this._model.Meshes.Count;
+			int meshCount = this._model.Meshes.Count;
 			int i = 0;
 			IL_00D1:
-			while (i < count)
+			while (i < meshCount)
 			{
-				ModelMesh modelMesh = this._model.Meshes[i];
-				Matrix matrix = this._worldBoneTransforms[modelMesh.ParentBone.Index];
-				int count2 = modelMesh.Effects.Count;
-				for (int j = 0; j < count2; j++)
+				ModelMesh mesh = this._model.Meshes[i];
+				Matrix world = this._worldBoneTransforms[mesh.ParentBone.Index];
+				int effectCount = mesh.Effects.Count;
+				for (int j = 0; j < effectCount; j++)
 				{
-					if (!this.SetEffectParams(modelMesh, modelMesh.Effects[j], gameTime, matrix, view, projection))
+					if (!this.SetEffectParams(mesh, mesh.Effects[j], gameTime, world, view, projection))
 					{
 						IL_00CD:
 						i++;
 						goto IL_00D1;
 					}
 				}
-				this.DrawMesh(device, modelMesh);
+				this.DrawMesh(device, mesh);
 				goto IL_00CD;
 			}
 			base.Draw(device, gameTime, view, projection);
@@ -476,19 +476,19 @@ namespace DNA.Drawing
 
 		protected void DrawWireframeBones(GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
 		{
-			Matrix[] worldBoneTransforms = this._worldBoneTransforms;
+			Matrix[] worldBones = this._worldBoneTransforms;
 			if (this._wireFrameVerts == null)
 			{
-				this._wireFrameVerts = new VertexPositionColor[worldBoneTransforms.Length * 2];
+				this._wireFrameVerts = new VertexPositionColor[worldBones.Length * 2];
 			}
 			this._wireFrameVerts[0].Color = Color.Blue;
-			this._wireFrameVerts[0].Position = worldBoneTransforms[0].Translation;
+			this._wireFrameVerts[0].Position = worldBones[0].Translation;
 			this._wireFrameVerts[1] = this._wireFrameVerts[0];
-			for (int i = 2; i < worldBoneTransforms.Length * 2; i += 2)
+			for (int i = 2; i < worldBones.Length * 2; i += 2)
 			{
-				this._wireFrameVerts[i].Position = worldBoneTransforms[i / 2].Translation;
+				this._wireFrameVerts[i].Position = worldBones[i / 2].Translation;
 				this._wireFrameVerts[i].Color = Color.Red;
-				this._wireFrameVerts[i + 1].Position = worldBoneTransforms[this.Skeleton[i / 2].Parent.Index].Translation;
+				this._wireFrameVerts[i + 1].Position = worldBones[this.Skeleton[i / 2].Parent.Index].Translation;
 				this._wireFrameVerts[i + 1].Color = Color.Green;
 			}
 			if (this._wireFrameEffect == null)
@@ -503,9 +503,9 @@ namespace DNA.Drawing
 			this._wireFrameEffect.World = Matrix.Identity;
 			for (int j = 0; j < this._wireFrameEffect.CurrentTechnique.Passes.Count; j++)
 			{
-				EffectPass effectPass = this._wireFrameEffect.CurrentTechnique.Passes[j];
-				effectPass.Apply();
-				graphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.LineList, this._wireFrameVerts, 0, worldBoneTransforms.Length);
+				EffectPass pass = this._wireFrameEffect.CurrentTechnique.Passes[j];
+				pass.Apply();
+				graphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.LineList, this._wireFrameVerts, 0, worldBones.Length);
 			}
 		}
 

@@ -72,31 +72,31 @@ namespace DNA.Drawing.Drawing2D
 
 		private RectangleF ComputeBoundingBox()
 		{
-			float num;
-			float num2;
+			float minx;
+			float maxx;
 			if (this._start.X < this._end.X)
 			{
-				num = this._start.X;
-				num2 = this._end.X;
+				minx = this._start.X;
+				maxx = this._end.X;
 			}
 			else
 			{
-				num = this._end.X;
-				num2 = this._start.X;
+				minx = this._end.X;
+				maxx = this._start.X;
 			}
-			float num3;
-			float num4;
+			float miny;
+			float maxy;
 			if (this._start.Y < this._end.Y)
 			{
-				num3 = this._start.Y;
-				num4 = this._end.Y;
+				miny = this._start.Y;
+				maxy = this._end.Y;
 			}
 			else
 			{
-				num3 = this._end.Y;
-				num4 = this._start.Y;
+				miny = this._end.Y;
+				maxy = this._start.Y;
 			}
-			return new RectangleF(num, num3, num2 - num, num4 - num3);
+			return new RectangleF(minx, miny, maxx - minx, maxy - miny);
 		}
 
 		public LineF2D(float sx, float sy, float ex, float ey)
@@ -113,81 +113,81 @@ namespace DNA.Drawing.Drawing2D
 
 		public Vector2 GetValue(float t)
 		{
-			float num = (this._end.X - this._start.X) * t + this._start.X;
-			float num2 = (this._end.Y - this._start.Y) * t + this._start.Y;
-			return new Vector2(num, num2);
+			float x = (this._end.X - this._start.X) * t + this._start.X;
+			float y = (this._end.Y - this._start.Y) * t + this._start.Y;
+			return new Vector2(x, y);
 		}
 
 		public float DistanceSquare()
 		{
-			float num = this.End.Y - this.Start.Y;
-			float num2 = this.End.X - this.Start.X;
-			return num * num + num2 * num2;
+			float a = this.End.Y - this.Start.Y;
+			float b = this.End.X - this.Start.X;
+			return a * a + b * b;
 		}
 
 		public float Intersect(Vector2 pointOnLine)
 		{
 			if (this.IsVertical)
 			{
-				float num = this._end.Y - this._start.Y;
-				return (pointOnLine.Y - this._start.Y) / num;
+				float span = this._end.Y - this._start.Y;
+				return (pointOnLine.Y - this._start.Y) / span;
 			}
-			float num2 = this._end.X - this._start.X;
-			return (pointOnLine.X - this._start.X) / num2;
+			float span2 = this._end.X - this._start.X;
+			return (pointOnLine.X - this._start.X) / span2;
 		}
 
 		public bool HorizontalIntersect(float x, out float y)
 		{
-			float num = this._end.X - this._start.X;
-			if (num == 0f)
+			float deltaX = this._end.X - this._start.X;
+			if (deltaX == 0f)
 			{
 				y = float.NaN;
 				return false;
 			}
-			float num2 = (x - this._start.X) / num;
-			y = this._start.Y + num2 * (this._end.Y - this._start.Y);
-			return num2 >= 0f && num2 <= 1f;
+			float t = (x - this._start.X) / deltaX;
+			y = this._start.Y + t * (this._end.Y - this._start.Y);
+			return t >= 0f && t <= 1f;
 		}
 
 		public bool VerticalIntersect(float y, out float x)
 		{
-			float num = this._end.Y - this._start.Y;
-			if (num == 0f)
+			float deltaY = this._end.Y - this._start.Y;
+			if (deltaY == 0f)
 			{
 				x = float.NaN;
 				return false;
 			}
-			float num2 = (y - this._start.Y) / num;
-			x = this._start.X + num2 * (this._end.X - this._start.X);
-			return num2 >= 0f && num2 <= 1f;
+			float t = (y - this._start.Y) / deltaY;
+			x = this._start.X + t * (this._end.X - this._start.X);
+			return t >= 0f && t <= 1f;
 		}
 
 		public bool Intersects(LineF2D line)
 		{
-			Vector2 vector;
-			bool flag;
-			return this.Intersects(line, out vector, out flag);
+			Vector2 intr;
+			bool coincident;
+			return this.Intersects(line, out intr, out coincident);
 		}
 
 		public bool Intersects(Circle circle, out float t1, out float t2)
 		{
 			Vector2 center = circle.Center;
-			float radius = circle.Radius;
-			Vector2 vector = this._end - this._start;
-			Vector2 vector2 = this._start - center;
-			double num = (double)vector.LengthSquared();
-			double num2 = (double)(2f * Vector2.Dot(vector, vector2));
-			double num3 = (double)(center.LengthSquared() + this._start.LengthSquared() - 2f * Vector2.Dot(center, this._start) - radius * radius);
-			double num4 = num2 * num2 - 4.0 * num * num3;
-			if (num == 0.0 || num4 < 0.0)
+			float r = circle.Radius;
+			Vector2 dist = this._end - this._start;
+			Vector2 v2 = this._start - center;
+			double a = (double)dist.LengthSquared();
+			double b = (double)(2f * Vector2.Dot(dist, v2));
+			double c = (double)(center.LengthSquared() + this._start.LengthSquared() - 2f * Vector2.Dot(center, this._start) - r * r);
+			double bb4ac = b * b - 4.0 * a * c;
+			if (a == 0.0 || bb4ac < 0.0)
 			{
 				t1 = 0f;
 				t2 = 0f;
 				return false;
 			}
-			double num5 = Math.Sqrt(num4);
-			t1 = (float)((-(float)num2 + num5) / (2.0 * num));
-			t2 = (float)((-(float)num2 - num5) / (2.0 * num));
+			double sqbb4ac = Math.Sqrt(bb4ac);
+			t1 = (float)((-(float)b + sqbb4ac) / (2.0 * a));
+			t2 = (float)((-(float)b - sqbb4ac) / (2.0 * a));
 			if (t1 >= 0f && t1 <= 1f)
 			{
 				return true;
@@ -203,21 +203,21 @@ namespace DNA.Drawing.Drawing2D
 		public bool Intersects(Vector2 start, Vector2 end, out float t, out bool coincident)
 		{
 			coincident = false;
-			Vector2 vector = new Vector2(this._end.X - this._start.X, this._end.Y - this._start.Y);
-			Vector2 vector2 = new Vector2(end.X - start.X, end.Y - start.Y);
-			if (vector.LengthSquared() == 0f || vector2.LengthSquared() == 0f)
+			Vector2 a = new Vector2(this._end.X - this._start.X, this._end.Y - this._start.Y);
+			Vector2 b = new Vector2(end.X - start.X, end.Y - start.Y);
+			if (a.LengthSquared() == 0f || b.LengthSquared() == 0f)
 			{
 				t = -1f;
 				return false;
 			}
-			Vector2 vector3 = new Vector2(this._start.X - start.X, this._start.Y - start.Y);
-			float num = vector2.Cross(vector3);
-			float num2 = vector.Cross(vector2);
-			float num3 = vector.Cross(vector3);
-			if (num2 == 0f)
+			Vector2 c = new Vector2(this._start.X - start.X, this._start.Y - start.Y);
+			float UaNum = b.Cross(c);
+			float UDen = a.Cross(b);
+			float UbNum = a.Cross(c);
+			if (UDen == 0f)
 			{
 				t = -1f;
-				if (num == 0f && num3 == 0f)
+				if (UaNum == 0f && UbNum == 0f)
 				{
 					coincident = true;
 					return true;
@@ -226,11 +226,11 @@ namespace DNA.Drawing.Drawing2D
 			}
 			else
 			{
-				float num4 = num / num2;
-				float num5 = num3 / num2;
-				if (num4 >= 0f && num4 <= 1f && num5 >= 0f && num5 <= 1f)
+				float Ua = UaNum / UDen;
+				float Ub = UbNum / UDen;
+				if (Ua >= 0f && Ua <= 1f && Ub >= 0f && Ub <= 1f)
 				{
-					t = num4;
+					t = Ua;
 					return true;
 				}
 				t = -1f;
@@ -241,21 +241,21 @@ namespace DNA.Drawing.Drawing2D
 		public bool Intersects(LineF2D line, out float t, out bool coincident)
 		{
 			coincident = false;
-			Vector2 vector = new Vector2(this._end.X - this._start.X, this._end.Y - this._start.Y);
-			Vector2 vector2 = new Vector2(line._end.X - line._start.X, line._end.Y - line._start.Y);
-			if (vector.LengthSquared() == 0f || vector2.LengthSquared() == 0f)
+			Vector2 a = new Vector2(this._end.X - this._start.X, this._end.Y - this._start.Y);
+			Vector2 b = new Vector2(line._end.X - line._start.X, line._end.Y - line._start.Y);
+			if (a.LengthSquared() == 0f || b.LengthSquared() == 0f)
 			{
 				t = -1f;
 				return false;
 			}
-			Vector2 vector3 = new Vector2(this._start.X - line._start.X, this._start.Y - line._start.Y);
-			float num = vector2.Cross(vector3);
-			float num2 = vector.Cross(vector2);
-			float num3 = vector.Cross(vector3);
-			if (num2 == 0f)
+			Vector2 c = new Vector2(this._start.X - line._start.X, this._start.Y - line._start.Y);
+			float UaNum = b.Cross(c);
+			float UDen = a.Cross(b);
+			float UbNum = a.Cross(c);
+			if (UDen == 0f)
 			{
 				t = -1f;
-				if (num == 0f && num3 == 0f)
+				if (UaNum == 0f && UbNum == 0f)
 				{
 					coincident = true;
 					return true;
@@ -264,11 +264,11 @@ namespace DNA.Drawing.Drawing2D
 			}
 			else
 			{
-				float num4 = num / num2;
-				float num5 = num3 / num2;
-				if (num4 >= 0f && num4 <= 1f && num5 >= 0f && num5 <= 1f)
+				float Ua = UaNum / UDen;
+				float Ub = UbNum / UDen;
+				if (Ua >= 0f && Ua <= 1f && Ub >= 0f && Ub <= 1f)
 				{
-					t = num4;
+					t = Ua;
 					return true;
 				}
 				t = -1f;
@@ -279,21 +279,21 @@ namespace DNA.Drawing.Drawing2D
 		public bool Intersects(LineF2D line, out Vector2 intersection, out bool coincident)
 		{
 			coincident = false;
-			Vector2 vector = new Vector2(this._end.X - this._start.X, this._end.Y - this._start.Y);
-			Vector2 vector2 = new Vector2(line._end.X - line._start.X, line._end.Y - line._start.Y);
-			if (vector.LengthSquared() == 0f || vector2.LengthSquared() == 0f)
+			Vector2 a = new Vector2(this._end.X - this._start.X, this._end.Y - this._start.Y);
+			Vector2 b = new Vector2(line._end.X - line._start.X, line._end.Y - line._start.Y);
+			if (a.LengthSquared() == 0f || b.LengthSquared() == 0f)
 			{
 				intersection = Vector2.Zero;
 				return false;
 			}
-			Vector2 vector3 = new Vector2(this._start.X - line._start.X, this._start.Y - line._start.Y);
-			float num = vector2.Cross(vector3);
-			float num2 = vector.Cross(vector2);
-			float num3 = vector.Cross(vector3);
-			if (num2 == 0f)
+			Vector2 c = new Vector2(this._start.X - line._start.X, this._start.Y - line._start.Y);
+			float UaNum = b.Cross(c);
+			float UDen = a.Cross(b);
+			float UbNum = a.Cross(c);
+			if (UDen == 0f)
 			{
 				intersection = Vector2.Zero;
-				if (num == 0f && num3 == 0f)
+				if (UaNum == 0f && UbNum == 0f)
 				{
 					coincident = true;
 					return true;
@@ -302,11 +302,11 @@ namespace DNA.Drawing.Drawing2D
 			}
 			else
 			{
-				float num4 = num / num2;
-				float num5 = num3 / num2;
-				if (num4 >= 0f && num4 <= 1f && num5 >= 0f && num5 <= 1f)
+				float Ua = UaNum / UDen;
+				float Ub = UbNum / UDen;
+				if (Ua >= 0f && Ua <= 1f && Ub >= 0f && Ub <= 1f)
 				{
-					intersection = new Vector2(this._start.X + num4 * vector.X, this._start.Y + num4 * vector.Y);
+					intersection = new Vector2(this._start.X + Ua * a.X, this._start.Y + Ua * a.Y);
 					return true;
 				}
 				intersection = Vector2.Zero;
@@ -316,29 +316,29 @@ namespace DNA.Drawing.Drawing2D
 
 		public Vector2 ShortestVectorTo(Vector2 pnt)
 		{
-			double num = (double)Vector2.DistanceSquared(this._start, this._end);
-			double num2;
-			if (num != 0.0)
+			double lengthSq = (double)Vector2.DistanceSquared(this._start, this._end);
+			double u;
+			if (lengthSq != 0.0)
 			{
-				num2 = (double)((pnt.X - this._start.X) * (this._end.X - this._start.X) + (pnt.Y - this._start.Y) * (this._end.Y - this._start.Y)) / num;
+				u = (double)((pnt.X - this._start.X) * (this._end.X - this._start.X) + (pnt.Y - this._start.Y) * (this._end.Y - this._start.Y)) / lengthSq;
 			}
 			else
 			{
-				num2 = 0.0;
+				u = 0.0;
 			}
-			if (num2 < 0.0)
+			if (u < 0.0)
 			{
 				return this._start - pnt;
 			}
-			if (num2 > 1.0)
+			if (u > 1.0)
 			{
 				return this._end - pnt;
 			}
-			double num3 = (double)this._start.X + num2 * (double)(this._end.X - this._start.X);
-			double num4 = (double)this._start.Y + num2 * (double)(this._end.Y - this._start.Y);
-			double num5 = num3 - (double)pnt.X;
-			double num6 = num4 - (double)pnt.Y;
-			return new Vector2((float)num5, (float)num6);
+			double newx = (double)this._start.X + u * (double)(this._end.X - this._start.X);
+			double newy = (double)this._start.Y + u * (double)(this._end.Y - this._start.Y);
+			double xd = newx - (double)pnt.X;
+			double yd = newy - (double)pnt.Y;
+			return new Vector2((float)xd, (float)yd);
 		}
 
 		public double DistanceTo(Vector2 pnt)

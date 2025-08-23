@@ -97,7 +97,7 @@ namespace DNA.Drawing.UI
 		public override void Draw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
 			base.Draw(device, spriteBatch, gameTime);
-			Rectangle titleSafeArea = device.Viewport.TitleSafeArea;
+			Rectangle titleSafe = device.Viewport.TitleSafeArea;
 			this._drawCursorTimer.Update(gameTime.ElapsedGameTime);
 			if (this._drawCursorTimer.Expired)
 			{
@@ -105,44 +105,44 @@ namespace DNA.Drawing.UI
 				this._drawCursor = !this._drawCursor;
 			}
 			spriteBatch.Begin();
-			Vector2 vector = new Vector2((float)(titleSafeArea.Center.X - this._bgImage.Width / 2) + this.DescriptionPadding.X, this._endOfDescriptionLoc);
-			this._input1Rectangle = new Rectangle((int)vector.X, (int)vector.Y, (int)((float)this._bgImage.Width - this.DescriptionPadding.X * 2f), 27);
+			Vector2 location = new Vector2((float)(titleSafe.Center.X - this._bgImage.Width / 2) + this.DescriptionPadding.X, this._endOfDescriptionLoc);
+			this._input1Rectangle = new Rectangle((int)location.X, (int)location.Y, (int)((float)this._bgImage.Width - this.DescriptionPadding.X * 2f), 27);
 			spriteBatch.Draw(this._game.DummyTexture, this._input1Rectangle, Color.White);
-			spriteBatch.DrawString(this._font, this._textInput, vector, Color.Black);
+			spriteBatch.DrawString(this._font, this._textInput, location, Color.Black);
 			if (this._drawCursor && this._cursorLine == 1)
 			{
-				spriteBatch.DrawString(this._font, "_", vector + new Vector2(this._font.MeasureString(this._textInput).X, 0f), Color.Black);
+				spriteBatch.DrawString(this._font, "_", location + new Vector2(this._font.MeasureString(this._textInput).X, 0f), Color.Black);
 			}
 			if (this._description2 != null)
 			{
-				vector.Y += 35f;
-				spriteBatch.DrawOutlinedText(this._font, this._description2, vector, Color.White, Color.Black, 1);
-				vector.Y += this._font.MeasureString(this._description2).Y;
-				this._input2Rectangle = new Rectangle((int)vector.X, (int)vector.Y, (int)((float)this._bgImage.Width - this.DescriptionPadding.X * 2f), 27);
+				location.Y += 35f;
+				spriteBatch.DrawOutlinedText(this._font, this._description2, location, Color.White, Color.Black, 1);
+				location.Y += this._font.MeasureString(this._description2).Y;
+				this._input2Rectangle = new Rectangle((int)location.X, (int)location.Y, (int)((float)this._bgImage.Width - this.DescriptionPadding.X * 2f), 27);
 				spriteBatch.Draw(this._game.DummyTexture, this._input2Rectangle, Color.White);
-				spriteBatch.DrawString(this._font, this._textInput2, vector, Color.Black);
+				spriteBatch.DrawString(this._font, this._textInput2, location, Color.Black);
 				if (this._drawCursor && this._cursorLine == 2)
 				{
-					spriteBatch.DrawString(this._font, "_", vector + new Vector2(this._font.MeasureString(this._textInput2).X, 0f), Color.Black);
+					spriteBatch.DrawString(this._font, "_", location + new Vector2(this._font.MeasureString(this._textInput2).X, 0f), Color.Black);
 				}
 			}
 			if (this._description3 != null)
 			{
-				vector.Y += 35f;
-				spriteBatch.DrawOutlinedText(this._font, this._description3, vector, Color.White, Color.Black, 1);
-				vector.Y += this._font.MeasureString(this._description3).Y;
-				this._input3Rectangle = new Rectangle((int)vector.X, (int)vector.Y, (int)((float)this._bgImage.Width - this.DescriptionPadding.X * 2f), 27);
+				location.Y += 35f;
+				spriteBatch.DrawOutlinedText(this._font, this._description3, location, Color.White, Color.Black, 1);
+				location.Y += this._font.MeasureString(this._description3).Y;
+				this._input3Rectangle = new Rectangle((int)location.X, (int)location.Y, (int)((float)this._bgImage.Width - this.DescriptionPadding.X * 2f), 27);
 				spriteBatch.Draw(this._game.DummyTexture, this._input3Rectangle, Color.White);
-				spriteBatch.DrawString(this._font, this._textInput3, vector, Color.Black);
+				spriteBatch.DrawString(this._font, this._textInput3, location, Color.Black);
 				if (this._drawCursor && this._cursorLine == 3)
 				{
-					spriteBatch.DrawString(this._font, "_", vector + new Vector2(this._font.MeasureString(this._textInput3).X, 0f), Color.Black);
+					spriteBatch.DrawString(this._font, "_", location + new Vector2(this._font.MeasureString(this._textInput3).X, 0f), Color.Black);
 				}
 			}
 			if (this._errorMessage != null)
 			{
-				vector.Y += 35f;
-				spriteBatch.DrawOutlinedText(this._font, this._errorMessage, vector, Color.Red, Color.Black, 1);
+				location.Y += 35f;
+				spriteBatch.DrawOutlinedText(this._font, this._errorMessage, location, Color.Red, Color.Black, 1);
 			}
 			spriteBatch.End();
 		}
@@ -173,32 +173,32 @@ namespace DNA.Drawing.UI
 
 		public override bool ProcessChar(GameTime gameTime, char c)
 		{
-			string text = "";
+			string input = "";
 			switch (this._cursorLine)
 			{
 			case 1:
-				text = this._textInput;
+				input = this._textInput;
 				break;
 			case 2:
-				text = this._textInput2;
+				input = this._textInput2;
 				break;
 			case 3:
-				text = this._textInput3;
+				input = this._textInput3;
 				break;
 			}
-			bool flag = true;
-			if (c == '\b' || this._font.MeasureString(text + "M_").X <= (float)this._input1Rectangle.Width)
+			bool updateInput = true;
+			if (c == '\b' || this._font.MeasureString(input + "M_").X <= (float)this._input1Rectangle.Width)
 			{
 				switch (c)
 				{
 				case '\b':
-					if (text.Length > 0)
+					if (input.Length > 0)
 					{
-						text = text.Substring(0, text.Length - 1);
+						input = input.Substring(0, input.Length - 1);
 					}
 					break;
 				case '\t':
-					flag = false;
+					updateInput = false;
 					switch (this._cursorLine)
 					{
 					case 1:
@@ -227,34 +227,34 @@ namespace DNA.Drawing.UI
 					{
 						if (!char.IsControl(c))
 						{
-							text += c;
+							input += c;
 						}
 					}
 					else if (Clipboard.ContainsText())
 					{
-						string text2 = Clipboard.GetText();
-						int num = text2.Length;
-						while (this._font.MeasureString(text + text2.Substring(0, num) + "M_").X > (float)this._input1Rectangle.Width)
+						string clipboard = Clipboard.GetText();
+						int length = clipboard.Length;
+						while (this._font.MeasureString(input + clipboard.Substring(0, length) + "M_").X > (float)this._input1Rectangle.Width)
 						{
-							num--;
+							length--;
 						}
-						text += text2.Substring(0, num);
+						input += clipboard.Substring(0, length);
 					}
 					break;
 				}
 			}
-			if (flag)
+			if (updateInput)
 			{
 				switch (this._cursorLine)
 				{
 				case 1:
-					this._textInput = text;
+					this._textInput = input;
 					break;
 				case 2:
-					this._textInput2 = text;
+					this._textInput2 = input;
 					break;
 				case 3:
-					this._textInput3 = text;
+					this._textInput3 = input;
 					break;
 				}
 			}

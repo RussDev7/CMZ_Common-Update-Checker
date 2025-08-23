@@ -35,15 +35,15 @@ namespace DNA.Security.Cryptography.Asn1
 
 		public override string GetString()
 		{
-			StringBuilder stringBuilder = new StringBuilder("#");
-			byte[] derEncoded = base.GetDerEncoded();
-			for (int num = 0; num != derEncoded.Length; num++)
+			StringBuilder buffer = new StringBuilder("#");
+			byte[] enc = base.GetDerEncoded();
+			for (int i = 0; i != enc.Length; i++)
 			{
-				uint num2 = (uint)derEncoded[num];
-				stringBuilder.Append(DerUniversalString.table[(int)((UIntPtr)((num2 >> 4) & 15U))]);
-				stringBuilder.Append(DerUniversalString.table[(int)(derEncoded[num] & 15)]);
+				uint ubyte = (uint)enc[i];
+				buffer.Append(DerUniversalString.table[(int)((UIntPtr)((ubyte >> 4) & 15U))]);
+				buffer.Append(DerUniversalString.table[(int)(enc[i] & 15)]);
 			}
-			return stringBuilder.ToString();
+			return buffer.ToString();
 		}
 
 		public byte[] GetOctets()
@@ -58,8 +58,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerUniversalString derUniversalString = asn1Object as DerUniversalString;
-			return derUniversalString != null && Arrays.AreEqual(this.str, derUniversalString.str);
+			DerUniversalString other = asn1Object as DerUniversalString;
+			return other != null && Arrays.AreEqual(this.str, other.str);
 		}
 
 		private static readonly char[] table = new char[]

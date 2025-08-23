@@ -28,11 +28,11 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		public void WritePascalString(string s)
 		{
-			string text = ((s.Length > 255) ? s.Substring(0, 255) : s);
-			byte[] bytes = Encoding.Default.GetBytes(text);
-			this.Write((byte)bytes.Length);
-			this.Write(bytes);
-			if (bytes.Length % 2 == 0)
+			string str = ((s.Length > 255) ? s.Substring(0, 255) : s);
+			byte[] bytesArray = Encoding.Default.GetBytes(str);
+			this.Write((byte)bytesArray.Length);
+			this.Write(bytesArray);
+			if (bytesArray.Length % 2 == 0)
 			{
 				this.Write(0);
 			}
@@ -45,8 +45,8 @@ namespace DNA.Drawing.Imaging.Photoshop
 		public void WriteUnicodeString(string s)
 		{
 			this.Write(s.Length);
-			byte[] bytes = Encoding.BigEndianUnicode.GetBytes(s);
-			this.Write(bytes);
+			byte[] data = Encoding.BigEndianUnicode.GetBytes(s);
+			this.Write(data);
 		}
 
 		public void Write(bool value)

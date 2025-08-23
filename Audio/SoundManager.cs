@@ -32,8 +32,8 @@ namespace DNA.Audio
 
 		public void SetGlobalVarible(string varibleName, float value)
 		{
-			float num;
-			if (!this._globalVars.TryGetValue(varibleName, out num) || num != value)
+			float val;
+			if (!this._globalVars.TryGetValue(varibleName, out val) || val != value)
 			{
 				this._engine.SetGlobalVariable(varibleName, value);
 				this._globalVars[varibleName] = value;
@@ -62,9 +62,9 @@ namespace DNA.Audio
 			Cue cue = this.GetCue(name);
 			cue.Apply3D(SoundManager.ActiveListener, emitter);
 			cue.Play();
-			SoundCue3D soundCue3D = new SoundCue3D(cue, emitter);
-			this._activeSounds.AddLast(soundCue3D);
-			return soundCue3D;
+			SoundCue3D cue3d = new SoundCue3D(cue, emitter);
+			this._activeSounds.AddLast(cue3d);
+			return cue3d;
 		}
 
 		public void Update()
@@ -105,17 +105,17 @@ namespace DNA.Audio
 					}
 				}
 			}
-			LinkedListNode<SoundCue3D> next;
-			for (LinkedListNode<SoundCue3D> linkedListNode = this._activeSounds.First; linkedListNode != null; linkedListNode = next)
+			LinkedListNode<SoundCue3D> nextNode;
+			for (LinkedListNode<SoundCue3D> node = this._activeSounds.First; node != null; node = nextNode)
 			{
-				next = linkedListNode.Next;
-				if (linkedListNode.Value.IsStopped)
+				nextNode = node.Next;
+				if (node.Value.IsStopped)
 				{
-					this._activeSounds.Remove(linkedListNode);
+					this._activeSounds.Remove(node);
 				}
 				else
 				{
-					linkedListNode.Value.Apply3D(SoundManager.ActiveListener);
+					node.Value.Apply3D(SoundManager.ActiveListener);
 				}
 			}
 		}

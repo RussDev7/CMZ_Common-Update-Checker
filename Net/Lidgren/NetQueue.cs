@@ -37,8 +37,8 @@ namespace DNA.Net.Lidgren
 				{
 					this.SetCapacity(this.m_items.Length + 8);
 				}
-				int num = (this.m_head + this.m_size) % this.m_items.Length;
-				this.m_items[num] = item;
+				int slot = (this.m_head + this.m_size) % this.m_items.Length;
+				this.m_items[slot] = item;
 				this.m_size++;
 			}
 		}
@@ -47,14 +47,14 @@ namespace DNA.Net.Lidgren
 		{
 			lock (this.m_lock)
 			{
-				foreach (T t in items)
+				foreach (T item in items)
 				{
 					if (this.m_size == this.m_items.Length)
 					{
 						this.SetCapacity(this.m_items.Length + 8);
 					}
-					int num = (this.m_head + this.m_size) % this.m_items.Length;
-					this.m_items[num] = t;
+					int slot = (this.m_head + this.m_size) % this.m_items.Length;
+					this.m_items[slot] = item;
 					this.m_size++;
 				}
 			}
@@ -86,17 +86,17 @@ namespace DNA.Net.Lidgren
 				this.m_head = 0;
 				return;
 			}
-			T[] array = new T[newCapacity];
+			T[] newItems = new T[newCapacity];
 			if (this.m_head + this.m_size - 1 < this.m_items.Length)
 			{
-				Array.Copy(this.m_items, this.m_head, array, 0, this.m_size);
+				Array.Copy(this.m_items, this.m_head, newItems, 0, this.m_size);
 			}
 			else
 			{
-				Array.Copy(this.m_items, this.m_head, array, 0, this.m_items.Length - this.m_head);
-				Array.Copy(this.m_items, 0, array, this.m_items.Length - this.m_head, this.m_size - (this.m_items.Length - this.m_head));
+				Array.Copy(this.m_items, this.m_head, newItems, 0, this.m_items.Length - this.m_head);
+				Array.Copy(this.m_items, 0, newItems, this.m_items.Length - this.m_head, this.m_size - (this.m_items.Length - this.m_head));
 			}
-			this.m_items = array;
+			this.m_items = newItems;
 			this.m_head = 0;
 		}
 
@@ -136,16 +136,16 @@ namespace DNA.Net.Lidgren
 			int num;
 			lock (this.m_lock)
 			{
-				int size = this.m_size;
+				int added = this.m_size;
 				while (this.m_size > 0)
 				{
-					T t = this.m_items[this.m_head];
-					addTo.Add(t);
+					T item = this.m_items[this.m_head];
+					addTo.Add(item);
 					this.m_items[this.m_head] = default(T);
 					this.m_head = (this.m_head + 1) % this.m_items.Length;
 					this.m_size--;
 				}
-				num = size;
+				num = added;
 			}
 			return num;
 		}
@@ -175,21 +175,21 @@ namespace DNA.Net.Lidgren
 		{
 			lock (this.m_lock)
 			{
-				int num = this.m_head;
+				int ptr = this.m_head;
 				for (int i = 0; i < this.m_size; i++)
 				{
-					if (this.m_items[num] == null)
+					if (this.m_items[ptr] == null)
 					{
 						if (item == null)
 						{
 							return true;
 						}
 					}
-					else if (this.m_items[num].Equals(item))
+					else if (this.m_items[ptr].Equals(item))
 					{
 						return true;
 					}
-					num = (num + 1) % this.m_items.Length;
+					ptr = (ptr + 1) % this.m_items.Length;
 				}
 			}
 			return false;
@@ -197,22 +197,22 @@ namespace DNA.Net.Lidgren
 
 		public T[] ToArray()
 		{
-			T[] array2;
+			T[] array;
 			lock (this.m_lock)
 			{
-				T[] array = new T[this.m_size];
-				int num = this.m_head;
+				T[] retval = new T[this.m_size];
+				int ptr = this.m_head;
 				for (int i = 0; i < this.m_size; i++)
 				{
-					array[i] = this.m_items[num++];
-					if (num >= this.m_items.Length)
+					retval[i] = this.m_items[ptr++];
+					if (ptr >= this.m_items.Length)
 					{
-						num = 0;
+						ptr = 0;
 					}
 				}
-				array2 = array;
+				array = retval;
 			}
-			return array2;
+			return array;
 		}
 
 		public void Clear()

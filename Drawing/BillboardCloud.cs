@@ -60,18 +60,18 @@ namespace DNA.Drawing
 
 		private void SetData()
 		{
-			int num = this.billboardVerticies.Count / 4;
-			uint[] array = new uint[num * 6];
-			for (int i = 0; i < num; i++)
+			int cards = this.billboardVerticies.Count / 4;
+			uint[] indices = new uint[cards * 6];
+			for (int i = 0; i < cards; i++)
 			{
-				array[i * 6] = (uint)(i * 4);
-				array[i * 6 + 1] = (uint)(i * 4 + 1);
-				array[i * 6 + 2] = (uint)(i * 4 + 2);
-				array[i * 6 + 3] = (uint)(i * 4);
-				array[i * 6 + 4] = (uint)(i * 4 + 2);
-				array[i * 6 + 5] = (uint)(i * 4 + 3);
+				indices[i * 6] = (uint)(i * 4);
+				indices[i * 6 + 1] = (uint)(i * 4 + 1);
+				indices[i * 6 + 2] = (uint)(i * 4 + 2);
+				indices[i * 6 + 3] = (uint)(i * 4);
+				indices[i * 6 + 4] = (uint)(i * 4 + 2);
+				indices[i * 6 + 5] = (uint)(i * 4 + 3);
 			}
-			this._indexBuffer.SetData<uint>(array);
+			this._indexBuffer.SetData<uint>(indices);
 			this._vertexBuffer.SetData<BillboardVertex>(this.billboardVerticies.ToArray());
 		}
 
@@ -108,14 +108,14 @@ namespace DNA.Drawing
 			default:
 				throw new Exception("Unknown Mode");
 			}
-			int num = this.billboardVerticies.Count / 4;
+			int cardCount = this.billboardVerticies.Count / 4;
 			device.SetVertexBuffer(this._vertexBuffer);
 			device.Indices = this._indexBuffer;
 			for (int i = 0; i < this._cardEffect.CurrentTechnique.Passes.Count; i++)
 			{
-				EffectPass effectPass = this._cardEffect.CurrentTechnique.Passes[i];
-				effectPass.Apply();
-				device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, num * 4, 0, num * 2);
+				EffectPass pass = this._cardEffect.CurrentTechnique.Passes[i];
+				pass.Apply();
+				device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, cardCount * 4, 0, cardCount * 2);
 			}
 			device.SetVertexBuffer(null);
 		}

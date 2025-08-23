@@ -80,8 +80,8 @@ namespace DNA
 				this._offscreenBuffer.Dispose();
 				this._offscreenBuffer = null;
 			}
-			PresentationParameters presentationParameters = base.GraphicsDevice.PresentationParameters;
-			this._offscreenBuffer = new RenderTarget2D(base.GraphicsDevice, width, height, false, presentationParameters.BackBufferFormat, presentationParameters.DepthStencilFormat, 1, RenderTargetUsage.PlatformContents);
+			PresentationParameters pp = base.GraphicsDevice.PresentationParameters;
+			this._offscreenBuffer = new RenderTarget2D(base.GraphicsDevice, width, height, false, pp.BackBufferFormat, pp.DepthStencilFormat, 1, RenderTargetUsage.PlatformContents);
 		}
 
 		public ScreenGroup ScreenManager
@@ -108,16 +108,16 @@ namespace DNA
 			}
 			set
 			{
-				GameTime gameTime;
+				GameTime v;
 				if (!this.LimitElapsedGameTime || value.ElapsedGameTime <= TimeSpan.FromSeconds(0.1))
 				{
-					gameTime = value;
+					v = value;
 				}
 				else
 				{
-					gameTime = new GameTime(value.TotalGameTime, TimeSpan.FromSeconds(0.1), true);
+					v = new GameTime(value.TotalGameTime, TimeSpan.FromSeconds(0.1), true);
 				}
-				Interlocked.Exchange<GameTime>(ref this._currentGameTime, gameTime);
+				Interlocked.Exchange<GameTime>(ref this._currentGameTime, v);
 			}
 		}
 
@@ -155,18 +155,18 @@ namespace DNA
 
 		private string GetLocalizedAssetName(string assetName)
 		{
-			string[] array = new string[]
+			string[] cultureNames = new string[]
 			{
 				CultureInfo.CurrentCulture.Name,
 				CultureInfo.CurrentCulture.TwoLetterISOLanguageName
 			};
-			foreach (string text in array)
+			foreach (string cultureName in cultureNames)
 			{
-				string text2 = assetName + '.' + text;
-				string text3 = Path.Combine(base.Content.RootDirectory, text2 + ".xnb");
-				if (File.Exists(text3))
+				string localizedAssetName = assetName + '.' + cultureName;
+				string localizedAssetPath = Path.Combine(base.Content.RootDirectory, localizedAssetName + ".xnb");
+				if (File.Exists(localizedAssetPath))
 				{
-					return text2;
+					return localizedAssetName;
 				}
 			}
 			return assetName;
@@ -174,8 +174,8 @@ namespace DNA
 
 		public Texture2D LoadLocalizedImage(string name)
 		{
-			string localizedAssetName = this.GetLocalizedAssetName(name);
-			return base.Content.Load<Texture2D>(localizedAssetName);
+			string locName = this.GetLocalizedAssetName(name);
+			return base.Content.Load<Texture2D>(locName);
 		}
 
 		public virtual void StartGamerServices()
@@ -276,17 +276,17 @@ namespace DNA
 
 		public void LeaveGame()
 		{
-			bool flag = false;
+			bool endEvent = false;
 			if (this._networkSession != null)
 			{
 				if (this._networkSession.AllowHostMigration)
 				{
-					flag = true;
+					endEvent = true;
 				}
 				this._networkSession.Dispose();
 			}
 			this._networkSession = null;
-			if (flag)
+			if (endEvent)
 			{
 				this.OnSessionEnded(NetworkSessionEndReason.Disconnected);
 			}
@@ -312,10 +312,10 @@ namespace DNA
 			this.processMessages = false;
 			NetworkSession.BeginCreate(sessionType, gamers, maxPlayers, 0, properties, gameName, networkVersion, serverMessage, password, delegate(IAsyncResult result)
 			{
-				SuccessCallback successCallback = (SuccessCallback)result.AsyncState;
-				if (successCallback != null && !result.IsCompleted)
+				SuccessCallback clientCallback = (SuccessCallback)result.AsyncState;
+				if (clientCallback != null && !result.IsCompleted)
 				{
-					successCallback(false);
+					clientCallback(false);
 					this.processMessages = true;
 					return;
 				}
@@ -328,16 +328,16 @@ namespace DNA
 				}
 				catch (Exception)
 				{
-					if (successCallback != null)
+					if (clientCallback != null)
 					{
-						successCallback(false);
+						clientCallback(false);
 					}
 					this.processMessages = true;
 					return;
 				}
-				if (successCallback != null)
+				if (clientCallback != null)
 				{
-					successCallback(true);
+					clientCallback(true);
 				}
 				this.processMessages = true;
 			}, callback);
@@ -351,31 +351,31 @@ namespace DNA
 			{
 				NetworkSession.BeginJoinInvited(lobbyId, version, gameName, gamers, delegate(IAsyncResult result)
 				{
-					SuccessCallbackWithMessage successCallbackWithMessage = (SuccessCallbackWithMessage)result.AsyncState;
-					bool flag = true;
+					SuccessCallbackWithMessage clientCallback = (SuccessCallbackWithMessage)result.AsyncState;
+					bool success = true;
 					try
 					{
 						this._networkSession = NetworkSession.EndJoinInvited(result);
 						this.RegisterNetworkCallbacks(this._networkSession);
 					}
-					catch (Exception ex2)
+					catch (Exception ex)
 					{
-						failureMessage = ex2.Message;
+						failureMessage = ex.Message;
 						this.LeaveGame();
-						flag = false;
+						success = false;
 					}
-					if (successCallbackWithMessage != null)
+					if (clientCallback != null)
 					{
-						successCallbackWithMessage(flag, failureMessage);
+						clientCallback(success, failureMessage);
 					}
 					this.processMessages = true;
 				}, callback, getPasswordCallback);
 			}
-			catch (Exception ex)
+			catch (Exception e)
 			{
 				if (callback != null)
 				{
-					callback(false, ex.Message);
+					callback(false, e.Message);
 				}
 			}
 		}
@@ -391,8 +391,8 @@ namespace DNA
 			string failureMessage = null;
 			NetworkSession.BeginJoin(session, gameName, version, password, gamers, delegate(IAsyncResult result)
 			{
-				bool flag = true;
-				SuccessCallbackWithMessage successCallbackWithMessage = (SuccessCallbackWithMessage)result.AsyncState;
+				bool success = true;
+				SuccessCallbackWithMessage clientCallback = (SuccessCallbackWithMessage)result.AsyncState;
 				try
 				{
 					this._networkSession = NetworkSession.EndJoin(result);
@@ -402,11 +402,11 @@ namespace DNA
 				{
 					failureMessage = ex.Message;
 					this.LeaveGame();
-					flag = false;
+					success = false;
 				}
-				if (successCallbackWithMessage != null)
+				if (clientCallback != null)
 				{
-					successCallbackWithMessage(flag, failureMessage);
+					clientCallback(success, failureMessage);
 				}
 				this.processMessages = true;
 			}, callback);
@@ -417,8 +417,8 @@ namespace DNA
 			this.processMessages = false;
 			NetworkSession.BeginJoin(session, gameName, version, password, gamers, delegate(IAsyncResult result)
 			{
-				bool flag = true;
-				SuccessCallback successCallback = (SuccessCallback)result.AsyncState;
+				bool success = true;
+				SuccessCallback clientCallback = (SuccessCallback)result.AsyncState;
 				try
 				{
 					this._networkSession = NetworkSession.EndJoin(result);
@@ -427,11 +427,11 @@ namespace DNA
 				catch (Exception)
 				{
 					this.LeaveGame();
-					flag = false;
+					success = false;
 				}
-				if (successCallback != null)
+				if (clientCallback != null)
 				{
-					successCallback(flag);
+					clientCallback(success);
 				}
 				this.processMessages = true;
 			}, callback);
@@ -571,18 +571,18 @@ namespace DNA
 		{
 			if (this._networkSession != null)
 			{
-				List<KeyValuePair<byte, NetworkGamer>> list = new List<KeyValuePair<byte, NetworkGamer>>();
-				foreach (KeyValuePair<byte, NetworkGamer> keyValuePair in this._currentPlayers)
+				List<KeyValuePair<byte, NetworkGamer>> toRemove = new List<KeyValuePair<byte, NetworkGamer>>();
+				foreach (KeyValuePair<byte, NetworkGamer> pair in this._currentPlayers)
 				{
-					if (this.CurrentNetworkSession.FindGamerById(keyValuePair.Key) == null)
+					if (this.CurrentNetworkSession.FindGamerById(pair.Key) == null)
 					{
-						list.Add(keyValuePair);
+						toRemove.Add(pair);
 					}
 				}
-				foreach (KeyValuePair<byte, NetworkGamer> keyValuePair2 in list)
+				foreach (KeyValuePair<byte, NetworkGamer> pair2 in toRemove)
 				{
-					this._currentPlayers.Remove(keyValuePair2.Key);
-					this.OnGamerLeft(keyValuePair2.Value);
+					this._currentPlayers.Remove(pair2.Key);
+					this.OnGamerLeft(pair2.Value);
 				}
 			}
 		}
@@ -609,12 +609,12 @@ namespace DNA
 			{
 				return;
 			}
-			bool flag = false;
+			bool guide = false;
 			try
 			{
 				if (this.HasGamerServices && Guide.IsVisible)
 				{
-					flag = true;
+					guide = true;
 				}
 			}
 			catch
@@ -624,7 +624,7 @@ namespace DNA
 			{
 				this.LicenseServices.Update(gameTime.ElapsedGameTime, gameTime.TotalGameTime);
 			}
-			if (!flag || !this.PauseDuringGuide)
+			if (!guide || !this.PauseDuringGuide)
 			{
 				if (this._firstFrame)
 				{
@@ -676,24 +676,24 @@ namespace DNA
 
 		public static PlayerID GetLocalID()
 		{
-			string macAddress = DNAGame.GetMacAddress();
-			byte[] bytes = Encoding.UTF8.GetBytes(macAddress);
-			MD5HashProvider md5HashProvider = new MD5HashProvider();
-			return new PlayerID(md5HashProvider.Compute(bytes).Data);
+			string address = DNAGame.GetMacAddress();
+			byte[] data = Encoding.UTF8.GetBytes(address);
+			MD5HashProvider provider = new MD5HashProvider();
+			return new PlayerID(provider.Compute(data).Data);
 		}
 
 		private static string GetMacAddress()
 		{
-			string text = "";
-			foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+			string macAddresses = "";
+			foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
 			{
-				if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet && networkInterface.OperationalStatus == OperationalStatus.Up)
+				if (nic.NetworkInterfaceType == NetworkInterfaceType.Ethernet && nic.OperationalStatus == OperationalStatus.Up)
 				{
-					text += networkInterface.GetPhysicalAddress().ToString();
+					macAddresses += nic.GetPhysicalAddress().ToString();
 					break;
 				}
 			}
-			return text;
+			return macAddresses;
 		}
 
 		protected void ShowTrialWarning(PlayerIndex player)
@@ -718,43 +718,43 @@ namespace DNA
 			{
 				return;
 			}
-			DNAGame.CodeVal codeVal = DNAGame.CodeVal.None;
-			GameController gameController = this.InputManager.Controllers[1];
-			if (gameController.PressedButtons.A)
+			DNAGame.CodeVal val = DNAGame.CodeVal.None;
+			GameController controller = this.InputManager.Controllers[1];
+			if (controller.PressedButtons.A)
 			{
-				codeVal |= DNAGame.CodeVal.A;
+				val |= DNAGame.CodeVal.A;
 			}
-			if (gameController.PressedButtons.B)
+			if (controller.PressedButtons.B)
 			{
-				codeVal |= DNAGame.CodeVal.B;
+				val |= DNAGame.CodeVal.B;
 			}
-			if (gameController.PressedButtons.X)
+			if (controller.PressedButtons.X)
 			{
-				codeVal |= DNAGame.CodeVal.X;
+				val |= DNAGame.CodeVal.X;
 			}
-			if (gameController.PressedButtons.Y)
+			if (controller.PressedButtons.Y)
 			{
-				codeVal |= DNAGame.CodeVal.Y;
+				val |= DNAGame.CodeVal.Y;
 			}
-			if (gameController.PressedDPad.Up)
+			if (controller.PressedDPad.Up)
 			{
-				codeVal |= DNAGame.CodeVal.Up;
+				val |= DNAGame.CodeVal.Up;
 			}
-			if (gameController.PressedDPad.Down)
+			if (controller.PressedDPad.Down)
 			{
-				codeVal |= DNAGame.CodeVal.Down;
+				val |= DNAGame.CodeVal.Down;
 			}
-			if (gameController.PressedDPad.Left)
+			if (controller.PressedDPad.Left)
 			{
-				codeVal |= DNAGame.CodeVal.Left;
+				val |= DNAGame.CodeVal.Left;
 			}
-			if (gameController.PressedDPad.Right)
+			if (controller.PressedDPad.Right)
 			{
-				codeVal |= DNAGame.CodeVal.Right;
+				val |= DNAGame.CodeVal.Right;
 			}
-			if (codeVal != DNAGame.CodeVal.None)
+			if (val != DNAGame.CodeVal.None)
 			{
-				this.recentCodes.Enqueue(codeVal);
+				this.recentCodes.Enqueue(val);
 				while (this.recentCodes.Count > this.CodeLimit)
 				{
 					this.recentCodes.Dequeue();
@@ -764,10 +764,10 @@ namespace DNA
 			{
 				return;
 			}
-			DNAGame.CodeVal[] array = this.recentCodes.ToArray();
+			DNAGame.CodeVal[] codes = this.recentCodes.ToArray();
 			for (int i = 0; i < this.konamiCode.Length; i++)
 			{
-				if (this.konamiCode[i] != array[i])
+				if (this.konamiCode[i] != codes[i])
 				{
 					return;
 				}
@@ -791,15 +791,15 @@ namespace DNA
 				GamerCollection<LocalNetworkGamer> localGamers = this._networkSession.LocalGamers;
 				if (localGamers != null)
 				{
-					int num = 0;
-					while (this._networkSession != null && num < localGamers.Count)
+					int i = 0;
+					while (this._networkSession != null && i < localGamers.Count)
 					{
-						LocalNetworkGamer localNetworkGamer = localGamers[num];
-						while (this._networkSession != null && localNetworkGamer.IsDataAvailable)
+						LocalNetworkGamer localGamer = localGamers[i];
+						while (this._networkSession != null && localGamer.IsDataAvailable)
 						{
 							try
 							{
-								Message message = Message.GetMessage(localNetworkGamer);
+								Message message = Message.GetMessage(localGamer);
 								if (message is VoiceChatMessage)
 								{
 									if (this._voiceChat != null)
@@ -812,25 +812,25 @@ namespace DNA
 									this.OnMessage(message);
 								}
 							}
-							catch (InvalidMessageException ex)
+							catch (InvalidMessageException ime)
 							{
 								if (this._networkSession.IsHost)
 								{
 									try
 									{
-										ex.Sender.Machine.RemoveFromSession();
+										ime.Sender.Machine.RemoveFromSession();
 									}
 									catch
 									{
 									}
 								}
-								if (ex.Sender.IsHost)
+								if (ime.Sender.IsHost)
 								{
 									this.LeaveGame();
 								}
 							}
 						}
-						num++;
+						i++;
 					}
 				}
 			}
@@ -847,22 +847,22 @@ namespace DNA
 		private void DrawTitleSafeArea(GameTime gameTime)
 		{
 			Viewport viewport = base.GraphicsDevice.Viewport;
-			Rectangle titleSafeArea = viewport.TitleSafeArea;
-			int num = viewport.X + viewport.Width;
-			int num2 = viewport.Y + viewport.Height;
-			Rectangle rectangle = new Rectangle(viewport.X, viewport.Y, titleSafeArea.X - viewport.X, viewport.Height);
-			Rectangle rectangle2 = new Rectangle(titleSafeArea.Right, viewport.Y, num - titleSafeArea.Right, viewport.Height);
-			Rectangle rectangle3 = new Rectangle(titleSafeArea.Left, viewport.Y, titleSafeArea.Width, titleSafeArea.Top - viewport.Y);
-			Rectangle rectangle4 = new Rectangle(titleSafeArea.Left, titleSafeArea.Bottom, titleSafeArea.Width, num2 - titleSafeArea.Bottom);
-			Color color = new Color(1f, 0f, 0f, 0.5f);
+			Rectangle safeArea = viewport.TitleSafeArea;
+			int viewportRight = viewport.X + viewport.Width;
+			int viewportBottom = viewport.Y + viewport.Height;
+			Rectangle leftBorder = new Rectangle(viewport.X, viewport.Y, safeArea.X - viewport.X, viewport.Height);
+			Rectangle rightBorder = new Rectangle(safeArea.Right, viewport.Y, viewportRight - safeArea.Right, viewport.Height);
+			Rectangle topBorder = new Rectangle(safeArea.Left, viewport.Y, safeArea.Width, safeArea.Top - viewport.Y);
+			Rectangle bottomBorder = new Rectangle(safeArea.Left, safeArea.Bottom, safeArea.Width, viewportBottom - safeArea.Bottom);
+			Color translucentRed = new Color(1f, 0f, 0f, 0.5f);
 			this.SpriteBatch.Begin();
-			this.SpriteBatch.Draw(this.DummyTexture, rectangle, color);
-			this.SpriteBatch.Draw(this.DummyTexture, rectangle2, color);
-			this.SpriteBatch.Draw(this.DummyTexture, rectangle3, color);
-			this.SpriteBatch.Draw(this.DummyTexture, rectangle4, color);
+			this.SpriteBatch.Draw(this.DummyTexture, leftBorder, translucentRed);
+			this.SpriteBatch.Draw(this.DummyTexture, rightBorder, translucentRed);
+			this.SpriteBatch.Draw(this.DummyTexture, topBorder, translucentRed);
+			this.SpriteBatch.Draw(this.DummyTexture, bottomBorder, translucentRed);
 			this.frsb.Length = 0;
-			int num3 = (int)(1.0 / gameTime.ElapsedGameTime.TotalSeconds);
-			this.frsb.Append(num3);
+			int fps = (int)(1.0 / gameTime.ElapsedGameTime.TotalSeconds);
+			this.frsb.Append(fps);
 			this.SpriteBatch.DrawOutlinedText(this.DebugFont, this.frsb, new Vector2(10f, 10f), Color.White, Color.Black, 1);
 			this.SpriteBatch.End();
 		}
@@ -876,28 +876,28 @@ namespace DNA
 		public static void Run<T>(string errorUrl, string name) where T : DNAGame, new()
 		{
 			Version version = new Version(0, 0);
-			DateTime utcNow = DateTime.UtcNow;
+			DateTime startTime = DateTime.UtcNow;
 			if (Debugger.IsAttached)
 			{
-				using (T t = new T())
+				using (T g = new T())
 				{
-					version = t.Version;
-					t.Run();
+					version = g.Version;
+					g.Run();
 					return;
 				}
 			}
 			try
 			{
-				using (T t2 = new T())
+				using (T g2 = new T())
 				{
-					version = t2.Version;
-					t2.Run();
+					version = g2.Version;
+					g2.Run();
 				}
 			}
-			catch (Exception ex)
+			catch (Exception e)
 			{
-				BlackScreenIssueReporter blackScreenIssueReporter = new BlackScreenIssueReporter(errorUrl, name, version, utcNow);
-				blackScreenIssueReporter.ReportCrash(ex);
+				BlackScreenIssueReporter reporter = new BlackScreenIssueReporter(errorUrl, name, version, startTime);
+				reporter.ReportCrash(e);
 			}
 		}
 
@@ -906,26 +906,26 @@ namespace DNA
 			new Version(0, 0);
 			if (Debugger.IsAttached)
 			{
-				using (T t = new T())
+				using (T g = new T())
 				{
-					t.LicenseServices = onlineServices;
-					Version version = t.Version;
-					t.Run();
+					g.LicenseServices = onlineServices;
+					Version version = g.Version;
+					g.Run();
 					return;
 				}
 			}
 			try
 			{
-				using (T t2 = new T())
+				using (T g2 = new T())
 				{
-					t2.LicenseServices = onlineServices;
-					Version version2 = t2.Version;
-					t2.Run();
+					g2.LicenseServices = onlineServices;
+					Version version2 = g2.Version;
+					g2.Run();
 				}
 			}
-			catch (Exception ex)
+			catch (Exception e)
 			{
-				issueReporter.ReportCrash(ex);
+				issueReporter.ReportCrash(e);
 			}
 		}
 
@@ -1000,19 +1000,19 @@ namespace DNA
 			{
 				base.GraphicsDevice.Clear(Color.Black);
 				this.SpriteBatch.Begin();
-				float aspectRatio = base.GraphicsDevice.Viewport.AspectRatio;
-				float num = (float)this._offscreenBuffer.Width / (float)this._offscreenBuffer.Height;
-				if (aspectRatio > num)
+				float screenAspect = base.GraphicsDevice.Viewport.AspectRatio;
+				float offscreenAspect = (float)this._offscreenBuffer.Width / (float)this._offscreenBuffer.Height;
+				if (screenAspect > offscreenAspect)
 				{
-					int height = base.GraphicsDevice.Viewport.Height;
-					int num2 = base.GraphicsDevice.Viewport.Height * this._offscreenBuffer.Width / this._offscreenBuffer.Height;
-					this._bufferDestRect = new Rectangle((base.GraphicsDevice.Viewport.Width - num2) / 2, 0, num2, height);
+					int destHeight = base.GraphicsDevice.Viewport.Height;
+					int destWidth = base.GraphicsDevice.Viewport.Height * this._offscreenBuffer.Width / this._offscreenBuffer.Height;
+					this._bufferDestRect = new Rectangle((base.GraphicsDevice.Viewport.Width - destWidth) / 2, 0, destWidth, destHeight);
 				}
 				else
 				{
-					int num3 = base.GraphicsDevice.Viewport.Width * this._offscreenBuffer.Height / this._offscreenBuffer.Width;
-					int width = base.GraphicsDevice.Viewport.Width;
-					this._bufferDestRect = new Rectangle(0, (base.GraphicsDevice.Viewport.Height - num3) / 2, width, num3);
+					int destHeight2 = base.GraphicsDevice.Viewport.Width * this._offscreenBuffer.Height / this._offscreenBuffer.Width;
+					int destWidth2 = base.GraphicsDevice.Viewport.Width;
+					this._bufferDestRect = new Rectangle(0, (base.GraphicsDevice.Viewport.Height - destHeight2) / 2, destWidth2, destHeight2);
 				}
 				this.SpriteBatch.Draw(this._offscreenBuffer, this._bufferDestRect, Color.White);
 				this.SpriteBatch.End();

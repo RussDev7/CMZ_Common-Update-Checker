@@ -70,8 +70,8 @@ namespace DNA.Security.Cryptography.Crypto.Parameters
 			{
 				return true;
 			}
-			RsaPrivateCrtKeyParameters rsaPrivateCrtKeyParameters = obj as RsaPrivateCrtKeyParameters;
-			return rsaPrivateCrtKeyParameters != null && (rsaPrivateCrtKeyParameters.DP.Equals(this.dP) && rsaPrivateCrtKeyParameters.DQ.Equals(this.dQ) && rsaPrivateCrtKeyParameters.Exponent.Equals(base.Exponent) && rsaPrivateCrtKeyParameters.Modulus.Equals(base.Modulus) && rsaPrivateCrtKeyParameters.P.Equals(this.p) && rsaPrivateCrtKeyParameters.Q.Equals(this.q) && rsaPrivateCrtKeyParameters.PublicExponent.Equals(this.e)) && rsaPrivateCrtKeyParameters.QInv.Equals(this.qInv);
+			RsaPrivateCrtKeyParameters kp = obj as RsaPrivateCrtKeyParameters;
+			return kp != null && (kp.DP.Equals(this.dP) && kp.DQ.Equals(this.dQ) && kp.Exponent.Equals(base.Exponent) && kp.Modulus.Equals(base.Modulus) && kp.P.Equals(this.p) && kp.Q.Equals(this.q) && kp.PublicExponent.Equals(this.e)) && kp.QInv.Equals(this.qInv);
 		}
 
 		public override int GetHashCode()

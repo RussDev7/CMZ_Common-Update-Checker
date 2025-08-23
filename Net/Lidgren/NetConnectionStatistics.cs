@@ -89,56 +89,56 @@ namespace DNA.Net.Lidgren
 
 		public override string ToString()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(string.Concat(new object[] { "Sent ", this.m_sentBytes, " bytes in ", this.m_sentMessages, " messages in ", this.m_sentPackets, " packets" }));
-			stringBuilder.AppendLine(string.Concat(new object[] { "Received ", this.m_receivedBytes, " bytes in ", this.m_receivedMessages, " messages in ", this.m_receivedPackets, " packets" }));
+			StringBuilder bdr = new StringBuilder();
+			bdr.AppendLine(string.Concat(new object[] { "Sent ", this.m_sentBytes, " bytes in ", this.m_sentMessages, " messages in ", this.m_sentPackets, " packets" }));
+			bdr.AppendLine(string.Concat(new object[] { "Received ", this.m_receivedBytes, " bytes in ", this.m_receivedMessages, " messages in ", this.m_receivedPackets, " packets" }));
 			if (this.m_resentMessagesDueToDelay > 0)
 			{
-				stringBuilder.AppendLine("Resent messages (delay): " + this.m_resentMessagesDueToDelay);
+				bdr.AppendLine("Resent messages (delay): " + this.m_resentMessagesDueToDelay);
 			}
 			if (this.m_resentMessagesDueToDelay > 0)
 			{
-				stringBuilder.AppendLine("Resent messages (holes): " + this.m_resentMessagesDueToHole);
+				bdr.AppendLine("Resent messages (holes): " + this.m_resentMessagesDueToHole);
 			}
-			int num = 0;
-			int num2 = 0;
-			foreach (NetSenderChannelBase netSenderChannelBase in this.m_connection.m_sendChannels)
+			int numUnsent = 0;
+			int numStored = 0;
+			foreach (NetSenderChannelBase sendChan in this.m_connection.m_sendChannels)
 			{
-				if (netSenderChannelBase != null)
+				if (sendChan != null)
 				{
-					num += netSenderChannelBase.m_queuedSends.Count;
-					NetReliableSenderChannel netReliableSenderChannel = netSenderChannelBase as NetReliableSenderChannel;
-					if (netReliableSenderChannel != null)
+					numUnsent += sendChan.m_queuedSends.Count;
+					NetReliableSenderChannel relSendChan = sendChan as NetReliableSenderChannel;
+					if (relSendChan != null)
 					{
-						for (int j = 0; j < netReliableSenderChannel.m_storedMessages.Length; j++)
+						for (int i = 0; i < relSendChan.m_storedMessages.Length; i++)
 						{
-							if (netReliableSenderChannel.m_storedMessages[j].Message != null)
+							if (relSendChan.m_storedMessages[i].Message != null)
 							{
-								num2++;
+								numStored++;
 							}
 						}
 					}
 				}
 			}
-			int num3 = 0;
-			foreach (NetReceiverChannelBase netReceiverChannelBase in this.m_connection.m_receiveChannels)
+			int numWithheld = 0;
+			foreach (NetReceiverChannelBase recChan in this.m_connection.m_receiveChannels)
 			{
-				NetReliableOrderedReceiver netReliableOrderedReceiver = netReceiverChannelBase as NetReliableOrderedReceiver;
-				if (netReliableOrderedReceiver != null)
+				NetReliableOrderedReceiver relRecChan = recChan as NetReliableOrderedReceiver;
+				if (relRecChan != null)
 				{
-					for (int l = 0; l < netReliableOrderedReceiver.m_withheldMessages.Length; l++)
+					for (int j = 0; j < relRecChan.m_withheldMessages.Length; j++)
 					{
-						if (netReliableOrderedReceiver.m_withheldMessages[l] != null)
+						if (relRecChan.m_withheldMessages[j] != null)
 						{
-							num3++;
+							numWithheld++;
 						}
 					}
 				}
 			}
-			stringBuilder.AppendLine("Unsent messages: " + num);
-			stringBuilder.AppendLine("Stored messages: " + num2);
-			stringBuilder.AppendLine("Withheld messages: " + num3);
-			return stringBuilder.ToString();
+			bdr.AppendLine("Unsent messages: " + numUnsent);
+			bdr.AppendLine("Stored messages: " + numStored);
+			bdr.AppendLine("Withheld messages: " + numWithheld);
+			return bdr.ToString();
 		}
 
 		private readonly NetConnection m_connection;

@@ -20,13 +20,13 @@ namespace DNA.Drawing.Imaging.Photoshop
 			writer.Write((ushort)this.ID);
 			writer.WritePascalString(this.Name);
 			writer.Write(0U);
-			long position = writer.BaseStream.Position;
+			long startPosition = writer.BaseStream.Position;
 			this.WriteData(writer);
-			long position2 = writer.BaseStream.Position;
-			long num = position2 - position;
-			writer.BaseStream.Position = position - 4L;
-			writer.Write((uint)num);
-			writer.BaseStream.Position = position2;
+			long endPosition = writer.BaseStream.Position;
+			long dataLength = endPosition - startPosition;
+			writer.BaseStream.Position = startPosition - 4L;
+			writer.Write((uint)dataLength);
+			writer.BaseStream.Position = endPosition;
 			if (writer.BaseStream.Position % 2L == 1L)
 			{
 				writer.Write(0);

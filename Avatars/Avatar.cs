@@ -124,13 +124,13 @@ namespace DNA.Avatars
 
 		static Avatar()
 		{
-			List<string> list = new List<string>();
+			List<string> bones = new List<string>();
 			for (int i = 0; i < 71; i++)
 			{
-				AvatarBone avatarBone = (AvatarBone)i;
-				list.Add(avatarBone.ToString());
+				AvatarBone bone = (AvatarBone)i;
+				bones.Add(bone.ToString());
 			}
-			Avatar.BoneNames = new ReadOnlyCollection<string>(list);
+			Avatar.BoneNames = new ReadOnlyCollection<string>(bones);
 			for (int j = 0; j < Avatar.nativeBoneNames.Length; j++)
 			{
 				Avatar.boneNameLookup[Avatar.nativeBoneNames[j]] = j;
@@ -171,20 +171,20 @@ namespace DNA.Avatars
 			{
 				return this._partMap[(int)bone];
 			}
-			Entity entity = new Entity();
-			this._partMap[(int)bone] = entity;
-			base.Children.Add(entity);
-			int num = (int)bone;
+			Entity part = new Entity();
+			this._partMap[(int)bone] = part;
+			base.Children.Add(part);
+			int currentBone = (int)bone;
 			do
 			{
-				this._partMask[num] = true;
-				num = Avatar.DefaultParentBones[num];
+				this._partMask[currentBone] = true;
+				currentBone = Avatar.DefaultParentBones[currentBone];
 			}
-			while (num >= 0 && !this._partMask[num]);
+			while (currentBone >= 0 && !this._partMask[currentBone]);
 			this.Skeleton.CopyTransformsTo(this._bonesToAvatar);
 			this.UpdateParts(this._bonesToAvatar);
-			entity.LocalToParent = this._bonesToAvatar[(int)bone];
-			return entity;
+			part.LocalToParent = this._bonesToAvatar[(int)bone];
+			return part;
 		}
 
 		public bool IsMale
@@ -209,11 +209,11 @@ namespace DNA.Avatars
 		public void SetAsPlayerAvatar(PlayerIndex index)
 		{
 			this.SetAsPlayerAvatar(Gamer.SignedInGamers[index]);
-			IAsyncResult asyncResult = AvatarDescription.BeginGetFromGamer(this._gamer, delegate(IAsyncResult resulta)
+			IAsyncResult result = AvatarDescription.BeginGetFromGamer(this._gamer, delegate(IAsyncResult resulta)
 			{
 			}, null);
-			asyncResult.AsyncWaitHandle.WaitOne();
-			this._avatarDescription = AvatarDescription.EndGetFromGamer(asyncResult);
+			result.AsyncWaitHandle.WaitOne();
+			this._avatarDescription = AvatarDescription.EndGetFromGamer(result);
 			this._avatarRenderer = new AvatarRenderer(this._avatarDescription, false);
 			this._skeletonBuilt = false;
 		}
@@ -221,11 +221,11 @@ namespace DNA.Avatars
 		public void SetAsPlayerAvatar(Gamer gamer)
 		{
 			this._gamer = gamer;
-			IAsyncResult asyncResult = AvatarDescription.BeginGetFromGamer(this._gamer, delegate(IAsyncResult resulta)
+			IAsyncResult result = AvatarDescription.BeginGetFromGamer(this._gamer, delegate(IAsyncResult resulta)
 			{
 			}, null);
-			asyncResult.AsyncWaitHandle.WaitOne();
-			this._avatarDescription = AvatarDescription.EndGetFromGamer(asyncResult);
+			result.AsyncWaitHandle.WaitOne();
+			this._avatarDescription = AvatarDescription.EndGetFromGamer(result);
 			this._avatarRenderer = new AvatarRenderer(this._avatarDescription, false);
 			this._skeletonBuilt = false;
 		}
@@ -235,11 +235,11 @@ namespace DNA.Avatars
 			this._animations = new AvatarAnimationCollection(this);
 			this._expression.Mouth = AvatarMouth.Neutral;
 			this._gamer = gamer;
-			IAsyncResult asyncResult = AvatarDescription.BeginGetFromGamer(this._gamer, delegate(IAsyncResult resulta)
+			IAsyncResult result = AvatarDescription.BeginGetFromGamer(this._gamer, delegate(IAsyncResult resulta)
 			{
 			}, null);
-			asyncResult.AsyncWaitHandle.WaitOne();
-			this._avatarDescription = AvatarDescription.EndGetFromGamer(asyncResult);
+			result.AsyncWaitHandle.WaitOne();
+			this._avatarDescription = AvatarDescription.EndGetFromGamer(result);
 			this._avatarRenderer = new AvatarRenderer(this._avatarDescription, false);
 			if (!this._avatarDescription.IsValid)
 			{
@@ -254,11 +254,11 @@ namespace DNA.Avatars
 			this._animations = new AvatarAnimationCollection(this);
 			this._expression.Mouth = AvatarMouth.Neutral;
 			this._gamer = Gamer.SignedInGamers[index];
-			IAsyncResult asyncResult = AvatarDescription.BeginGetFromGamer(this._gamer, delegate(IAsyncResult resulta)
+			IAsyncResult result = AvatarDescription.BeginGetFromGamer(this._gamer, delegate(IAsyncResult resulta)
 			{
 			}, null);
-			asyncResult.AsyncWaitHandle.WaitOne();
-			this._avatarDescription = AvatarDescription.EndGetFromGamer(asyncResult);
+			result.AsyncWaitHandle.WaitOne();
+			this._avatarDescription = AvatarDescription.EndGetFromGamer(result);
 			this._avatarRenderer = new AvatarRenderer(this._avatarDescription, false);
 			if (!this._avatarDescription.IsValid)
 			{
@@ -322,16 +322,16 @@ namespace DNA.Avatars
 
 		public static List<int> FindInfluencedBones(AvatarBone avatarBone)
 		{
-			List<int> list = new List<int>();
-			list.Add((int)avatarBone);
-			for (int i = list[0] + 1; i < Avatar.DefaultParentBones.Count; i++)
+			List<int> influencedList = new List<int>();
+			influencedList.Add((int)avatarBone);
+			for (int currentBoneID = influencedList[0] + 1; currentBoneID < Avatar.DefaultParentBones.Count; currentBoneID++)
 			{
-				if (list.Contains(Avatar.DefaultParentBones[i]))
+				if (influencedList.Contains(Avatar.DefaultParentBones[currentBoneID]))
 				{
-					list.Add(i);
+					influencedList.Add(currentBoneID);
 				}
 			}
-			return list;
+			return influencedList;
 		}
 
 		public static bool[] GetInfluncedBoneList(AvatarBone bone)
@@ -342,47 +342,47 @@ namespace DNA.Avatars
 		public static bool[] GetInfluncedBoneList(IList<AvatarBone> bones)
 		{
 			new Dictionary<int, int>();
-			bool[] array = new bool[71];
-			for (int i = 0; i < array.Length; i++)
+			bool[] influencedBones = new bool[71];
+			for (int i = 0; i < influencedBones.Length; i++)
 			{
-				array[i] = false;
+				influencedBones[i] = false;
 			}
-			foreach (AvatarBone avatarBone in bones)
+			foreach (AvatarBone bone in bones)
 			{
-				List<int> list = Avatar.FindInfluencedBones(avatarBone);
-				foreach (int num in list)
+				List<int> influences = Avatar.FindInfluencedBones(bone);
+				foreach (int ibone in influences)
 				{
-					array[num] = true;
+					influencedBones[ibone] = true;
 				}
 			}
-			return array;
+			return influencedBones;
 		}
 
 		public static bool[] GetInfluncedBoneList(IList<AvatarBone> bones, IList<AvatarBone> maskedBones)
 		{
 			new Dictionary<int, int>();
-			bool[] array;
+			bool[] influencedBones;
 			if (bones != null)
 			{
-				array = Avatar.GetInfluncedBoneList(bones);
+				influencedBones = Avatar.GetInfluncedBoneList(bones);
 			}
 			else
 			{
-				array = new bool[71];
-				for (int i = 0; i < array.Length; i++)
+				influencedBones = new bool[71];
+				for (int i = 0; i < influencedBones.Length; i++)
 				{
-					array[i] = true;
+					influencedBones[i] = true;
 				}
 			}
-			bool[] influncedBoneList = Avatar.GetInfluncedBoneList(maskedBones);
-			for (int j = 0; j < influncedBoneList.Length; j++)
+			bool[] maskedBonesList = Avatar.GetInfluncedBoneList(maskedBones);
+			for (int j = 0; j < maskedBonesList.Length; j++)
 			{
-				if (influncedBoneList[j])
+				if (maskedBonesList[j])
 				{
-					array[j] = false;
+					influencedBones[j] = false;
 				}
 			}
-			return array;
+			return influencedBones;
 		}
 
 		protected override void OnUpdate(GameTime gameTime)
@@ -392,34 +392,34 @@ namespace DNA.Avatars
 				this.BuildSkeleton();
 			}
 			this._animations.Update(gameTime.ElapsedGameTime, this.Skeleton);
-			Matrix matrix = this._bonesToAvatar[19];
-			Vector3 translation = matrix.Translation;
-			Vector3 forward = matrix.Forward;
-			Vector3 up = matrix.Up;
+			Matrix headToAvatar = this._bonesToAvatar[19];
+			Vector3 pos = headToAvatar.Translation;
+			Vector3 forward = headToAvatar.Forward;
+			Vector3 up = headToAvatar.Up;
 			forward.Normalize();
 			up.Normalize();
-			matrix = Matrix.CreateWorld(translation, forward, up);
-			Matrix matrix2 = this.eyeToHead * matrix;
-			this.EyePointCamera.LocalToParent = matrix2;
+			headToAvatar = Matrix.CreateWorld(pos, forward, up);
+			Matrix eyeToAvatar = this.eyeToHead * headToAvatar;
+			this.EyePointCamera.LocalToParent = eyeToAvatar;
 			if (this.HideHead)
 			{
-				Bone bone = this.Skeleton[19];
-				bone.Scale = new Vector3(0.001f, 0.001f, 0.001f);
+				Bone headBone = this.Skeleton[19];
+				headBone.Scale = new Vector3(0.001f, 0.001f, 0.001f);
 			}
 			this.Skeleton.CopyTransformsTo(this._boneTransformBuffer);
 			if (this.ProxyModelEntity != null)
 			{
-				Matrix matrix3 = Matrix.CreateRotationY(3.1415927f);
-				matrix3.Translation = new Vector3(0f, 0.7769f, -0.008664f);
-				this.ProxyModelEntity.DefaultPose[0] = this._boneTransformBuffer[0] * matrix3;
+				Matrix rootAdjust = Matrix.CreateRotationY(3.1415927f);
+				rootAdjust.Translation = new Vector3(0f, 0.7769f, -0.008664f);
+				this.ProxyModelEntity.DefaultPose[0] = this._boneTransformBuffer[0] * rootAdjust;
 				for (int i = 1; i < this.ProxyModelEntity.DefaultPose.Length; i++)
 				{
-					string name = this.ProxyModelEntity.Skeleton[i].Name;
-					int num = Avatar.boneNameLookup[name];
-					Matrix matrix4 = this._boneTransformBuffer[num];
-					matrix4.Translation = this.ProxyModelEntity.BindPose[i].Translation;
-					this.ProxyModelEntity.DefaultPose[i] = matrix4;
-					this.ProxyModelEntity.Skeleton[i].SetTransform(matrix4);
+					string nativeBoneName = this.ProxyModelEntity.Skeleton[i].Name;
+					int avatarBoneIndex = Avatar.boneNameLookup[nativeBoneName];
+					Matrix avatarMatrix = this._boneTransformBuffer[avatarBoneIndex];
+					avatarMatrix.Translation = this.ProxyModelEntity.BindPose[i].Translation;
+					this.ProxyModelEntity.DefaultPose[i] = avatarMatrix;
+					this.ProxyModelEntity.Skeleton[i].SetTransform(avatarMatrix);
 				}
 			}
 			this.UpdateParts(this._boneTransformBuffer);
@@ -458,9 +458,9 @@ namespace DNA.Avatars
 
 		protected void SetEyePoint(float playerHeight)
 		{
-			float num = 0.045f;
-			num += (playerHeight - 1.4120882f) / 0.25442278f * 0.01f;
-			this.eyeToHead = Matrix.CreateFromQuaternion(Quaternion.CreateFromAxisAngle(Vector3.UnitX, 3.1415927f) * Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 3.1415927f)) * Matrix.CreateTranslation(new Vector3(0f, num, 0f));
+			float offset = 0.045f;
+			offset += (playerHeight - 1.4120882f) / 0.25442278f * 0.01f;
+			this.eyeToHead = Matrix.CreateFromQuaternion(Quaternion.CreateFromAxisAngle(Vector3.UnitX, 3.1415927f) * Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 3.1415927f)) * Matrix.CreateTranslation(new Vector3(0f, offset, 0f));
 		}
 
 		private void BuildSkeleton()
@@ -556,9 +556,9 @@ namespace DNA.Avatars
 			this._wireFrameWorldTransforms[0] = this._boneTransformBuffer[0] * Avatar.DefaultBindPose[0];
 			for (int i = 1; i < this._wireFrameWorldTransforms.Length; i++)
 			{
-				Matrix matrix = this._boneTransformBuffer[i];
-				matrix.Translation = Avatar.DefaultBindPose[i].Translation;
-				this._wireFrameWorldTransforms[i] = matrix;
+				Matrix avatarMatrix = this._boneTransformBuffer[i];
+				avatarMatrix.Translation = Avatar.DefaultBindPose[i].Translation;
+				this._wireFrameWorldTransforms[i] = avatarMatrix;
 			}
 			this._wireFrameWorldTransforms[0] *= base.LocalToWorld;
 			for (int j = 1; j < this._wireFrameWorldTransforms.Length; j++)
@@ -591,8 +591,8 @@ namespace DNA.Avatars
 			this._wireFrameEffect.World = Matrix.Identity;
 			for (int l = 0; l < this._wireFrameEffect.CurrentTechnique.Passes.Count; l++)
 			{
-				EffectPass effectPass = this._wireFrameEffect.CurrentTechnique.Passes[l];
-				effectPass.Apply();
+				EffectPass pass = this._wireFrameEffect.CurrentTechnique.Passes[l];
+				pass.Apply();
 				graphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.LineList, this._wireFrameVerts, 0, this._wireFrameWorldTransforms.Length);
 			}
 		}
@@ -870,20 +870,20 @@ namespace DNA.Avatars
 
 			public AvatarVerifyView(GraphicsDevice device)
 			{
-				int num = 32;
-				this.SetDestinationTarget(new RenderTarget2D(device, num, num, false, SurfaceFormat.Bgra4444, DepthFormat.Depth16, 1, RenderTargetUsage.PreserveContents));
+				int textureSize = 32;
+				this.SetDestinationTarget(new RenderTarget2D(device, textureSize, textureSize, false, SurfaceFormat.Bgra4444, DepthFormat.Depth16, 1, RenderTargetUsage.PreserveContents));
 			}
 
 			protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 			{
 				base.OnDraw(device, spriteBatch, gameTime);
-				int width = base.Target.Width;
+				int textureSize = base.Target.Width;
 				this.toRemove.Clear();
-				for (int i = 0; i < this._toVerify.Count; i++)
+				for (int idx = 0; idx < this._toVerify.Count; idx++)
 				{
-					if (this._toVerify[i].AvatarState == AvatarRendererState.Ready)
+					if (this._toVerify[idx].AvatarState == AvatarRendererState.Ready)
 					{
-						Avatar avatar = this._toVerify[i];
+						Avatar avatar = this._toVerify[idx];
 						this.toRemove.Add(avatar);
 						device.SetRenderTarget(base.Target);
 						device.Clear(new Color(0, 0, 0, 0));
@@ -893,18 +893,18 @@ namespace DNA.Avatars
 						avatar._avatarRenderer.Draw(avatar.BindPose, avatar.Expression);
 						avatar._avatarRenderer.Draw(avatar.BindPose, avatar.Expression);
 						device.SetRenderTarget(null);
-						byte[] array = new byte[width * width * 4];
-						base.Target.GetData<byte>(array);
-						int num = 0;
-						for (int j = 0; j < array.Length; j++)
+						byte[] data = new byte[textureSize * textureSize * 4];
+						base.Target.GetData<byte>(data);
+						int sum = 0;
+						for (int i = 0; i < data.Length; i++)
 						{
-							if (array[j] != 0)
+							if (data[i] != 0)
 							{
-								num++;
+								sum++;
 							}
 						}
-						float num2 = (float)num / (float)array.Length;
-						avatar._invisible = num2 < 0.01f;
+						float per = (float)sum / (float)data.Length;
+						avatar._invisible = per < 0.01f;
 					}
 				}
 				foreach (Avatar avatar2 in this.toRemove)

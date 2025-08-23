@@ -72,15 +72,15 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerIA5String derIA5String = asn1Object as DerIA5String;
-			return derIA5String != null && this.str.Equals(derIA5String.str);
+			DerIA5String other = asn1Object as DerIA5String;
+			return other != null && this.str.Equals(other.str);
 		}
 
 		public static bool IsIA5String(string str)
 		{
-			foreach (char c in str)
+			foreach (char ch in str)
 			{
-				if (c > '\u007f')
+				if (ch > '\u007f')
 				{
 					return false;
 				}

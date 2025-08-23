@@ -25,8 +25,8 @@ namespace DNA
 			{
 				if (object.ReferenceEquals(CommonDialogResources.resourceMan, null))
 				{
-					ResourceManager resourceManager = new ResourceManager("DNA.CommonDialogResources", typeof(CommonDialogResources).Assembly);
-					CommonDialogResources.resourceMan = resourceManager;
+					ResourceManager temp = new ResourceManager("DNA.CommonDialogResources", typeof(CommonDialogResources).Assembly);
+					CommonDialogResources.resourceMan = temp;
 				}
 				return CommonDialogResources.resourceMan;
 			}
@@ -49,8 +49,8 @@ namespace DNA
 		{
 			get
 			{
-				object @object = CommonDialogResources.ResourceManager.GetObject("loginwithfacebook", CommonDialogResources.resourceCulture);
-				return (Bitmap)@object;
+				object obj = CommonDialogResources.ResourceManager.GetObject("loginwithfacebook", CommonDialogResources.resourceCulture);
+				return (Bitmap)obj;
 			}
 		}
 

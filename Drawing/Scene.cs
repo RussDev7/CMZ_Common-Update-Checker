@@ -28,40 +28,40 @@ namespace DNA.Drawing
 			double totalSeconds = gameTime.ElapsedGameTime.TotalSeconds;
 			for (int i = 0; i < base.Children.Count; i++)
 			{
-				Entity entity = base.Children[i];
-				if (entity.Physics != null)
+				Entity e = base.Children[i];
+				if (e.Physics != null)
 				{
-					entity.Physics.Accelerate(gameTime.ElapsedGameTime);
+					e.Physics.Accelerate(gameTime.ElapsedGameTime);
 				}
 			}
 			this.Colliders.Clear();
 			this.Collidees.Clear();
 			for (int j = 0; j < base.Children.Count; j++)
 			{
-				Entity entity2 = base.Children[j];
-				if (entity2.Collider)
+				Entity e2 = base.Children[j];
+				if (e2.Collider)
 				{
-					this.Colliders.Add(entity2);
+					this.Colliders.Add(e2);
 				}
-				if (entity2.Collidee)
+				if (e2.Collidee)
 				{
-					this.Collidees.Add(entity2);
+					this.Collidees.Add(e2);
 				}
 			}
 			using (Profiler.TimeSection("Collision", ProfilerThreadEnum.MAIN))
 			{
 				for (int k = 0; k < this.Colliders.Count; k++)
 				{
-					Entity entity3 = this.Colliders[k];
-					entity3.ResolveCollsions(this.Collidees, gameTime);
+					Entity collider = this.Colliders[k];
+					collider.ResolveCollsions(this.Collidees, gameTime);
 				}
 			}
 			for (int l = 0; l < base.Children.Count; l++)
 			{
-				Entity entity4 = base.Children[l];
-				if (entity4.Physics != null)
+				Entity e3 = base.Children[l];
+				if (e3.Physics != null)
 				{
-					entity4.Physics.Move(gameTime.ElapsedGameTime);
+					e3.Physics.Move(gameTime.ElapsedGameTime);
 				}
 			}
 			base.OnUpdate(gameTime);
@@ -69,30 +69,30 @@ namespace DNA.Drawing
 
 		private void DrawList(GraphicsDevice device, List<Entity> drawList, GameTime gameTime, Matrix projection)
 		{
-			int num = int.MaxValue;
+			int nextDrawPriority = int.MaxValue;
 			int count = drawList.Count;
 			for (int i = 0; i < count; i++)
 			{
-				num = Math.Min(num, drawList[i].DrawPriority);
+				nextDrawPriority = Math.Min(nextDrawPriority, drawList[i].DrawPriority);
 			}
-			bool flag = false;
-			while (!flag)
+			bool finished = false;
+			while (!finished)
 			{
-				flag = true;
-				int num2 = num;
-				num = int.MaxValue;
+				finished = true;
+				int thisDrawPriority = nextDrawPriority;
+				nextDrawPriority = int.MaxValue;
 				for (int j = 0; j < count; j++)
 				{
-					Entity entity = drawList[j];
-					if (num2 == entity.DrawPriority)
+					Entity e = drawList[j];
+					if (thisDrawPriority == e.DrawPriority)
 					{
-						entity.SetRenderState(device);
-						entity.Draw(device, gameTime, this._view, projection);
+						e.SetRenderState(device);
+						e.Draw(device, gameTime, this._view, projection);
 					}
-					else if (entity.DrawPriority > num2 && entity.DrawPriority < num)
+					else if (e.DrawPriority > thisDrawPriority && e.DrawPriority < nextDrawPriority)
 					{
-						num = entity.DrawPriority;
-						flag = false;
+						nextDrawPriority = e.DrawPriority;
+						finished = false;
 					}
 				}
 			}
@@ -140,15 +140,15 @@ namespace DNA.Drawing
 
 			public int Compare(Entity e1, Entity e2)
 			{
-				Matrix matrix = e1.LocalToWorld * this._owner._view;
+				Matrix m = e1.LocalToWorld * this._owner._view;
 				e2.LocalToWorld * this._owner._view;
-				Vector3 vector = Vector3.Transform(Vector3.Zero, matrix);
-				Vector3 vector2 = Vector3.Transform(Vector3.Zero, matrix);
-				if (vector2.Z > vector.Z)
+				Vector3 p = Vector3.Transform(Vector3.Zero, m);
+				Vector3 p2 = Vector3.Transform(Vector3.Zero, m);
+				if (p2.Z > p.Z)
 				{
 					return 1;
 				}
-				if (vector2.Z < vector.Z)
+				if (p2.Z < p.Z)
 				{
 					return -1;
 				}

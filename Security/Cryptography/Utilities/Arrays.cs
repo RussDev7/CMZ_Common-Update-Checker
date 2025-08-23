@@ -83,17 +83,17 @@ namespace DNA.Security.Cryptography.Utilities
 
 		public static string ToString(object[] a)
 		{
-			StringBuilder stringBuilder = new StringBuilder(91);
+			StringBuilder sb = new StringBuilder(91);
 			if (a.Length > 0)
 			{
-				stringBuilder.Append(a[0]);
-				for (int i = 1; i < a.Length; i++)
+				sb.Append(a[0]);
+				for (int index = 1; index < a.Length; index++)
 				{
-					stringBuilder.Append(", ").Append(a[i]);
+					sb.Append(", ").Append(a[index]);
 				}
 			}
-			stringBuilder.Append(']');
-			return stringBuilder.ToString();
+			sb.Append(']');
+			return sb.ToString();
 		}
 
 		public static int GetHashCode(byte[] data)
@@ -102,14 +102,14 @@ namespace DNA.Security.Cryptography.Utilities
 			{
 				return 0;
 			}
-			int num = data.Length;
-			int num2 = num + 1;
-			while (--num >= 0)
+			int i = data.Length;
+			int hc = i + 1;
+			while (--i >= 0)
 			{
-				num2 *= 257;
-				num2 ^= (int)data[num];
+				hc *= 257;
+				hc ^= (int)data[i];
 			}
-			return num2;
+			return hc;
 		}
 
 		public static byte[] Clone(byte[] data)

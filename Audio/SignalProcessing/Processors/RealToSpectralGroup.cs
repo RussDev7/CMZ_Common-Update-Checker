@@ -21,106 +21,106 @@ namespace DNA.Audio.SignalProcessing.Processors
 			{
 				this.Alloc();
 			}
-			int samples = data.Samples;
+			int numSampsToProcess = data.Samples;
 			int sampleRate = data.SampleRate;
-			float[] data2 = data.GetData(0);
-			int fftsize = this.FFTSize;
-			int overSampling = this.OverSampling;
-			float num = 3.1415927f;
-			float num2 = 6.2831855f;
-			float[] array = data2;
-			int num3 = fftsize / 2;
-			int num4 = fftsize / overSampling;
-			float num5 = (float)sampleRate / (float)fftsize;
-			float num6 = (float)(6.283185307179586 * (double)((float)num4) / (double)((float)fftsize));
-			int num7 = fftsize - num4;
+			float[] indata = data.GetData(0);
+			int fftFrameSize = this.FFTSize;
+			int osamp = this.OverSampling;
+			float pi = 3.1415927f;
+			float pi2 = 6.2831855f;
+			float[] outdata = indata;
+			int fftFrameSize2 = fftFrameSize / 2;
+			int stepSize = fftFrameSize / osamp;
+			float freqPerBin = (float)sampleRate / (float)fftFrameSize;
+			float expct = (float)(6.283185307179586 * (double)((float)stepSize) / (double)((float)fftFrameSize));
+			int inFifoLatency = fftFrameSize - stepSize;
 			if (this.gRover == 0)
 			{
-				this.gRover = num7;
+				this.gRover = inFifoLatency;
 			}
-			int i = 0;
-			int num8 = 0;
-			FrequencyPair[] data3 = this._specbuffer.GetData(0);
-			while (i < samples)
+			int inputPos = 0;
+			int outputPos = 0;
+			FrequencyPair[] freqs = this._specbuffer.GetData(0);
+			while (inputPos < numSampsToProcess)
 			{
-				int num9 = samples - i;
-				int num10 = fftsize - this.gRover;
-				if (num10 > num9)
+				int dataLeft = numSampsToProcess - inputPos;
+				int blockSize = fftFrameSize - this.gRover;
+				if (blockSize > dataLeft)
 				{
-					num10 = num9;
+					blockSize = dataLeft;
 				}
-				Buffer.BlockCopy(data2, i * 4, this.gInFIFO, this.gRover * 4, num10 * 4);
-				Buffer.BlockCopy(this.gOutFIFO, (this.gRover - num7) * 4, array, num8 * 4, num10 * 4);
-				i += num10;
-				num8 += num10;
-				this.gRover += num10;
-				if (this.gRover >= fftsize)
+				Buffer.BlockCopy(indata, inputPos * 4, this.gInFIFO, this.gRover * 4, blockSize * 4);
+				Buffer.BlockCopy(this.gOutFIFO, (this.gRover - inFifoLatency) * 4, outdata, outputPos * 4, blockSize * 4);
+				inputPos += blockSize;
+				outputPos += blockSize;
+				this.gRover += blockSize;
+				if (this.gRover >= fftFrameSize)
 				{
-					this.gRover = num7;
-					for (int j = 0; j < fftsize; j++)
+					this.gRover = inFifoLatency;
+					for (int i = 0; i < fftFrameSize; i++)
 					{
-						this.gFFTworksp[2 * j] = this.gInFIFO[j] * this._windowVals[j];
-						this.gFFTworksp[2 * j + 1] = 0f;
+						this.gFFTworksp[2 * i] = this.gInFIFO[i] * this._windowVals[i];
+						this.gFFTworksp[2 * i + 1] = 0f;
 					}
 					this._fft.Transform(this.gFFTworksp, -1);
-					for (int j = 0; j <= num3; j++)
+					for (int i = 0; i <= fftFrameSize2; i++)
 					{
-						float num11 = this.gFFTworksp[2 * j];
-						float num12 = this.gFFTworksp[2 * j + 1];
-						float num13 = 2f * (float)Math.Sqrt((double)(num11 * num11 + num12 * num12));
-						float num14 = (float)Math.Atan2((double)num12, (double)num11);
-						float num15 = num14 - this.gLastPhase[j];
-						this.gLastPhase[j] = num14;
-						num15 -= (float)j * num6;
-						int num16 = (int)(num15 / num);
-						if (num16 >= 0)
+						float real = this.gFFTworksp[2 * i];
+						float imag = this.gFFTworksp[2 * i + 1];
+						float magn = 2f * (float)Math.Sqrt((double)(real * real + imag * imag));
+						float phase = (float)Math.Atan2((double)imag, (double)real);
+						float tmp = phase - this.gLastPhase[i];
+						this.gLastPhase[i] = phase;
+						tmp -= (float)i * expct;
+						int qpd = (int)(tmp / pi);
+						if (qpd >= 0)
 						{
-							num16 += num16 & 1;
+							qpd += qpd & 1;
 						}
 						else
 						{
-							num16 -= num16 & 1;
+							qpd -= qpd & 1;
 						}
-						num15 -= num * (float)num16;
-						num15 = (float)overSampling * num15 / num2;
-						num15 = (float)j * num5 + num15 * num5;
-						data3[j].Magnitude = num13;
-						data3[j].Value.Hertz = num15;
+						tmp -= pi * (float)qpd;
+						tmp = (float)osamp * tmp / pi2;
+						tmp = (float)i * freqPerBin + tmp * freqPerBin;
+						freqs[i].Magnitude = magn;
+						freqs[i].Value.Hertz = tmp;
 					}
-					for (int k = 0; k < base.Count; k++)
+					for (int j = 0; j < base.Count; j++)
 					{
-						SignalProcessor<SpectralData> signalProcessor = base[k];
-						if (signalProcessor.Active)
+						SignalProcessor<SpectralData> proc = base[j];
+						if (proc.Active)
 						{
-							signalProcessor.ProcessBlock(this._specbuffer);
+							proc.ProcessBlock(this._specbuffer);
 						}
 					}
-					for (int j = 0; j <= num3; j++)
+					for (int i = 0; i <= fftFrameSize2; i++)
 					{
-						float num13 = data3[j].Magnitude;
-						float num15 = data3[j].Value.Hertz;
-						num15 -= (float)j * num5;
-						num15 /= num5;
-						num15 = num2 * num15 / (float)overSampling;
-						num15 += (float)j * num6;
-						this.gSumPhase[j] += num15;
-						float num14 = this.gSumPhase[j];
-						this.gFFTworksp[2 * j] = num13 * (float)Math.Cos((double)num14);
-						this.gFFTworksp[2 * j + 1] = num13 * (float)Math.Sin((double)num14);
+						float magn = freqs[i].Magnitude;
+						float tmp = freqs[i].Value.Hertz;
+						tmp -= (float)i * freqPerBin;
+						tmp /= freqPerBin;
+						tmp = pi2 * tmp / (float)osamp;
+						tmp += (float)i * expct;
+						this.gSumPhase[i] += tmp;
+						float phase = this.gSumPhase[i];
+						this.gFFTworksp[2 * i] = magn * (float)Math.Cos((double)phase);
+						this.gFFTworksp[2 * i + 1] = magn * (float)Math.Sin((double)phase);
 					}
-					for (int j = fftsize + 2; j < 2 * fftsize; j++)
+					for (int i = fftFrameSize + 2; i < 2 * fftFrameSize; i++)
 					{
-						this.gFFTworksp[j] = 0f;
+						this.gFFTworksp[i] = 0f;
 					}
 					this._fft.Transform(this.gFFTworksp, 1);
-					float num17 = 2f / (float)(num3 * overSampling);
-					for (int j = 0; j < fftsize; j++)
+					float mval = 2f / (float)(fftFrameSize2 * osamp);
+					for (int i = 0; i < fftFrameSize; i++)
 					{
-						this.gOutputAccum[j] += num17 * this._windowVals[j] * this.gFFTworksp[2 * j];
+						this.gOutputAccum[i] += mval * this._windowVals[i] * this.gFFTworksp[2 * i];
 					}
-					Buffer.BlockCopy(this.gOutputAccum, 0, this.gOutFIFO, 0, num4 * 4);
-					Buffer.BlockCopy(this.gOutputAccum, num4 * 4, this.gOutputAccum, 0, fftsize * 4);
-					Buffer.BlockCopy(this.gInFIFO, num4 * 4, this.gInFIFO, 0, num7 * 4);
+					Buffer.BlockCopy(this.gOutputAccum, 0, this.gOutFIFO, 0, stepSize * 4);
+					Buffer.BlockCopy(this.gOutputAccum, stepSize * 4, this.gOutputAccum, 0, fftFrameSize * 4);
+					Buffer.BlockCopy(this.gInFIFO, stepSize * 4, this.gInFIFO, 0, inFifoLatency * 4);
 				}
 			}
 			return true;

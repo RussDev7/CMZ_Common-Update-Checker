@@ -11,13 +11,13 @@ namespace DNA.Drawing.UI.Controls
 		{
 			get
 			{
-				int num = base.ScreenBounds.Height - (this.SliderHeight + this.ArrowSize * 2) - 1;
-				return this._sliderTop / (float)num;
+				int maxTop = base.ScreenBounds.Height - (this.SliderHeight + this.ArrowSize * 2) - 1;
+				return this._sliderTop / (float)maxTop;
 			}
 			set
 			{
-				int num = base.ScreenBounds.Height - (this.SliderHeight + this.ArrowSize * 2) - 1;
-				this._sliderTop = value * (float)num;
+				int maxTop = base.ScreenBounds.Height - (this.SliderHeight + this.ArrowSize * 2) - 1;
+				this._sliderTop = value * (float)maxTop;
 			}
 		}
 
@@ -57,10 +57,10 @@ namespace DNA.Drawing.UI.Controls
 
 		protected override void OnInput(InputManager inputManager, GameController controller, KeyboardInput chatPad, GameTime gameTime)
 		{
-			bool flag = this.GetSliderLocation(base.ScreenBounds).Contains(inputManager.Mouse.Position);
-			Rectangle rectangle = new Rectangle(base.ScreenBounds.X + 1, base.ScreenBounds.Y + 1, base.ScreenBounds.Width - 2, this.ArrowSize - 2);
-			Rectangle rectangle2 = new Rectangle(base.ScreenBounds.X + 1, base.ScreenBounds.Bottom - this.ArrowSize, base.ScreenBounds.Width - 2, this.ArrowSize - 2);
-			if (flag && !this._upperArrowCaptureInput && !this._lowerArrowCaptureInput)
+			bool hitTest = this.GetSliderLocation(base.ScreenBounds).Contains(inputManager.Mouse.Position);
+			Rectangle upperArrow = new Rectangle(base.ScreenBounds.X + 1, base.ScreenBounds.Y + 1, base.ScreenBounds.Width - 2, this.ArrowSize - 2);
+			Rectangle lowerArrow = new Rectangle(base.ScreenBounds.X + 1, base.ScreenBounds.Bottom - this.ArrowSize, base.ScreenBounds.Width - 2, this.ArrowSize - 2);
+			if (hitTest && !this._upperArrowCaptureInput && !this._lowerArrowCaptureInput)
 			{
 				this.Hovering = true;
 				if (inputManager.Mouse.LeftButtonPressed)
@@ -94,7 +94,7 @@ namespace DNA.Drawing.UI.Controls
 				this._upperArrowHover = false;
 				this._lowerArrowHover = false;
 			}
-			else if (!this._lowerArrowHover && !this._lowerArrowCaptureInput && rectangle.Contains(inputManager.Mouse.Position))
+			else if (!this._lowerArrowHover && !this._lowerArrowCaptureInput && upperArrow.Contains(inputManager.Mouse.Position))
 			{
 				this._lowerArrowCaptureInput = false;
 				this._lowerArrowHover = false;
@@ -105,7 +105,7 @@ namespace DNA.Drawing.UI.Controls
 					this.OnUpArrowPressed();
 				}
 			}
-			else if (!this._upperArrowHover && !this._upperArrowCaptureInput && rectangle2.Contains(inputManager.Mouse.Position))
+			else if (!this._upperArrowHover && !this._upperArrowCaptureInput && lowerArrow.Contains(inputManager.Mouse.Position))
 			{
 				this._upperArrowCaptureInput = false;
 				this._upperArrowHover = false;
@@ -141,50 +141,50 @@ namespace DNA.Drawing.UI.Controls
 		protected override void OnDraw(GraphicsDevice device, SpriteBatch spriteBatch, GameTime gameTime)
 		{
 			spriteBatch.Draw(UIControl.DummyTexture, base.ScreenBounds, this.TrackColor);
-			Color color = this.SliderColor;
+			Color sliderColor = this.SliderColor;
 			if (this._sliderCaptureInput)
 			{
-				color = this.SelectedColor;
+				sliderColor = this.SelectedColor;
 			}
 			else if (this._hovering)
 			{
-				color = this.HoverColor;
+				sliderColor = this.HoverColor;
 			}
-			Rectangle sliderLocation = this.GetSliderLocation(base.ScreenBounds);
-			spriteBatch.Draw(UIControl.DummyTexture, sliderLocation, Color.Black);
-			sliderLocation.Inflate(-1, -1);
-			spriteBatch.Draw(UIControl.DummyTexture, sliderLocation, color);
-			Rectangle rectangle = new Rectangle(base.ScreenBounds.X + 1, base.ScreenBounds.Y + 1, base.ScreenBounds.Width - 2, this.ArrowSize - 2);
-			Rectangle rectangle2 = new Rectangle(base.ScreenBounds.X + 1, base.ScreenBounds.Bottom - this.ArrowSize, base.ScreenBounds.Width - 2, this.ArrowSize - 2);
+			Rectangle sliderLoc = this.GetSliderLocation(base.ScreenBounds);
+			spriteBatch.Draw(UIControl.DummyTexture, sliderLoc, Color.Black);
+			sliderLoc.Inflate(-1, -1);
+			spriteBatch.Draw(UIControl.DummyTexture, sliderLoc, sliderColor);
+			Rectangle upperArrow = new Rectangle(base.ScreenBounds.X + 1, base.ScreenBounds.Y + 1, base.ScreenBounds.Width - 2, this.ArrowSize - 2);
+			Rectangle lowerArrow = new Rectangle(base.ScreenBounds.X + 1, base.ScreenBounds.Bottom - this.ArrowSize, base.ScreenBounds.Width - 2, this.ArrowSize - 2);
 			if (this._trackHover)
 			{
-				spriteBatch.Draw(UIControl.DummyTexture, rectangle, Color.Black);
-				rectangle.Inflate(-1, -1);
+				spriteBatch.Draw(UIControl.DummyTexture, upperArrow, Color.Black);
+				upperArrow.Inflate(-1, -1);
 				if (this._upperArrowCaptureInput)
 				{
-					spriteBatch.Draw(UIControl.DummyTexture, rectangle, this.SelectedColor);
+					spriteBatch.Draw(UIControl.DummyTexture, upperArrow, this.SelectedColor);
 				}
 				else if (this._upperArrowHover)
 				{
-					spriteBatch.Draw(UIControl.DummyTexture, rectangle, this.HoverColor);
+					spriteBatch.Draw(UIControl.DummyTexture, upperArrow, this.HoverColor);
 				}
 				else
 				{
-					spriteBatch.Draw(UIControl.DummyTexture, rectangle, this.SliderColor);
+					spriteBatch.Draw(UIControl.DummyTexture, upperArrow, this.SliderColor);
 				}
-				spriteBatch.Draw(UIControl.DummyTexture, rectangle2, Color.Black);
-				rectangle2.Inflate(-1, -1);
+				spriteBatch.Draw(UIControl.DummyTexture, lowerArrow, Color.Black);
+				lowerArrow.Inflate(-1, -1);
 				if (this._lowerArrowCaptureInput)
 				{
-					spriteBatch.Draw(UIControl.DummyTexture, rectangle2, this.SelectedColor);
+					spriteBatch.Draw(UIControl.DummyTexture, lowerArrow, this.SelectedColor);
 				}
 				else if (this._lowerArrowHover)
 				{
-					spriteBatch.Draw(UIControl.DummyTexture, rectangle2, this.HoverColor);
+					spriteBatch.Draw(UIControl.DummyTexture, lowerArrow, this.HoverColor);
 				}
 				else
 				{
-					spriteBatch.Draw(UIControl.DummyTexture, rectangle2, this.SliderColor);
+					spriteBatch.Draw(UIControl.DummyTexture, lowerArrow, this.SliderColor);
 				}
 			}
 			spriteBatch.Draw(UIControl.DummyTexture, new Rectangle(base.ScreenBounds.Center.X, base.ScreenBounds.Y + 5, 3, 10), null, Color.Black, Angle.FromDegrees(45f).Radians, Vector2.Zero, SpriteEffects.None, 0f);

@@ -6,26 +6,26 @@ namespace DNA.Audio.SignalProcessing.Processors
 	{
 		public override bool ProcessBlock(RealPCMData data)
 		{
-			int num = (int)((double)data.SampleRate * this.Delay.TotalSeconds);
-			int num2 = num * 2;
-			if (data.Channels != this._delayBuffer.Channels || num2 != this._delayBuffer.Samples)
+			int delayLen = (int)((double)data.SampleRate * this.Delay.TotalSeconds);
+			int bufferNeeded = delayLen * 2;
+			if (data.Channels != this._delayBuffer.Channels || bufferNeeded != this._delayBuffer.Samples)
 			{
-				this._delayBuffer = new RealPCMData(data.Channels, num2, data.SampleRate);
+				this._delayBuffer = new RealPCMData(data.Channels, bufferNeeded, data.SampleRate);
 			}
-			for (int i = 0; i < data.Channels; i++)
+			for (int channel = 0; channel < data.Channels; channel++)
 			{
-				float[] data2 = data.GetData(i);
-				float[] data3 = this._delayBuffer.GetData(i);
-				for (int j = 0; j < data2.Length; j++)
+				float[] buffer = data.GetData(channel);
+				float[] delayBuffer = this._delayBuffer.GetData(channel);
+				for (int i = 0; i < buffer.Length; i++)
 				{
-					float num3 = data2[j];
-					float num4 = data3[this._delayPos] * this.Decay;
-					num3 += num4;
-					data2[j] = num3;
-					int num5 = (this._delayPos + num) % data3.Length;
-					data3[num5] = num3;
+					float currentValue = buffer[i];
+					float oldValue = delayBuffer[this._delayPos] * this.Decay;
+					currentValue += oldValue;
+					buffer[i] = currentValue;
+					int savePos = (this._delayPos + delayLen) % delayBuffer.Length;
+					delayBuffer[savePos] = currentValue;
 					this._delayPos++;
-					if (this._delayPos >= data3.Length)
+					if (this._delayPos >= delayBuffer.Length)
 					{
 						this._delayPos = 0;
 					}

@@ -14,45 +14,45 @@ namespace DNA.Runtime.InteropServices.Win32.IPHelper
 
 		public static NetworkAdapterInfo[] GetAdaptersInfo()
 		{
-			List<NetworkAdapterInfo> list = new List<NetworkAdapterInfo>();
-			uint num = 0U;
-			if (IPHelperAPI.GetAdaptersInfo(IntPtr.Zero, ref num) == Win32ErrorCode.Success)
+			List<NetworkAdapterInfo> devices = new List<NetworkAdapterInfo>();
+			uint size = 0U;
+			if (IPHelperAPI.GetAdaptersInfo(IntPtr.Zero, ref size) == Win32ErrorCode.Success)
 			{
 				return new NetworkAdapterInfo[0];
 			}
-			GlobalBuffer globalBuffer = new GlobalBuffer(num);
-			Win32ErrorCode adaptersInfo = IPHelperAPI.GetAdaptersInfo(globalBuffer.Pointer, ref num);
-			if (adaptersInfo != Win32ErrorCode.Success)
+			GlobalBuffer buffer = new GlobalBuffer(size);
+			Win32ErrorCode ret = IPHelperAPI.GetAdaptersInfo(buffer.Pointer, ref size);
+			if (ret != Win32ErrorCode.Success)
 			{
-				throw new Win32Exception((int)adaptersInfo);
+				throw new Win32Exception((int)ret);
 			}
 			Marshal.SizeOf(typeof(IPHelperAPI.IPAdapterInfo));
-			IntPtr intPtr = globalBuffer.Pointer;
+			IntPtr curPtr = buffer.Pointer;
 			do
 			{
-				IPHelperAPI.IPAdapterInfo ipadapterInfo = (IPHelperAPI.IPAdapterInfo)Marshal.PtrToStructure(intPtr, typeof(IPHelperAPI.IPAdapterInfo));
-				ulong num2 = 0UL;
-				int num3 = 0;
-				while ((long)num3 < (long)((ulong)ipadapterInfo.AddressLength))
+				IPHelperAPI.IPAdapterInfo adapterInfo = (IPHelperAPI.IPAdapterInfo)Marshal.PtrToStructure(curPtr, typeof(IPHelperAPI.IPAdapterInfo));
+				ulong macAddress = 0UL;
+				int i = 0;
+				while ((long)i < (long)((ulong)adapterInfo.AddressLength))
 				{
-					ulong num4 = (ulong)ipadapterInfo.Address[num3] << num3 * 8;
-					num2 |= num4;
-					num3++;
+					ulong orval = (ulong)adapterInfo.Address[i] << i * 8;
+					macAddress |= orval;
+					i++;
 				}
-				string text = "";
-				for (int i = 0; i < 6; i++)
+				string macstring = "";
+				for (int j = 0; j < 6; j++)
 				{
-					text += ((num2 >> 8 * i) & 255UL).ToString("X2");
-					if (i != 5)
+					macstring += ((macAddress >> 8 * j) & 255UL).ToString("X2");
+					if (j != 5)
 					{
-						text += ":";
+						macstring += ":";
 					}
 				}
-				list.Add(new NetworkAdapterInfo(text, new IPAddress[0], true));
-				intPtr = ipadapterInfo.Next;
+				devices.Add(new NetworkAdapterInfo(macstring, new IPAddress[0], true));
+				curPtr = adapterInfo.Next;
 			}
-			while (intPtr != IntPtr.Zero);
-			return list.ToArray();
+			while (curPtr != IntPtr.Zero);
+			return devices.ToArray();
 		}
 
 		private struct IPAddressString

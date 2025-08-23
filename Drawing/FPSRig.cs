@@ -58,10 +58,10 @@ namespace DNA.Drawing
 		{
 			if (this.CanJump)
 			{
-				float num = Vector3.Dot(this.GroundNormal, Vector3.Up);
-				Vector3 worldVelocity = this.PlayerPhysics.WorldVelocity;
-				worldVelocity.Y += this.JumpImpulse * num;
-				this.PlayerPhysics.WorldVelocity = worldVelocity;
+				float damp = Vector3.Dot(this.GroundNormal, Vector3.Up);
+				Vector3 vel = this.PlayerPhysics.WorldVelocity;
+				vel.Y += this.JumpImpulse * damp;
+				this.PlayerPhysics.WorldVelocity = vel;
 				this.m_jumpCount++;
 			}
 		}

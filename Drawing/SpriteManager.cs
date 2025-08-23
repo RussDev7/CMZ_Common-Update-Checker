@@ -22,16 +22,16 @@ namespace DNA.Drawing
 		{
 			protected override SpriteManager Read(ContentReader input, SpriteManager existingInstance)
 			{
-				SpriteManager spriteManager = new SpriteManager();
-				Texture2D texture2D = input.ReadObject<Texture2D>();
-				int num = input.ReadInt32();
-				for (int i = 0; i < num; i++)
+				SpriteManager manager = new SpriteManager();
+				Texture2D texture = input.ReadObject<Texture2D>();
+				int count = input.ReadInt32();
+				for (int i = 0; i < count; i++)
 				{
-					string text = input.ReadString();
-					Rectangle rectangle = new Rectangle(input.ReadInt32(), input.ReadInt32(), input.ReadInt32(), input.ReadInt32());
-					spriteManager._sprites[text] = new Sprite(texture2D, rectangle);
+					string name = input.ReadString();
+					Rectangle rect = new Rectangle(input.ReadInt32(), input.ReadInt32(), input.ReadInt32(), input.ReadInt32());
+					manager._sprites[name] = new Sprite(texture, rect);
 				}
-				return spriteManager;
+				return manager;
 			}
 		}
 	}

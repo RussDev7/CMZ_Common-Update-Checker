@@ -9,12 +9,12 @@ namespace DNA.Drawing.Imaging
 	{
 		private static ImageCodecInfo GetEncoderFormat(string formatName)
 		{
-			ImageCodecInfo[] imageEncoders = ImageCodecInfo.GetImageEncoders();
-			foreach (ImageCodecInfo imageCodecInfo in imageEncoders)
+			ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+			foreach (ImageCodecInfo codec in codecs)
 			{
-				if (string.Compare(imageCodecInfo.FormatDescription, formatName, true) == 0)
+				if (string.Compare(codec.FormatDescription, formatName, true) == 0)
 				{
-					return imageCodecInfo;
+					return codec;
 				}
 			}
 			throw new ArgumentException("Cannot Find Codec " + formatName);
@@ -22,10 +22,10 @@ namespace DNA.Drawing.Imaging
 
 		public static void SaveJpg(Bitmap bitmap, Stream outStream, Percentage quality)
 		{
-			ImageCodecInfo encoderFormat = ImageTools.GetEncoderFormat("JPEG");
-			EncoderParameters encoderParameters = new EncoderParameters(1);
-			encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, (long)quality.Percent);
-			bitmap.Save(outStream, encoderFormat, encoderParameters);
+			ImageCodecInfo encoder = ImageTools.GetEncoderFormat("JPEG");
+			EncoderParameters encoderParams = new EncoderParameters(1);
+			encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)quality.Percent);
+			bitmap.Save(outStream, encoder, encoderParams);
 		}
 
 		public static string GetFileExtenstion(ImageFormat format)
@@ -63,37 +63,37 @@ namespace DNA.Drawing.Imaging
 
 		public static Image ReshapeImageBuffered(Image orginalImage, Size newSize, Color bufferColor, PixelFormat destFormat)
 		{
-			Bitmap bitmap = new Bitmap(newSize.Width, newSize.Height, destFormat);
-			using (Graphics graphics = Graphics.FromImage(bitmap))
+			Bitmap newBmp = new Bitmap(newSize.Width, newSize.Height, destFormat);
+			using (Graphics g = Graphics.FromImage(newBmp))
 			{
-				graphics.Clear(bufferColor);
-				float num = (float)orginalImage.Width / (float)orginalImage.Height;
-				float num2 = (float)newSize.Width / (float)newSize.Height;
-				if (num > num2)
+				g.Clear(bufferColor);
+				float sourceAspect = (float)orginalImage.Width / (float)orginalImage.Height;
+				float destAspect = (float)newSize.Width / (float)newSize.Height;
+				if (sourceAspect > destAspect)
 				{
-					float num3 = (float)newSize.Width / (float)orginalImage.Width;
-					int num4 = (int)(num3 * (float)orginalImage.Height);
-					int num5 = newSize.Height - num4;
-					Rectangle rectangle = new Rectangle(0, num5 / 2, newSize.Width, num4);
-					graphics.DrawImage(orginalImage, rectangle, 0, 0, orginalImage.Width, orginalImage.Height, GraphicsUnit.Pixel);
+					float factor = (float)newSize.Width / (float)orginalImage.Width;
+					int newHeight = (int)(factor * (float)orginalImage.Height);
+					int diff = newSize.Height - newHeight;
+					Rectangle destRect = new Rectangle(0, diff / 2, newSize.Width, newHeight);
+					g.DrawImage(orginalImage, destRect, 0, 0, orginalImage.Width, orginalImage.Height, GraphicsUnit.Pixel);
 				}
 				else
 				{
-					float num6 = (float)newSize.Height / (float)orginalImage.Height;
-					int num7 = (int)(num6 * (float)orginalImage.Width);
-					int num8 = newSize.Width - num7;
-					Rectangle rectangle2 = new Rectangle(num8 / 2, 0, num7, newSize.Height);
-					graphics.DrawImage(orginalImage, rectangle2, 0, 0, orginalImage.Width, orginalImage.Height, GraphicsUnit.Pixel);
+					float factor2 = (float)newSize.Height / (float)orginalImage.Height;
+					int newWidth = (int)(factor2 * (float)orginalImage.Width);
+					int diff2 = newSize.Width - newWidth;
+					Rectangle destRect2 = new Rectangle(diff2 / 2, 0, newWidth, newSize.Height);
+					g.DrawImage(orginalImage, destRect2, 0, 0, orginalImage.Width, orginalImage.Height, GraphicsUnit.Pixel);
 				}
 			}
-			return bitmap;
+			return newBmp;
 		}
 
 		public static Image ReshapeImageCropped(Image sourceImage, Size newSize, ImageTools.CropOptions cropOptions)
 		{
-			float num = (float)newSize.Width / (float)newSize.Height;
-			Image image = ImageTools.CropToAspectRatio(sourceImage, num, cropOptions);
-			return ImageTools.Resample(image, Percentage.FromFraction((float)newSize.Width / (float)image.Width));
+			float newAspect = (float)newSize.Width / (float)newSize.Height;
+			Image bitmap = ImageTools.CropToAspectRatio(sourceImage, newAspect, cropOptions);
+			return ImageTools.Resample(bitmap, Percentage.FromFraction((float)newSize.Width / (float)bitmap.Width));
 		}
 
 		public static string GetFileExtenstion(Image image)
@@ -103,55 +103,55 @@ namespace DNA.Drawing.Imaging
 
 		public static Bitmap ChangeFormat(Image source, PixelFormat format)
 		{
-			Bitmap bitmap = new Bitmap(source.Width, source.Height, format);
-			using (Graphics graphics = Graphics.FromImage(bitmap))
+			Bitmap dest = new Bitmap(source.Width, source.Height, format);
+			using (Graphics g = Graphics.FromImage(dest))
 			{
-				graphics.DrawImageUnscaled(source, 0, 0);
+				g.DrawImageUnscaled(source, 0, 0);
 			}
-			return bitmap;
+			return dest;
 		}
 
 		public static Image Resample(Image source, Percentage percentage)
 		{
-			int num = (int)Math.Round((double)(percentage.Fraction * (float)source.Width));
-			int num2 = (int)Math.Round((double)(percentage.Fraction * (float)source.Height));
-			return ImageTools.Resample(source, new Size(num, num2));
+			int newWidth = (int)Math.Round((double)(percentage.Fraction * (float)source.Width));
+			int newHeight = (int)Math.Round((double)(percentage.Fraction * (float)source.Height));
+			return ImageTools.Resample(source, new Size(newWidth, newHeight));
 		}
 
 		public static Image Resample(Image source, Size newSize)
 		{
-			Bitmap bitmap = new Bitmap(source, newSize);
-			using (Graphics graphics = Graphics.FromImage(bitmap))
+			Bitmap newImage = new Bitmap(source, newSize);
+			using (Graphics g = Graphics.FromImage(newImage))
 			{
-				Rectangle rectangle = new Rectangle(0, 0, source.Width, source.Height);
-				Rectangle rectangle2 = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-				graphics.DrawImage(source, rectangle2, rectangle, GraphicsUnit.Pixel);
+				Rectangle srect = new Rectangle(0, 0, source.Width, source.Height);
+				Rectangle drect = new Rectangle(0, 0, newImage.Width, newImage.Height);
+				g.DrawImage(source, drect, srect, GraphicsUnit.Pixel);
 			}
-			return bitmap;
+			return newImage;
 		}
 
 		public static Image CropToAspectRatio(Image source, float cropAspectRatio, ImageTools.CropOptions options)
 		{
-			float num = (float)source.Width / (float)source.Height;
-			int num2;
-			int num3;
-			int num4;
-			int num5;
-			if (cropAspectRatio < num)
+			float sourceAspect = (float)source.Width / (float)source.Height;
+			int newY;
+			int newX;
+			int yoff;
+			int xoff;
+			if (cropAspectRatio < sourceAspect)
 			{
-				num2 = source.Height;
-				num3 = (int)((float)source.Height * cropAspectRatio);
-				num4 = 0;
+				newY = source.Height;
+				newX = (int)((float)source.Height * cropAspectRatio);
+				yoff = 0;
 				switch (options)
 				{
 				case ImageTools.CropOptions.Start:
-					num5 = 0;
+					xoff = 0;
 					break;
 				case ImageTools.CropOptions.Middle:
-					num5 = (source.Width - num3) / 2;
+					xoff = (source.Width - newX) / 2;
 					break;
 				case ImageTools.CropOptions.End:
-					num5 = num3 - source.Width;
+					xoff = newX - source.Width;
 					break;
 				default:
 					throw new ArgumentException("Not a valid Crop option");
@@ -159,41 +159,41 @@ namespace DNA.Drawing.Imaging
 			}
 			else
 			{
-				num3 = source.Width;
-				num2 = (int)((float)source.Width / cropAspectRatio);
-				num5 = 0;
+				newX = source.Width;
+				newY = (int)((float)source.Width / cropAspectRatio);
+				xoff = 0;
 				switch (options)
 				{
 				case ImageTools.CropOptions.Start:
-					num4 = 0;
+					yoff = 0;
 					break;
 				case ImageTools.CropOptions.Middle:
-					num4 = (source.Height - num2) / 2;
+					yoff = (source.Height - newY) / 2;
 					break;
 				case ImageTools.CropOptions.End:
-					num4 = num2 - source.Height;
+					yoff = newY - source.Height;
 					break;
 				default:
 					throw new ArgumentException("Not a valid Crop option");
 				}
 			}
-			Bitmap bitmap = new Bitmap(source, num3, num2);
-			using (Graphics graphics = Graphics.FromImage(bitmap))
+			Bitmap dest = new Bitmap(source, newX, newY);
+			using (Graphics g = Graphics.FromImage(dest))
 			{
-				Rectangle rectangle = new Rectangle(num5, num4, num3, num2);
-				Rectangle rectangle2 = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-				graphics.DrawImage(source, rectangle2, rectangle, GraphicsUnit.Pixel);
+				Rectangle srect = new Rectangle(xoff, yoff, newX, newY);
+				Rectangle drect = new Rectangle(0, 0, dest.Width, dest.Height);
+				g.DrawImage(source, drect, srect, GraphicsUnit.Pixel);
 			}
-			return bitmap;
+			return dest;
 		}
 
 		public static Bitmap ExtractSubImage(Bitmap sourceBmp, Rectangle sourceRect)
 		{
-			Bitmap bitmap = new Bitmap(sourceRect.Width, sourceRect.Height, sourceBmp.PixelFormat);
-			Graphics graphics = Graphics.FromImage(bitmap);
-			Rectangle rectangle = new Rectangle(new Point(0, 0), sourceRect.Size);
-			graphics.DrawImage(sourceBmp, rectangle, sourceRect, GraphicsUnit.Pixel);
-			return bitmap;
+			Bitmap destBmp = new Bitmap(sourceRect.Width, sourceRect.Height, sourceBmp.PixelFormat);
+			Graphics g = Graphics.FromImage(destBmp);
+			Rectangle destRect = new Rectangle(new Point(0, 0), sourceRect.Size);
+			g.DrawImage(sourceBmp, destRect, sourceRect, GraphicsUnit.Pixel);
+			return destBmp;
 		}
 
 		public static bool IsEditable(PixelFormat format)
@@ -203,16 +203,16 @@ namespace DNA.Drawing.Imaging
 
 		public static Bitmap WaterMark(Image orginal, Image watermark, Rectangle markLocation)
 		{
-			Bitmap bitmap;
+			Bitmap resultImage;
 			if (ImageTools.IsEditable(orginal.PixelFormat))
 			{
-				bitmap = ImageTools.ChangeFormat(orginal, orginal.PixelFormat);
+				resultImage = ImageTools.ChangeFormat(orginal, orginal.PixelFormat);
 			}
 			else
 			{
-				bitmap = ImageTools.ChangeFormat(orginal, PixelFormat.Format32bppArgb);
+				resultImage = ImageTools.ChangeFormat(orginal, PixelFormat.Format32bppArgb);
 			}
-			using (Graphics graphics = Graphics.FromImage(bitmap))
+			using (Graphics g = Graphics.FromImage(resultImage))
 			{
 				float[][] array = new float[5][];
 				float[][] array2 = array;
@@ -238,13 +238,13 @@ namespace DNA.Drawing.Imaging
 				float[] array9 = new float[5];
 				array8[num4] = array9;
 				array[4] = new float[] { 0f, 0f, 0f, 0f, 1f };
-				float[][] array10 = array;
-				ColorMatrix colorMatrix = new ColorMatrix(array10);
-				ImageAttributes imageAttributes = new ImageAttributes();
-				imageAttributes.SetColorMatrix(colorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-				graphics.DrawImage(watermark, markLocation, 0, 0, watermark.Width, watermark.Height, GraphicsUnit.Pixel, imageAttributes);
+				float[][] matrixItems = array;
+				ColorMatrix colorMatrix = new ColorMatrix(matrixItems);
+				ImageAttributes imageAtt = new ImageAttributes();
+				imageAtt.SetColorMatrix(colorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+				g.DrawImage(watermark, markLocation, 0, 0, watermark.Width, watermark.Height, GraphicsUnit.Pixel, imageAtt);
 			}
-			return bitmap;
+			return resultImage;
 		}
 
 		public enum CropOptions

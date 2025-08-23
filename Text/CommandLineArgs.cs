@@ -14,87 +14,87 @@ namespace DNA.Text
 
 		private static List<string> TokenizeCommandLine()
 		{
-			List<string> list = new List<string>();
-			string commandLine = Environment.CommandLine;
-			if (commandLine == null || commandLine.Length == 0)
+			List<string> result = new List<string>();
+			string cl = Environment.CommandLine;
+			if (cl == null || cl.Length == 0)
 			{
-				return list;
+				return result;
 			}
-			bool flag = false;
-			bool flag2 = false;
-			bool flag3 = false;
-			bool flag4 = false;
-			StringBuilder stringBuilder = new StringBuilder();
-			foreach (char c in commandLine)
+			bool escaped = false;
+			bool openQuote = false;
+			bool doubleQuote = false;
+			bool wasQuoted = false;
+			StringBuilder accumulator = new StringBuilder();
+			foreach (char c in cl)
 			{
-				if (flag)
+				if (escaped)
 				{
-					stringBuilder.Append(c);
-					flag = false;
+					accumulator.Append(c);
+					escaped = false;
 				}
-				else if (flag2)
+				else if (openQuote)
 				{
-					if ((flag3 && c == '"') || (!flag3 && c == '\''))
+					if ((doubleQuote && c == '"') || (!doubleQuote && c == '\''))
 					{
-						flag2 = false;
-						flag4 = true;
+						openQuote = false;
+						wasQuoted = true;
 					}
 					else
 					{
-						stringBuilder.Append(c);
+						accumulator.Append(c);
 					}
 				}
 				else if (c == '\\' && CommandLineArgs.ApplicationPath != null)
 				{
-					flag = true;
+					escaped = true;
 				}
 				else if (c == '"')
 				{
-					flag2 = true;
-					flag3 = true;
+					openQuote = true;
+					doubleQuote = true;
 				}
 				else if (c == '\'')
 				{
-					flag2 = true;
-					flag3 = false;
+					openQuote = true;
+					doubleQuote = false;
 				}
 				else if (!char.IsWhiteSpace(c))
 				{
-					stringBuilder.Append(c);
-					flag4 = false;
+					accumulator.Append(c);
+					wasQuoted = false;
 				}
 				else
 				{
-					string text2 = stringBuilder.ToString();
+					string token = accumulator.ToString();
 					if (CommandLineArgs.ApplicationPath == null)
 					{
-						if (flag4 || File.Exists(text2) || File.Exists(text2 + ".exe"))
+						if (wasQuoted || File.Exists(token) || File.Exists(token + ".exe"))
 						{
-							CommandLineArgs.ApplicationPath = text2;
-							stringBuilder.Length = 0;
+							CommandLineArgs.ApplicationPath = token;
+							accumulator.Length = 0;
 						}
 						else
 						{
-							stringBuilder.Append(c);
+							accumulator.Append(c);
 						}
 					}
-					else if (!string.IsNullOrEmpty(text2))
+					else if (!string.IsNullOrEmpty(token))
 					{
-						list.Add(text2);
-						stringBuilder.Length = 0;
+						result.Add(token);
+						accumulator.Length = 0;
 					}
-					flag4 = false;
+					wasQuoted = false;
 				}
 			}
 			if (CommandLineArgs.ApplicationPath == null)
 			{
-				CommandLineArgs.ApplicationPath = stringBuilder.ToString();
+				CommandLineArgs.ApplicationPath = accumulator.ToString();
 			}
-			else if (stringBuilder.Length != 0)
+			else if (accumulator.Length != 0)
 			{
-				list.Add(stringBuilder.ToString());
+				result.Add(accumulator.ToString());
 			}
-			return list;
+			return result;
 		}
 
 		public static void ProcessArguments()
@@ -106,7 +106,7 @@ namespace DNA.Text
 			CommandLineArgs._sCommandLineTokens = CommandLineArgs.TokenizeCommandLine();
 			CommandLineArgs._commandLineCache = new Dictionary<Type, CommandLineArgs>();
 			CommandLineArgs._registeredArgs = new List<CommandLineArgs.ArgumentDefinition>();
-			Type typeFromHandle = typeof(CommandLineArgs);
+			Type argType = typeof(CommandLineArgs);
 			Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 			foreach (Assembly assembly in assemblies)
 			{
@@ -115,14 +115,14 @@ namespace DNA.Text
 					Type[] types = assembly.GetTypes();
 					foreach (Type type in types)
 					{
-						if (type.IsSubclassOf(typeFromHandle) && !type.Equals(typeFromHandle))
+						if (type.IsSubclassOf(argType) && !type.Equals(argType))
 						{
-							CommandLineArgs commandLineArgs = Activator.CreateInstance(type) as CommandLineArgs;
-							if (commandLineArgs != null)
+							CommandLineArgs arg = Activator.CreateInstance(type) as CommandLineArgs;
+							if (arg != null)
 							{
-								commandLineArgs.RegisterArguments();
+								arg.RegisterArguments();
 							}
-							CommandLineArgs._commandLineCache[type] = commandLineArgs;
+							CommandLineArgs._commandLineCache[type] = arg;
 						}
 					}
 				}
@@ -130,27 +130,27 @@ namespace DNA.Text
 				{
 				}
 			}
-			foreach (CommandLineArgs commandLineArgs2 in CommandLineArgs._commandLineCache.Values)
+			foreach (CommandLineArgs arg2 in CommandLineArgs._commandLineCache.Values)
 			{
-				if (commandLineArgs2 != null)
+				if (arg2 != null)
 				{
-					commandLineArgs2.ParseArguments();
+					arg2.ParseArguments();
 				}
 			}
 		}
 
 		public static T Get<T>() where T : CommandLineArgs
 		{
-			CommandLineArgs commandLineArgs = null;
+			CommandLineArgs result = null;
 			if (CommandLineArgs._commandLineCache == null)
 			{
 				throw new Exception("Command line requested but arguments have not been processed");
 			}
-			if (!CommandLineArgs._commandLineCache.TryGetValue(typeof(T), out commandLineArgs))
+			if (!CommandLineArgs._commandLineCache.TryGetValue(typeof(T), out result))
 			{
 				throw new Exception("Command line type " + typeof(T).Name + " referenced but does not exist");
 			}
-			return commandLineArgs as T;
+			return result as T;
 		}
 
 		protected int AddFlag(string flag, int numargs, CommandLineArgs.ArgumentHandler handler, string description = "", string sample = "", StringComparison compType = StringComparison.OrdinalIgnoreCase)
@@ -161,98 +161,98 @@ namespace DNA.Text
 
 		public virtual string GetErrorUsageAndDescription()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder sb = new StringBuilder();
 			if (this.ErrorString != null)
 			{
-				stringBuilder.Append(this.ErrorString).Append("\n").Append("\n");
+				sb.Append(this.ErrorString).Append("\n").Append("\n");
 			}
-			this.GetUsageLine(stringBuilder);
-			stringBuilder.Append("\n\n");
-			string text = this.UsagePreamble;
-			if (text != null)
+			this.GetUsageLine(sb);
+			sb.Append("\n\n");
+			string extra = this.UsagePreamble;
+			if (extra != null)
 			{
-				stringBuilder.Append(text);
+				sb.Append(extra);
 			}
-			this.GetUsageDescription(stringBuilder);
-			stringBuilder.Append("\n");
-			text = this.UsageEpilogue;
-			if (text != null)
+			this.GetUsageDescription(sb);
+			sb.Append("\n");
+			extra = this.UsageEpilogue;
+			if (extra != null)
 			{
-				stringBuilder.Append(text);
+				sb.Append(extra);
 			}
-			stringBuilder.Append("\n");
-			return stringBuilder.ToString();
+			sb.Append("\n");
+			return sb.ToString();
 		}
 
 		public virtual string GetUsageLine()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			this.GetUsageLine(stringBuilder);
-			return stringBuilder.ToString();
+			StringBuilder sb = new StringBuilder();
+			this.GetUsageLine(sb);
+			return sb.ToString();
 		}
 
 		public virtual void GetUsageLine(StringBuilder sb)
 		{
-			string text = null;
+			string appName = null;
 			if (!string.IsNullOrEmpty(CommandLineArgs.ApplicationPath))
 			{
-				text = Path.GetFileName(CommandLineArgs.ApplicationPath);
+				appName = Path.GetFileName(CommandLineArgs.ApplicationPath);
 			}
-			if (string.IsNullOrEmpty(text))
+			if (string.IsNullOrEmpty(appName))
 			{
-				text = "usage:";
+				appName = "usage:";
 			}
-			sb.Append(text + " ");
-			CommandLineArgs.ArgumentDefinition argumentDefinition = null;
-			foreach (CommandLineArgs.ArgumentDefinition argumentDefinition2 in this._argumentDefinitions)
+			sb.Append(appName + " ");
+			CommandLineArgs.ArgumentDefinition defHandler = null;
+			foreach (CommandLineArgs.ArgumentDefinition def in this._argumentDefinitions)
 			{
-				if (argumentDefinition2.Flag != null)
+				if (def.Flag != null)
 				{
-					if (!string.IsNullOrEmpty(argumentDefinition2.Sample))
+					if (!string.IsNullOrEmpty(def.Sample))
 					{
-						sb.Append(" ").Append(argumentDefinition2.Sample);
+						sb.Append(" ").Append(def.Sample);
 					}
 				}
 				else
 				{
-					argumentDefinition = argumentDefinition2;
+					defHandler = def;
 				}
 			}
-			if (argumentDefinition != null && !string.IsNullOrEmpty(argumentDefinition.Sample))
+			if (defHandler != null && !string.IsNullOrEmpty(defHandler.Sample))
 			{
-				sb.Append(" ").Append(argumentDefinition.Sample);
+				sb.Append(" ").Append(defHandler.Sample);
 			}
 		}
 
 		public virtual string GetUsageDescription()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			this.GetUsageDescription(stringBuilder);
-			return stringBuilder.ToString();
+			StringBuilder sb = new StringBuilder();
+			this.GetUsageDescription(sb);
+			return sb.ToString();
 		}
 
 		public virtual void GetUsageDescription(StringBuilder sb)
 		{
-			CommandLineArgs.ArgumentDefinition argumentDefinition = null;
-			foreach (CommandLineArgs.ArgumentDefinition argumentDefinition2 in this._argumentDefinitions)
+			CommandLineArgs.ArgumentDefinition defHandler = null;
+			foreach (CommandLineArgs.ArgumentDefinition def in this._argumentDefinitions)
 			{
-				if (argumentDefinition2.Flag != null)
+				if (def.Flag != null)
 				{
-					if (!string.IsNullOrEmpty(argumentDefinition2.Description))
+					if (!string.IsNullOrEmpty(def.Description))
 					{
-						sb.Append("\t").Append(argumentDefinition2.Flag).Append(" - ")
-							.Append(argumentDefinition2.Description)
+						sb.Append("\t").Append(def.Flag).Append(" - ")
+							.Append(def.Description)
 							.Append("\n");
 					}
 				}
 				else
 				{
-					argumentDefinition = argumentDefinition2;
+					defHandler = def;
 				}
 			}
-			if (argumentDefinition != null && !string.IsNullOrEmpty(argumentDefinition.Sample))
+			if (defHandler != null && !string.IsNullOrEmpty(defHandler.Sample))
 			{
-				sb.Append("\t").Append(argumentDefinition.Description).Append("\n");
+				sb.Append("\t").Append(defHandler.Description).Append("\n");
 			}
 		}
 
@@ -280,22 +280,22 @@ namespace DNA.Text
 
 		protected virtual void RegisterArguments()
 		{
-			foreach (CommandLineArgs.ArgumentDefinition argumentDefinition in this._argumentDefinitions)
+			foreach (CommandLineArgs.ArgumentDefinition def in this._argumentDefinitions)
 			{
-				if (argumentDefinition.Flag != null)
+				if (def.Flag != null)
 				{
-					bool flag = false;
+					bool alreadyIn = false;
 					int i = 0;
 					while (i < CommandLineArgs._registeredArgs.Count)
 					{
-						if (CommandLineArgs._registeredArgs[i].EquivilentTo(argumentDefinition))
+						if (CommandLineArgs._registeredArgs[i].EquivilentTo(def))
 						{
-							if (CommandLineArgs._registeredArgs[i].NumArgs != argumentDefinition.NumArgs)
+							if (CommandLineArgs._registeredArgs[i].NumArgs != def.NumArgs)
 							{
 								CommandLineArgs._registeredArgs.RemoveAt(i);
 								break;
 							}
-							flag = true;
+							alreadyIn = true;
 							break;
 						}
 						else
@@ -303,9 +303,9 @@ namespace DNA.Text
 							i++;
 						}
 					}
-					if (!flag)
+					if (!alreadyIn)
 					{
-						CommandLineArgs._registeredArgs.Add(argumentDefinition);
+						CommandLineArgs._registeredArgs.Add(def);
 					}
 				}
 			}
@@ -313,9 +313,9 @@ namespace DNA.Text
 
 		protected virtual bool IsAFlag(string val)
 		{
-			foreach (CommandLineArgs.ArgumentDefinition argumentDefinition in CommandLineArgs._registeredArgs)
+			foreach (CommandLineArgs.ArgumentDefinition def in CommandLineArgs._registeredArgs)
 			{
-				if (argumentDefinition.Matches(val))
+				if (def.Matches(val))
 				{
 					return true;
 				}
@@ -325,75 +325,75 @@ namespace DNA.Text
 
 		protected virtual bool CheckFlag(List<CommandLineArgs.ArgumentDefinition> definitions, List<string> args, bool runHandlers)
 		{
-			bool flag = false;
-			foreach (CommandLineArgs.ArgumentDefinition argumentDefinition in definitions)
+			bool handled = false;
+			foreach (CommandLineArgs.ArgumentDefinition def in definitions)
 			{
-				if (argumentDefinition.Matches(args[0]))
+				if (def.Matches(args[0]))
 				{
-					flag = true;
-					string text = args[0];
+					handled = true;
+					string flag = args[0];
 					args.RemoveAt(0);
-					if (argumentDefinition.NumArgs == -1)
+					if (def.NumArgs == -1)
 					{
 						if (runHandlers)
 						{
-							argumentDefinition.Handler(text, args);
+							def.Handler(flag, args);
 							break;
 						}
 						break;
 					}
-					else if (argumentDefinition.NumArgs == -2)
+					else if (def.NumArgs == -2)
 					{
-						List<string> list = null;
+						List<string> newargs = null;
 						while (args.Count != 0 && !this.IsAFlag(args[0]))
 						{
 							if (runHandlers)
 							{
-								if (list == null)
+								if (newargs == null)
 								{
-									list = new List<string>();
+									newargs = new List<string>();
 								}
-								list.Add(args[0]);
+								newargs.Add(args[0]);
 							}
 							args.RemoveAt(0);
 						}
 						if (runHandlers)
 						{
-							argumentDefinition.Handler(text, list);
+							def.Handler(flag, newargs);
 							break;
 						}
 						break;
 					}
 					else
 					{
-						List<string> list2 = null;
-						if (argumentDefinition.NumArgs > args.Count)
+						List<string> newargs2 = null;
+						if (def.NumArgs > args.Count)
 						{
 							if (runHandlers)
 							{
 								this.ShowUsage = true;
-								this.ErrorString = "Not enough arguments for " + text + " flag";
+								this.ErrorString = "Not enough arguments for " + flag + " flag";
 								break;
 							}
 							break;
 						}
 						else
 						{
-							if (argumentDefinition.NumArgs > 0)
+							if (def.NumArgs > 0)
 							{
 								if (runHandlers)
 								{
-									list2 = new List<string>();
-									for (int i = 0; i < argumentDefinition.NumArgs; i++)
+									newargs2 = new List<string>();
+									for (int i = 0; i < def.NumArgs; i++)
 									{
-										list2.Add(args[i]);
+										newargs2.Add(args[i]);
 									}
 								}
-								args.RemoveRange(0, argumentDefinition.NumArgs);
+								args.RemoveRange(0, def.NumArgs);
 							}
 							if (runHandlers)
 							{
-								argumentDefinition.Handler(text, list2);
+								def.Handler(flag, newargs2);
 								break;
 							}
 							break;
@@ -401,39 +401,39 @@ namespace DNA.Text
 					}
 				}
 			}
-			return flag;
+			return handled;
 		}
 
 		protected virtual bool ParseArguments()
 		{
 			this.ShowUsage = false;
-			List<string> list = new List<string>(CommandLineArgs._sCommandLineTokens);
-			CommandLineArgs.ArgumentDefinition argumentDefinition = null;
+			List<string> args = new List<string>(CommandLineArgs._sCommandLineTokens);
+			CommandLineArgs.ArgumentDefinition defaultDef = null;
 			using (List<CommandLineArgs.ArgumentDefinition>.Enumerator enumerator = this._argumentDefinitions.GetEnumerator())
 			{
 				while (enumerator.MoveNext())
 				{
-					CommandLineArgs.ArgumentDefinition argumentDefinition2 = enumerator.Current;
-					if (argumentDefinition2.Flag == null)
+					CommandLineArgs.ArgumentDefinition def = enumerator.Current;
+					if (def.Flag == null)
 					{
-						argumentDefinition = argumentDefinition2;
+						defaultDef = def;
 						break;
 					}
 				}
 				goto IL_00AE;
 			}
 			IL_0050:
-			if (!this.CheckFlag(this._argumentDefinitions, list, true))
+			if (!this.CheckFlag(this._argumentDefinitions, args, true))
 			{
-				if (argumentDefinition != null)
+				if (defaultDef != null)
 				{
-					argumentDefinition.Handler(list[0], null);
-					list.RemoveAt(0);
+					defaultDef.Handler(args[0], null);
+					args.RemoveAt(0);
 				}
-				else if (!this.CheckFlag(CommandLineArgs._registeredArgs, list, false))
+				else if (!this.CheckFlag(CommandLineArgs._registeredArgs, args, false))
 				{
-					this.HandleUncaughtArg(list[0]);
-					list.RemoveAt(0);
+					this.HandleUncaughtArg(args[0]);
+					args.RemoveAt(0);
 				}
 			}
 			if (this.ShowUsage)
@@ -441,7 +441,7 @@ namespace DNA.Text
 				return false;
 			}
 			IL_00AE:
-			if (list == null || list.Count <= 0)
+			if (args == null || args.Count <= 0)
 			{
 				this.ValidateSettings();
 				return !this.ShowUsage;
@@ -493,11 +493,11 @@ namespace DNA.Text
 
 			public override string ToString()
 			{
-				string text = ((this.Flag == null) ? "null" : this.Flag);
-				string text2 = text;
+				string result = ((this.Flag == null) ? "null" : this.Flag);
+				string text = result;
 				return string.Concat(new string[]
 				{
-					text2,
+					text,
 					": ",
 					this.Description,
 					" (",

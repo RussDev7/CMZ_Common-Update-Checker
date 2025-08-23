@@ -14,7 +14,7 @@ namespace DNA
 	{
 		static PromoCode()
 		{
-			string text = "AEFHKMNPRTUVWXYZ";
+			string friendlyChars = "AEFHKMNPRTUVWXYZ";
 			for (int i = 0; i < 256; i++)
 			{
 				PromoCode.FriendlyToHexLookup[i] = (char)i;
@@ -22,10 +22,10 @@ namespace DNA
 			}
 			for (int j = 0; j < 16; j++)
 			{
-				char c = j.ToString("X1")[0];
-				char c2 = text[j];
-				PromoCode.FriendlyToHexLookup[(int)c2] = c;
-				PromoCode.HexToFriendlyLookup[(int)c] = c2;
+				char hexValue = j.ToString("X1")[0];
+				char freindlyValue = friendlyChars[j];
+				PromoCode.FriendlyToHexLookup[(int)freindlyValue] = hexValue;
+				PromoCode.HexToFriendlyLookup[(int)hexValue] = freindlyValue;
 			}
 		}
 
@@ -95,30 +95,30 @@ namespace DNA
 
 		private static string HexToFriendlyCode(string code)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder builder = new StringBuilder();
 			foreach (char c in code)
 			{
 				if (c < 'Ā')
 				{
 					c = PromoCode.HexToFriendlyLookup[(int)c];
 				}
-				stringBuilder.Append(c);
+				builder.Append(c);
 			}
-			return stringBuilder.ToString();
+			return builder.ToString();
 		}
 
 		private static string FriendlyToHexCode(string code)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder builder = new StringBuilder();
 			foreach (char c in code)
 			{
 				if (c < 'Ā')
 				{
 					c = PromoCode.FriendlyToHexLookup[(int)c];
 				}
-				stringBuilder.Append(c);
+				builder.Append(c);
 			}
-			return stringBuilder.ToString();
+			return builder.ToString();
 		}
 
 		private static uint ParshHash(string str)
@@ -126,15 +126,15 @@ namespace DNA
 			str = str.ToUpper();
 			str = str.Replace(" ", "");
 			str = str.Replace("-", "");
-			uint num;
-			if (uint.TryParse(str, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out num))
+			uint hexNum;
+			if (uint.TryParse(str, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out hexNum))
 			{
-				return num;
+				return hexNum;
 			}
 			str = PromoCode.FriendlyToHexCode(str);
-			if (uint.TryParse(str, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out num))
+			if (uint.TryParse(str, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out hexNum))
 			{
-				return num;
+				return hexNum;
 			}
 			return 0U;
 		}
@@ -145,17 +145,17 @@ namespace DNA
 			this._reward = rewardDescription;
 			this._systemName = systemName;
 			this.Tag = tag;
-			string text = SecurityTools.DecryptString(PromoCode.Key, PromoCode.Code) + this.SystemName + gamerTag;
-			byte[] array = Encoding.UTF8.GetBytes(text);
+			string encStr = SecurityTools.DecryptString(PromoCode.Key, PromoCode.Code) + this.SystemName + gamerTag;
+			byte[] data = Encoding.UTF8.GetBytes(encStr);
 			Crc32 crc = new Crc32();
-			crc.Update(array);
+			crc.Update(data);
 			this._altHashCode = crc.Value;
 			this._altUserCode = this._altHashCode.ToString("X8");
 			this._altUserCode = this._altUserCode.Substring(0, 4) + "-" + this._altUserCode.Substring(4, 4);
-			text = SecurityTools.DecryptString(PromoCode.Key, PromoCode.Code) + this.SystemName + gamerTag.ToLower();
-			array = Encoding.UTF8.GetBytes(text);
+			encStr = SecurityTools.DecryptString(PromoCode.Key, PromoCode.Code) + this.SystemName + gamerTag.ToLower();
+			data = Encoding.UTF8.GetBytes(encStr);
 			crc = new Crc32();
-			crc.Update(array);
+			crc.Update(data);
 			this._hashCode = crc.Value;
 			this._userCode = this._hashCode.ToString("X8");
 			this._userCode = this._userCode.Substring(0, 4) + "-" + this._userCode.Substring(4, 4);
@@ -210,22 +210,22 @@ namespace DNA
 
 			public PromoCode RegisterCode(string systemName, string reward, object tag)
 			{
-				PromoCode promoCode = new PromoCode(this, systemName, reward, this._gamer.Gamertag, tag);
-				this.Codes[promoCode.SystemName] = promoCode;
-				return promoCode;
+				PromoCode code = new PromoCode(this, systemName, reward, this._gamer.Gamertag, tag);
+				this.Codes[code.SystemName] = code;
+				return code;
 			}
 
 			public List<PromoCode> GetRedeemedCodes()
 			{
-				List<PromoCode> list = new List<PromoCode>();
-				foreach (KeyValuePair<string, PromoCode> keyValuePair in this.Codes)
+				List<PromoCode> redeemedCodes = new List<PromoCode>();
+				foreach (KeyValuePair<string, PromoCode> pair in this.Codes)
 				{
-					if (keyValuePair.Value.Redeemed)
+					if (pair.Value.Redeemed)
 					{
-						list.Add(keyValuePair.Value);
+						redeemedCodes.Add(pair.Value);
 					}
 				}
-				return list;
+				return redeemedCodes;
 			}
 
 			public PromoCode GetDisplayCode(string name, string description, object tag)
@@ -239,16 +239,16 @@ namespace DNA
 				{
 					this._saveDevice.Load(PromoCode.PromoCodeManager.CodeFileName, delegate(Stream stream)
 					{
-						BinaryReader binaryReader = new BinaryReader(stream);
-						int num = binaryReader.ReadInt32();
-						for (int i = 0; i < num; i++)
+						BinaryReader reader = new BinaryReader(stream);
+						int count = reader.ReadInt32();
+						for (int i = 0; i < count; i++)
 						{
-							string text = binaryReader.ReadString();
-							uint num2 = binaryReader.ReadUInt32();
-							PromoCode promoCode;
-							if (this.Codes.TryGetValue(text, out promoCode) && (promoCode.HashCode == num2 || promoCode.AltHashCode == num2))
+							string name = reader.ReadString();
+							uint hash = reader.ReadUInt32();
+							PromoCode code;
+							if (this.Codes.TryGetValue(name, out code) && (code.HashCode == hash || code.AltHashCode == hash))
 							{
-								promoCode._redeemed = true;
+								code._redeemed = true;
 							}
 						}
 					});
@@ -269,14 +269,14 @@ namespace DNA
 						{
 							return;
 						}
-						BinaryWriter binaryWriter = new BinaryWriter(stream);
-						binaryWriter.Write(redeemedCodes.Count);
-						foreach (PromoCode promoCode in redeemedCodes)
+						BinaryWriter writer = new BinaryWriter(stream);
+						writer.Write(redeemedCodes.Count);
+						foreach (PromoCode code in redeemedCodes)
 						{
-							binaryWriter.Write(promoCode.SystemName);
-							binaryWriter.Write(promoCode.HashCode);
+							writer.Write(code.SystemName);
+							writer.Write(code.HashCode);
 						}
-						binaryWriter.Flush();
+						writer.Flush();
 					});
 				}
 				catch
@@ -292,18 +292,18 @@ namespace DNA
 
 			public PromoCode Redeem(string code, out string reason)
 			{
-				uint num = PromoCode.ParshHash(code);
+				uint hash = PromoCode.ParshHash(code);
 				reason = "Invalid Code";
-				foreach (KeyValuePair<string, PromoCode> keyValuePair in this.Codes)
+				foreach (KeyValuePair<string, PromoCode> pair in this.Codes)
 				{
-					if (num == keyValuePair.Value.HashCode || num == keyValuePair.Value.AltHashCode)
+					if (hash == pair.Value.HashCode || hash == pair.Value.AltHashCode)
 					{
-						if (!keyValuePair.Value.Redeemed)
+						if (!pair.Value.Redeemed)
 						{
-							keyValuePair.Value._redeemed = true;
+							pair.Value._redeemed = true;
 							reason = "Success";
 							this.SaveCodes();
-							return keyValuePair.Value;
+							return pair.Value;
 						}
 						reason = "Code Already Redeemed";
 					}

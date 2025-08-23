@@ -20,31 +20,31 @@ namespace DNA.Drawing.Curves.Splines
 
 		public override Vector3 ComputeValue(float t)
 		{
-			int controlPointIndex = Spline.GetControlPointIndex(this._controlPoints.Count, ref t);
-			return CubicBezierCurve.ComputeValue(t, this.ControlPoints[controlPointIndex], this.ControlPoints[controlPointIndex + 1]);
+			int idx = Spline.GetControlPointIndex(this._controlPoints.Count, ref t);
+			return CubicBezierCurve.ComputeValue(t, this.ControlPoints[idx], this.ControlPoints[idx + 1]);
 		}
 
 		private static Vector3 ComputeValue(float t, CubicBezierCurve.ControlPoint cp1, CubicBezierCurve.ControlPoint cp2)
 		{
-			Vector3 location = cp1.Location;
-			Vector3 @out = cp1.Out;
-			Vector3 @in = cp2.In;
-			Vector3 location2 = cp2.Location;
-			float num = 1f - t;
-			float num2 = num * num * num;
-			float num3 = 3f * t * num * num;
-			float num4 = 3f * t * t * num;
-			float num5 = t * t * t;
-			float num6 = num2 * location.X + num3 * @out.X + num4 * @in.X + num5 * location2.X;
-			float num7 = num2 * location.Y + num3 * @out.Y + num4 * @in.Y + num5 * location2.Y;
-			float num8 = num2 * location.Z + num3 * @out.Z + num4 * @in.Z + num5 * location2.Z;
-			return new Vector3(num6, num7, num8);
+			Vector3 p = cp1.Location;
+			Vector3 p2 = cp1.Out;
+			Vector3 p3 = cp2.In;
+			Vector3 p4 = cp2.Location;
+			float omt = 1f - t;
+			float a = omt * omt * omt;
+			float b = 3f * t * omt * omt;
+			float c = 3f * t * t * omt;
+			float d = t * t * t;
+			float x = a * p.X + b * p2.X + c * p3.X + d * p4.X;
+			float y = a * p.Y + b * p2.Y + c * p3.Y + d * p4.Y;
+			float z = a * p.Z + b * p2.Z + c * p3.Z + d * p4.Z;
+			return new Vector3(x, y, z);
 		}
 
 		public override Vector3 ComputeVelocity(float t)
 		{
-			int controlPointIndex = Spline.GetControlPointIndex(this._controlPoints.Count, ref t);
-			return CubicBezierCurve.ComputeVelocity(t, this.ControlPoints[controlPointIndex], this.ControlPoints[controlPointIndex + 1]);
+			int idx = Spline.GetControlPointIndex(this._controlPoints.Count, ref t);
+			return CubicBezierCurve.ComputeVelocity(t, this.ControlPoints[idx], this.ControlPoints[idx + 1]);
 		}
 
 		public static Vector3 ComputeVelocity(float t, CubicBezierCurve.ControlPoint cp1, CubicBezierCurve.ControlPoint cp2)
@@ -106,14 +106,14 @@ namespace DNA.Drawing.Curves.Splines
 
 			public void ReflectInHandle()
 			{
-				Vector3 vector = this.In - this.Location;
-				this.Out = this.Location - vector;
+				Vector3 vect = this.In - this.Location;
+				this.Out = this.Location - vect;
 			}
 
 			public void ReflectOutHandle()
 			{
-				Vector3 vector = this.Out - this.Location;
-				this.In = this.Location - vector;
+				Vector3 vect = this.Out - this.Location;
+				this.In = this.Location - vect;
 			}
 
 			public override int GetHashCode()

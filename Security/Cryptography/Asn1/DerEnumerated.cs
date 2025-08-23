@@ -58,8 +58,8 @@ namespace DNA.Security.Cryptography.Asn1
 
 		protected override bool Asn1Equals(Asn1Object asn1Object)
 		{
-			DerEnumerated derEnumerated = asn1Object as DerEnumerated;
-			return derEnumerated != null && Arrays.AreEqual(this.bytes, derEnumerated.bytes);
+			DerEnumerated other = asn1Object as DerEnumerated;
+			return other != null && Arrays.AreEqual(this.bytes, other.bytes);
 		}
 
 		protected override int Asn1GetHashCode()

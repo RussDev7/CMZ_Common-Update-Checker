@@ -36,7 +36,7 @@ namespace DNA.Drawing
 
 		public bool TryLockDeviceTimed(ref Stopwatch sw)
 		{
-			bool flag = false;
+			bool result = false;
 			if (sw == null)
 			{
 				sw = Stopwatch.StartNew();
@@ -49,31 +49,31 @@ namespace DNA.Drawing
 					{
 						this._resetting = false;
 					}
-					flag = true;
+					result = true;
 				}
 				else
 				{
 					Monitor.Exit(this._lockObject);
 				}
 			}
-			return flag;
+			return result;
 		}
 
 		public bool TryLockDevice()
 		{
-			bool flag = false;
+			bool result = false;
 			if (Monitor.TryEnter(this._lockObject))
 			{
 				if (!this._resetting)
 				{
-					flag = true;
+					result = true;
 				}
 				else
 				{
 					Monitor.Exit(this._lockObject);
 				}
 			}
-			return flag;
+			return result;
 		}
 
 		public void UnlockDevice()
@@ -83,7 +83,7 @@ namespace DNA.Drawing
 
 		public static void CallbackInProtectedEnvironment(GraphicsDeviceLocker.ProtectedCallbackDelegate callback)
 		{
-			bool flag = false;
+			bool created = false;
 			do
 			{
 				if (GraphicsDeviceLocker.Instance.TryLockDevice())
@@ -96,14 +96,14 @@ namespace DNA.Drawing
 					{
 						GraphicsDeviceLocker.Instance.UnlockDevice();
 					}
-					flag = true;
+					created = true;
 				}
-				if (!flag)
+				if (!created)
 				{
 					Thread.Sleep(10);
 				}
 			}
-			while (!flag);
+			while (!created);
 		}
 
 		public static GraphicsDeviceLocker Instance;

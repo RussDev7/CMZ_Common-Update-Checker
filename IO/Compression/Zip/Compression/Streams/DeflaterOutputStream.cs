@@ -104,16 +104,16 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 		{
 			while (!this.def.IsNeedingInput)
 			{
-				int num = this.def.Deflate(this.buf, 0, this.buf.Length);
-				if (num <= 0)
+				int len = this.def.Deflate(this.buf, 0, this.buf.Length);
+				if (len <= 0)
 				{
 					break;
 				}
 				if (this.Password != null)
 				{
-					this.EncryptBlock(this.buf, 0, num);
+					this.EncryptBlock(this.buf, 0, len);
 				}
-				this.baseOutputStream.Write(this.buf, 0, num);
+				this.baseOutputStream.Write(this.buf, 0, len);
 			}
 			if (!this.def.IsNeedingInput)
 			{
@@ -162,16 +162,16 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 			this.def.Finish();
 			while (!this.def.IsFinished)
 			{
-				int num = this.def.Deflate(this.buf, 0, this.buf.Length);
-				if (num <= 0)
+				int len = this.def.Deflate(this.buf, 0, this.buf.Length);
+				if (len <= 0)
 				{
 					break;
 				}
 				if (this.Password != null)
 				{
-					this.EncryptBlock(this.buf, 0, num);
+					this.EncryptBlock(this.buf, 0, len);
 				}
-				this.baseOutputStream.Write(this.buf, 0, num);
+				this.baseOutputStream.Write(this.buf, 0, len);
 			}
 			if (!this.def.IsFinished)
 			{
@@ -214,18 +214,18 @@ namespace DNA.IO.Compression.Zip.Compression.Streams
 
 		protected byte EncryptByte()
 		{
-			uint num = (this.keys[2] & 65535U) | 2U;
-			return (byte)(num * (num ^ 1U) >> 8);
+			uint temp = (this.keys[2] & 65535U) | 2U;
+			return (byte)(temp * (temp ^ 1U) >> 8);
 		}
 
 		protected void EncryptBlock(byte[] buffer, int offset, int length)
 		{
 			for (int i = offset; i < offset + length; i++)
 			{
-				byte b = buffer[i];
+				byte oldbyte = buffer[i];
 				int num = i;
 				buffer[num] ^= this.EncryptByte();
-				this.UpdateKeys(b);
+				this.UpdateKeys(oldbyte);
 			}
 		}
 

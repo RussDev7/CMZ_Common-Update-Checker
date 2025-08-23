@@ -26,11 +26,11 @@ namespace DNA.Net.Lidgren
 
 		internal void Discover(NetPeer peer)
 		{
-			string text = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nST:upnp:rootdevice\r\nMAN:\"ssdp:discover\"\r\nMX:3\r\n\r\n";
+			string str = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nST:upnp:rootdevice\r\nMAN:\"ssdp:discover\"\r\nMX:3\r\n\r\n";
 			this.m_status = UPnPStatus.Discovering;
-			byte[] bytes = Encoding.UTF8.GetBytes(text);
+			byte[] arr = Encoding.UTF8.GetBytes(str);
 			peer.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
-			peer.RawSend(bytes, 0, bytes.Length, new IPEndPoint(IPAddress.Broadcast, 1900));
+			peer.RawSend(arr, 0, arr.Length, new IPEndPoint(IPAddress.Broadcast, 1900));
 			peer.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, false);
 			this.m_discoveryResponseDeadline = (float)NetTime.Now + 6f;
 			this.m_status = UPnPStatus.Discovering;
@@ -40,25 +40,25 @@ namespace DNA.Net.Lidgren
 		{
 			try
 			{
-				XmlDocument xmlDocument = new XmlDocument();
-				xmlDocument.Load(WebRequest.Create(resp).GetResponse().GetResponseStream());
-				XmlNamespaceManager xmlNamespaceManager = new XmlNamespaceManager(xmlDocument.NameTable);
-				xmlNamespaceManager.AddNamespace("tns", "urn:schemas-upnp-org:device-1-0");
-				XmlNode xmlNode = xmlDocument.SelectSingleNode("//tns:device/tns:deviceType/text()", xmlNamespaceManager);
-				if (xmlNode.Value.Contains("InternetGatewayDevice"))
+				XmlDocument desc = new XmlDocument();
+				desc.Load(WebRequest.Create(resp).GetResponse().GetResponseStream());
+				XmlNamespaceManager nsMgr = new XmlNamespaceManager(desc.NameTable);
+				nsMgr.AddNamespace("tns", "urn:schemas-upnp-org:device-1-0");
+				XmlNode typen = desc.SelectSingleNode("//tns:device/tns:deviceType/text()", nsMgr);
+				if (typen.Value.Contains("InternetGatewayDevice"))
 				{
 					this.m_serviceName = "WANIPConnection";
-					XmlNode xmlNode2 = xmlDocument.SelectSingleNode("//tns:service[tns:serviceType=\"urn:schemas-upnp-org:service:" + this.m_serviceName + ":1\"]/tns:controlURL/text()", xmlNamespaceManager);
-					if (xmlNode2 == null)
+					XmlNode node = desc.SelectSingleNode("//tns:service[tns:serviceType=\"urn:schemas-upnp-org:service:" + this.m_serviceName + ":1\"]/tns:controlURL/text()", nsMgr);
+					if (node == null)
 					{
 						this.m_serviceName = "WANPPPConnection";
-						xmlNode2 = xmlDocument.SelectSingleNode("//tns:service[tns:serviceType=\"urn:schemas-upnp-org:service:" + this.m_serviceName + ":1\"]/tns:controlURL/text()", xmlNamespaceManager);
-						if (xmlNode2 == null)
+						node = desc.SelectSingleNode("//tns:service[tns:serviceType=\"urn:schemas-upnp-org:service:" + this.m_serviceName + ":1\"]/tns:controlURL/text()", nsMgr);
+						if (node == null)
 						{
 							return;
 						}
 					}
-					this.m_serviceUrl = NetUPnP.CombineUrls(resp, xmlNode2.Value);
+					this.m_serviceUrl = NetUPnP.CombineUrls(resp, node.Value);
 					this.m_status = UPnPStatus.Available;
 					this.m_discoveryComplete.Set();
 				}
@@ -75,10 +75,10 @@ namespace DNA.Net.Lidgren
 				return subURL;
 			}
 			gatewayURL = gatewayURL.Replace("http://", "");
-			int num = gatewayURL.IndexOf("/");
-			if (num != -1)
+			int i = gatewayURL.IndexOf("/");
+			if (i != -1)
 			{
-				gatewayURL = gatewayURL.Substring(0, num);
+				gatewayURL = gatewayURL.Substring(0, i);
 			}
 			return "http://" + gatewayURL + subURL;
 		}
@@ -112,9 +112,9 @@ namespace DNA.Net.Lidgren
 			{
 				return false;
 			}
-			IPAddress ipaddress;
-			IPAddress myAddress = NetUtility.GetMyAddress(out ipaddress);
-			if (myAddress == null)
+			IPAddress mask;
+			IPAddress client = NetUtility.GetMyAddress(out mask);
+			if (client == null)
 			{
 				return false;
 			}
@@ -131,7 +131,7 @@ namespace DNA.Net.Lidgren
 					"</NewProtocol><NewInternalPort>",
 					port.ToString(),
 					"</NewInternalPort><NewInternalClient>",
-					myAddress.ToString(),
+					client.ToString(),
 					"</NewInternalClient><NewEnabled>1</NewEnabled><NewPortMappingDescription>",
 					description,
 					"</NewPortMappingDescription><NewLeaseDuration>0</NewLeaseDuration></u:AddPortMapping>"
@@ -184,11 +184,11 @@ namespace DNA.Net.Lidgren
 			IPAddress ipaddress;
 			try
 			{
-				XmlDocument xmlDocument = this.SOAPRequest(this.m_serviceUrl, "<u:GetExternalIPAddress xmlns:u=\"urn:schemas-upnp-org:service:" + this.m_serviceName + ":1\"></u:GetExternalIPAddress>", "GetExternalIPAddress");
-				XmlNamespaceManager xmlNamespaceManager = new XmlNamespaceManager(xmlDocument.NameTable);
-				xmlNamespaceManager.AddNamespace("tns", "urn:schemas-upnp-org:device-1-0");
-				string value = xmlDocument.SelectSingleNode("//NewExternalIPAddress/text()", xmlNamespaceManager).Value;
-				ipaddress = IPAddress.Parse(value);
+				XmlDocument xdoc = this.SOAPRequest(this.m_serviceUrl, "<u:GetExternalIPAddress xmlns:u=\"urn:schemas-upnp-org:service:" + this.m_serviceName + ":1\"></u:GetExternalIPAddress>", "GetExternalIPAddress");
+				XmlNamespaceManager nsMgr = new XmlNamespaceManager(xdoc.NameTable);
+				nsMgr.AddNamespace("tns", "urn:schemas-upnp-org:device-1-0");
+				string IP = xdoc.SelectSingleNode("//NewExternalIPAddress/text()", nsMgr).Value;
+				ipaddress = IPAddress.Parse(IP);
 			}
 			catch (Exception ex)
 			{
@@ -200,19 +200,19 @@ namespace DNA.Net.Lidgren
 
 		private XmlDocument SOAPRequest(string url, string soap, string function)
 		{
-			string text = "<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>" + soap + "</s:Body></s:Envelope>";
-			WebRequest webRequest = WebRequest.Create(url);
-			webRequest.Method = "POST";
-			byte[] bytes = Encoding.UTF8.GetBytes(text);
-			webRequest.Headers.Add("SOAPACTION", string.Concat(new string[] { "\"urn:schemas-upnp-org:service:", this.m_serviceName, ":1#", function, "\"" }));
-			webRequest.ContentType = "text/xml; charset=\"utf-8\"";
-			webRequest.ContentLength = (long)bytes.Length;
-			webRequest.GetRequestStream().Write(bytes, 0, bytes.Length);
-			XmlDocument xmlDocument = new XmlDocument();
-			WebResponse response = webRequest.GetResponse();
-			Stream responseStream = response.GetResponseStream();
-			xmlDocument.Load(responseStream);
-			return xmlDocument;
+			string req = "<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>" + soap + "</s:Body></s:Envelope>";
+			WebRequest r = WebRequest.Create(url);
+			r.Method = "POST";
+			byte[] b = Encoding.UTF8.GetBytes(req);
+			r.Headers.Add("SOAPACTION", string.Concat(new string[] { "\"urn:schemas-upnp-org:service:", this.m_serviceName, ":1#", function, "\"" }));
+			r.ContentType = "text/xml; charset=\"utf-8\"";
+			r.ContentLength = (long)b.Length;
+			r.GetRequestStream().Write(b, 0, b.Length);
+			XmlDocument resp = new XmlDocument();
+			WebResponse wres = r.GetResponse();
+			Stream ress = wres.GetResponseStream();
+			resp.Load(ress);
+			return resp;
 		}
 
 		private const int c_discoveryTimeOutMillis = 1000;

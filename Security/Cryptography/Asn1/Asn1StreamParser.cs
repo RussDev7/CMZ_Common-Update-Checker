@@ -27,83 +27,83 @@ namespace DNA.Security.Cryptography.Asn1
 
 		public virtual IAsn1Convertible ReadObject()
 		{
-			int num = this._in.ReadByte();
-			if (num == -1)
+			int tag = this._in.ReadByte();
+			if (tag == -1)
 			{
 				return null;
 			}
 			this.Set00Check(false);
-			int num2 = Asn1InputStream.ReadTagNumber(this._in, num);
-			bool flag = (num & 32) != 0;
-			int num3 = Asn1InputStream.ReadLength(this._in, this._limit);
-			if (num3 < 0)
+			int tagNo = Asn1InputStream.ReadTagNumber(this._in, tag);
+			bool isConstructed = (tag & 32) != 0;
+			int length = Asn1InputStream.ReadLength(this._in, this._limit);
+			if (length < 0)
 			{
-				if (!flag)
+				if (!isConstructed)
 				{
 					throw new IOException("indefinite length primitive encoding encountered");
 				}
-				IndefiniteLengthInputStream indefiniteLengthInputStream = new IndefiniteLengthInputStream(this._in);
-				if ((num & 64) != 0)
+				IndefiniteLengthInputStream indIn = new IndefiniteLengthInputStream(this._in);
+				if ((tag & 64) != 0)
 				{
-					Asn1StreamParser asn1StreamParser = new Asn1StreamParser(indefiniteLengthInputStream);
-					return new BerApplicationSpecificParser(num2, asn1StreamParser);
+					Asn1StreamParser sp2 = new Asn1StreamParser(indIn);
+					return new BerApplicationSpecificParser(tagNo, sp2);
 				}
-				if ((num & 128) != 0)
+				if ((tag & 128) != 0)
 				{
-					return new BerTaggedObjectParser(num, num2, indefiniteLengthInputStream);
+					return new BerTaggedObjectParser(tag, tagNo, indIn);
 				}
-				Asn1StreamParser asn1StreamParser2 = new Asn1StreamParser(indefiniteLengthInputStream);
-				int num4 = num2;
-				if (num4 == 4)
+				Asn1StreamParser sp3 = new Asn1StreamParser(indIn);
+				int num = tagNo;
+				if (num == 4)
 				{
-					return new BerOctetStringParser(asn1StreamParser2);
+					return new BerOctetStringParser(sp3);
 				}
-				switch (num4)
+				switch (num)
 				{
 				case 16:
-					return new BerSequenceParser(asn1StreamParser2);
+					return new BerSequenceParser(sp3);
 				case 17:
-					return new BerSetParser(asn1StreamParser2);
+					return new BerSetParser(sp3);
 				default:
 					throw new IOException("unknown BER object encountered");
 				}
 			}
 			else
 			{
-				DefiniteLengthInputStream definiteLengthInputStream = new DefiniteLengthInputStream(this._in, num3);
-				if ((num & 64) != 0)
+				DefiniteLengthInputStream defIn = new DefiniteLengthInputStream(this._in, length);
+				if ((tag & 64) != 0)
 				{
-					return new DerApplicationSpecific(flag, num2, definiteLengthInputStream.ToArray());
+					return new DerApplicationSpecific(isConstructed, tagNo, defIn.ToArray());
 				}
-				if ((num & 128) != 0)
+				if ((tag & 128) != 0)
 				{
-					return new BerTaggedObjectParser(num, num2, definiteLengthInputStream);
+					return new BerTaggedObjectParser(tag, tagNo, defIn);
 				}
-				if (flag)
+				if (isConstructed)
 				{
-					int num5 = num2;
-					if (num5 == 4)
+					int num2 = tagNo;
+					if (num2 == 4)
 					{
-						return new BerOctetStringParser(new Asn1StreamParser(definiteLengthInputStream));
+						return new BerOctetStringParser(new Asn1StreamParser(defIn));
 					}
-					switch (num5)
+					switch (num2)
 					{
 					case 16:
-						return new DerSequenceParser(new Asn1StreamParser(definiteLengthInputStream));
+						return new DerSequenceParser(new Asn1StreamParser(defIn));
 					case 17:
-						return new DerSetParser(new Asn1StreamParser(definiteLengthInputStream));
+						return new DerSetParser(new Asn1StreamParser(defIn));
 					default:
-						return new DerUnknownTag(true, num2, definiteLengthInputStream.ToArray());
+						return new DerUnknownTag(true, tagNo, defIn.ToArray());
 					}
 				}
 				else
 				{
-					int num6 = num2;
-					if (num6 == 4)
+					int num3 = tagNo;
+					if (num3 == 4)
 					{
-						return new DerOctetStringParser(definiteLengthInputStream);
+						return new DerOctetStringParser(defIn);
 					}
-					return Asn1InputStream.CreatePrimitiveDerObject(num2, definiteLengthInputStream.ToArray());
+					return Asn1InputStream.CreatePrimitiveDerObject(tagNo, defIn.ToArray());
 				}
 			}
 		}
@@ -118,13 +118,13 @@ namespace DNA.Security.Cryptography.Asn1
 
 		internal Asn1EncodableVector ReadVector()
 		{
-			Asn1EncodableVector asn1EncodableVector = new Asn1EncodableVector(new Asn1Encodable[0]);
-			IAsn1Convertible asn1Convertible;
-			while ((asn1Convertible = this.ReadObject()) != null)
+			Asn1EncodableVector v = new Asn1EncodableVector(new Asn1Encodable[0]);
+			IAsn1Convertible obj;
+			while ((obj = this.ReadObject()) != null)
 			{
-				asn1EncodableVector.Add(new Asn1Encodable[] { asn1Convertible.ToAsn1Object() });
+				v.Add(new Asn1Encodable[] { obj.ToAsn1Object() });
 			}
-			return asn1EncodableVector;
+			return v;
 		}
 
 		private readonly Stream _in;

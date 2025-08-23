@@ -24,28 +24,28 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		public void Load(string fileName)
 		{
-			using (FileStream fileStream = new FileStream(fileName, FileMode.Open))
+			using (FileStream stream = new FileStream(fileName, FileMode.Open))
 			{
-				this.Load(fileStream);
+				this.Load(stream);
 			}
 		}
 
 		public void Load(Stream stream)
 		{
-			PsdBinaryReader psdBinaryReader = new PsdBinaryReader(stream);
-			this.LoadHeader(psdBinaryReader);
-			this.LoadColorModeData(psdBinaryReader);
-			this.LoadImageResources(psdBinaryReader);
-			this.LoadLayerAndMaskInfo(psdBinaryReader);
-			this.LoadImage(psdBinaryReader);
+			PsdBinaryReader reader = new PsdBinaryReader(stream);
+			this.LoadHeader(reader);
+			this.LoadColorModeData(reader);
+			this.LoadImageResources(reader);
+			this.LoadLayerAndMaskInfo(reader);
+			this.LoadImage(reader);
 			this.DecompressImages();
 		}
 
 		public void Save(string fileName)
 		{
-			using (FileStream fileStream = new FileStream(fileName, FileMode.Create))
+			using (FileStream stream = new FileStream(fileName, FileMode.Create))
 			{
-				this.Save(fileStream);
+				this.Save(stream);
 			}
 		}
 
@@ -55,14 +55,14 @@ namespace DNA.Drawing.Imaging.Photoshop
 			{
 				throw new NotImplementedException("Only 8-bit color has been implemented for saving.");
 			}
-			PsdBinaryWriter psdBinaryWriter = new PsdBinaryWriter(stream);
-			psdBinaryWriter.AutoFlush = true;
+			PsdBinaryWriter writer = new PsdBinaryWriter(stream);
+			writer.AutoFlush = true;
 			this.PrepareSave();
-			this.SaveHeader(psdBinaryWriter);
-			this.SaveColorModeData(psdBinaryWriter);
-			this.SaveImageResources(psdBinaryWriter);
-			this.SaveLayerAndMaskInfo(psdBinaryWriter);
-			this.SaveImage(psdBinaryWriter);
+			this.SaveHeader(writer);
+			this.SaveColorModeData(writer);
+			this.SaveImageResources(writer);
+			this.SaveLayerAndMaskInfo(writer);
+			this.SaveImage(writer);
 		}
 
 		public short Version { get; private set; }
@@ -145,8 +145,8 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		private void LoadHeader(PsdBinaryReader reader)
 		{
-			string text = new string(reader.ReadChars(4));
-			if (text != "8BPS")
+			string signature = new string(reader.ReadChars(4));
+			if (signature != "8BPS")
 			{
 				throw new PsdInvalidException("The given stream is not a valid PSD file");
 			}
@@ -165,8 +165,8 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		private void SaveHeader(PsdBinaryWriter writer)
 		{
-			string text = "8BPS";
-			writer.Write(text.ToCharArray());
+			string signature = "8BPS";
+			writer.Write(signature.ToCharArray());
 			writer.Write(this.Version);
 			byte[] array = new byte[6];
 			writer.Write(array);
@@ -179,10 +179,10 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		private void LoadColorModeData(PsdBinaryReader reader)
 		{
-			uint num = reader.ReadUInt32();
-			if (num > 0U)
+			uint paletteLength = reader.ReadUInt32();
+			if (paletteLength > 0U)
 			{
-				this.ColorModeData = reader.ReadBytes((int)num);
+				this.ColorModeData = reader.ReadBytes((int)paletteLength);
 			}
 		}
 
@@ -210,28 +210,28 @@ namespace DNA.Drawing.Imaging.Photoshop
 		private void LoadImageResources(PsdBinaryReader reader)
 		{
 			this.ImageResources.Clear();
-			uint num = reader.ReadUInt32();
-			if (num <= 0U)
+			uint imageResourcesLength = reader.ReadUInt32();
+			if (imageResourcesLength <= 0U)
 			{
 				return;
 			}
-			long position = reader.BaseStream.Position;
-			long num2 = position + (long)((ulong)num);
-			while (reader.BaseStream.Position < num2)
+			long startPosition = reader.BaseStream.Position;
+			long endPosition = startPosition + (long)((ulong)imageResourcesLength);
+			while (reader.BaseStream.Position < endPosition)
 			{
 				ImageResource imageResource = ImageResourceFactory.CreateImageResource(reader);
 				this.ImageResources.Add(imageResource);
 			}
-			reader.BaseStream.Position = position + (long)((ulong)num);
+			reader.BaseStream.Position = startPosition + (long)((ulong)imageResourcesLength);
 		}
 
 		private void SaveImageResources(PsdBinaryWriter writer)
 		{
 			using (new PsdBlockLengthWriter(writer))
 			{
-				foreach (ImageResource imageResource in this.ImageResources)
+				foreach (ImageResource imgRes in this.ImageResources)
 				{
-					imageResource.Save(writer);
+					imgRes.Save(writer);
 				}
 			}
 		}
@@ -242,24 +242,24 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		private void LoadLayerAndMaskInfo(PsdBinaryReader reader)
 		{
-			uint num = reader.ReadUInt32();
-			if (num <= 0U)
+			uint layersAndMaskLength = reader.ReadUInt32();
+			if (layersAndMaskLength <= 0U)
 			{
 				return;
 			}
-			long position = reader.BaseStream.Position;
+			long startPosition = reader.BaseStream.Position;
 			this.LoadLayers(reader);
 			this.LoadGlobalLayerMask(reader);
-			if (this.BitDepth > 8 && reader.BaseStream.Position < position + (long)((ulong)num))
+			if (this.BitDepth > 8 && reader.BaseStream.Position < startPosition + (long)((ulong)layersAndMaskLength))
 			{
-				string text = new string(reader.ReadChars(8));
-				if (text == "8BIMLr16" || text == "8BIMLr32")
+				string signature = new string(reader.ReadChars(8));
+				if (signature == "8BIMLr16" || signature == "8BIMLr32")
 				{
 					this.LoadLayers(reader);
 					this.LoadGlobalLayerMask(reader);
 				}
 			}
-			reader.BaseStream.Position = position + (long)((ulong)num);
+			reader.BaseStream.Position = startPosition + (long)((ulong)layersAndMaskLength);
 		}
 
 		private void SaveLayerAndMaskInfo(PsdBinaryWriter writer)
@@ -273,24 +273,24 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		private void LoadLayers(PsdBinaryReader reader)
 		{
-			uint num = reader.ReadUInt32();
-			if (num <= 0U)
+			uint layersInfoSectionLength = reader.ReadUInt32();
+			if (layersInfoSectionLength <= 0U)
 			{
 				return;
 			}
-			long position = reader.BaseStream.Position;
-			short num2 = reader.ReadInt16();
-			if (num2 < 0)
+			long startPosition = reader.BaseStream.Position;
+			short numLayers = reader.ReadInt16();
+			if (numLayers < 0)
 			{
 				this.AbsoluteAlpha = true;
-				num2 = Math.Abs(num2);
+				numLayers = Math.Abs(numLayers);
 			}
 			this.Layers.Clear();
-			if (num2 == 0)
+			if (numLayers == 0)
 			{
 				return;
 			}
-			for (int i = 0; i < (int)num2; i++)
+			for (int i = 0; i < (int)numLayers; i++)
 			{
 				this.Layers.Add(new Layer(reader, this));
 			}
@@ -298,27 +298,27 @@ namespace DNA.Drawing.Imaging.Photoshop
 			{
 				foreach (Channel channel in layer.Channels)
 				{
-					Rectangle rectangle = ((channel.ID == -2) ? layer.MaskData.Rect : layer.Rect);
-					channel.LoadPixelData(reader, rectangle);
+					Rectangle rect = ((channel.ID == -2) ? layer.MaskData.Rect : layer.Rect);
+					channel.LoadPixelData(reader, rect);
 				}
 			}
 			if (reader.BaseStream.Position % 2L == 1L)
 			{
 				reader.ReadByte();
 			}
-			reader.BaseStream.Position = position + (long)((ulong)num);
+			reader.BaseStream.Position = startPosition + (long)((ulong)layersInfoSectionLength);
 		}
 
 		private void DecompressImages()
 		{
-			IEnumerable<Layer> enumerable = this.Layers.Concat(new List<Layer> { this.BaseLayer });
-			foreach (Layer layer in enumerable)
+			IEnumerable<Layer> imageLayers = this.Layers.Concat(new List<Layer> { this.BaseLayer });
+			foreach (Layer layer in imageLayers)
 			{
 				foreach (Channel channel in layer.Channels)
 				{
-					Rectangle rectangle = ((channel.ID == -2) ? layer.MaskData.Rect : layer.Rect);
-					PsdFile.DecompressChannelContext decompressChannelContext = new PsdFile.DecompressChannelContext(channel, rectangle);
-					decompressChannelContext.DecompressChannel(null);
+					Rectangle rect = ((channel.ID == -2) ? layer.MaskData.Rect : layer.Rect);
+					PsdFile.DecompressChannelContext dcc = new PsdFile.DecompressChannelContext(channel, rect);
+					dcc.DecompressChannel(null);
 				}
 			}
 			foreach (Layer layer2 in this.Layers)
@@ -332,8 +332,8 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		public void PrepareSave()
 		{
-			List<Layer> list = this.Layers.Concat(new List<Layer> { this.BaseLayer }).ToList<Layer>();
-			foreach (Layer layer in list)
+			List<Layer> imageLayers = this.Layers.Concat(new List<Layer> { this.BaseLayer }).ToList<Layer>();
+			foreach (Layer layer in imageLayers)
 			{
 				layer.PrepareSave();
 			}
@@ -343,27 +343,27 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		internal void VerifyLayerSections()
 		{
-			int num = 0;
+			int depth = 0;
 			foreach (Layer layer in this.Layers.Reverse<Layer>())
 			{
-				IEnumerable<LayerInfo> enumerable = layer.AdditionalInfo.Where((LayerInfo info) => info.Key == "lsct");
-				int num2 = enumerable.Count<LayerInfo>();
-				if (num2 > 1)
+				IEnumerable<LayerInfo> sectionInfos = layer.AdditionalInfo.Where((LayerInfo info) => info.Key == "lsct");
+				int sectionInfoCount = sectionInfos.Count<LayerInfo>();
+				if (sectionInfoCount > 1)
 				{
 					throw new PsdInvalidException("Layer has more than one section info block.");
 				}
-				if (num2 != 0)
+				if (sectionInfoCount != 0)
 				{
-					LayerSectionInfo layerSectionInfo = (LayerSectionInfo)enumerable.Single<LayerInfo>();
-					switch (layerSectionInfo.SectionType)
+					LayerSectionInfo sectionInfo = (LayerSectionInfo)sectionInfos.Single<LayerInfo>();
+					switch (sectionInfo.SectionType)
 					{
 					case LayerSectionType.OpenFolder:
 					case LayerSectionType.ClosedFolder:
-						num++;
+						depth++;
 						break;
 					case LayerSectionType.SectionDivider:
-						num--;
-						if (num < 0)
+						depth--;
+						if (depth < 0)
 						{
 							throw new PsdInvalidException("Layer section ended without matching start marker.");
 						}
@@ -371,7 +371,7 @@ namespace DNA.Drawing.Imaging.Photoshop
 					}
 				}
 			}
-			if (num != 0)
+			if (depth != 0)
 			{
 				throw new PsdInvalidException("Layer section not closed by end marker.");
 			}
@@ -379,24 +379,24 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		public void SetVersionInfo()
 		{
-			IEnumerable<ImageResource> enumerable = this.ImageResources.Where((ImageResource x) => x.ID == ResourceID.VersionInfo);
-			if (enumerable.Count<ImageResource>() > 1)
+			IEnumerable<ImageResource> versionInfos = this.ImageResources.Where((ImageResource x) => x.ID == ResourceID.VersionInfo);
+			if (versionInfos.Count<ImageResource>() > 1)
 			{
 				throw new PsdInvalidException("Image has more than one VersionInfo resource.");
 			}
-			VersionInfo versionInfo = (VersionInfo)enumerable.SingleOrDefault<ImageResource>();
+			VersionInfo versionInfo = (VersionInfo)versionInfos.SingleOrDefault<ImageResource>();
 			if (versionInfo == null)
 			{
 				versionInfo = new VersionInfo();
 				this.ImageResources.Add(versionInfo);
 			}
-			Assembly executingAssembly = Assembly.GetExecutingAssembly();
-			Version version = executingAssembly.GetName().Version;
-			string text = string.Concat(new object[] { version.Major, ".", version.Minor, ".", version.Build });
+			Assembly assembly = Assembly.GetExecutingAssembly();
+			Version version = assembly.GetName().Version;
+			string versionString = string.Concat(new object[] { version.Major, ".", version.Minor, ".", version.Build });
 			versionInfo.Version = 1U;
 			versionInfo.HasRealMergedData = true;
 			versionInfo.ReaderName = "Paint.NET PSD Plugin";
-			versionInfo.WriterName = "Paint.NET PSD Plugin " + text;
+			versionInfo.WriterName = "Paint.NET PSD Plugin " + versionString;
 			versionInfo.FileVersion = 1U;
 		}
 
@@ -404,12 +404,12 @@ namespace DNA.Drawing.Imaging.Photoshop
 		{
 			using (new PsdBlockLengthWriter(writer))
 			{
-				short num = (short)this.Layers.Count;
+				short numberOfLayers = (short)this.Layers.Count;
 				if (this.AbsoluteAlpha)
 				{
-					num = -num;
+					numberOfLayers = -numberOfLayers;
 				}
-				writer.Write(num);
+				writer.Write(numberOfLayers);
 				foreach (Layer layer in this.Layers)
 				{
 					layer.Save(writer);
@@ -430,12 +430,12 @@ namespace DNA.Drawing.Imaging.Photoshop
 
 		private void LoadGlobalLayerMask(PsdBinaryReader reader)
 		{
-			uint num = reader.ReadUInt32();
-			if (num <= 0U)
+			uint maskLength = reader.ReadUInt32();
+			if (maskLength <= 0U)
 			{
 				return;
 			}
-			this.GlobalLayerMaskData = reader.ReadBytes((int)num);
+			this.GlobalLayerMaskData = reader.ReadBytes((int)maskLength);
 		}
 
 		private void SaveGlobalLayerMask(PsdBinaryWriter writer)
@@ -452,29 +452,29 @@ namespace DNA.Drawing.Imaging.Photoshop
 			{
 			case ImageCompression.Raw:
 			{
-				int num = this.RowCount * Util.BytesPerRow(this.BaseLayer.Rect, this.BitDepth);
-				for (short num2 = 0; num2 < this.ChannelCount; num2 += 1)
+				int length = this.RowCount * Util.BytesPerRow(this.BaseLayer.Rect, this.BitDepth);
+				for (short i = 0; i < this.ChannelCount; i += 1)
 				{
-					Channel channel = new Channel(num2, this.BaseLayer);
+					Channel channel = new Channel(i, this.BaseLayer);
 					channel.ImageCompression = this.ImageCompression;
-					channel.Length = num;
-					channel.ImageData = reader.ReadBytes(num);
+					channel.Length = length;
+					channel.ImageData = reader.ReadBytes(length);
 					this.BaseLayer.Channels.Add(channel);
 				}
 				break;
 			}
 			case ImageCompression.Rle:
 			{
-				for (short num3 = 0; num3 < this.ChannelCount; num3 += 1)
+				for (short j = 0; j < this.ChannelCount; j += 1)
 				{
-					int num4 = 0;
-					for (int i = 0; i < this.RowCount; i++)
+					int totalRleLength = 0;
+					for (int k = 0; k < this.RowCount; k++)
 					{
-						num4 += (int)reader.ReadUInt16();
+						totalRleLength += (int)reader.ReadUInt16();
 					}
-					Channel channel2 = new Channel(num3, this.BaseLayer);
+					Channel channel2 = new Channel(j, this.BaseLayer);
 					channel2.ImageCompression = this.ImageCompression;
-					channel2.Length = num4;
+					channel2.Length = totalRleLength;
 					this.BaseLayer.Channels.Add(channel2);
 				}
 				foreach (Channel channel3 in this.BaseLayer.Channels)
@@ -486,8 +486,8 @@ namespace DNA.Drawing.Imaging.Photoshop
 			}
 			if (this.ChannelCount == this.ColorMode.ChannelCount() + 1)
 			{
-				Channel channel4 = this.BaseLayer.Channels.Last<Channel>();
-				channel4.ID = -1;
+				Channel alphaChannel = this.BaseLayer.Channels.Last<Channel>();
+				alphaChannel.ID = -1;
 			}
 		}
 
