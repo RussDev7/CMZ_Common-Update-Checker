@@ -13,7 +13,6 @@ using DNA.Distribution;
 using DNA.Drawing;
 using DNA.Drawing.UI;
 using DNA.Input;
-using DNA.Multimedia.Broadcasting;
 using DNA.Net;
 using DNA.Net.GamerServices;
 using DNA.Profiling;
@@ -223,11 +222,6 @@ namespace DNA
 
 		protected override void OnExiting(object sender, EventArgs args)
 		{
-			if (this.CurrentBroadcastStream != null)
-			{
-				this.CurrentBroadcastStream.Broadcasting = false;
-				this.CurrentBroadcastStream.Dispose();
-			}
 			if (this.TaskScheduler != null)
 			{
 				this.TaskScheduler.Exit();
@@ -600,10 +594,6 @@ namespace DNA
 			}
 			Profiler.MarkFrame();
 			this.CurrentGameTime = gameTime;
-			if (this.CurrentBroadcastStream != null)
-			{
-				this.CurrentBroadcastStream.Update(gameTime);
-			}
 			SoundManager.Instance.Update();
 			if (this.Stop)
 			{
@@ -873,34 +863,6 @@ namespace DNA
 			throw exception;
 		}
 
-		public static void Run<T>(string errorUrl, string name) where T : DNAGame, new()
-		{
-			Version version = new Version(0, 0);
-			DateTime startTime = DateTime.UtcNow;
-			if (Debugger.IsAttached)
-			{
-				using (T g = new T())
-				{
-					version = g.Version;
-					g.Run();
-					return;
-				}
-			}
-			try
-			{
-				using (T g2 = new T())
-				{
-					version = g2.Version;
-					g2.Run();
-				}
-			}
-			catch (Exception e)
-			{
-				BlackScreenIssueReporter reporter = new BlackScreenIssueReporter(errorUrl, name, version, startTime);
-				reporter.ReportCrash(e);
-			}
-		}
-
 		public static void Run<T>(IssueReporter issueReporter, OnlineServices onlineServices) where T : DNAGame, new()
 		{
 			new Version(0, 0);
@@ -987,14 +949,6 @@ namespace DNA
 			}
 			this.ScreenManager.Draw(base.GraphicsDevice, this.SpriteBatch, gameTime);
 			this.DrawBrightness();
-			if (this.CurrentBroadcastStream != null)
-			{
-				if (this._offscreenBuffer == null)
-				{
-					throw new Exception("You must create an offscreen buffer, to use a Video Stream");
-				}
-				this.CurrentBroadcastStream.SubmitFrame(this._offscreenBuffer);
-			}
 			base.GraphicsDevice.SetRenderTarget(null);
 			if (this._offscreenBuffer != null)
 			{
@@ -1039,8 +993,6 @@ namespace DNA
 		private Version _version;
 
 		private static DateTime _gameStartTime = DateTime.UtcNow;
-
-		public BroadcastStream CurrentBroadcastStream;
 
 		public Texture2D MousePointer;
 
@@ -1101,8 +1053,6 @@ namespace DNA
 		private Queue<DNAGame.CodeVal> recentCodes = new Queue<DNAGame.CodeVal>();
 
 		protected bool HasGamerServices;
-
-		protected GVerifier _gVerifier = new GVerifier();
 
 		private Thread _startupThread;
 

@@ -13,8 +13,6 @@ namespace DNA.Security.Cryptography
 
 		Hash Compute(byte[] data, long start, long length);
 
-		HashProcess BeginHash();
-
 		Hash GetFileHash(string path);
 
 		Hash Read(BinaryReader reader);

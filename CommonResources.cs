@@ -108,14 +108,6 @@ namespace DNA
 			}
 		}
 
-		internal static string LauncherControl_ValidateLicenseFacebook_There_was_a_problem_authenticating_your_facebook_account_
-		{
-			get
-			{
-				return CommonResources.ResourceManager.GetString("LauncherControl_ValidateLicenseFacebook_There_was_a_problem_authenticating_your_facebook_account_", CommonResources.resourceCulture);
-			}
-		}
-
 		internal static string No_network_is_available
 		{
 			get

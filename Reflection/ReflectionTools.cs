@@ -12,19 +12,6 @@ namespace DNA.Reflection
 			return string.Compare(a.FullName, b.FullName);
 		}
 
-		public static bool ImplementsInterface(this Type type, Type interfaceType)
-		{
-			Type[] interfaces = type.GetInterfaces();
-			foreach (Type t in interfaces)
-			{
-				if (t == interfaceType)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
 		public static string GetCompanyName(this Assembly assembly)
 		{
 			object[] objects = assembly.GetCustomAttributes(typeof(AssemblyCompanyAttribute), true);
@@ -137,6 +124,19 @@ namespace DNA.Reflection
 				referencedAssemblies = new Dictionary<Assembly, int>();
 				ReflectionTools._assemblies[assembly] = referencedAssemblies;
 			}
+		}
+
+		public static bool ImplementsInterface(this Type type, Type interfaceType)
+		{
+			Type[] interfaces = type.GetInterfaces();
+			foreach (Type t in interfaces)
+			{
+				if (t == interfaceType)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public static Type[] GetTypes(Filter<Type> filter)

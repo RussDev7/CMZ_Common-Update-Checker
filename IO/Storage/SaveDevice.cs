@@ -467,13 +467,8 @@ namespace DNA.IO.Storage
 			ThreadPool.QueueUserWorkItem(new WaitCallback(this.DoGetFilesAsync), state);
 		}
 
-		private void SetProcessorAffinity()
-		{
-		}
-
 		private void DoSaveAsync(object asyncState)
 		{
-			this.SetProcessorAffinity();
 			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
 			Exception error = null;
 			try
@@ -495,7 +490,6 @@ namespace DNA.IO.Storage
 
 		private void DoLoadAsync(object asyncState)
 		{
-			this.SetProcessorAffinity();
 			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
 			Exception error = null;
 			try
@@ -517,7 +511,6 @@ namespace DNA.IO.Storage
 
 		private void DoDeleteDirectoryAsync(object asyncState)
 		{
-			this.SetProcessorAffinity();
 			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
 			Exception error = null;
 			try
@@ -539,7 +532,6 @@ namespace DNA.IO.Storage
 
 		private void DoDeleteAsync(object asyncState)
 		{
-			this.SetProcessorAffinity();
 			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
 			Exception error = null;
 			try
@@ -561,7 +553,6 @@ namespace DNA.IO.Storage
 
 		private void DoFileExistsAsync(object asyncState)
 		{
-			this.SetProcessorAffinity();
 			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
 			Exception error = null;
 			bool result = false;
@@ -584,7 +575,6 @@ namespace DNA.IO.Storage
 
 		private void DoGetFilesAsync(object asyncState)
 		{
-			this.SetProcessorAffinity();
 			SaveDevice.FileOperationState state = asyncState as SaveDevice.FileOperationState;
 			Exception error = null;
 			string[] result = null;

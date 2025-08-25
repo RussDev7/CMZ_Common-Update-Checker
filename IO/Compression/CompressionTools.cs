@@ -1,63 +1,62 @@
 ﻿using System;
 using System.IO;
-using DNA.IO.Compression.Zip.Compression;
-using DNA.IO.Compression.Zip.Compression.Streams;
+using System.IO.Compression;
 
 namespace DNA.IO.Compression
 {
 	public class CompressionTools
 	{
-		public CompressionTools()
-		{
-			this.deflater = new Deflater(Deflater.DefaultCompression, !this.UseHeaders);
-			this.inflater = new Inflater(!this.UseHeaders);
-		}
-
-		public CompressionTools(bool useHeaders)
-		{
-			this.UseHeaders = useHeaders;
-		}
-
 		public byte[] Compress(byte[] data)
 		{
-			byte[] array;
-			lock (this.deflater)
+			if (data == null)
 			{
-				this.deflater.Reset();
-				this.outStream.Position = 0L;
-				this.outStream.SetLength(0L);
-				DeflaterOutputStream stream = new DeflaterOutputStream(this.outStream, this.deflater);
-				BinaryWriter writer = new BinaryWriter(stream);
-				writer.Write(data.Length);
-				writer.Write(data, 0, data.Length);
-				writer.Flush();
-				stream.Finish();
-				array = this.outStream.ToArray();
+				throw new ArgumentNullException("data");
+			}
+			byte[] array;
+			using (MemoryStream outMs = new MemoryStream())
+			{
+				using (DeflateStream ds = new DeflateStream(outMs, CompressionMode.Compress, true))
+				{
+					using (BinaryWriter bw = new BinaryWriter(ds))
+					{
+						bw.Write(data.Length);
+						bw.Write(data, 0, data.Length);
+						bw.Flush();
+					}
+				}
+				array = outMs.ToArray();
 			}
 			return array;
 		}
 
 		public byte[] Decompress(byte[] data)
 		{
-			byte[] array;
-			lock (this.inflater)
+			if (data == null)
 			{
-				MemoryStream inStream = new MemoryStream(data);
-				this.inflater.Reset();
-				InflaterInputStream inflateStream = new InflaterInputStream(inStream, this.inflater);
-				BinaryReader reader = new BinaryReader(inflateStream);
-				int len = reader.ReadInt32();
-				array = reader.ReadBytes(len);
+				throw new ArgumentNullException("data");
+			}
+			byte[] array;
+			using (MemoryStream inMs = new MemoryStream(data))
+			{
+				using (DeflateStream ds = new DeflateStream(inMs, CompressionMode.Decompress, true))
+				{
+					using (BinaryReader br = new BinaryReader(ds))
+					{
+						int len = br.ReadInt32();
+						if (len < 0)
+						{
+							throw new InvalidDataException("Negative length in compressed stream.");
+						}
+						byte[] payload = br.ReadBytes(len);
+						if (payload.Length != len)
+						{
+							throw new EndOfStreamException("Truncated compressed payload.");
+						}
+						array = payload;
+					}
+				}
 			}
 			return array;
 		}
-
-		private bool UseHeaders;
-
-		private Inflater inflater;
-
-		private Deflater deflater;
-
-		private MemoryStream outStream = new MemoryStream();
 	}
 }

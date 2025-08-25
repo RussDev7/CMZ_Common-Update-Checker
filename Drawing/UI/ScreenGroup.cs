@@ -68,12 +68,6 @@ namespace DNA.Drawing.UI
 		{
 		}
 
-		public void ShowDialogScreen(DialogScreen screen, ThreadStart callback)
-		{
-			screen.Callback = callback;
-			this.PushScreen(screen);
-		}
-
 		public void ShowPCDialogScreen(PCDialogScreen screen, ThreadStart callback)
 		{
 			screen.Callback = callback;
